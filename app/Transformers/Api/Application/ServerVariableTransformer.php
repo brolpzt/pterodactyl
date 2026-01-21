@@ -28,7 +28,16 @@ class ServerVariableTransformer extends BaseTransformer
      */
     public function transform(EggVariable $variable): array
     {
-        return $variable->toArray();
+        return [
+            'name' => $variable->name,
+            'description' => $variable->description,
+            'env_variable' => $variable->env_variable,
+            'default_value' => $variable->default_value,
+            'server_value' => $variable->server_value ?? null,
+            'is_editable' => $variable->user_editable,
+            'is_viewable' => $variable->user_viewable,
+            'rules' => $variable->rules,
+        ];
     }
 
     /**

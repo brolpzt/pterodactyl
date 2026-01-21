@@ -25,5 +25,6 @@ export interface ServerEggVariable {
     defaultValue: string;
     serverValue: string | null;
     isEditable: boolean;
+    isViewable: boolean;
     rules: string[];
 }

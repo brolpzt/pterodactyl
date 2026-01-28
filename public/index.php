@@ -38,6 +38,30 @@ require __DIR__ . '/../vendor/autoload.php';
 
 /*
 |--------------------------------------------------------------------------
+| Redirect External Frontend Requests
+|--------------------------------------------------------------------------
+|
+| For any non-API web request that is not the login endpoint, redirect
+| the user to the external client area frontend.
+|
+*/
+
+if (PHP_SAPI !== 'cli' && isset($_SERVER['REQUEST_URI'])) {
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
+
+    $isAuthLogin = $path === '/auth/login';
+    $isApiRequest = $path === '/api' || strpos($path, '/api/') === 0;
+    $isAdmin = $path === '/admin' || strpos($path, '/admin/') === 0;
+    $isServer = $path === '/server' || strpos($path, '/server/') === 0;
+
+    if (!$isAuthLogin && !$isApiRequest && !$isAdmin && !$isServer) {
+        header('Location: https://clientarea.hostgamer.net', true, 302);
+        exit;
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
 | Turn On The Lights
 |--------------------------------------------------------------------------
 |

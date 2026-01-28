@@ -45,7 +45,7 @@ require __DIR__ . '/../vendor/autoload.php';
 | the user to the external client area frontend.
 |
 */
-
+/*
 if (PHP_SAPI !== 'cli' && isset($_SERVER['REQUEST_URI'])) {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
 
@@ -74,7 +74,7 @@ if (PHP_SAPI !== 'cli' && isset($_SERVER['REQUEST_URI'])) {
         header('Location: https://clientarea.hostgamer.net', true, 302);
         exit;
     }
-}
+}*/
 
 /*
 |--------------------------------------------------------------------------

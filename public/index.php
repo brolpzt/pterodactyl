@@ -45,7 +45,7 @@ require __DIR__ . '/../vendor/autoload.php';
 | the user to the external client area frontend.
 |
 */
-
+/*
 if (PHP_SAPI !== 'cli' && isset($_SERVER['REQUEST_URI'])) {
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
 
@@ -54,11 +54,27 @@ if (PHP_SAPI !== 'cli' && isset($_SERVER['REQUEST_URI'])) {
     $isAdmin = $path === '/admin' || strpos($path, '/admin/') === 0;
     $isServer = $path === '/server' || strpos($path, '/server/') === 0;
 
-    if (!$isAuthLogin && !$isApiRequest && !$isAdmin && !$isServer) {
+    $isRestrictedPath = $isAuthLogin || $isApiRequest || $isAdmin || $isServer;
+
+    if ($isRestrictedPath) {
+        $allowedIps = ['189.28.184.26', '201.76.4.146', '143.208.215.169'];
+        $clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+        if (strpos($clientIp, ',') !== false) {
+            $clientIp = trim(explode(',', $clientIp)[0]);
+        }
+        if (!in_array($clientIp, $allowedIps, true)) {
+            http_response_code(403);
+            header('Content-Type: text/plain; charset=UTF-8');
+            echo 'Acesso negado.';
+            exit;
+        }
+    }
+
+    if (!$isRestrictedPath) {
         header('Location: https://clientarea.hostgamer.net', true, 302);
         exit;
     }
-}
+}*/
 
 /*
 |--------------------------------------------------------------------------

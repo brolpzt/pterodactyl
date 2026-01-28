@@ -60,6 +60,11 @@
                                     </p>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label for="pGamedig" class="control-label">GameDig</label>
+                                <input type="text" id="pGamedig" name="gamedig" value="{{ old('gamedig') }}" class="form-control" />
+                                <p class="text-muted small">The GameDig value necessary for querying server information.</p>
+                            </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="form-group">

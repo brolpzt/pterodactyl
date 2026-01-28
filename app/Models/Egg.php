@@ -41,6 +41,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string|null $inherit_config_stop
  * @property string $inherit_file_denylist
  * @property array|null $inherit_features
+ * @property string|null $gamedig
  * @property Nest $nest
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\Server[] $servers
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\EggVariable[] $variables
@@ -101,6 +102,7 @@ class Egg extends Model
         'script_entry',
         'script_container',
         'copy_script_from',
+        'gamedig',
     ];
 
     /**

@@ -58,6 +58,7 @@ class EggTransformer extends BaseTransformer
             // to upgrade to using "docker_images".
             'docker_image' => count($model->docker_images) > 0 ? Arr::first($model->docker_images) : '',
             'docker_images' => $model->docker_images,
+            'gamedig' => $model->gamedig,
             'config' => [
                 'files' => $files,
                 'startup' => json_decode($model->config_startup, true),

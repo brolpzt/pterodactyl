@@ -21,6 +21,7 @@ class EggFormRequest extends AdminFormRequest
             'config_startup' => 'required_without:config_from|nullable|json',
             'config_logs' => 'required_without:config_from|nullable|json',
             'config_files' => 'required_without:config_from|nullable|json',
+            'gamedig' => 'nullable|string|max:191',
         ];
 
         if ($this->method() === 'POST') {

@@ -173,6 +173,24 @@ Route::group(['prefix' => 'nodes'], function () {
 
 /*
 |--------------------------------------------------------------------------
+| FastDL Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/fastdl
+|
+*/
+Route::group(['prefix' => 'fastdl'], function () {
+    Route::get('/', [Admin\FastDlController::class, 'index'])->name('admin.fastdl');
+    Route::get('/new', [Admin\FastDlController::class, 'create'])->name('admin.fastdl.new');
+    Route::get('/view/{node:id}', [Admin\FastDlController::class, 'view'])->name('admin.fastdl.view');
+
+    Route::post('/new', [Admin\FastDlController::class, 'store']);
+    Route::patch('/view/{node:id}', [Admin\FastDlController::class, 'update']);
+    Route::delete('/view/{node:id}/delete', [Admin\FastDlController::class, 'delete'])->name('admin.fastdl.delete');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Mount Controller Routes
 |--------------------------------------------------------------------------
 |

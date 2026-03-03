@@ -73,6 +73,7 @@ class ServerTransformer extends BaseTransformer
                 'databases' => $server->database_limit,
                 'allocations' => $server->allocation_limit,
                 'backups' => $server->backup_limit,
+                'fastdl_enabled' => $server->fastdl_enabled,
             ],
             'user' => $server->owner_id,
             'node' => $server->node_id,

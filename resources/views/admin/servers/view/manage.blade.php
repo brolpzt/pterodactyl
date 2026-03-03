@@ -135,7 +135,7 @@
             </div>
         @endif
 
-        @if(in_array('fastdl', $server->egg->features ?? []))
+        @if($server->fastdl_enabled && in_array('fastdl', $server->egg->features ?? []))
             <div class="col-sm-4">
                 <div class="box box-info">
                     <div class="box-header with-border">

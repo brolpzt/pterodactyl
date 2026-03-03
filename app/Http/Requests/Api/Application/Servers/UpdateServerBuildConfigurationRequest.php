@@ -46,6 +46,7 @@ class UpdateServerBuildConfigurationRequest extends ServerWriteRequest
             'feature_limits.databases' => $rules['database_limit'],
             'feature_limits.allocations' => $rules['allocation_limit'],
             'feature_limits.backups' => $rules['backup_limit'],
+            'feature_limits.fastdl_enabled' => 'sometimes|boolean',
         ];
     }
 
@@ -60,6 +61,7 @@ class UpdateServerBuildConfigurationRequest extends ServerWriteRequest
         $data['database_limit'] = $data['feature_limits']['databases'] ?? null;
         $data['allocation_limit'] = $data['feature_limits']['allocations'] ?? null;
         $data['backup_limit'] = $data['feature_limits']['backups'] ?? null;
+        $data['fastdl_enabled'] = $data['feature_limits']['fastdl_enabled'] ?? null;
         unset($data['allocation'], $data['feature_limits']);
 
         // Adjust the limits field to match what is expected by the model.
@@ -87,6 +89,7 @@ class UpdateServerBuildConfigurationRequest extends ServerWriteRequest
             'feature_limits.databases' => 'Database Limit',
             'feature_limits.allocations' => 'Allocation Limit',
             'feature_limits.backups' => 'Backup Limit',
+            'feature_limits.fastdl_enabled' => 'FastDL Enabled',
         ];
     }
 

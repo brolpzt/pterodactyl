@@ -25,8 +25,8 @@ class FastDlSyncService
      */
     public function handle(Server $server): void
     {
-        // Check if FastDL is enabled for the egg
-        if (!in_array('fastdl', $server->egg->features ?? [])) {
+        // Check if FastDL is enabled for the server and egg
+        if (!$server->fastdl_enabled || !in_array('fastdl', $server->egg->features ?? [])) {
             return;
         }
 

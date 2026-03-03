@@ -431,12 +431,13 @@
                     const nodesData = $(this).data('nodes');
                     const eggsData = $(this).data('eggs');
 
-                    const nodes = nodesData ? nodesData.toString().split(',') : [];
-                    const eggs = eggsData ? eggsData.toString().split(',') : [];
+                    // Garantir que se estiver vazio, tenhamos um array vazio, não um array com string vazia
+                    const nodes = (nodesData && nodesData.toString() !== "") ? nodesData.toString().split(',') : [];
+                    const eggs = (eggsData && eggsData.toString() !== "") ? eggsData.toString().split(',') : [];
 
-                    // A mount matches if:
-                    // 1. It has no node restriction OR the selected node is in the list
-                    // 2. It has no egg restriction OR the selected egg is in the list
+                    // Um mount combina se:
+                    // 1. Não tiver restrição de node OU o node selecionado estiver na lista
+                    // 2. Não tiver restrição de egg OU o egg selecionado estiver na lista
                     const nodeMatch = nodes.length === 0 || (nodeId && nodes.includes(nodeId.toString()));
                     const eggMatch = eggs.length === 0 || (eggId && eggs.includes(eggId.toString()));
 
@@ -448,6 +449,7 @@
                     }
                 });
 
+                $('#pMounts').select2('destroy');
                 $('#pMounts').select2({
                     placeholder: 'Select Mounts',
                 });

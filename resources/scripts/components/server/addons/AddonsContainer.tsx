@@ -21,7 +21,7 @@ const AddonBox = ({ addon }: { addon: Addon }) => {
     const onInstall = () => {
         setLoading(true);
         clearFlashes('server:addons');
-        installAddon(uuid, addon.id)
+        installAddon(uuid, addon.uuid)
             .then(() => {
                 addFlash({
                     key: 'server:addons',

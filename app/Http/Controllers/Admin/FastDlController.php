@@ -35,7 +35,7 @@ class FastDlController extends Controller
     public function index(): View
     {
         return view('admin.fastdl.index', [
-            'nodes' => $this->repository->setColumns(['*'])->with('location')->paginate(50),
+            'nodes' => $this->repository->getBuilder()->with('location')->paginate(50),
         ]);
     }
 

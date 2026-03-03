@@ -65,6 +65,8 @@ class StoreServerRequest extends ApplicationApiRequest
             'start_on_completion' => 'sometimes|boolean',
             'mounts' => 'sometimes|nullable|array',
             'mounts.*' => 'numeric|exists:mounts,id',
+            'addons' => 'sometimes|nullable|array',
+            'addons.*' => 'numeric|exists:addons,id',
         ];
     }
 
@@ -100,6 +102,7 @@ class StoreServerRequest extends ApplicationApiRequest
             'fastdl_enabled' => array_get($data, 'feature_limits.fastdl_enabled', false),
             'oom_disabled' => array_get($data, 'oom_disabled'),
             'mounts' => array_get($data, 'mounts'),
+            'addons' => array_get($data, 'addons'),
         ];
     }
 

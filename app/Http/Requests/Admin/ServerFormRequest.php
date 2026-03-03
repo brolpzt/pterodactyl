@@ -18,6 +18,9 @@ class ServerFormRequest extends AdminFormRequest
         $rules['custom_image'] = 'sometimes|nullable|string';
         $rules['mounts'] = 'sometimes|nullable|array';
         $rules['mounts.*'] = 'numeric|exists:mounts,id';
+        $rules['addons'] = 'sometimes|nullable|array';
+        $rules['addons.*'] = 'numeric|exists:addons,id';
+
 
         return $rules;
     }

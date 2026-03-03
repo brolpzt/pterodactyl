@@ -140,5 +140,12 @@ export default {
             name: 'Activity',
             component: ServerActivityLogContainer,
         },
+        {
+            path: '/addons',
+            permission: 'addon.*',
+            name: 'Addons',
+            component: lazy(() => import('@/components/server/addons/AddonsContainer')),
+        },
     ],
 } as Routes;
+

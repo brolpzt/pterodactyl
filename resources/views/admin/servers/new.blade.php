@@ -309,6 +309,28 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box box-secondary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Addons</h3>
+                </div>
+                <div class="box-body row">
+                    <div class="form-group col-xs-12">
+                        <select id="pAddons" name="addons[]" class="form-control" multiple>
+                            @foreach($addons ?? [] as $addon)
+                                <option value="{{ $addon->id }}" data-egg="{{ $addon->egg_id }}">
+                                    {{ $addon->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="small text-muted no-margin">Select the addons that should be installed on this server during creation. Only addons applicable to the selected egg will be shown.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <div class="row">
         <div class="col-md-12">
@@ -422,6 +444,9 @@
             $('#pMounts').select2({
                 placeholder: 'Select Mounts',
             });
+            $('#pAddons').select2({
+                placeholder: 'Select Addons',
+            });
 
             function updateMounts() {
                 const nodeId = $('#pNodeId').val();
@@ -455,11 +480,34 @@
                 });
             }
 
+            function updateAddons() {
+                const eggId = $('#pEggId').val();
+
+                $('#pAddons option').each(function() {
+                    const egg = $(this).data('egg');
+
+                    if (!egg || (eggId && egg.toString() === eggId.toString())) {
+                        $(this).prop('disabled', false);
+                    } else {
+                        $(this).prop('disabled', true);
+                        $(this).prop('selected', false);
+                    }
+                });
+
+                $('#pAddons').select2('destroy');
+                $('#pAddons').select2({
+                    placeholder: 'Select Addons',
+                });
+            }
+
             $('#pNodeId, #pEggId').on('change', function() {
                 updateMounts();
+                updateAddons();
             });
 
             updateMounts();
+            updateAddons();
+
         });
     </script>
 @endsection

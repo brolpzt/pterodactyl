@@ -99,8 +99,15 @@ class ServerCreationService
                 }
             }
 
+            if (isset($data['addons']) && is_array($data['addons'])) {
+                foreach ($data['addons'] as $addonId) {
+                    $server->addons()->attach($addonId, ['installed_at' => null]);
+                }
+            }
+
             return $server;
         }, 5);
+
 
         try {
             $this->daemonServerRepository->setServer($server)->create(

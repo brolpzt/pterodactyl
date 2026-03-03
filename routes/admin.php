@@ -245,3 +245,22 @@ Route::group(['prefix' => 'nests'], function () {
     Route::delete('/egg/{egg:id}', [Admin\Nests\EggController::class, 'destroy']);
     Route::delete('/egg/{egg:id}/variables/{variable:id}', [Admin\Nests\EggVariableController::class, 'destroy']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Addon Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/addons
+|
+*/
+Route::group(['prefix' => 'addons'], function () {
+    Route::get('/', [Admin\AddonsController::class, 'index'])->name('admin.addons');
+    Route::get('/new', [Admin\AddonsController::class, 'create'])->name('admin.addons.new');
+    Route::get('/view/{addon:id}', [Admin\AddonsController::class, 'view'])->name('admin.addons.view');
+
+    Route::post('/new', [Admin\AddonsController::class, 'store']);
+    Route::patch('/view/{addon:id}', [Admin\AddonsController::class, 'update']);
+    Route::delete('/view/{addon:id}/delete', [Admin\AddonsController::class, 'delete'])->name('admin.addons.delete');
+});
+

@@ -371,6 +371,14 @@ class Server extends Model
     }
 
     /**
+     * Returns all addons that have been installed on this server.
+     */
+    public function addons(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Addon::class, 'addon_server')->withPivot('installed_at');
+    }
+
+    /**
      * Returns all of the activity log entries where the server is the subject.
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany<\Pterodactyl\Models\ActivityLog, $this>

@@ -148,4 +148,8 @@ Route::group([
         Route::post('/reinstall', [Client\Servers\SettingsController::class, 'reinstall']);
         Route::put('/docker-image', [Client\Servers\SettingsController::class, 'dockerImage']);
     });
+    Route::group(['prefix' => '/addons'], function () {
+        Route::get('/', [Client\Servers\AddonController::class, 'index']);
+        Route::post('/{addon}/install', [Client\Servers\AddonController::class, 'install']);
+    });
 });

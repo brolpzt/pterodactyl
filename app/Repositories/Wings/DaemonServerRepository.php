@@ -90,6 +90,24 @@ class DaemonServerRepository extends DaemonRepository
     }
 
     /**
+     * Executes an addon (installation script) on the daemon.
+     *
+     * @throws DaemonConnectionException
+     */
+    public function executeAddon(array $data): void
+    {
+        Assert::isInstanceOf($this->server, Server::class);
+
+        try {
+            $this->getHttpClient()->post("/api/servers/{$this->server->uuid}/addon", [
+                'json' => $data,
+            ]);
+        } catch (GuzzleException $exception) {
+            throw new DaemonConnectionException($exception);
+        }
+    }
+
+    /**
      * Delete a server from the daemon, forcibly if passed.
      *
      * @throws DaemonConnectionException

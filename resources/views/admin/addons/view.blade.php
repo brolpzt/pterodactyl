@@ -1,0 +1,109 @@
+@extends('layouts.admin')
+
+@section('title')
+    Addon: {{ $addon->name }}
+@endsection
+
+@section('content-header')
+    <h1>{{ $addon->name }}<small>Edit addon details and script.</small></h1>
+    <ol class="breadcrumb">
+        <li><a href="{{ route('admin.index') }}">Admin</a></li>
+        <li><a href="{{ route('admin.addons') }}">Addons</a></li>
+        <li class="active">{{ $addon->name }}</li>
+    </ol>
+@endsection
+
+@section('content')
+<div class="row">
+    <form action="{{ route('admin.addons.view', $addon->id) }}" method="POST">
+        @method('PATCH')
+        <div class="col-md-6">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Addon Details</h3>
+                </div>
+                <div class="box-body">
+                    <div class="form-group">
+                        <label for="pName" class="control-label">Name</label>
+                        <input type="text" name="name" id="pName" class="form-control" value="{{ old('name', $addon->name) }}" />
+                    </div>
+                    <div class="form-group">
+                        <label for="pDescription" class="control-label">Description</label>
+                        <textarea name="description" id="pDescription" class="form-control" rows="4">{{ old('description', $addon->description) }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="pEggId" class="control-label">Associated Egg</label>
+                        <select name="egg_id" id="pEggId" class="form-control">
+                            @foreach($nests as $nest)
+                                <optgroup label="{{ $nest->name }}">
+                                    @foreach($nest->eggs as $egg)
+                                        <option value="{{ $egg->id }}" {{ old('egg_id', $addon->egg_id) != $egg->id ?: 'selected' }}>{{ $egg->name }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pIsActive" class="control-label">Status</label>
+                        <select name="is_active" id="pIsActive" class="form-control">
+                            <option value="1" {{ old('is_active', $addon->is_active) ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ old('is_active', $addon->is_active) ? '' : 'selected' }}>Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="box-footer">
+                    {!! csrf_token() !!}
+                    <button type="submit" class="btn btn-primary btn-sm pull-right">Save Changes</button>
+                    <button type="button" class="btn btn-danger btn-sm pull-left" data-toggle="modal" data-target="#deleteModal">Delete Addon</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="box box-secondary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Installation Script</h3>
+                </div>
+                <div class="box-body">
+                    <div class="form-group">
+                        <label for="pContainerImage" class="control-label">Container Image</label>
+                        <input type="text" name="container_image" id="pContainerImage" class="form-control" value="{{ old('container_image', $addon->container_image) }}" />
+                    </div>
+                    <div class="form-group">
+                        <label for="pScript" class="control-label">Install Script</label>
+                        <textarea name="script" id="pScript" class="form-control" rows="10">{{ old('script', $addon->script) }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="{{ route('admin.addons.delete', $addon->id) }}" method="POST">
+                @method('DELETE')
+                {!! csrf_token() !!}
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Delete Addon</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this addon? This will not remove files from servers that have already installed it.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Addon</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('footer-scripts')
+    @parent
+    <script>
+        $('#pEggId').select2();
+    </script>
+@endsection

@@ -127,6 +127,11 @@
                                 <i class="fa fa-th-large"></i> <span>Nests</span>
                             </a>
                         </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.addons') ?: 'active' }}">
+                            <a href="{{ route('admin.addons') }}">
+                                <i class="fa fa-puzzle-piece"></i> <span>Addons</span>
+                            </a>
+                        </li>
                     </ul>
                 </section>
             </aside>

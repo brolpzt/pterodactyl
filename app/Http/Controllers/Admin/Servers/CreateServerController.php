@@ -58,7 +58,9 @@ class CreateServerController extends Controller
             'locations' => Location::all(),
             'nests' => $nests,
             'mounts' => \Pterodactyl\Models\Mount::with(['nodes', 'eggs'])->get(),
+            'addons' => \Pterodactyl\Models\Addon::where('is_active', true)->get(),
         ]);
+
     }
 
     /**

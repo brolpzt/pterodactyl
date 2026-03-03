@@ -97,6 +97,7 @@ class ServerTransformer extends BaseClientTransformer
         }
 
         return 'http://' . $node->fqdn . '/' . $server->uuidShort . '/';
+
     }
 
     /**

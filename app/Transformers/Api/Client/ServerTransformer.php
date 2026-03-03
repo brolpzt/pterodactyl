@@ -96,9 +96,7 @@ class ServerTransformer extends BaseClientTransformer
             return null;
         }
 
-        $port = $node->port !== 80 ? ':' . $node->port : '';
-
-        return 'http://' . $node->fqdn . $port . '/';
+        return 'http://' . $node->fqdn . '/' . $server->uuidShort . '/';
     }
 
     /**

@@ -51,6 +51,7 @@ class FastDlSyncService
             'password' => $password,
             'private_key' => $privateKey,
             'remote_path' => $node->remote_path,
+            'sync_patterns' => $node->sync_patterns,
         ]);
     }
 }

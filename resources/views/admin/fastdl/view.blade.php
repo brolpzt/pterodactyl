@@ -48,6 +48,11 @@
                         <input type="text" name="remote_path" id="pRemotePath" class="form-control" value="{{ old('remote_path', $node->remote_path) }}" />
                     </div>
                     <div class="form-group">
+                        <label for="pSyncPatterns" class="control-label">Sync Patterns</label>
+                        <textarea name="sync_patterns" id="pSyncPatterns" class="form-control" rows="3">{{ old('sync_patterns', $node->sync_patterns) }}</textarea>
+                        <p class="text-muted small">Comma-separated list of file extensions or glob patterns to synchronize. Example: <code>*.bsp, maps/*.nav, sound/*</code></p>
+                    </div>
+                    <div class="form-group">
                         <label for="pIsActive" class="control-label">Is Active</label>
                         <select name="is_active" id="pIsActive" class="form-control">
                             <option value="1" {{ $node->is_active ? 'selected' : '' }}>Yes</option>

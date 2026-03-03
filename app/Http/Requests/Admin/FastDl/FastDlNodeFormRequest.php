@@ -17,6 +17,7 @@ class FastDlNodeFormRequest extends AdminFormRequest
             'fqdn' => 'required|string|max:191',
             'port' => 'required|numeric|between:1,65535',
             'remote_path' => 'required|string|max:191',
+            'sync_patterns' => 'nullable|string',
             'username' => 'required|string|max:191',
             'password' => 'nullable|string',
             'private_key' => 'nullable|string',

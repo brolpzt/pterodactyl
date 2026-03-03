@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string $fqdn
  * @property int $port
  * @property string $remote_path
+ * @property string|null $sync_patterns
  * @property string $username
  * @property string|null $password
  * @property string|null $private_key
@@ -59,6 +60,7 @@ class FastDlNode extends Model
         'fqdn' => 'required|string|max:191',
         'port' => 'required|integer|between:1,65535',
         'remote_path' => 'required|string|max:191',
+        'sync_patterns' => 'nullable|string',
         'username' => 'required|string|max:191',
         'password' => 'nullable|string',
         'private_key' => 'nullable|string',

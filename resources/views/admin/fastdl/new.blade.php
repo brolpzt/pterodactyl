@@ -46,6 +46,11 @@
                         <label for="pRemotePath" class="control-label">Remote Path</label>
                         <input type="text" name="remote_path" id="pRemotePath" class="form-control" value="{{ old('remote_path', '/var/www/fastdl') }}" />
                     </div>
+                    <div class="form-group">
+                        <label for="pSyncPatterns" class="control-label">Sync Patterns</label>
+                        <textarea name="sync_patterns" id="pSyncPatterns" class="form-control" rows="3">{{ old('sync_patterns', "*.bsp, *.nav, *.wad, *.tga, *.vmt, *.vtf, *.mdl, *.ani, *.vtx, *.vvd, *.phy, *.pcf, *.spr, *.wav, *.mp3, *.ogg") }}</textarea>
+                        <p class="text-muted small">Comma-separated list of file extensions or glob patterns to synchronize. Example: <code>*.bsp, maps/*.nav, sound/*</code></p>
+                    </div>
                 </div>
             </div>
         </div>

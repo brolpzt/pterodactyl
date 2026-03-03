@@ -58,6 +58,8 @@ const AddonBox = ({ addon }: { addon: Addon }) => {
     );
 };
 
+import FlashMessageRender from '@/components/FlashMessageRender';
+
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const { data, error, isValidating, mutate } = getServerAddons(uuid);
@@ -70,6 +72,7 @@ export default () => {
         )
     ) : (
         <ServerContentBlock title={'Server Addons'}>
+            <FlashMessageRender byKey={'server:addons'} css={tw`mb-4`} />
             <div css={tw`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}>
                 {data.length > 0 ? (
                     data.map((addon) => <AddonBox key={addon.id} addon={addon} />)
@@ -80,3 +83,4 @@ export default () => {
         </ServerContentBlock>
     );
 };
+

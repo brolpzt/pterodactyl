@@ -16,6 +16,8 @@ class ServerFormRequest extends AdminFormRequest
         $rules = Server::getRules();
         $rules['description'][] = 'nullable';
         $rules['custom_image'] = 'sometimes|nullable|string';
+        $rules['mounts'] = 'sometimes|nullable|array';
+        $rules['mounts.*'] = 'numeric|exists:mounts,id';
 
         return $rules;
     }

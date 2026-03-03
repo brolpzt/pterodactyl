@@ -90,6 +90,10 @@ class ServerCreationService
             $this->storeAssignedAllocations($server, $data);
             $this->storeEggVariables($server, $eggVariableData);
 
+            if (isset($data['mounts'])) {
+                $server->mounts()->attach($data['mounts']);
+            }
+
             return $server;
         }, 5);
 

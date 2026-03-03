@@ -21,6 +21,7 @@ class CreateServerController extends Controller
      */
     public function __construct(
         private AlertsMessageBag $alert,
+        private \Pterodactyl\Repositories\Eloquent\MountRepository $mountRepository,
         private NestRepository $nestRepository,
         private NodeRepository $nodeRepository,
         private ServerCreationService $creationService,
@@ -50,6 +51,7 @@ class CreateServerController extends Controller
                     'eggs' => $item->eggs->keyBy('id')->toArray(),
                 ]);
             })->keyBy('id'),
+            'mounts' => \Pterodactyl\Models\Mount::with(['nodes', 'eggs'])->get(),
         ]);
 
         return view('admin.servers.new', [

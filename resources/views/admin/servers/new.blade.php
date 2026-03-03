@@ -289,6 +289,28 @@
     </div>
 
     <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Mounts</h3>
+                </div>
+                <div class="box-body row">
+                    <div class="form-group col-xs-12">
+                        <select id="pMounts" name="mounts[]" class="form-control" multiple>
+                            @foreach($mounts ?? [] as $mount)
+                                <option value="{{ $mount->id }}" data-nodes="{{ $mount->nodes->pluck('id')->implode(',') }}" data-eggs="{{ $mount->eggs->pluck('id')->implode(',') }}">
+                                    {{ $mount->name }} ({{ $mount->source }} -> {{ $mount->target }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="small text-muted no-margin">Select the mounts that should be assigned to this server. Only mounts applicable to the selected node and egg will be shown.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
         <div class="col-md-12">
             <div class="box">
                 <div class="box-header with-border">
@@ -397,6 +419,37 @@
                 // END Persist 'Egg' select2
             @endif
             // END Persist 'Nest' select2
+            $('#pMounts').select2({
+                placeholder: 'Select Mounts',
+            });
+
+            function updateMounts() {
+                const nodeId = $('#pNodeId').val();
+                const eggId = $('#pEggId').val();
+
+                $('#pMounts option').each(function() {
+                    const nodes = $(this).data('nodes').toString().split(',');
+                    const eggs = $(this).data('eggs').toString().split(',');
+
+                    const nodeMatch = nodes.includes(nodeId) || nodes.includes('');
+                    const eggMatch = eggs.includes(eggId) || eggs.includes('');
+
+                    if (nodeMatch && eggMatch) {
+                        $(this).prop('disabled', false);
+                    } else {
+                        $(this).prop('disabled', true);
+                        $(this).prop('selected', false);
+                    }
+                });
+
+                $('#pMounts').select2();
+            }
+
+            $('#pNodeId, #pEggId').on('change', function() {
+                updateMounts();
+            });
+
+            updateMounts();
         });
     </script>
 @endsection

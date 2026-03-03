@@ -63,6 +63,8 @@ class StoreServerRequest extends ApplicationApiRequest
             'deploy.port_range.*' => 'string',
 
             'start_on_completion' => 'sometimes|boolean',
+            'mounts' => 'sometimes|nullable|array',
+            'mounts.*' => 'numeric|exists:mounts,id',
         ];
     }
 
@@ -97,6 +99,7 @@ class StoreServerRequest extends ApplicationApiRequest
             'backup_limit' => array_get($data, 'feature_limits.backups'),
             'fastdl_enabled' => array_get($data, 'feature_limits.fastdl_enabled', false),
             'oom_disabled' => array_get($data, 'oom_disabled'),
+            'mounts' => array_get($data, 'mounts'),
         ];
     }
 

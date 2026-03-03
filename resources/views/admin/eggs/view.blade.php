@@ -126,6 +126,9 @@
                                         @foreach(($egg->features ?? []) as $feature)
                                             <option value="{{ $feature }}" selected>{{ $feature }}</option>
                                         @endforeach
+                                        @if(!in_array('fastdl', $egg->features ?? []))
+                                            <option value="fastdl">fastdl</option>
+                                        @endif
                                     </select>
                                     <p class="text-muted small">Additional features belonging to the egg. Useful for configuring additional panel modifications.</p>
                                 </div>

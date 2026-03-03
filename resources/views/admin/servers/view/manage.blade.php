@@ -134,6 +134,25 @@
                 </div>
             </div>
         @endif
+
+        @if(in_array('fastdl', $server->egg->features ?? []))
+            <div class="col-sm-4">
+                <div class="box box-info">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Sync FastDL</h3>
+                    </div>
+                    <div class="box-body">
+                        <p>This will synchronize the server files to the configured FastDL node for this location.</p>
+                    </div>
+                    <div class="box-footer">
+                        <form action="{{ route('admin.servers.view.manage.fastdl', $server->id) }}" method="POST">
+                            {!! csrf_field() !!}
+                            <button type="submit" class="btn btn-info">Sync FastDL</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <div class="modal fade" id="transferServerModal" tabindex="-1" role="dialog">

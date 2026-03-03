@@ -128,6 +128,7 @@ Route::group(['prefix' => 'servers'], function () {
     Route::post('/view/{server:id}/manage/toggle', [Admin\ServersController::class, 'toggleInstall'])->name('admin.servers.view.manage.toggle');
     Route::post('/view/{server:id}/manage/suspension', [Admin\ServersController::class, 'manageSuspension'])->name('admin.servers.view.manage.suspension');
     Route::post('/view/{server:id}/manage/reinstall', [Admin\ServersController::class, 'reinstallServer'])->name('admin.servers.view.manage.reinstall');
+    Route::post('/view/{server:id}/manage/fastdl', [Admin\ServersController::class, 'syncFastDl'])->name('admin.servers.view.manage.fastdl');
     Route::post('/view/{server:id}/manage/transfer', [Admin\Servers\ServerTransferController::class, 'transfer'])->name('admin.servers.view.manage.transfer');
     Route::post('/view/{server:id}/delete', [Admin\ServersController::class, 'delete']);
 

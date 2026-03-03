@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property \Pterodactyl\Models\Node[] $nodes
+ * @property \Pterodactyl\Models\FastDlNode[] $fastDlNodes
  * @property \Pterodactyl\Models\Server[] $servers
  */
 class Location extends Model
@@ -57,6 +58,16 @@ class Location extends Model
     public function nodes(): HasMany
     {
         return $this->hasMany(Node::class);
+    }
+
+    /**
+     * Gets the FastDL nodes in a specified location.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Pterodactyl\Models\FastDlNode, $this>
+     */
+    public function fastDlNodes(): HasMany
+    {
+        return $this->hasMany(FastDlNode::class);
     }
 
     /**

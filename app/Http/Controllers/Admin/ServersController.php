@@ -25,6 +25,7 @@ use Pterodactyl\Services\Databases\DatabasePasswordService;
 use Pterodactyl\Services\Servers\DetailsModificationService;
 use Pterodactyl\Services\Servers\StartupModificationService;
 use Pterodactyl\Contracts\Repository\NestRepositoryInterface;
+use Pterodactyl\Services\Servers\FastDlSyncService;
 use Pterodactyl\Repositories\Eloquent\DatabaseHostRepository;
 use Pterodactyl\Services\Databases\DatabaseManagementService;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
@@ -58,6 +59,7 @@ class ServersController extends Controller
         protected ServerConfigurationStructureService $serverConfigurationStructureService,
         protected StartupModificationService $startupModificationService,
         protected SuspensionService $suspensionService,
+        protected FastDlSyncService $fastDlSyncService,
     ) {
     }
 
@@ -269,5 +271,20 @@ class ServersController extends Controller
         $this->alert->success('Mount was removed successfully.')->flash();
 
         return redirect()->route('admin.servers.view.mounts', $server->id);
+    }
+
+    /**
+     * Triggers a FastDL sync for the server.
+     */
+    public function syncFastDl(Server $server): RedirectResponse
+    {
+        try {
+            $this->fastDlSyncService->handle($server);
+            $this->alert->success('FastDL synchronization triggered successfully.')->flash();
+        } catch (\Exception $exception) {
+            $this->alert->danger('Failed to trigger FastDL sync: ' . $exception->getMessage())->flash();
+        }
+
+        return redirect()->route('admin.servers.view.manage', $server->id);
     }
 }

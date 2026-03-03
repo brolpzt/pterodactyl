@@ -101,6 +101,11 @@
                                 <i class="fa fa-sitemap"></i> <span>Nodes</span>
                             </a>
                         </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.fastdl') ?: 'active' }}">
+                            <a href="{{ route('admin.fastdl') }}">
+                                <i class="fa fa-download"></i> <span>FastDL Nodes</span>
+                            </a>
+                        </li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.servers') ?: 'active' }}">
                             <a href="{{ route('admin.servers') }}">
                                 <i class="fa fa-server"></i> <span>Servers</span>

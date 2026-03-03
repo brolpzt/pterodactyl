@@ -72,6 +72,24 @@ class DaemonServerRepository extends DaemonRepository
     }
 
     /**
+     * Triggers a FastDL sync on Wings.
+     *
+     * @throws DaemonConnectionException
+     */
+    public function syncFastDl(array $data): void
+    {
+        Assert::isInstanceOf($this->server, Server::class);
+
+        try {
+            $this->getHttpClient()->post("/api/servers/{$this->server->uuid}/fastdl/sync", [
+                'json' => $data,
+            ]);
+        } catch (GuzzleException $exception) {
+            throw new DaemonConnectionException($exception);
+        }
+    }
+
+    /**
      * Delete a server from the daemon, forcibly if passed.
      *
      * @throws DaemonConnectionException

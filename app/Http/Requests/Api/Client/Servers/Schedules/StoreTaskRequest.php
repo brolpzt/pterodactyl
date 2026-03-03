@@ -19,8 +19,8 @@ class StoreTaskRequest extends ViewScheduleRequest
     public function rules(): array
     {
         return [
-            'action' => 'required|in:command,power,backup',
-            'payload' => 'required_unless:action,backup|string|nullable',
+            'action' => 'required|in:command,power,backup,fastdl',
+            'payload' => 'required_unless:action,backup,fastdl|string|nullable',
             'time_offset' => 'required|numeric|min:0|max:900',
             'sequence_id' => 'sometimes|required|numeric|min:1',
             'continue_on_failure' => 'sometimes|required|boolean',

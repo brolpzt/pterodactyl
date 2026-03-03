@@ -38,6 +38,7 @@ class RunTaskJob extends Job implements ShouldQueue
         DaemonCommandRepository $commandRepository,
         InitiateBackupService $backupService,
         DaemonPowerRepository $powerRepository,
+        \Pterodactyl\Services\Servers\FastDlSyncService $fastdlService,
     ) {
         // Do not process a task that is not set to active, unless it's been manually triggered.
         if (!$this->task->schedule->is_active && !$this->manualRun) {
@@ -69,6 +70,9 @@ class RunTaskJob extends Job implements ShouldQueue
                     break;
                 case Task::ACTION_BACKUP:
                     $backupService->setIgnoredFiles(explode(PHP_EOL, $this->task->payload))->handle($server, null, true);
+                    break;
+                case Task::ACTION_FASTDL:
+                    $fastdlService->handle($server);
                     break;
                 default:
                     throw new \InvalidArgumentException('Invalid task action provided: ' . $this->task->action);

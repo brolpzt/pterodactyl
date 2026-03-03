@@ -41,6 +41,7 @@ class Task extends Model
     public const ACTION_POWER = 'power';
     public const ACTION_COMMAND = 'command';
     public const ACTION_BACKUP = 'backup';
+    public const ACTION_FASTDL = 'fastdl';
 
     /**
      * The table associated with the model.
@@ -90,7 +91,7 @@ class Task extends Model
         'schedule_id' => 'required|numeric|exists:schedules,id',
         'sequence_id' => 'required|numeric|min:1',
         'action' => 'required|string',
-        'payload' => 'required_unless:action,backup|string',
+        'payload' => 'required_unless:action,backup,fastdl|string|nullable',
         'time_offset' => 'required|numeric|between:0,900',
         'is_queued' => 'boolean',
         'continue_on_failure' => 'boolean',

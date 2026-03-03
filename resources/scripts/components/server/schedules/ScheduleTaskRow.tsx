@@ -6,6 +6,7 @@ import {
     faClock,
     faCode,
     faFileArchive,
+    faSyncAlt,
     faPencilAlt,
     faToggleOn,
     faTrashAlt,
@@ -34,6 +35,8 @@ const getActionDetails = (action: string): [string, any] => {
             return ['Send Power Action', faToggleOn];
         case 'backup':
             return ['Create Backup', faFileArchive];
+        case 'fastdl':
+            return ['Sync FastDL', faSyncAlt];
         default:
             return ['Unknown Action', faCode];
     }

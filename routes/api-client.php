@@ -152,4 +152,6 @@ Route::group([
         Route::get('/', [Client\Servers\AddonController::class, 'index']);
         Route::post('/{addon}/install', [Client\Servers\AddonController::class, 'install']);
     });
+
+    Route::post('/fastdl/sync', [Client\Servers\FastDlController::class, 'sync']);
 });

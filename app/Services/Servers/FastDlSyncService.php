@@ -5,6 +5,7 @@ namespace Pterodactyl\Services\Servers;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\FastDlNode;
 use Illuminate\Contracts\Encryption\Encrypter;
+use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
 
 class FastDlSyncService
@@ -21,13 +22,18 @@ class FastDlSyncService
     /**
      * Trigger a FastDL synchronization for a server.
      *
+     * @throws \Pterodactyl\Exceptions\DisplayException
      * @throws \Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException
      */
     public function handle(Server $server): void
     {
         // Check if FastDL is enabled for the server and egg
-        if (!$server->fastdl_enabled || !in_array('fastdl', $server->egg->features ?? [])) {
-            return;
+        if (!$server->fastdl_enabled) {
+            throw new DisplayException('FastDL is not enabled for this server.');
+        }
+
+        if (!in_array('fastdl', $server->egg->features ?? [])) {
+            throw new DisplayException('The Egg assigned to this server does not support FastDL (missing "fastdl" feature).');
         }
 
         // Find a FastDL node in the server's location
@@ -36,7 +42,7 @@ class FastDlSyncService
             ->first();
 
         if (!$node) {
-            return;
+            throw new DisplayException('No active FastDL node is configured for this server\'s location.');
         }
 
         // Prepare credentials

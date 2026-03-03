@@ -47,10 +47,7 @@ const AddonBox = ({ addon }: { addon: Addon }) => {
         >
             <div css={tw`px-1`}>
                 <p css={tw`text-sm text-neutral-200 mb-4`}>{addon.description}</p>
-                <div css={tw`flex items-center justify-between mt-auto`}>
-                    <div css={tw`text-xs text-neutral-400`}>
-                        Image: <code css={tw`text-neutral-200`}>{addon.containerImage}</code>
-                    </div>
+                <div css={tw`flex items-center justify-end mt-auto`}>
                     <Button size={'xsmall'} onClick={onInstall} isLoading={loading}>
                         <FontAwesomeIcon icon={faDownload} css={tw`mr-2`} />
                         Install

@@ -428,11 +428,17 @@
                 const eggId = $('#pEggId').val();
 
                 $('#pMounts option').each(function() {
-                    const nodes = $(this).data('nodes').toString().split(',');
-                    const eggs = $(this).data('eggs').toString().split(',');
+                    const nodesData = $(this).data('nodes');
+                    const eggsData = $(this).data('eggs');
 
-                    const nodeMatch = nodes.includes(nodeId) || nodes.includes('');
-                    const eggMatch = eggs.includes(eggId) || eggs.includes('');
+                    const nodes = nodesData ? nodesData.toString().split(',') : [];
+                    const eggs = eggsData ? eggsData.toString().split(',') : [];
+
+                    // A mount matches if:
+                    // 1. It has no node restriction OR the selected node is in the list
+                    // 2. It has no egg restriction OR the selected egg is in the list
+                    const nodeMatch = nodes.length === 0 || (nodeId && nodes.includes(nodeId.toString()));
+                    const eggMatch = eggs.length === 0 || (eggId && eggs.includes(eggId.toString()));
 
                     if (nodeMatch && eggMatch) {
                         $(this).prop('disabled', false);
@@ -442,7 +448,9 @@
                     }
                 });
 
-                $('#pMounts').select2();
+                $('#pMounts').select2({
+                    placeholder: 'Select Mounts',
+                });
             }
 
             $('#pNodeId, #pEggId').on('change', function() {

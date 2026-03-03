@@ -57,6 +57,7 @@ class CreateServerController extends Controller
         return view('admin.servers.new', [
             'locations' => Location::all(),
             'nests' => $nests,
+            'mounts' => \Pterodactyl\Models\Mount::with(['nodes', 'eggs'])->get(),
         ]);
     }
 

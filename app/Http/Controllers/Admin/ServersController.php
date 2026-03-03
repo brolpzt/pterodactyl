@@ -144,11 +144,16 @@ class ServersController extends Controller
     public function updateBuild(Request $request, Server $server): RedirectResponse
     {
         try {
-            $this->buildModificationService->handle($server, $request->only([
+            $buildData = $request->only([
                 'allocation_id', 'add_allocations', 'remove_allocations',
                 'memory', 'swap', 'io', 'cpu', 'threads', 'disk',
                 'database_limit', 'allocation_limit', 'backup_limit', 'oom_disabled',
-            ]));
+                'fastdl_enabled',
+            ]);
+            // Checkboxes are not submitted when unchecked; default to false explicitly.
+            $buildData['fastdl_enabled'] = $request->boolean('fastdl_enabled');
+
+            $this->buildModificationService->handle($server, $buildData);
         } catch (DataValidationException $exception) {
             throw new ValidationException($exception->getValidator());
         }

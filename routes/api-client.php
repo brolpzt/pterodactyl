@@ -150,7 +150,7 @@ Route::group([
     });
     Route::group(['prefix' => '/addons'], function () {
         Route::get('/', [Client\Servers\AddonController::class, 'index']);
-        Route::post('/{addon}/install', [Client\Servers\AddonController::class, 'install']);
+        Route::post('/{addon}/install', [Client\Servers\AddonController::class, 'install'])->withoutScopedBindings();
     });
 
     Route::post('/fastdl/sync', [Client\Servers\FastDlController::class, 'sync']);

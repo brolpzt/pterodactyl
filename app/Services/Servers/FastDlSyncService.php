@@ -37,7 +37,7 @@ class FastDlSyncService
         }
 
         // Find a FastDL node in the server's location
-        $node = FastDlNode::where('location_id', $server->location_id)
+        $node = FastDlNode::where('location_id', $server->node->location_id)
             ->where('is_active', true)
             ->first();
 

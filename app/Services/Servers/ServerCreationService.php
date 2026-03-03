@@ -90,8 +90,13 @@ class ServerCreationService
             $this->storeAssignedAllocations($server, $data);
             $this->storeEggVariables($server, $eggVariableData);
 
-            if (isset($data['mounts'])) {
-                $server->mounts()->attach($data['mounts']);
+            if (isset($data['mounts']) && is_array($data['mounts'])) {
+                foreach ($data['mounts'] as $mountId) {
+                    (new \Pterodactyl\Models\MountServer())->forceFill([
+                        'mount_id' => (int) $mountId,
+                        'server_id' => $server->id,
+                    ])->save();
+                }
             }
 
             return $server;

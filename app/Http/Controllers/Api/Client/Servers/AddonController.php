@@ -37,8 +37,10 @@ class AddonController extends ClientApiController
     /**
      * Triggers the installation of an addon.
      */
-    public function install(InstallAddonRequest $request, Server $server, Addon $addon): array
+    public function install(InstallAddonRequest $request, Server $server, string $addonUuid): array
     {
+        $addon = Addon::where('uuid', $addonUuid)->firstOrFail();
+
         // Validate that this addon belongs to the server's egg
         if ($addon->egg_id !== $server->egg_id || !$addon->is_active) {
             abort(404);

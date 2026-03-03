@@ -17,6 +17,7 @@
 <div class="row">
     <form action="{{ route('admin.addons.view', $addon->id) }}" method="POST">
         @method('PATCH')
+        @csrf
         <div class="col-md-6">
             <div class="box box-primary">
                 <div class="box-header with-border">
@@ -51,11 +52,6 @@
                         </select>
                     </div>
                 </div>
-                <div class="box-footer">
-                    {!! csrf_token() !!}
-                    <button type="submit" class="btn btn-primary btn-sm pull-right">Save Changes</button>
-                    <button type="button" class="btn btn-danger btn-sm pull-left" data-toggle="modal" data-target="#deleteModal">Delete Addon</button>
-                </div>
             </div>
         </div>
         <div class="col-md-6">
@@ -67,11 +63,18 @@
                     <div class="form-group">
                         <label for="pContainerImage" class="control-label">Container Image</label>
                         <input type="text" name="container_image" id="pContainerImage" class="form-control" value="{{ old('container_image', $addon->container_image) }}" />
+                        <p class="text-muted small">The docker image to use for running the installation script.</p>
                     </div>
                     <div class="form-group">
-                        <label for="pScript" class="control-label">Install Script</label>
-                        <textarea name="script" id="pScript" class="form-control" rows="10">{{ old('script', $addon->script) }}</textarea>
+                        <label class="control-label">Install Script</label>
+                        <div id="editor_script" style="height:300px">{{ old('script', $addon->script) }}</div>
+                        <p class="text-muted small">The bash script that will be executed in the container. Server files are mounted at <code>/mnt/server</code>.</p>
                     </div>
+                </div>
+                <div class="box-footer">
+                    <textarea name="script" class="hidden"></textarea>
+                    <button type="submit" class="btn btn-primary btn-sm pull-right">Save Changes</button>
+                    <button type="button" class="btn btn-danger btn-sm pull-left" data-toggle="modal" data-target="#deleteModal">Delete Addon</button>
                 </div>
             </div>
         </div>
@@ -83,7 +86,7 @@
         <div class="modal-content">
             <form action="{{ route('admin.addons.delete', $addon->id) }}" method="POST">
                 @method('DELETE')
-                {!! csrf_token() !!}
+                @csrf
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title">Delete Addon</h4>
@@ -103,7 +106,21 @@
 
 @section('footer-scripts')
     @parent
+    {!! Theme::js('vendor/ace/ace.js') !!}
+    {!! Theme::js('vendor/ace/ext-modelist.js') !!}
     <script>
-        $('#pEggId').select2();
+        $(document).ready(function () {
+            $('#pEggId').select2();
+
+            const ScriptEditor = ace.edit('editor_script');
+            ScriptEditor.setTheme('ace/theme/chrome');
+            ScriptEditor.getSession().setMode('ace/mode/sh');
+            ScriptEditor.getSession().setUseWrapMode(true);
+            ScriptEditor.setShowPrintMargin(false);
+
+            $('form').on('submit', function (e) {
+                $('textarea[name="script"]').val(ScriptEditor.getValue());
+            });
+        });
     </script>
 @endsection

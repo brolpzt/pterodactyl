@@ -66,12 +66,13 @@
                     </div>
                     <div class="form-group">
                         <label for="pScript" class="control-label">Install Script</label>
-                        <textarea name="script" id="pScript" class="form-control" rows="10">{{ old('script') }}</textarea>
+                        <div id="editor_script" style="height:300px">{{ old('script') }}</div>
                         <p class="text-muted small">The bash script that will be executed in the container. Server files are mounted at <code>/home/container</code> (or <code>/mnt/server</code> depending on version).</p>
                     </div>
                 </div>
                 <div class="box-footer">
-                    {!! csrf_token() !!}
+                    {!! csrf_field() !!}
+                    <textarea name="script" class="hidden"></textarea>
                     <button type="submit" class="btn btn-primary btn-sm pull-right">Create Addon</button>
                 </div>
             </div>
@@ -82,7 +83,21 @@
 
 @section('footer-scripts')
     @parent
+    {!! Theme::js('vendor/ace/ace.js') !!}
+    {!! Theme::js('vendor/ace/ext-modelist.js') !!}
     <script>
-        $('#pEggId').select2();
+        $(document).ready(function () {
+            $('#pEggId').select2();
+
+            const ScriptEditor = ace.edit('editor_script');
+            ScriptEditor.setTheme('ace/theme/chrome');
+            ScriptEditor.getSession().setMode('ace/mode/sh');
+            ScriptEditor.getSession().setUseWrapMode(true);
+            ScriptEditor.setShowPrintMargin(false);
+
+            $('form').on('submit', function (e) {
+                $('textarea[name="script"]').val(ScriptEditor.getValue());
+            });
+        });
     </script>
 @endsection

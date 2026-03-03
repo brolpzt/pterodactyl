@@ -66,6 +66,8 @@ class ServerTransformer extends BaseClientTransformer
                 'allocations' => $server->allocation_limit,
                 'backups' => $server->backup_limit,
             ],
+            'fastdl_enabled' => $server->fastdl_enabled,
+            'fastdl_url' => $this->resolveFastDlUrl($server),
             'status' => $server->status,
             // This field is deprecated, please use "status".
             'is_suspended' => $server->isSuspended(),
@@ -76,7 +78,32 @@ class ServerTransformer extends BaseClientTransformer
     }
 
     /**
+     * Resolves the public FastDL URL for the given server, if one is configured.
+     */
+    private function resolveFastDlUrl(Server $server): ?string
+    {
+        if (!$server->fastdl_enabled) {
+            return null;
+        }
+
+        $location = $server->location()->with('fastDlNodes')->first();
+        if (!$location) {
+            return null;
+        }
+
+        $node = $location->fastDlNodes()->where('is_active', true)->first();
+        if (!$node) {
+            return null;
+        }
+
+        $port = $node->port !== 80 ? ':' . $node->port : '';
+
+        return 'http://' . $node->fqdn . $port . '/';
+    }
+
+    /**
      * Returns the allocations associated with this server.
+
      *
      * @throws \Pterodactyl\Exceptions\Transformer\InvalidTransformerLevelException
      */

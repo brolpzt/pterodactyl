@@ -21,6 +21,8 @@ export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const node = ServerContext.useStoreState((state) => state.server.data!.node);
     const sftp = ServerContext.useStoreState((state) => state.server.data!.sftpDetails, isEqual);
+    const fastdlEnabled = ServerContext.useStoreState((state) => state.server.data!.fastdlEnabled);
+    const fastdlUrl = ServerContext.useStoreState((state) => state.server.data!.fastdlUrl);
 
     return (
         <ServerContentBlock title={'Settings'}>
@@ -68,6 +70,14 @@ export default () => {
                                 <code css={tw`font-mono bg-neutral-900 rounded py-1 px-2`}>{uuid}</code>
                             </div>
                         </CopyOnClick>
+                        {fastdlEnabled && fastdlUrl && (
+                            <CopyOnClick text={fastdlUrl}>
+                                <div css={tw`flex items-center justify-between mt-2 text-sm`}>
+                                    <p>FastDL URL</p>
+                                    <code css={tw`font-mono bg-neutral-900 rounded py-1 px-2`}>{fastdlUrl}</code>
+                                </div>
+                            </CopyOnClick>
+                        )}
                     </TitledGreyBox>
                 </div>
                 <div css={tw`w-full mt-6 md:flex-1 md:mt-0`}>

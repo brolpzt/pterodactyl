@@ -1,0 +1,74 @@
+{
+  "118.16f60b92.js": {
+    "src": "/assets/118.16f60b92.js",
+    "integrity": "sha384-plfvEmYRikGVrInSjej0/kNwqRIJdmP1wF0cLUs/xdtUVhUyBxASk7nJf04Fu9Y5"
+  },
+  "24.c5bbea47.js": {
+    "src": "/assets/24.c5bbea47.js",
+    "integrity": "sha384-ZcvbH7hst+16wA0nuJziOFYDG5hlWpO3o5zQLgCOKqj4dP1S2iTiwFgcvHfmIxS9"
+  },
+  "478.8ad7d7d2.js": {
+    "src": "/assets/478.8ad7d7d2.js",
+    "integrity": "sha384-9YxWL6AX8Rwu8O6kuQln/0bNoWhYqOZiQwMS2egDoGD6Wf4pHORcYw3hO2vMteZq"
+  },
+  "568.44c1ab5c.js": {
+    "src": "/assets/568.44c1ab5c.js",
+    "integrity": "sha384-Vt2IfRbeMAlYtrbbgufUJl1cno89cEgJ9MGUiLKjyZX4A3xyqHsZeLeonF8mV2wp"
+  },
+  "759.edbafb9d.js": {
+    "src": "/assets/759.edbafb9d.js",
+    "integrity": "sha384-Q/mGq1qPwnOJLQpzyPrA7iWB4i7kAUrXgaMgwHkv9stFOMU71jwlKV8MZy6minD4"
+  },
+  "799.db9a60cc.js": {
+    "src": "/assets/799.db9a60cc.js",
+    "integrity": "sha384-rWqIDeO++dyzYGMa8BUdq8Lk5LIo1TP0avW1cihqvI/ui/qZ2v9FyU+79DF6CaFd"
+  },
+  "878.d9f917f2.js": {
+    "src": "/assets/878.d9f917f2.js",
+    "integrity": "sha384-OdOvNBLhNGdc4j3JY/aetJESiC+08eFSS4VxxSvR3Hwma6IgPSPAQrmLm6+vYf9n"
+  },
+  "921.a75484d7.js": {
+    "src": "/assets/921.a75484d7.js",
+    "integrity": "sha384-mLaC6dChwZ2uwzupV9FU9i/FY8F5gFHM1NzY5dVRYy5q8/H8nHwldU587Q62jmu1"
+  },
+  "925.feacd99f.js": {
+    "src": "/assets/925.feacd99f.js",
+    "integrity": "sha384-FQQWHrOTnZmtyG6bQ4H8R3FJz4Vy0RnRUqT2x31xqP3/dyaWj8Y/absWyoNMulsN"
+  },
+  "930.1ea1e274.js": {
+    "src": "/assets/930.1ea1e274.js",
+    "integrity": "sha384-9VB51eaBC/droXIkVmvJyzNuRYvixTt3FW5hGFhHC/q//W0BtymimNhAwpDertGS"
+  },
+  "931.05e8c4fd.js": {
+    "src": "/assets/931.05e8c4fd.js",
+    "integrity": "sha384-YuvDwd0OKIb2IIoR7BOPMk8soUOj0M7rayYvmC0r5ragniyMnHrrS0HBKkCWgbJk"
+  },
+  "987.37e3090e.js": {
+    "src": "/assets/987.37e3090e.js",
+    "integrity": "sha384-LTCIxaaf1MHhdkmqLNuo3siHP+a9nzlNe6vejUaj6H4IYzFTTjP5gniHSv/MpeWA"
+  },
+  "auth.js": {
+    "src": "/assets/auth.7b453f90.js",
+    "integrity": "sha384-IJUSDJjypTDQzqgRVo0WtUTogt02/XgGaXkcKhqVPuZzuyG3dbsAUKVKy8Jcb9BF"
+  },
+  "dashboard.js": {
+    "src": "/assets/dashboard.b994f921.js",
+    "integrity": "sha384-FSPVWoI5jnuzyiazVRpQTLmIHFqivQjMoc/atfe1wNBzmsRGjXWEgAxfnkPz4QbF"
+  },
+  "ibm-plex-sans-latin-wght-normal.woff2": {
+    "src": "/assets/b33a81b76947ac354369.woff2",
+    "integrity": ""
+  },
+  "main.js": {
+    "src": "/assets/bundle.b5e60de7.js",
+    "integrity": "sha384-sgI3JWjj+rv5nzxrhwC6ZXvGUliKLzlFxa/+ngldcwnBr6W/LSqN5aXYXFxLJlqd"
+  },
+  "main.woff2": {
+    "src": "/assets/b33a81b76947ac354369.woff2",
+    "integrity": ""
+  },
+  "server.js": {
+    "src": "/assets/server.80a11276.js",
+    "integrity": "sha384-gPxK3njjB39UlRs+FLP5oPHfuwkowr1BZVpXeeaiYEMGLUvR+9vyFBDllkZSpimU"
+  }
+}

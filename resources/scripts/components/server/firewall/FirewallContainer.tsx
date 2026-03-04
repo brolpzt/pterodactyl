@@ -180,10 +180,7 @@ export default () => {
                 }
                 css={tw`mb-6`}
             >
-                <p css={tw`text-xs text-neutral-400 mb-4`}>
-                    Ao banir um IP, o Wings executará uma regra <code css={tw`bg-neutral-900 px-1 rounded text-red-300`}>iptables DROP</code>{' '}
-                    bloqueando TCP e UDP deste IP para o endereço e porta deste servidor.
-                </p>
+
                 <AddRuleForm onAdd={handleAdd} />
             </TitledGreyBox>
 

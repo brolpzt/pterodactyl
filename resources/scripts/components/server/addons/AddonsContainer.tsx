@@ -69,7 +69,7 @@ const AddonRow = ({ addon }: { addon: Addon }) => {
                 <td css={tw`py-4 pl-4 align-middle text-right`}>
                     <Button.Text onClick={attemptInstall} disabled={loading} css={tw`whitespace-nowrap`}>
                         <FontAwesomeIcon icon={faDownload} css={tw`mr-2`} />
-                        Contratar / Instalar
+                        Instalar
                     </Button.Text>
                 </td>
             </tr>

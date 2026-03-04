@@ -40,23 +40,24 @@ const AddonRow = ({ addon }: { addon: Addon }) => {
     };
 
     const attemptInstall = () => {
-        if (addon.reinstallServer) {
-            setModalVisible(true);
-        } else {
-            doInstall();
-        }
+        setModalVisible(true);
     };
 
     return (
         <React.Fragment>
             <Dialog.Confirm
                 open={modalVisible}
-                title={'Confirm server reinstallation'}
-                confirm={'Yes, install addon'}
+                title={'Confirmar Instalação'}
+                confirm={'Sim, instalar addon e desligar'}
                 onClose={() => setModalVisible(false)}
                 onConfirmed={doInstall}
             >
-                Atenção: Instalar este addon irá provocar a reinstalação de todo o seu servidor. Todos os processos serão interrompidos. Deseja continuar?
+                Atenção: O seu servidor será desligado para a instalação do novo addon, deseja continuar?
+                {addon.reinstallServer && (
+                    <div css={tw`mt-4 font-bold text-red-500`}>
+                        Atenção Adicional: O script de instalação deste formato poderá causar modificações em seus arquivos existentes, realize backup.
+                    </div>
+                )}
             </Dialog.Confirm>
             <tr css={tw`border-b border-neutral-600 last:border-b-0`}>
                 <td css={tw`py-4 pr-4 align-top w-2/5`}>

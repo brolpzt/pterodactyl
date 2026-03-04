@@ -264,3 +264,21 @@ Route::group(['prefix' => 'addons'], function () {
     Route::delete('/view/{addon:id}/delete', [Admin\AddonsController::class, 'delete'])->name('admin.addons.delete');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Addon Categories Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/addon-categories
+|
+*/
+Route::group(['prefix' => 'addon-categories'], function () {
+    Route::get('/', [Admin\AddonCategoriesController::class, 'index'])->name('admin.addon-categories');
+    Route::get('/new', [Admin\AddonCategoriesController::class, 'create'])->name('admin.addon-categories.new');
+    Route::get('/view/{category:id}', [Admin\AddonCategoriesController::class, 'view'])->name('admin.addon-categories.view');
+
+    Route::post('/new', [Admin\AddonCategoriesController::class, 'store']);
+    Route::patch('/view/{category:id}', [Admin\AddonCategoriesController::class, 'update']);
+    Route::delete('/view/{category:id}/delete', [Admin\AddonCategoriesController::class, 'delete'])->name('admin.addon-categories.delete');
+});
+

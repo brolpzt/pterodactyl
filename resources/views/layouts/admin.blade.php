@@ -132,6 +132,11 @@
                                 <i class="fa fa-puzzle-piece"></i> <span>Addons</span>
                             </a>
                         </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.addon-categories') ?: 'active' }}">
+                            <a href="{{ route('admin.addon-categories') }}">
+                                <i class="fa fa-tags"></i> <span>Addon Categories</span>
+                            </a>
+                        </li>
                     </ul>
                 </section>
             </aside>

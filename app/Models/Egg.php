@@ -45,6 +45,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property Nest $nest
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\Server[] $servers
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\EggVariable[] $variables
+ * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\Addon[] $addons
+ * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\AddonCategory[] $addonCategories
  * @property Egg|null $scriptFrom
  * @property Egg|null $configFrom
  */
@@ -291,6 +293,22 @@ class Egg extends Model
     public function variables(): HasMany
     {
         return $this->hasMany(EggVariable::class, 'egg_id');
+    }
+
+    /**
+     * Gets all addons associated with this egg.
+     */
+    public function addons(): HasMany
+    {
+        return $this->hasMany(Addon::class, 'egg_id');
+    }
+
+    /**
+     * Gets all addon categories associated with this egg.
+     */
+    public function addonCategories(): HasMany
+    {
+        return $this->hasMany(AddonCategory::class, 'egg_id');
     }
 
     /**

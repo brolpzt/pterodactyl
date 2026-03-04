@@ -9,14 +9,17 @@ use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Addons\GetAddonsRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Addons\InstallAddonRequest;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
+use Pterodactyl\Repositories\Wings\DaemonPowerRepository;
 
 class AddonController extends ClientApiController
 {
     /**
      * AddonController constructor.
      */
-    public function __construct(private DaemonServerRepository $daemonServerRepository)
-    {
+    public function __construct(
+        private DaemonServerRepository $daemonServerRepository,
+        private DaemonPowerRepository $daemonPowerRepository
+    ) {
         parent::__construct();
     }
 
@@ -25,7 +28,8 @@ class AddonController extends ClientApiController
      */
     public function index(GetAddonsRequest $request, Server $server): array
     {
-        $addons = Addon::where('egg_id', $server->egg_id)
+        $addons = Addon::with('category')
+            ->where('egg_id', $server->egg_id)
             ->where('is_active', true)
             ->get();
 
@@ -45,6 +49,8 @@ class AddonController extends ClientApiController
         if ($addon->egg_id !== $server->egg_id || !$addon->is_active) {
             abort(404);
         }
+
+        $this->daemonPowerRepository->setServer($server)->send('stop');
 
         $this->daemonServerRepository->setServer($server)->executeAddon([
             'script' => $addon->script,

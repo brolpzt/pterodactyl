@@ -122,3 +122,29 @@ Route::group(['prefix' => '/nests'], function () {
         Route::get('/{egg:id}', [Application\Nests\EggController::class, 'view'])->name('api.application.nests.eggs.view');
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Addon Controller Routes
+|--------------------------------------------------------------------------
+*/
+Route::group(['prefix' => '/addons'], function () {
+    Route::get('/', [Application\AddonsController::class, 'index'])->name('api.application.addons');
+    Route::get('/{addon:id}', [Application\AddonsController::class, 'view'])->name('api.application.addons.view');
+    Route::post('/', [Application\AddonsController::class, 'store']);
+    Route::patch('/{addon:id}', [Application\AddonsController::class, 'update']);
+    Route::delete('/{addon:id}', [Application\AddonsController::class, 'delete']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Addon Category Controller Routes
+|--------------------------------------------------------------------------
+*/
+Route::group(['prefix' => '/addon-categories'], function () {
+    Route::get('/', [Application\AddonCategoriesController::class, 'index'])->name('api.application.addon-categories');
+    Route::get('/{category:id}', [Application\AddonCategoriesController::class, 'view'])->name('api.application.addon-categories.view');
+    Route::post('/', [Application\AddonCategoriesController::class, 'store']);
+    Route::patch('/{category:id}', [Application\AddonCategoriesController::class, 'update']);
+    Route::delete('/{category:id}', [Application\AddonCategoriesController::class, 'delete']);
+});

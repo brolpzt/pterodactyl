@@ -36,7 +36,7 @@ class AddonsController extends Controller
     public function create(): View
     {
         return view('admin.addons.new', [
-            'nests' => Nest::with('eggs')->get(),
+            'nests' => Nest::with('eggs.addonCategories')->get(),
         ]);
     }
 
@@ -49,7 +49,11 @@ class AddonsController extends Controller
             'uuid' => \Illuminate\Support\Str::uuid()->toString(),
         ]);
 
-        $addon->fill($request->validated())->save();
+        $data = $request->validated();
+        $data['is_active'] = $request->has('is_active');
+        $data['reinstall_server'] = $request->has('reinstall_server');
+        
+        $addon->fill($data)->save();
 
         $this->alert->success('Addon has been created successfully.')->flash();
 
@@ -63,7 +67,7 @@ class AddonsController extends Controller
     {
         return view('admin.addons.view', [
             'addon' => $addon,
-            'nests' => Nest::with('eggs')->get(),
+            'nests' => Nest::with('eggs.addonCategories')->get(),
         ]);
     }
 
@@ -72,7 +76,11 @@ class AddonsController extends Controller
      */
     public function update(AddonFormRequest $request, Addon $addon): RedirectResponse
     {
-        $addon->fill($request->validated())->save();
+        $data = $request->validated();
+        $data['is_active'] = $request->has('is_active');
+        $data['reinstall_server'] = $request->has('reinstall_server');
+        
+        $addon->fill($data)->save();
 
         $this->alert->success('Addon has been updated successfully.')->flash();
 

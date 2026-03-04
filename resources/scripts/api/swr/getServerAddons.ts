@@ -8,6 +8,9 @@ export interface Addon {
     description: string;
     containerImage: string;
     isActive: boolean;
+    reinstallServer: boolean;
+    categoryId: number | null;
+    categoryName: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -24,6 +27,9 @@ export default (uuid: string, config?: SWRConfiguration) => {
                 description: raw.attributes.description,
                 containerImage: raw.attributes.container_image,
                 isActive: raw.attributes.is_active,
+                reinstallServer: raw.attributes.reinstall_server,
+                categoryId: raw.attributes.category_id,
+                categoryName: raw.attributes.category_name,
                 createdAt: raw.attributes.created_at,
                 updatedAt: raw.attributes.updated_at,
             }));

@@ -1,10 +1,10 @@
 <?php
 
-namespace Pterodactyl\Transformers\Api\Client;
+namespace Pterodactyl\Transformers\Api\Application;
 
 use Pterodactyl\Models\Addon;
 
-class AddonTransformer extends BaseClientTransformer
+class AddonTransformer extends BaseTransformer
 {
     /**
      * Return the resource name for the JSONAPI output.
@@ -15,20 +15,21 @@ class AddonTransformer extends BaseClientTransformer
     }
 
     /**
-     * Transform the addon model into a representative array for the client API.
+     * Transform the addon model into a representative array for the application API.
      */
     public function transform(Addon $addon): array
     {
         return [
             'id' => $addon->id,
             'uuid' => $addon->uuid,
+            'egg_id' => $addon->egg_id,
+            'category_id' => $addon->category_id,
             'name' => $addon->name,
             'description' => $addon->description,
+            'script' => $addon->script,
             'container_image' => $addon->container_image,
-            'is_active' => $addon->is_active,
             'reinstall_server' => $addon->reinstall_server,
-            'category_id' => $addon->category_id,
-            'category_name' => $addon->category ? $addon->category->name : 'Uncategorized',
+            'is_active' => $addon->is_active,
             'created_at' => $addon->created_at->toIso8601String(),
             'updated_at' => $addon->updated_at->toIso8601String(),
         ];

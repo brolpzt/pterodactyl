@@ -44,11 +44,32 @@
                         <p class="text-muted small">This addon will only be available for servers using this egg.</p>
                     </div>
                     <div class="form-group">
+                        <label for="pCategoryId" class="control-label">Category</label>
+                        <select name="category_id" id="pCategoryId" class="form-control">
+                            <option value="">None</option>
+                            @foreach($nests as $nest)
+                                @foreach($nest->eggs as $egg)
+                                    @foreach($egg->addonCategories as $category)
+                                        <option value="{{ $category->id }}" data-egg-id="{{ $egg->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }} ({{ $egg->name }})</option>
+                                    @endforeach
+                                @endforeach
+                            @endforeach
+                        </select>
+                        <p class="text-muted small">Category to group this addon.</p>
+                    </div>
+                    <div class="form-group">
                         <label for="pIsActive" class="control-label">Status</label>
                         <select name="is_active" id="pIsActive" class="form-control">
                             <option value="1" {{ old('is_active') !== '0' ?: 'selected' }}>Active</option>
                             <option value="0" {{ old('is_active') !== '0' ?: 'selected' }}>Inactive</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox checkbox-primary no-margin-bottom">
+                            <input id="pReinstallServer" name="reinstall_server" type="checkbox" value="1" {{ old('reinstall_server') ? 'checked' : '' }} />
+                            <label for="pReinstallServer" class="strong">Reinstall Server?</label>
+                        </div>
+                        <p class="text-muted small">If checked, the panel will prompt users that their server will be reinstalled when they install this addon.</p>
                     </div>
                 </div>
             </div>
@@ -98,6 +119,24 @@
             $('form').on('submit', function (e) {
                 $('textarea[name="script"]').val(ScriptEditor.getValue());
             });
+
+            function filterCategories() {
+                var selectedEgg = $('#pEggId').val();
+                $('#pCategoryId option').each(function() {
+                    if ($(this).val() === "") return;
+                    if ($(this).data('egg-id') == selectedEgg) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                        if ($(this).is(':selected')) {
+                            $(this).prop('selected', false);
+                        }
+                    }
+                });
+            }
+
+            $('#pEggId').on('change', filterCategories);
+            filterCategories();
         });
     </script>
 @endsection

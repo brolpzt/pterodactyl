@@ -153,5 +153,11 @@ Route::group([
         Route::post('/{addon}/install', [Client\Servers\AddonController::class, 'install'])->withoutScopedBindings();
     });
 
+    Route::group(['prefix' => '/firewall'], function () {
+        Route::get('/', [Client\Servers\FirewallController::class, 'index']);
+        Route::post('/', [Client\Servers\FirewallController::class, 'store']);
+        Route::delete('/{rule}', [Client\Servers\FirewallController::class, 'delete']);
+    });
+
     Route::post('/fastdl/sync', [Client\Servers\FastDlController::class, 'sync']);
 });

@@ -7,6 +7,7 @@ use Pterodactyl\Models\Server;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\ConnectionInterface;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
+use Pterodactyl\Repositories\Wings\DaemonFirewallRepository;
 use Pterodactyl\Services\Databases\DatabaseManagementService;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 
@@ -20,6 +21,7 @@ class ServerDeletionService
     public function __construct(
         private ConnectionInterface $connection,
         private DaemonServerRepository $daemonServerRepository,
+        private DaemonFirewallRepository $daemonFirewallRepository,
         private DatabaseManagementService $databaseManagementService,
     ) {
     }
@@ -42,6 +44,19 @@ class ServerDeletionService
      */
     public function handle(Server $server): void
     {
+        // Flush all iptables rules for this server on Wings before deleting.
+        // This ensures no orphaned firewall rules remain even if the DB cascade already
+        // handles the DB rows. We tolerate failures here (log and continue) to avoid
+        // blocking the deletion flow.
+        try {
+            $this->daemonFirewallRepository->setServer($server)->flushRules();
+        } catch (DaemonConnectionException $exception) {
+            Log::warning('Failed to flush firewall rules on Wings during server deletion.', [
+                'server_uuid' => $server->uuid,
+                'error' => $exception->getMessage(),
+            ]);
+        }
+
         try {
             $this->daemonServerRepository->setServer($server)->delete();
         } catch (DaemonConnectionException $exception) {

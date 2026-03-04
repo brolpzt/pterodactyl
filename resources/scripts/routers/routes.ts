@@ -146,6 +146,12 @@ export default {
             name: 'Addons',
             component: lazy(() => import('@/components/server/addons/AddonsContainer')),
         },
+        {
+            path: '/firewall',
+            permission: 'firewall.*',
+            name: 'Firewall',
+            component: lazy(() => import('@/components/server/firewall/FirewallContainer')),
+        },
     ],
 } as Routes;
 

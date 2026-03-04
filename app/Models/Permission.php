@@ -65,6 +65,10 @@ class Permission extends Model
 
     public const ACTION_ACTIVITY_READ = 'activity.read';
 
+    public const ACTION_FIREWALL_READ = 'firewall.read';
+    public const ACTION_FIREWALL_CREATE = 'firewall.create';
+    public const ACTION_FIREWALL_DELETE = 'firewall.delete';
+
     /**
      * Should timestamps be used on this model.
      */
@@ -204,6 +208,15 @@ class Permission extends Model
             'description' => 'Permissions that control a user\'s access to the server activity logs.',
             'keys' => [
                 'read' => 'Allows a user to view the activity logs for the server.',
+            ],
+        ],
+
+        'firewall' => [
+            'description' => 'Permissions that control a user\'s ability to manage the server firewall (IP bans).',
+            'keys' => [
+                'read'   => 'Allows a user to view all banned IPs for this server.',
+                'create' => 'Allows a user to ban an IP address from connecting to this server.',
+                'delete' => 'Allows a user to remove an IP ban from this server.',
             ],
         ],
     ];

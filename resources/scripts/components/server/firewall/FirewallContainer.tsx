@@ -14,7 +14,7 @@ import { Button } from '@/components/elements/button/index';
 import { Dialog } from '@/components/elements/dialog';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShieldAlt, faTrash, faBan, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import Input from '@/components/elements/Input';
 import Label from '@/components/elements/Label';
 
@@ -174,7 +174,6 @@ export default () => {
             <TitledGreyBox
                 title={
                     <div css={tw`flex items-center`}>
-                        <FontAwesomeIcon icon={faBan} css={tw`mr-2 text-red-400`} />
                         <span css={tw`text-sm uppercase`}>Banir IP</span>
                     </div>
                 }
@@ -189,7 +188,6 @@ export default () => {
                 title={
                     <div css={tw`flex items-center justify-between w-full`}>
                         <div css={tw`flex items-center`}>
-                            <FontAwesomeIcon icon={faShieldAlt} css={tw`mr-2 text-neutral-400`} />
                             <span css={tw`text-sm uppercase`}>IPs Banidos</span>
                         </div>
                         <span css={tw`text-xs bg-neutral-900 px-2 py-0.5 rounded-full text-neutral-400`}>

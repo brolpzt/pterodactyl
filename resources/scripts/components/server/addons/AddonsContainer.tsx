@@ -10,7 +10,7 @@ import { Button } from '@/components/elements/button/index';
 import useFlash from '@/plugins/useFlash';
 import installAddon from '@/api/server/installAddon';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { Dialog } from '@/components/elements/dialog';
 import FlashMessageRender from '@/components/FlashMessageRender';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
@@ -101,7 +101,6 @@ export default () => {
                                 key={categoryName}
                                 title={
                                     <div css={tw`flex items-center`}>
-                                        <FontAwesomeIcon icon={faPuzzlePiece} css={tw`mr-2 text-neutral-400`} />
                                         <span css={tw`text-sm uppercase`}>{categoryName}</span>
                                     </div>
                                 }

@@ -59,14 +59,14 @@ const AddonRow = ({ addon }: { addon: Addon }) => {
                     </div>
                 )}
             </Dialog.Confirm>
-            <tr css={tw`border-b border-neutral-600 last:border-b-0`}>
-                <td css={tw`py-4 pr-4 align-top w-2/5`}>
+            <tr css={tw`border-b border-neutral-600 last:border-b-0 hover:bg-neutral-600/25 transition-colors duration-150`}>
+                <td css={tw`px-4 py-4 align-middle w-1/4`}>
                     <p css={tw`text-base font-semibold text-neutral-100`}>{addon.name}</p>
                 </td>
-                <td css={tw`py-4 align-top w-full`}>
+                <td css={tw`px-4 py-4 align-middle w-2/4`}>
                     <p css={tw`text-sm text-neutral-300`}>{addon.description}</p>
                 </td>
-                <td css={tw`py-4 pl-4 align-middle text-right`}>
+                <td css={tw`px-4 py-4 align-middle text-right w-1/4`}>
                     <Button.Text onClick={attemptInstall} disabled={loading} css={tw`whitespace-nowrap`}>
                         <FontAwesomeIcon icon={faDownload} css={tw`mr-2`} />
                         Instalar
@@ -101,9 +101,16 @@ export default () => {
                     return (
                         <div key={categoryName} css={tw`mb-8`}>
                             <h2 css={tw`text-2xl mb-4 font-semibold text-neutral-100`}>{categoryName}</h2>
-                            <div css={tw`bg-neutral-700/50 p-6 rounded-md shadow-sm border border-neutral-600`}>
-                                <table css={tw`w-full`}>
-                                    <tbody>
+                            <div css={tw`bg-neutral-700 p-0 rounded-md shadow-sm border border-neutral-600 overflow-hidden`}>
+                                <table css={tw`w-full text-left table-auto`}>
+                                    <thead css={tw`bg-neutral-900/40 text-neutral-400 text-sm`}>
+                                        <tr>
+                                            <th css={tw`px-4 py-3 font-semibold`}>Nome do Addon</th>
+                                            <th css={tw`px-4 py-3 font-semibold`}>Descrição</th>
+                                            <th css={tw`px-4 py-3 font-semibold text-right`}>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody css={tw`divide-y divide-neutral-600`}>
                                         {categoryAddons.map((addon) => (
                                             <AddonRow key={addon.id} addon={addon} />
                                         ))}

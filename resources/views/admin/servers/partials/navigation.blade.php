@@ -24,6 +24,9 @@
                     <li class="{{ $router->currentRouteNamed('admin.servers.view.mounts') ? 'active' : '' }}">
                         <a href="{{ route('admin.servers.view.mounts', $server->id) }}">Mounts</a>
                     </li>
+                    <li class="{{ $router->currentRouteNamed('admin.servers.view.firewall') ? 'active' : '' }}">
+                        <a href="{{ route('admin.servers.view.firewall', $server->id) }}">Firewall</a>
+                    </li>
                 @endif
                 <li class="{{ $router->currentRouteNamed('admin.servers.view.manage') ? 'active' : '' }}">
                     <a href="{{ route('admin.servers.view.manage', $server->id) }}">Manage</a>

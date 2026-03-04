@@ -147,4 +147,12 @@ class ServerViewController extends Controller
     {
         return view('admin.servers.view.delete', compact('server'));
     }
+
+    /**
+     * Returns the server firewall management page.
+     */
+    public function firewall(Request $request, Server $server): View
+    {
+        return view('admin.servers.view.firewall', compact('server'));
+    }
 }

@@ -115,6 +115,7 @@ Route::group(['prefix' => 'servers'], function () {
         Route::get('/view/{server:id}/startup', [Admin\Servers\ServerViewController::class, 'startup'])->name('admin.servers.view.startup');
         Route::get('/view/{server:id}/database', [Admin\Servers\ServerViewController::class, 'database'])->name('admin.servers.view.database');
         Route::get('/view/{server:id}/mounts', [Admin\Servers\ServerViewController::class, 'mounts'])->name('admin.servers.view.mounts');
+        Route::get('/view/{server:id}/firewall', [Admin\Servers\ServerViewController::class, 'firewall'])->name('admin.servers.view.firewall');
     });
 
     Route::get('/view/{server:id}/manage', [Admin\Servers\ServerViewController::class, 'manage'])->name('admin.servers.view.manage');
@@ -130,14 +131,15 @@ Route::group(['prefix' => 'servers'], function () {
     Route::post('/view/{server:id}/manage/reinstall', [Admin\ServersController::class, 'reinstallServer'])->name('admin.servers.view.manage.reinstall');
     Route::post('/view/{server:id}/manage/fastdl', [Admin\ServersController::class, 'syncFastDl'])->name('admin.servers.view.manage.fastdl');
     Route::post('/view/{server:id}/manage/transfer', [Admin\Servers\ServerTransferController::class, 'transfer'])->name('admin.servers.view.manage.transfer');
+    Route::post('/view/{server:id}/firewall', [Admin\ServersController::class, 'newFirewallRule'])->name('admin.servers.view.firewall.new');
     Route::post('/view/{server:id}/delete', [Admin\ServersController::class, 'delete']);
 
     Route::patch('/view/{server:id}/details', [Admin\ServersController::class, 'setDetails']);
     Route::patch('/view/{server:id}/database', [Admin\ServersController::class, 'resetDatabasePassword']);
 
-    Route::delete('/view/{server:id}/database/{database:id}/delete', [Admin\ServersController::class, 'deleteDatabase'])->name('admin.servers.view.database.delete');
     Route::delete('/view/{server:id}/mounts/{mount:id}', [Admin\ServersController::class, 'deleteMount'])
         ->name('admin.servers.view.mounts.delete');
+    Route::delete('/view/{server:id}/firewall/{rule:id}', [Admin\ServersController::class, 'deleteFirewallRule'])->name('admin.servers.view.firewall.delete');
 });
 
 /*

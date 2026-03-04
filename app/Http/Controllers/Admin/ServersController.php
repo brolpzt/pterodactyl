@@ -8,6 +8,7 @@ use Illuminate\Http\Response;
 use Pterodactyl\Models\Mount;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Database;
+use Pterodactyl\Models\FirewallRule;
 use Pterodactyl\Models\MountServer;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
@@ -20,6 +21,7 @@ use Pterodactyl\Services\Servers\ServerDeletionService;
 use Pterodactyl\Services\Servers\ReinstallServerService;
 use Pterodactyl\Exceptions\Model\DataValidationException;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
+use Pterodactyl\Repositories\Wings\DaemonFirewallRepository;
 use Pterodactyl\Services\Servers\BuildModificationService;
 use Pterodactyl\Services\Databases\DatabasePasswordService;
 use Pterodactyl\Services\Servers\DetailsModificationService;
@@ -60,6 +62,7 @@ class ServersController extends Controller
         protected StartupModificationService $startupModificationService,
         protected SuspensionService $suspensionService,
         protected FastDlSyncService $fastDlSyncService,
+        protected DaemonFirewallRepository $daemonFirewallRepository,
     ) {
     }
 
@@ -291,5 +294,53 @@ class ServersController extends Controller
         }
 
         return redirect()->route('admin.servers.view.manage', $server->id);
+    }
+
+    /**
+     * Delete a firewall rule from a server.
+     *
+     * @throws \Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException
+     */
+    public function deleteFirewallRule(Request $request, Server $server, FirewallRule $rule): RedirectResponse
+    {
+        $this->daemonFirewallRepository->setServer($server)->removeRule($rule->ip);
+        $rule->delete();
+
+        $this->alert->success('Firewall rule was removed successfully.')->flash();
+
+        return redirect()->route('admin.servers.view.firewall', $server->id);
+    }
+
+    /**
+     * Create a new firewall rule for a server.
+     *
+     * @throws \Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException
+     */
+    public function newFirewallRule(Request $request, Server $server): RedirectResponse
+    {
+        $request->validate([
+            'ip' => ['required', 'ip'],
+            'reason' => ['nullable', 'string', 'max:191'],
+        ]);
+
+        $ip = $request->input('ip');
+        $reason = $request->input('reason', '');
+
+        if (FirewallRule::where('server_id', $server->id)->where('ip', $ip)->exists()) {
+            $this->alert->danger('IP address is already banned on this server.')->flash();
+            return redirect()->route('admin.servers.view.firewall', $server->id)->withInput();
+        }
+
+        $this->daemonFirewallRepository->setServer($server)->addRule($ip, $reason);
+
+        FirewallRule::create([
+            'server_id' => $server->id,
+            'ip'        => $ip,
+            'reason'    => $reason ?: null,
+        ]);
+
+        $this->alert->success('IP address was banned successfully.')->flash();
+
+        return redirect()->route('admin.servers.view.firewall', $server->id);
     }
 }

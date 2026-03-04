@@ -379,6 +379,14 @@ class Server extends Model
     }
 
     /**
+     * Returns all of the firewall rules (IP bans) associated with this server.
+     */
+    public function firewallRules(): HasMany
+    {
+        return $this->hasMany(FirewallRule::class);
+    }
+
+    /**
      * Returns all of the activity log entries where the server is the subject.
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany<\Pterodactyl\Models\ActivityLog, $this>

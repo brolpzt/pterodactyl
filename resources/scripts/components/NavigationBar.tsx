@@ -49,7 +49,7 @@ export default () => {
 
     return (
         <div className={'w-full bg-neutral-900 shadow-md overflow-x-auto fixed top-0 z-50'}>
-            <SpinnerOverlay visible={isLoggingOut} />
+            <SpinnerOverlay visible={isLoggingOut} fixed />
             <div className={'w-full flex items-center h-[3.5rem]'}>
                 {/* Logo area — exactly matches sidebar width */}
                 <div
@@ -68,7 +68,6 @@ export default () => {
                 {/* Hamburger — placed right after the sidebar boundary (20px gap into content) */}
                 <button
                     onClick={() => toggleSidebar()}
-                    style={{ marginLeft: '20px' }}
                     className={'flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150 flex-shrink-0'}
                     title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
                 >

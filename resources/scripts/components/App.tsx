@@ -14,6 +14,8 @@ import AuthenticatedRoute from '@/components/elements/AuthenticatedRoute';
 import { ServerContext } from '@/state/server';
 import '@/assets/tailwind.css';
 import Spinner from '@/components/elements/Spinner';
+import { SwitchTransition } from 'react-transition-group';
+import Fade from '@/components/elements/Fade';
 
 const DashboardRouter = lazy(() => import(/* webpackChunkName: "dashboard" */ '@/routers/DashboardRouter'));
 const ServerRouter = lazy(() => import(/* webpackChunkName: "server" */ '@/routers/ServerRouter'));
@@ -63,28 +65,42 @@ const App = () => {
                 <ProgressBar />
                 <div css={tw`mx-auto w-auto`}>
                     <Router history={history}>
-                        <Switch>
-                            <Route path={'/auth'}>
-                                <Spinner.Suspense>
-                                    <AuthenticationRouter />
-                                </Spinner.Suspense>
-                            </Route>
-                            <AuthenticatedRoute path={'/server/:id'}>
-                                <Spinner.Suspense>
-                                    <ServerContext.Provider>
-                                        <ServerRouter />
-                                    </ServerContext.Provider>
-                                </Spinner.Suspense>
-                            </AuthenticatedRoute>
-                            <AuthenticatedRoute path={'/'}>
-                                <Spinner.Suspense>
-                                    <DashboardRouter />
-                                </Spinner.Suspense>
-                            </AuthenticatedRoute>
-                            <Route path={'*'}>
-                                <NotFound />
-                            </Route>
-                        </Switch>
+                        {/* Route gives us location so SwitchTransition can key on route changes */}
+                        <Route render={({ location }) => {
+                            // Use a stable key: all server sub-pages share 'server' so only the
+                            // dashboard→server boundary triggers a fade, not every sub-page click.
+                            const topKey = location.pathname.startsWith('/server/') ? 'server' : location.pathname;
+                            return (
+                                <SwitchTransition>
+                                    <Fade timeout={150} key={topKey} in appear unmountOnExit>
+                                        <div>
+                                            <Switch location={location}>
+                                                <Route path={'/auth'}>
+                                                    <Spinner.Suspense>
+                                                        <AuthenticationRouter />
+                                                    </Spinner.Suspense>
+                                                </Route>
+                                                <AuthenticatedRoute path={'/server/:id'}>
+                                                    <Spinner.Suspense>
+                                                        <ServerContext.Provider>
+                                                            <ServerRouter />
+                                                        </ServerContext.Provider>
+                                                    </Spinner.Suspense>
+                                                </AuthenticatedRoute>
+                                                <AuthenticatedRoute path={'/'}>
+                                                    <Spinner.Suspense>
+                                                        <DashboardRouter />
+                                                    </Spinner.Suspense>
+                                                </AuthenticatedRoute>
+                                                <Route path={'*'}>
+                                                    <NotFound />
+                                                </Route>
+                                            </Switch>
+                                        </div>
+                                    </Fade>
+                                </SwitchTransition>
+                            );
+                        }} />
                     </Router>
                 </div>
             </StoreProvider>

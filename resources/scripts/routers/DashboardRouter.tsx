@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, Route, Switch } from 'react-router-dom';
+import { useStoreState } from 'easy-peasy';
 import NavigationBar from '@/components/NavigationBar';
 import DashboardContainer from '@/components/dashboard/DashboardContainer';
 import { NotFound } from '@/components/elements/ScreenBlock';
@@ -14,13 +15,17 @@ import tw from 'twin.macro';
 
 export default () => {
     const location = useLocation();
+    const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
 
     return (
         <>
             <NavigationBar />
             <div css={tw`flex min-h-screen pt-[3.5rem]`}>
                 <Sidebar />
-                <div css={tw`flex-1 ml-[240px] bg-neutral-800`}>
+                <div
+                    css={tw`flex-1 bg-neutral-800 transition-all duration-300`}
+                    style={{ marginLeft: sidebarCollapsed ? '70px' : '240px' }}
+                >
                     {location.pathname.startsWith('/account') && (
                         <SubNavigation>
                             <div>

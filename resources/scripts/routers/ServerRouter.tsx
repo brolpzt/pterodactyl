@@ -96,12 +96,17 @@ export default () => {
         };
     }, [match.params.id]);
 
+    const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
+
     return (
         <React.Fragment key={'server-router'}>
             <NavigationBar />
             <div css={tw`flex min-h-screen pt-[3.5rem]`}>
                 <Sidebar />
-                <div css={tw`flex-1 ml-[240px] bg-neutral-800`}>
+                <div
+                    css={tw`flex-1 bg-neutral-800 transition-all duration-300`}
+                    style={{ marginLeft: sidebarCollapsed ? '70px' : '240px' }}
+                >
                     {!uuid || !id ? (
                         error ? (
                             <ServerError message={error} />
@@ -111,7 +116,7 @@ export default () => {
                     ) : (
                         <>
                             {/* Content Header with Server Info */}
-                            <div tw="bg-neutral-700/95 border-b border-neutral-700 px-8 py-4 flex items-center justify-between sticky top-[3.5rem] z-30 shadow-md backdrop-blur-sm">
+                            <div tw="bg-neutral-700/95 border-b border-neutral-700 px-4 sm:px-8 py-4 flex flex-col md:flex-row items-start md:items-center justify-between sticky top-[3.5rem] z-30 shadow-md backdrop-blur-sm gap-4">
                                 <div tw="flex items-center">
                                     <div tw="mr-6 pr-6 border-r border-neutral-700">
                                         <h1 tw="text-xl font-header font-medium text-neutral-100">{name}</h1>

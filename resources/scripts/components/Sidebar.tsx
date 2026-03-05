@@ -19,8 +19,10 @@ import {
     faUserPlus,
     faPlug,
     faMicrochip,
+    faAngleDoubleLeft,
+    faAngleDoubleRight,
 } from '@fortawesome/free-solid-svg-icons';
-import { useStoreState } from 'easy-peasy';
+import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
 import { ServerContext } from '@/state/server';
 import tw from 'twin.macro';
@@ -28,9 +30,25 @@ import styled from 'styled-components/macro';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 
-const SidebarContainer = styled.div`
-    ${tw`flex flex-col bg-neutral-900 shadow-md border-r border-neutral-800 w-[240px] fixed left-0 bottom-0 z-40 transition-all duration-300`};
+const SidebarContainer = styled.div<{ collapsed: boolean }>`
+    ${tw`flex flex-col bg-neutral-900 shadow-md border-r border-neutral-800 fixed left-0 bottom-0 z-40 transition-all duration-300`};
+    width: ${props => props.collapsed ? '70px' : '240px'};
     top: 3.5rem;
+`;
+
+const NavItemLabel = styled.span<{ collapsed: boolean }>`
+    ${tw`transition-opacity duration-300 ml-3`};
+    ${props => props.collapsed ? tw`opacity-0 w-0 overflow-hidden` : tw`opacity-100`};
+`;
+
+const NavSectionTitle = styled.div<{ collapsed: boolean }>`
+    ${tw`px-4 pt-4 pb-1 text-[10px] font-bold text-neutral-500 uppercase tracking-widest truncate transition-colors duration-300`};
+    ${props => props.collapsed ? tw`text-transparent` : ''};
+`;
+
+const SidebarFooter = styled.div<{ collapsed: boolean }>`
+    ${tw`p-4 border-t border-neutral-800 text-[10px] text-neutral-500 font-medium transition-all duration-300`};
+    ${props => props.collapsed ? tw`text-center px-0` : ''};
 `;
 
 const NavItem = styled(NavLink)`
@@ -47,9 +65,9 @@ const IconContainer = styled.div`
     ${tw`flex items-center justify-center w-8 mr-2 flex-shrink-0 text-neutral-500 transition-colors duration-150`};
 `;
 
-const SectionTitle = styled.div`
-    ${tw`px-4 pt-4 pb-1 text-[10px] font-bold text-neutral-500 uppercase tracking-widest`};
-`;
+const SectionTitle = ({ children, collapsed }: { children: React.ReactNode, collapsed: boolean }) => (
+    <NavSectionTitle collapsed={collapsed}>{children}</NavSectionTitle>
+);
 
 const Divider = styled.div`
     ${tw`mx-4 my-2 border-t border-neutral-800`};
@@ -96,47 +114,29 @@ const ServerLinks = () => {
         }
     };
 
+    const collapsed = useStoreState((state) => state.sidebarCollapsed);
+
     return (
         <>
-            {/* <SectionTitle>Menu Rápido</SectionTitle>
-            <NavItem to={to('/quick/add-admin')} onClick={(e) => e.preventDefault()}>
-                <IconContainer className="icon-container" tw="text-green-500">
-                    <FontAwesomeIcon icon={faUserPlus} />
-                </IconContainer>
-                Adicionar Admin
-            </NavItem>
-            <NavItem to={to('/quick/amxx')} onClick={(e) => e.preventDefault()}>
-                <IconContainer className="icon-container" tw="text-yellow-500">
-                    <FontAwesomeIcon icon={faPlug} />
-                </IconContainer>
-                Plugins AMXX
-            </NavItem>
-            <NavItem to={to('/quick/metamod')} onClick={(e) => e.preventDefault()}>
-                <IconContainer className="icon-container" tw="text-red-500">
-                    <FontAwesomeIcon icon={faMicrochip} />
-                </IconContainer>
-                Plugins Metamod
-            </NavItem> */}
-
-            <SectionTitle>Menu do Servidor</SectionTitle>
+            <SectionTitle collapsed={collapsed}>Menu do Servidor</SectionTitle>
             {routes.server
                 .filter((route) => !!route.name)
                 .map((route) => (
                     route.permission ? (
                         <Can key={route.path} action={route.permission as any} matchAny>
-                            <NavItem to={to(route.path)} exact={route.exact}>
+                            <NavItem to={to(route.path)} exact={route.exact} title={collapsed ? route.name : undefined}>
                                 <IconContainer className="icon-container">
                                     <FontAwesomeIcon icon={getIcon(route.name!)} />
                                 </IconContainer>
-                                {route.name}
+                                <NavItemLabel collapsed={collapsed}>{route.name}</NavItemLabel>
                             </NavItem>
                         </Can>
                     ) : (
-                        <NavItem key={route.path} to={to(route.path)} exact={route.exact}>
+                        <NavItem key={route.path} to={to(route.path)} exact={route.exact} title={collapsed ? route.name : undefined}>
                             <IconContainer className="icon-container">
                                 <FontAwesomeIcon icon={getIcon(route.name!)} />
                             </IconContainer>
-                            {route.name}
+                            <NavItemLabel collapsed={collapsed}>{route.name}</NavItemLabel>
                         </NavItem>
                     )
                 ))}
@@ -160,16 +160,18 @@ const ServerLinks = () => {
 
 const Sidebar = () => {
     const match = useRouteMatch<{ id: string }>('/server/:id');
+    const collapsed = useStoreState((state) => state.sidebarCollapsed);
+    const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
 
     return (
-        <SidebarContainer>
+        <SidebarContainer collapsed={collapsed}>
             <SidebarScroll>
-                <SectionTitle>Navigation</SectionTitle>
-                <NavItem to={'/'} exact>
+                <SectionTitle collapsed={collapsed}>Navigation</SectionTitle>
+                <NavItem to={'/'} exact title={collapsed ? 'Dashboard' : undefined}>
                     <IconContainer className="icon-container">
                         <FontAwesomeIcon icon={faLayerGroup} />
                     </IconContainer>
-                    Dashboard
+                    <NavItemLabel collapsed={collapsed}>Dashboard</NavItemLabel>
                 </NavItem>
 
                 {match && (
@@ -178,6 +180,17 @@ const Sidebar = () => {
                     </React.Suspense>
                 )}
             </SidebarScroll>
+
+            <NavItem as="button" onClick={() => toggleSidebar()} tw="border-t border-neutral-800 outline-none!">
+                <IconContainer className="icon-container">
+                    <FontAwesomeIcon icon={collapsed ? faAngleDoubleRight : faAngleDoubleLeft} />
+                </IconContainer>
+                <NavItemLabel collapsed={collapsed}>Minimizar Menu</NavItemLabel>
+            </NavItem>
+
+            <SidebarFooter collapsed={collapsed}>
+                {collapsed ? 'v2.0' : 'HostGamer Control v2.0'}
+            </SidebarFooter>
         </SidebarContainer>
     );
 };

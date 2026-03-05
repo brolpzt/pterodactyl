@@ -79,6 +79,23 @@ export default () => {
                         )
                     ) : (
                         <>
+                            {/* Content Header with Server Info */}
+                            <div tw="bg-neutral-700/50 border-b border-neutral-700 px-8 py-4 flex items-center justify-between">
+                                <div>
+                                    <h1 tw="text-xl font-header font-medium text-neutral-100 italic">{ServerContext.useStoreState(state => state.server.data?.name)}</h1>
+                                    <p tw="text-xs text-neutral-400 mt-1">
+                                        <span tw="font-mono bg-neutral-800 px-2 py-0.5 rounded mr-2 text-cyan-400">
+                                            {ServerContext.useStoreState(state => state.server.data?.id)}
+                                        </span>
+                                        {ServerContext.useStoreState(state => state.server.data?.allocations.find(a => a.isDefault)?.ip)}:{ServerContext.useStoreState(state => state.server.data?.allocations.find(a => a.isDefault)?.port)}
+                                    </p>
+                                </div>
+                                <div tw="hidden md:flex flex-col items-end">
+                                    <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Node</span>
+                                    <span tw="text-sm text-neutral-300">{ServerContext.useStoreState(state => state.server.data?.node)}</span>
+                                </div>
+                            </div>
+
                             <InstallListener />
                             <TransferListener />
                             <WebsocketHandler />

@@ -27,22 +27,29 @@ import routes from '@/routers/routes';
 
 const SidebarContainer = styled.div`
     ${tw`flex flex-col bg-neutral-900 shadow-xl border-r border-neutral-800 w-[240px] fixed left-0 bottom-0 z-40 transition-all duration-300`};
-    top: 3.5rem; /* Height of NavigationBar */
+    top: 3.5rem;
 `;
 
 const NavItem = styled(NavLink)`
-    ${tw`flex items-center px-4 py-2 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
+    ${tw`flex items-center px-4 py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
     &.active {
         ${tw`bg-neutral-800 text-cyan-400 border-r-2 border-cyan-600`};
+        & .icon-container {
+            ${tw`text-cyan-400`};
+        }
     }
+`;
+
+const IconContainer = styled.div`
+    ${tw`flex items-center justify-center w-5 mr-3 flex-shrink-0 text-neutral-500 transition-colors duration-150`};
 `;
 
 const SectionTitle = styled.div`
     ${tw`px-4 pt-6 pb-2 text-[10px] font-bold text-neutral-500 uppercase tracking-widest`};
 `;
 
-const ServerHeader = styled.div`
-    ${tw`mx-3 mt-4 mb-2 p-3 bg-cyan-900/20 border border-cyan-700/30 rounded-lg`};
+const Divider = styled.div`
+    ${tw`mx-4 my-4 border-t border-neutral-800`};
 `;
 
 const SidebarScroll = styled.div`
@@ -56,7 +63,6 @@ const SidebarScroll = styled.div`
 `;
 
 const ServerLinks = () => {
-    const serverName = ServerContext.useStoreState((state) => state.server.data?.name);
     const internalId = ServerContext.useStoreState((state) => state.server.data?.internalId);
     const rootAdmin = useStoreState((state: ApplicationStore) => state.user.data!.rootAdmin);
 
@@ -87,28 +93,26 @@ const ServerLinks = () => {
         }
     };
 
-    if (!serverName) return null;
-
     return (
         <>
-            <ServerHeader>
-                <div tw="text-[10px] text-cyan-500 font-bold uppercase tracking-wider mb-1">Active Server</div>
-                <div tw="text-sm font-bold text-neutral-100 truncate">{serverName}</div>
-            </ServerHeader>
-
+            <Divider />
             {routes.server
                 .filter((route) => !!route.name)
                 .map((route) => (
                     route.permission ? (
                         <Can key={route.path} action={route.permission as any} matchAny>
                             <NavItem to={to(route.path)} exact={route.exact}>
-                                <FontAwesomeIcon icon={getIcon(route.name!)} tw="mr-3 w-4 text-center text-xs" />
+                                <IconContainer className="icon-container">
+                                    <FontAwesomeIcon icon={getIcon(route.name!)} />
+                                </IconContainer>
                                 {route.name}
                             </NavItem>
                         </Can>
                     ) : (
                         <NavItem key={route.path} to={to(route.path)} exact={route.exact}>
-                            <FontAwesomeIcon icon={getIcon(route.name!)} tw="mr-3 w-4 text-center text-xs" />
+                            <IconContainer className="icon-container">
+                                <FontAwesomeIcon icon={getIcon(route.name!)} />
+                            </IconContainer>
                             {route.name}
                         </NavItem>
                     )
@@ -119,9 +123,11 @@ const ServerLinks = () => {
                     href={`/admin/servers/view/${internalId}`}
                     target={'_blank'}
                     rel="noreferrer"
-                    tw="flex items-center px-4 py-2 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100"
+                    tw="flex items-center px-4 py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100"
                 >
-                    <FontAwesomeIcon icon={faExternalLinkAlt} tw="mr-3 w-4 text-center text-xs" />
+                    <IconContainer className="icon-container">
+                        <FontAwesomeIcon icon={faExternalLinkAlt} />
+                    </IconContainer>
                     Admin View
                 </a>
             )}
@@ -135,9 +141,11 @@ const Sidebar = () => {
     return (
         <SidebarContainer>
             <SidebarScroll>
-                <SectionTitle>Main Menu</SectionTitle>
+                <SectionTitle>Navigation</SectionTitle>
                 <NavItem to={'/'} exact>
-                    <FontAwesomeIcon icon={faLayerGroup} tw="mr-3 w-4 text-center text-xs" />
+                    <IconContainer className="icon-container">
+                        <FontAwesomeIcon icon={faLayerGroup} />
+                    </IconContainer>
                     Dashboard
                 </NavItem>
 

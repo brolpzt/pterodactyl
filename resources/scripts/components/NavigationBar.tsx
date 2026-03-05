@@ -50,30 +50,30 @@ export default () => {
     return (
         <div className={'w-full bg-neutral-900 shadow-md overflow-x-auto fixed top-0 z-50'}>
             <SpinnerOverlay visible={isLoggingOut} />
-            <div className={'w-full flex items-center h-[3.5rem] px-4'}>
-                {/* Hamburger – fixed width matching sidebar, aligns with sidebar left edge */}
+            <div className={'w-full flex items-center h-[3.5rem]'}>
+                {/* Left section with sidebar width: logo left, hamburger right — hamburger aligns with content edge */}
                 <div
                     style={{ width: sidebarCollapsed ? '70px' : '240px', minWidth: sidebarCollapsed ? '70px' : '240px' }}
-                    className={'flex items-center justify-center transition-all duration-300'}
+                    className={'flex items-center justify-between px-4 transition-all duration-300 flex-shrink-0'}
                 >
+                    {!sidebarCollapsed && (
+                        <Link
+                            to={'/'}
+                            className={'text-2xl font-header font-medium no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 whitespace-nowrap'}
+                        >
+                            {name}
+                        </Link>
+                    )}
                     <button
                         onClick={() => toggleSidebar()}
-                        className={'flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150'}
+                        className={'flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150 flex-shrink-0'}
                         title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
                     >
                         <FontAwesomeIcon icon={faBars} />
                     </button>
                 </div>
-                <div id={'logo'} className={'flex items-center flex-1'}>
-                    <Link
-                        to={'/'}
-                        className={
-                            'text-2xl font-header font-medium px-2 no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150'
-                        }
-                    >
-                        {name}
-                    </Link>
-                </div>
+                {/* Flex-1 spacer between logo area and right nav */}
+                <div className={'flex-1'} />
                 <RightNavigation className={'flex h-full items-center justify-center'}>
                     <SearchContainer />
                     <Tooltip placement={'bottom'} content={'Dashboard'}>

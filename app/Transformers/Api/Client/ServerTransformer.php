@@ -31,6 +31,8 @@ class ServerTransformer extends BaseClientTransformer
      */
     public function transform(Server $server): array
     {
+        $server->loadMissing(['node.location', 'egg']);
+
         /** @var StartupCommandService $service */
         $service = Container::getInstance()->make(StartupCommandService::class);
 

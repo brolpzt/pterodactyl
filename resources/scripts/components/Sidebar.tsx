@@ -115,10 +115,7 @@ const ServerLinks = () => {
                 <IconContainer className="icon-container" tw="text-red-500">
                     <FontAwesomeIcon icon={faMicrochip} />
                 </IconContainer>
-                Plugins Metamod
             </NavItem>
-
-            <Divider />
 
             <SectionTitle>Menu do Servidor</SectionTitle>
             {routes.server

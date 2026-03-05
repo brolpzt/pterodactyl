@@ -26,6 +26,7 @@ import Sidebar from '@/components/Sidebar';
 import tw from 'twin.macro';
 import useFlash from '@/plugins/useFlash';
 import PowerButtons from '@/components/server/console/PowerButtons';
+import ContentContainer from '@/components/elements/ContentContainer';
 
 export default () => {
     const match = useRouteMatch<{ id: string }>();
@@ -167,18 +168,21 @@ export default () => {
                                 </div>
                             </div>
 
-                            <div tw="p-8">
-                                <div tw="flex items-center text-[11px] uppercase tracking-wider text-neutral-500 mb-6 bg-neutral-700/30 px-3 py-1.5 rounded-md border border-neutral-700/50">
-                                    <NavLink to="/" tw="hover:text-neutral-300 transition-colors duration-150">Início</NavLink>
-                                    <span tw="mx-2 text-neutral-600">/</span>
-                                    <NavLink to={`/server/${match.params.id}`} tw="hover:text-neutral-300 transition-colors duration-150">{name}</NavLink>
-                                    {routes.server.find(r => matchPath(location.pathname, { path: to(r.path, true), exact: r.exact }))?.name && (
-                                        <>
-                                            <span tw="mx-2 text-neutral-600">/</span>
-                                            <span tw="text-neutral-200 font-bold">{routes.server.find(r => matchPath(location.pathname, { path: to(r.path, true), exact: r.exact }))?.name}</span>
-                                        </>
-                                    )}
-                                </div>
+                            <div tw="mt-4 sm:mt-8">
+                                <ContentContainer>
+                                    <div tw="flex items-center text-[11px] uppercase tracking-wider text-neutral-500 mb-6 bg-neutral-700/30 px-3 py-1.5 rounded-md border border-neutral-700/50 flex-wrap">
+                                        <NavLink to="/" tw="hover:text-neutral-300 transition-colors duration-150">Início</NavLink>
+                                        <span tw="mx-2 text-neutral-600">/</span>
+                                        <NavLink to={`/server/${match.params.id}`} tw="hover:text-neutral-300 transition-colors duration-150">{name}</NavLink>
+                                        {routes.server.find(r => matchPath(location.pathname, { path: to(r.path, true), exact: r.exact }))?.name && (
+                                            <>
+                                                <span tw="mx-2 text-neutral-600">/</span>
+                                                <span tw="text-neutral-200 font-bold">{routes.server.find(r => matchPath(location.pathname, { path: to(r.path, true), exact: r.exact }))?.name}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </ContentContainer>
+
                                 <InstallListener />
                                 <TransferListener />
                                 <WebsocketHandler />

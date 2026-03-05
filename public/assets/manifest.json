@@ -64,15 +64,15 @@
     "integrity": ""
   },
   "main.js": {
-    "src": "/assets/bundle.1a0c4f14.js",
-    "integrity": "sha384-N3aCUWwnEK/hk8b7JkszBVTo7puGbL7gST9SQbHtDcfHL8nJjFQjheIFFvl4dY6E"
+    "src": "/assets/bundle.bdfc8c80.js",
+    "integrity": "sha384-kpLqkI8iHdT3v9O/I1zZ6Q4+MivWNYaLpsU/2A8Q5o7LwJJumiWi4Qc/c3lKGDdV"
   },
   "main.woff2": {
     "src": "/assets/b33a81b76947ac354369.woff2",
     "integrity": ""
   },
   "server.js": {
-    "src": "/assets/server.be0cabbe.js",
-    "integrity": "sha384-HwMHV26nJOO4/wfdnl7dHsBxMq9eMPgdO0h5mpRjzsSI9+NOAe/GNL386l4yyGRm"
+    "src": "/assets/server.04fa3a87.js",
+    "integrity": "sha384-yVfyLOJyGTkatxXslw1kWCgI71qOTRZrwc5pDjh+Sg8RBlSlnjGOpkQVFRI9KKzb"
   }
 }

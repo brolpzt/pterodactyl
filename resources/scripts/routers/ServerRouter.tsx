@@ -110,12 +110,12 @@ export default () => {
                                 <div tw="flex items-center">
                                     <div tw="mr-6 pr-6 border-r border-neutral-700">
                                         <h1 tw="text-xl font-header font-medium text-neutral-100">{name}</h1>
-                                        <p tw="text-base text-neutral-400 mt-1 flex items-center">
+                                        <p tw="text-sm text-neutral-400 mt-1 flex items-center">
                                             <span tw="font-mono bg-neutral-800 px-2 py-0.5 rounded mr-2 text-neutral-100 text-[12px]">
                                                 {id}
                                             </span>
                                             <span
-                                                tw="cursor-pointer hover:text-neutral-200 transition-colors duration-150"
+                                                tw="cursor-pointer hover:text-neutral-200 transition-colors duration-150 text-xs"
                                                 onClick={() => allocation && onCopyIp(`${allocation.ip}:${allocation.port}`)}
                                                 title="Clique para copiar"
                                             >

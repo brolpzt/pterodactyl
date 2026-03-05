@@ -98,7 +98,7 @@ const ServerLinks = () => {
 
     return (
         <>
-            <SectionTitle>Menu Rápido</SectionTitle>
+            {/* <SectionTitle>Menu Rápido</SectionTitle>
             <NavItem to={to('/quick/add-admin')} onClick={(e) => e.preventDefault()}>
                 <IconContainer className="icon-container" tw="text-green-500">
                     <FontAwesomeIcon icon={faUserPlus} />
@@ -116,7 +116,7 @@ const ServerLinks = () => {
                     <FontAwesomeIcon icon={faMicrochip} />
                 </IconContainer>
                 Plugins Metamod
-            </NavItem>
+            </NavItem> */}
 
             <SectionTitle>Menu do Servidor</SectionTitle>
             {routes.server

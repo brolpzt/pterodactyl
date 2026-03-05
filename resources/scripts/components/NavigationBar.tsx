@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCogs, faLayerGroup, faSignOutAlt, faBars } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faLayerGroup, faSignOutAlt, faBars, faLanguage, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
 import SearchContainer from '@/components/dashboard/search/SearchContainer';
@@ -38,6 +38,14 @@ export default () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
+    const [language, setLanguage] = useState({ code: 'BR', flag: '🇧🇷' });
+    const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+
+    const languages = [
+        { name: 'English (US)', code: 'US', flag: '🇺🇸' },
+        { name: 'Português (BR)', code: 'BR', flag: '🇧🇷' },
+        { name: 'Español (AR)', code: 'ES', flag: '🇦🇷' },
+    ];
 
     const onTriggerLogout = () => {
         setIsLoggingOut(true);
@@ -89,6 +97,36 @@ export default () => {
                             </a>
                         </Tooltip>
                     )}
+
+                    <div className={'relative'}>
+                        <button
+                            onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                            className={'flex items-center h-full px-6 text-neutral-300 hover:text-neutral-100 hover:bg-black transition-all duration-150'}
+                        >
+                            <span className={'mr-2'}>{language.flag}</span>
+                            <span className={'text-xs font-bold'}>{language.code}</span>
+                            <FontAwesomeIcon icon={faChevronDown} className={'ml-2 text-[10px]'} />
+                        </button>
+
+                        {showLanguageDropdown && (
+                            <div className={'absolute right-0 mt-1 w-48 bg-neutral-800 border border-neutral-700 rounded shadow-xl z-50 overflow-hidden'}>
+                                {languages.map((lang) => (
+                                    <button
+                                        key={lang.code}
+                                        onClick={() => {
+                                            setLanguage(lang);
+                                            setShowLanguageDropdown(false);
+                                        }}
+                                        className={'w-full flex items-center px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-700 hover:text-neutral-100 transition-colors duration-150'}
+                                    >
+                                        <span className={'mr-3 text-lg'}>{lang.flag}</span>
+                                        <span>{lang.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     <Tooltip placement={'bottom'} content={'Account Settings'}>
                         <NavLink to={'/account'}>
                             <span className={'flex items-center w-5 h-5'}>

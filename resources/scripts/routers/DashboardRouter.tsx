@@ -9,42 +9,47 @@ import { useLocation } from 'react-router';
 import Spinner from '@/components/elements/Spinner';
 import routes from '@/routers/routes';
 
+import Sidebar from '@/components/Sidebar';
+import tw from 'twin.macro';
+
 export default () => {
     const location = useLocation();
 
     return (
-        <>
-            <NavigationBar />
-            {location.pathname.startsWith('/account') && (
-                <SubNavigation>
-                    <div>
-                        {routes.account
-                            .filter((route) => !!route.name)
-                            .map(({ path, name, exact = false }) => (
-                                <NavLink key={path} to={`/account/${path}`.replace('//', '/')} exact={exact}>
-                                    {name}
-                                </NavLink>
-                            ))}
-                    </div>
-                </SubNavigation>
-            )}
-            <TransitionRouter>
-                <React.Suspense fallback={<Spinner centered />}>
-                    <Switch location={location}>
-                        <Route path={'/'} exact>
-                            <DashboardContainer />
-                        </Route>
-                        {routes.account.map(({ path, component: Component }) => (
-                            <Route key={path} path={`/account/${path}`.replace('//', '/')} exact>
-                                <Component />
+        <div css={tw`flex min-h-screen`}>
+            <Sidebar />
+            <div css={tw`flex-1 ml-[250px] bg-neutral-800`}>
+                {location.pathname.startsWith('/account') && (
+                    <SubNavigation>
+                        <div>
+                            {routes.account
+                                .filter((route) => !!route.name)
+                                .map(({ path, name, exact = false }) => (
+                                    <NavLink key={path} to={`/account/${path}`.replace('//', '/')} exact={exact}>
+                                        {name}
+                                    </NavLink>
+                                ))}
+                        </div>
+                    </SubNavigation>
+                )}
+                <TransitionRouter>
+                    <React.Suspense fallback={<Spinner centered />}>
+                        <Switch location={location}>
+                            <Route path={'/'} exact>
+                                <DashboardContainer />
                             </Route>
-                        ))}
-                        <Route path={'*'}>
-                            <NotFound />
-                        </Route>
-                    </Switch>
-                </React.Suspense>
-            </TransitionRouter>
-        </>
+                            {routes.account.map(({ path, component: Component }) => (
+                                <Route key={path} path={`/account/${path}`.replace('//', '/')} exact>
+                                    <Component />
+                                </Route>
+                            ))}
+                            <Route path={'*'}>
+                                <NotFound />
+                            </Route>
+                        </Switch>
+                    </React.Suspense>
+                </TransitionRouter>
+            </div>
+        </div>
     );
 };

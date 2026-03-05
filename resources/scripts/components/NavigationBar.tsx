@@ -51,14 +51,20 @@ export default () => {
         <div className={'w-full bg-neutral-900 shadow-md overflow-x-auto fixed top-0 z-50'}>
             <SpinnerOverlay visible={isLoggingOut} />
             <div className={'w-full flex items-center h-[3.5rem] px-4'}>
-                <div id={'logo'} className={'flex items-center flex-1 gap-2'}>
+                {/* Hamburger – fixed width matching sidebar, aligns with sidebar left edge */}
+                <div
+                    style={{ width: sidebarCollapsed ? '70px' : '240px', minWidth: sidebarCollapsed ? '70px' : '240px' }}
+                    className={'flex items-center justify-center transition-all duration-300'}
+                >
                     <button
                         onClick={() => toggleSidebar()}
-                        className={'flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150 ml-1'}
+                        className={'flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150'}
                         title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
                     >
                         <FontAwesomeIcon icon={faBars} />
                     </button>
+                </div>
+                <div id={'logo'} className={'flex items-center flex-1'}>
                     <Link
                         to={'/'}
                         className={

@@ -150,12 +150,14 @@ const ServerLinks = () => {
                     href={`/admin/servers/view/${internalId}`}
                     target={'_blank'}
                     rel="noreferrer"
-                    tw="flex items-center px-4 py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100"
+                    title={'Admin View'}
+                    style={{ justifyContent: collapsed ? 'center' : 'flex-start', paddingLeft: '1.25rem', paddingRight: '1.25rem' }}
+                    tw="flex items-center py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100"
                 >
                     <IconContainer className="icon-container">
                         <FontAwesomeIcon icon={faExternalLinkAlt} />
                     </IconContainer>
-                    Admin View
+                    <NavItemLabel collapsed={collapsed}>Admin View</NavItemLabel>
                 </a>
             )}
         </>
@@ -186,7 +188,7 @@ const Sidebar = () => {
             </SidebarScroll>
 
             <SidebarFooter collapsed={collapsed}>
-                {collapsed ? 'v2.0' : 'Hostgamer Control v2.0'}
+                {collapsed ? 'v2.0' : 'HostGamer Control v2.0'}
             </SidebarFooter>
         </SidebarContainer>
     );

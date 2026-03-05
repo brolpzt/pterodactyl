@@ -102,7 +102,7 @@ export default () => {
                     <div className={'relative h-full'}>
                         <button
                             onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                            className={'flex items-center h-full w-full px-6 text-neutral-300 hover:text-neutral-100 transition-all duration-150'}
+                            className={'flex items-center h-full w-full px-4 text-neutral-300 hover:text-neutral-100 transition-all duration-150'}
                         >
                             <span className={'mr-2'}>{language.flag}</span>
                             <span className={'text-xs font-bold'}>{language.code}</span>
@@ -110,7 +110,7 @@ export default () => {
                         </button>
 
                         {showLanguageDropdown && (
-                            <div className={'absolute right-0 top-full mt-0 w-48 bg-neutral-800 border border-neutral-700 rounded-b shadow-2xl z-50 overflow-hidden'}>
+                            <div className={'absolute right-0 top-full mt-0 w-40 bg-neutral-800 border border-neutral-700 rounded-b shadow-2xl z-50 overflow-hidden'}>
                                 {languages.map((lang) => (
                                     <button
                                         key={lang.code}

@@ -16,7 +16,6 @@ import Avatar from '@/components/Avatar';
 const RightNavigation = styled.div`
     & > a,
     & > button,
-    & > div,
     & > .navigation-link {
         ${tw`flex items-center h-full no-underline text-neutral-300 px-6 cursor-pointer transition-all duration-150`};
 
@@ -99,18 +98,18 @@ export default () => {
                         </Tooltip>
                     )}
 
-                    <div className={'relative h-full'}>
+                    <div className={'relative h-full flex items-center'}>
                         <button
                             onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                            className={'flex items-center h-full w-full px-4 text-neutral-300 hover:text-neutral-100 transition-all duration-150'}
+                            className={'flex items-center h-full px-6 text-neutral-300 hover:text-neutral-100 hover:bg-black transition-all duration-150'}
                         >
-                            <span className={'mr-2'}>{language.flag}</span>
-                            <span className={'text-xs font-bold'}>{language.code}</span>
+                            <span className={'mr-2 text-base'}>{language.flag}</span>
+                            <span className={'text-xs font-bold tracking-wide'}>{language.code}</span>
                             <FontAwesomeIcon icon={faChevronDown} className={'ml-2 text-[10px]'} />
                         </button>
 
                         {showLanguageDropdown && (
-                            <div className={'absolute right-0 top-full mt-0 w-40 bg-neutral-800 border border-neutral-700 rounded-b shadow-2xl z-50 overflow-hidden'}>
+                            <div className={'absolute right-0 top-full mt-0 w-64 bg-neutral-800 border border-neutral-700 rounded-b shadow-2xl z-50'}>
                                 {languages.map((lang) => (
                                     <button
                                         key={lang.code}
@@ -118,10 +117,18 @@ export default () => {
                                             setLanguage(lang);
                                             setShowLanguageDropdown(false);
                                         }}
-                                        className={'w-full flex items-center px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-700 hover:text-neutral-100 transition-colors duration-150'}
+                                        className={
+                                            `w-full flex items-center px-5 py-4 text-sm transition-all duration-150 group border-l-2
+                                            ${language.code === lang.code
+                                                ? 'bg-neutral-700/50 text-neutral-100 border-cyan-500'
+                                                : 'text-neutral-400 hover:bg-neutral-700 hover:text-neutral-100 border-transparent'}`
+                                        }
                                     >
-                                        <span className={'mr-3 text-lg'}>{lang.flag}</span>
-                                        <span>{lang.name}</span>
+                                        <span className={'mr-4 text-xl'}>{lang.flag}</span>
+                                        <div className={'flex flex-col items-start'}>
+                                            <span className={'font-medium'}>{lang.name}</span>
+                                            {language.code === lang.code && <span className={'text-[10px] text-cyan-400 uppercase tracking-widest font-bold mt-1'}>Ativo</span>}
+                                        </div>
                                     </button>
                                 ))}
                             </div>

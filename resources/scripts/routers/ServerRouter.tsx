@@ -120,13 +120,13 @@ export default () => {
                                 {/* Server name + ID/IP — always visible, flex-shrink-0 so it never collapses */}
                                 <div tw="flex items-center flex-shrink-0 mr-4 sm:mr-6 pr-4 sm:pr-6 border-r border-neutral-700 min-w-0">
                                     <div tw="min-w-0">
-                                        <h1 tw="text-base sm:text-lg font-header font-medium text-neutral-100 whitespace-nowrap truncate max-w-[140px] sm:max-w-[200px]">{name}</h1>
-                                        <p tw="text-xs text-neutral-400 mt-0.5 flex items-center whitespace-nowrap">
-                                            <span tw="font-mono bg-neutral-800 px-1.5 py-0.5 rounded mr-2 text-neutral-100 text-[11px] flex-shrink-0">
+                                        <h1 tw="text-lg sm:text-xl font-header font-medium text-neutral-100 whitespace-nowrap truncate max-w-[140px] sm:max-w-[220px]">{name}</h1>
+                                        <p tw="text-[13px] text-neutral-400 mt-0.5 flex items-center whitespace-nowrap">
+                                            <span tw="font-mono bg-neutral-800 px-1.5 py-0.5 rounded mr-2 text-neutral-100 text-[12px] flex-shrink-0">
                                                 {id}
                                             </span>
                                             <span
-                                                tw="cursor-pointer hover:text-neutral-200 transition-colors duration-150 flex items-center flex-shrink-0"
+                                                tw="cursor-pointer hover:text-neutral-200 transition-colors duration-150 flex items-center flex-shrink-0 text-[13px]"
                                                 onClick={() => allocation && onCopyText(`${allocation.ip}:${allocation.port}`, 'IP')}
                                                 title="Clique para copiar"
                                             >
@@ -141,32 +141,32 @@ export default () => {
                                 <div tw="hidden md:flex items-center gap-6 lg:gap-8 flex-shrink-0 overflow-hidden">
                                     {/* Localização — md+ */}
                                     <div tw="flex flex-col flex-shrink-0">
-                                        <span tw="text-[9px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Localização</span>
-                                        <span tw="text-xs text-neutral-200 flex items-center whitespace-nowrap">
+                                        <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Localização</span>
+                                        <span tw="text-[13px] text-neutral-200 flex items-center whitespace-nowrap">
                                             <span tw="mr-1 text-sm">{locationName ? getFlagEmoji(locationName.split(' ')[0]) : '🌐'}</span>
                                             <span tw="max-w-[80px] truncate">{locationName || 'n/a'}</span>
                                         </span>
                                     </div>
                                     {/* Players — lg+ */}
                                     <div tw="hidden lg:flex flex-col flex-shrink-0">
-                                        <span tw="text-[9px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Players</span>
-                                        <span tw="text-xs text-neutral-200 whitespace-nowrap">12 / 32</span>
+                                        <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Players</span>
+                                        <span tw="text-[13px] text-neutral-200 whitespace-nowrap">12 / 32</span>
                                     </div>
                                     {/* Mapa — lg+ */}
                                     <div tw="hidden lg:flex flex-col flex-shrink-0">
-                                        <span tw="text-[9px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Mapa</span>
-                                        <span tw="text-xs text-neutral-200 whitespace-nowrap">cs_assault_up</span>
+                                        <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Mapa</span>
+                                        <span tw="text-[13px] text-neutral-200 whitespace-nowrap">cs_assault_up</span>
                                     </div>
                                     {/* Egg — xl+ */}
                                     <div tw="hidden xl:flex flex-col flex-shrink-0">
-                                        <span tw="text-[9px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Egg</span>
-                                        <span tw="text-xs text-neutral-200 whitespace-nowrap">{eggName || 'n/a'}</span>
+                                        <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Egg</span>
+                                        <span tw="text-[13px] text-neutral-200 whitespace-nowrap">{eggName || 'n/a'}</span>
                                     </div>
                                     {/* String de conexão — xl+ */}
                                     <div tw="hidden xl:flex flex-col flex-shrink-0">
-                                        <span tw="text-[9px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Conexão</span>
+                                        <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Conexão</span>
                                         <span
-                                            tw="text-xs text-neutral-200 cursor-pointer hover:text-neutral-100 transition-colors duration-150 flex items-center whitespace-nowrap"
+                                            tw="text-[13px] text-neutral-200 cursor-pointer hover:text-neutral-100 transition-colors duration-150 flex items-center whitespace-nowrap"
                                             onClick={() => connectionString && onCopyText(connectionString, 'String de conexão')}
                                             title="Clique para copiar"
                                         >

@@ -30,6 +30,40 @@ import styled from 'styled-components/macro';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 
+const serverLinksFade = `
+    @keyframes fadeInItems {
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+`;
+
+const FadeInWrapper = styled.div`
+    animation: fadeInItems 200ms ease-out both;
+`;
+
+const ServerLinksPlaceholder = () => {
+    const collapsed = useStoreState((state) => state.sidebarCollapsed);
+    return (
+        <>
+            {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                    key={i}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: collapsed ? 'center' : 'flex-start',
+                        padding: '0.625rem 1.25rem',
+                        opacity: 0.3,
+                    }}
+                >
+                    <div style={{ width: '1.25rem', height: '1rem', borderRadius: '4px', background: '#4b5563', flexShrink: 0 }} />
+                    {!collapsed && <div style={{ width: '80px', height: '0.8rem', borderRadius: '4px', background: '#4b5563', marginLeft: '0.5rem' }} />}
+                </div>
+            ))}
+        </>
+    );
+};
+
 const SidebarContainer = styled.div<{ collapsed: boolean }>`
     ${tw`flex flex-col bg-neutral-900 shadow-md border-r border-neutral-800 fixed left-0 bottom-0 z-40 transition-all duration-300`};
     width: ${props => props.collapsed ? '70px' : '240px'};
@@ -181,8 +215,10 @@ const Sidebar = () => {
                 </NavItem>
 
                 {match && (
-                    <React.Suspense fallback={null}>
-                        <ServerLinks />
+                    <React.Suspense fallback={<ServerLinksPlaceholder />}>
+                        <FadeInWrapper key={match.params.id}>
+                            <ServerLinks />
+                        </FadeInWrapper>
                     </React.Suspense>
                 )}
             </SidebarScroll>

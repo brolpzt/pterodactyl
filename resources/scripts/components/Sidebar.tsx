@@ -36,9 +36,9 @@ const SidebarContainer = styled.div`
 const NavItem = styled(NavLink)`
     ${tw`flex items-center px-4 py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
     &.active {
-        ${tw`bg-neutral-800 text-cyan-400 border-r-2 border-cyan-600`};
+        ${tw`bg-neutral-800 text-neutral-100 border-r-2 border-neutral-100`};
         & .icon-container {
-            ${tw`text-cyan-400`};
+            ${tw`text-neutral-100`};
         }
     }
 `;

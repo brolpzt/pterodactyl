@@ -95,12 +95,19 @@ const ServerLinks = () => {
             {routes.server
                 .filter((route) => !!route.name)
                 .map((route) => (
-                    <Can key={route.path} action={route.permission as any} matchAny>
-                        <NavItem to={to(route.path)} exact={route.exact}>
+                    route.permission ? (
+                        <Can key={route.path} action={route.permission as any} matchAny>
+                            <NavItem to={to(route.path)} exact={route.exact}>
+                                <FontAwesomeIcon icon={getIcon(route.name!)} tw="mr-3 w-5 text-center" />
+                                {route.name}
+                            </NavItem>
+                        </Can>
+                    ) : (
+                        <NavItem key={route.path} to={to(route.path)} exact={route.exact}>
                             <FontAwesomeIcon icon={getIcon(route.name!)} tw="mr-3 w-5 text-center" />
                             {route.name}
                         </NavItem>
-                    </Can>
+                    )
                 ))}
 
             {rootAdmin && internalId && (

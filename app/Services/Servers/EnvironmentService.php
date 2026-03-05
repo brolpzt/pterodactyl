@@ -58,12 +58,12 @@ class EnvironmentService
 
         // FastDL URL Injection
         if ($server->fastdl_enabled && in_array('fastdl', $server->egg->features ?? [])) {
-            $node = \Pterodactyl\Models\FastDlNode::where('location_id', $server->location_id)
+            $node = \Pterodactyl\Models\FastDlNode::where('location_id', $server->node->location_id)
                 ->where('is_active', true)
                 ->first();
 
             if ($node) {
-                $variables->put('FASTDL_URL', "http://{$node->fqdn}/{$server->uuid}");
+                $variables->put('FASTDL_URL', "http://{$node->fqdn}/{$server->uuidShort}");
             }
         }
 

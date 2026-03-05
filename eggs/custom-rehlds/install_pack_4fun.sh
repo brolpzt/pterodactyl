@@ -47,8 +47,8 @@ curl -sSL -H "Authorization: $AUTH_TOKEN" \
 
 echo "[INFO] Extracting files into $GAME_DIR..."
 mkdir -p "$GAME_DIR"
-# Usamos -C "$GAME_DIR" para extrair diretamente na pasta do jogo
-tar -xf "$TMP_DIR/pack_4fun.tar.xz" -C "$GAME_DIR"
+# Usamos --strip-components=1 para ignorar a pasta raiz do arquivo e extrair o conteúdo direto
+tar -xf "$TMP_DIR/pack_4fun.tar.xz" -C "$GAME_DIR" --strip-components=1
 
 #############################################
 # Cleanup

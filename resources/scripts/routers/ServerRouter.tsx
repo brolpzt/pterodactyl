@@ -67,9 +67,10 @@ export default () => {
 
     return (
         <React.Fragment key={'server-router'}>
-            <div css={tw`flex min-h-screen`}>
+            <NavigationBar />
+            <div css={tw`flex min-h-screen pt-[3.5rem]`}>
                 <Sidebar />
-                <div css={tw`flex-1 ml-[250px] bg-neutral-800`}>
+                <div css={tw`flex-1 ml-[240px] bg-neutral-800`}>
                     {!uuid || !id ? (
                         error ? (
                             <ServerError message={error} />

@@ -1,11 +1,9 @@
 import * as React from 'react';
-import { useState } from 'react';
-import { Link, NavLink, useRouteMatch } from 'react-router-dom';
+import { NavLink, useRouteMatch } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCogs,
     faLayerGroup,
-    faSignOutAlt,
     faTerminal,
     faFolderOpen,
     faDatabase,
@@ -24,14 +22,12 @@ import { ApplicationStore } from '@/state';
 import { ServerContext } from '@/state/server';
 import tw from 'twin.macro';
 import styled from 'styled-components/macro';
-import http from '@/api/http';
-import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
-import Avatar from '@/components/Avatar';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 
 const SidebarContainer = styled.div`
-    ${tw`flex flex-col h-screen bg-neutral-900 shadow-xl border-r border-neutral-800 w-[240px] fixed left-0 top-0 z-50 transition-all duration-300`};
+    ${tw`flex flex-col bg-neutral-900 shadow-xl border-r border-neutral-800 w-[240px] fixed left-0 bottom-0 z-40 transition-all duration-300`};
+    top: 3.5rem; /* Height of NavigationBar */
 `;
 
 const NavItem = styled(NavLink)`
@@ -50,7 +46,7 @@ const ServerHeader = styled.div`
 `;
 
 const SidebarScroll = styled.div`
-    ${tw`flex-1 overflow-y-auto overflow-x-hidden`};
+    ${tw`flex-1 overflow-y-auto overflow-x-hidden pb-4`};
     &::-webkit-scrollbar {
         width: 4px;
     }
@@ -134,40 +130,15 @@ const ServerLinks = () => {
 };
 
 const Sidebar = () => {
-    const name = useStoreState((state: ApplicationStore) => state.settings.data!.name);
-    const rootAdmin = useStoreState((state: ApplicationStore) => state.user.data!.rootAdmin);
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
-
     const match = useRouteMatch<{ id: string }>('/server/:id');
-
-    const onTriggerLogout = () => {
-        setIsLoggingOut(true);
-        http.post('/auth/logout').finally(() => {
-            // @ts-expect-error this is valid
-            window.location = '/';
-        });
-    };
 
     return (
         <SidebarContainer>
-            <SpinnerOverlay visible={isLoggingOut} />
-            <div tw="p-6 pb-2">
-                <Link to={'/'} tw="text-xl font-header font-bold text-neutral-100 no-underline block truncate">
-                    {name}
-                </Link>
-            </div>
-
             <SidebarScroll>
                 <SectionTitle>Main Menu</SectionTitle>
                 <NavItem to={'/'} exact>
                     <FontAwesomeIcon icon={faLayerGroup} tw="mr-3 w-4 text-center text-xs" />
                     Dashboard
-                </NavItem>
-                <NavItem to={'/account'}>
-                    <div tw="mr-3 w-4 flex justify-center text-xs">
-                        <Avatar.User />
-                    </div>
-                    Account Settings
                 </NavItem>
 
                 {match && (
@@ -176,22 +147,6 @@ const Sidebar = () => {
                     </React.Suspense>
                 )}
             </SidebarScroll>
-
-            <div tw="p-3 border-t border-neutral-800 space-y-1">
-                {rootAdmin && (
-                    <a href={'/admin'} tw="flex items-center px-3 py-2 text-xs text-neutral-500 hover:text-neutral-200 no-underline transition-colors hover:bg-neutral-800 rounded">
-                        <FontAwesomeIcon icon={faCogs} tw="mr-3 w-4" />
-                        Admin Panel
-                    </a>
-                )}
-                <button
-                    onClick={onTriggerLogout}
-                    tw="w-full flex items-center px-3 py-2 text-xs text-red-500/70 hover:text-red-500 hover:bg-red-900/10 rounded transition-colors"
-                >
-                    <FontAwesomeIcon icon={faSignOutAlt} tw="mr-3 w-4" />
-                    Sign Out
-                </button>
-            </div>
         </SidebarContainer>
     );
 };

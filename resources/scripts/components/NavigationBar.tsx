@@ -16,12 +16,13 @@ import Avatar from '@/components/Avatar';
 const RightNavigation = styled.div`
     & > a,
     & > button,
+    & > div,
     & > .navigation-link {
         ${tw`flex items-center h-full no-underline text-neutral-300 px-6 cursor-pointer transition-all duration-150`};
 
         &:active,
         &:hover {
-            ${tw`text-neutral-100 bg-black`};
+            ${tw`text-neutral-100 bg-black transition-all duration-150`};
         }
 
         &:active,
@@ -56,7 +57,7 @@ export default () => {
     };
 
     return (
-        <div className={'w-full bg-neutral-900 shadow-md overflow-x-auto fixed top-0 z-50'}>
+        <div className={'w-full bg-neutral-900 shadow-md fixed top-0 z-50'}>
             <SpinnerOverlay visible={isLoggingOut} fixed />
             <div className={'w-full flex items-center h-[3.5rem]'}>
                 {/* Logo area — exactly matches sidebar width */}
@@ -98,10 +99,10 @@ export default () => {
                         </Tooltip>
                     )}
 
-                    <div className={'relative'}>
+                    <div className={'relative h-full'}>
                         <button
                             onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                            className={'flex items-center h-full px-6 text-neutral-300 hover:text-neutral-100 hover:bg-black transition-all duration-150'}
+                            className={'flex items-center h-full w-full px-6 text-neutral-300 hover:text-neutral-100 transition-all duration-150'}
                         >
                             <span className={'mr-2'}>{language.flag}</span>
                             <span className={'text-xs font-bold'}>{language.code}</span>
@@ -109,7 +110,7 @@ export default () => {
                         </button>
 
                         {showLanguageDropdown && (
-                            <div className={'absolute right-0 mt-1 w-48 bg-neutral-800 border border-neutral-700 rounded shadow-xl z-50 overflow-hidden'}>
+                            <div className={'absolute right-0 top-full mt-0 w-48 bg-neutral-800 border border-neutral-700 rounded-b shadow-2xl z-50 overflow-hidden'}>
                                 {languages.map((lang) => (
                                     <button
                                         key={lang.code}

@@ -44,7 +44,7 @@ const NavItem = styled(NavLink)`
 `;
 
 const IconContainer = styled.div`
-    ${tw`flex items-center justify-center w-5 mr-3 flex-shrink-0 text-neutral-500 transition-colors duration-150`};
+    ${tw`flex items-center justify-center w-8 mr-2 flex-shrink-0 text-neutral-500 transition-colors duration-150`};
 `;
 
 const SectionTitle = styled.div`
@@ -115,6 +115,7 @@ const ServerLinks = () => {
                 <IconContainer className="icon-container" tw="text-red-500">
                     <FontAwesomeIcon icon={faMicrochip} />
                 </IconContainer>
+                Plugins Metamod
             </NavItem>
 
             <SectionTitle>Menu do Servidor</SectionTitle>

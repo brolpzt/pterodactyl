@@ -246,22 +246,6 @@ else
 fi
 
 ########################################
-# 9. Hitbox Fixer
-########################################
-echo "--- [9/10] Installing Hitbox Fixer ---"
-
-HF_URL=$(get_github_release_url "Garey27/hitbox_fixer" "hitbox_fix-bin.*\.zip")
-curl -sSL -o "$TMP_DIR/hitbox_fix.zip" "$HF_URL"
-unzip -q -o "$TMP_DIR/hitbox_fix.zip" -d "$TMP_DIR/hitbox_fix"
-
-if [ -d "$TMP_DIR/hitbox_fix/addons" ]; then
-    cp -r "$TMP_DIR/hitbox_fix/addons/"* "$GAME_DIR/addons/"
-fi
-find "$GAME_DIR/addons/hitboxfixer" -type f -name "*.dll" -delete || true
-
-add_to_plugins_ini "linux addons/hitboxfixer/hitbox_fix_mm_i386.so"
-
-########################################
 # Cleanup
 ########################################
 rm -rf "$TMP_DIR"

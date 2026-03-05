@@ -48,11 +48,11 @@ const IconContainer = styled.div`
 `;
 
 const SectionTitle = styled.div`
-    ${tw`px-4 pt-6 pb-2 text-[10px] font-bold text-neutral-500 uppercase tracking-widest`};
+    ${tw`px-4 pt-4 pb-1 text-[10px] font-bold text-neutral-500 uppercase tracking-widest`};
 `;
 
 const Divider = styled.div`
-    ${tw`mx-4 my-4 border-t border-neutral-800`};
+    ${tw`mx-4 my-2 border-t border-neutral-800`};
 `;
 
 const SidebarScroll = styled.div`
@@ -98,8 +98,6 @@ const ServerLinks = () => {
 
     return (
         <>
-            <Divider />
-
             <SectionTitle>Menu Rápido</SectionTitle>
             <NavItem to={to('/quick/add-admin')} onClick={(e) => e.preventDefault()}>
                 <IconContainer className="icon-container" tw="text-green-500">

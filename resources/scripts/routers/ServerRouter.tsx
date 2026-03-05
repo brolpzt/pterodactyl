@@ -89,7 +89,7 @@ export default () => {
                             <div tw="bg-neutral-700/50 border-b border-neutral-700 px-8 py-4 flex items-center justify-between">
                                 <div tw="flex items-center">
                                     <div tw="mr-6 pr-6 border-r border-neutral-700">
-                                        <h1 tw="text-xl font-header font-medium text-neutral-100 italic">{name}</h1>
+                                        <h1 tw="text-xl font-header font-medium text-neutral-100">{name}</h1>
                                         <p tw="text-xs text-neutral-400 mt-1">
                                             <span tw="font-mono bg-neutral-800 px-2 py-0.5 rounded mr-2 text-cyan-400 text-[10px]">
                                                 {id}
@@ -99,27 +99,21 @@ export default () => {
                                     </div>
                                     <div tw="hidden lg:flex space-x-8">
                                         <div tw="flex flex-col">
-                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Location</span>
-                                            <span tw="text-sm text-neutral-200">{locationName || 'n/a'}</span>
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Players</span>
+                                            <span tw="text-sm text-neutral-200">12 / 32</span>
                                         </div>
                                         <div tw="flex flex-col">
-                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">CPU Limit</span>
-                                            <span tw="text-sm text-neutral-200">{!limits || limits.cpu === 0 ? 'Unlimited' : `${limits.cpu}%`}</span>
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Mapa</span>
+                                            <span tw="text-sm text-neutral-200">de_dust2</span>
                                         </div>
                                         <div tw="flex flex-col">
-                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Memory</span>
-                                            <span tw="text-sm text-neutral-200">{!limits || limits.memory === 0 ? 'Unlimited' : bytesToString(mbToBytes(limits.memory))}</span>
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Versão</span>
+                                            <span tw="text-sm text-neutral-200">1.1.2.7 (Build 8648)</span>
                                         </div>
                                         <div tw="flex flex-col">
-                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Disk</span>
-                                            <span tw="text-sm text-neutral-200">{!limits || limits.disk === 0 ? 'Unlimited' : bytesToString(mbToBytes(limits.disk))}</span>
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Tickrate</span>
+                                            <span tw="text-sm text-neutral-200">100 / 100</span>
                                         </div>
-                                    </div>
-                                </div>
-                                <div tw="hidden md:flex flex-col items-end">
-                                    <div tw="flex items-center bg-cyan-900/30 border border-cyan-800/50 rounded-full px-3 py-1">
-                                        <div tw="w-2 h-2 rounded-full bg-cyan-400 mr-2 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
-                                        <span tw="text-[10px] uppercase font-bold text-cyan-100 tracking-wider">Server Connected</span>
                                     </div>
                                 </div>
                             </div>
@@ -149,6 +143,6 @@ export default () => {
                     )}
                 </div>
             </div>
-        </React.Fragment>
+        </React.Fragment >
     );
 };

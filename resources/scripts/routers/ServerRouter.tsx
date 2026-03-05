@@ -46,13 +46,17 @@ export default () => {
     const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
     const clearServerState = ServerContext.useStoreActions((actions) => actions.clearServerState);
+    const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
+
+    const password = variables?.find((v) => v.envVariable === 'SV_PASSWORD')?.serverValue || '';
+    const connectionString = allocation ? `connect ${allocation.ip}:${allocation.port};${password ? ` password ${password};` : ''}` : '';
 
     const { addFlash, clearFlashes } = useFlash();
 
-    const onCopyIp = (ip: string) => {
-        navigator.clipboard.writeText(ip);
-        clearFlashes('server:ip-copy');
-        addFlash({ key: 'server:ip-copy', type: 'success', message: 'IP copiado para a área de transferência!' });
+    const onCopyText = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        clearFlashes('server:copy');
+        addFlash({ key: 'server:copy', type: 'success', message: `${label} copiado para a área de transferência!` });
     };
 
     const getFlagEmoji = (code: string) => {
@@ -116,7 +120,7 @@ export default () => {
                                             </span>
                                             <span
                                                 tw="cursor-pointer hover:text-neutral-200 transition-colors duration-150 text-sm flex items-center"
-                                                onClick={() => allocation && onCopyIp(`${allocation.ip}:${allocation.port}`)}
+                                                onClick={() => allocation && onCopyText(`${allocation.ip}:${allocation.port}`, 'IP')}
                                                 title="Clique para copiar"
                                             >
                                                 {allocation ? `${allocation.ip}:${allocation.port}` : 'n/a'}
@@ -124,7 +128,7 @@ export default () => {
                                             </span>
                                         </p>
                                     </div>
-                                    <div tw="hidden lg:flex space-x-16">
+                                    <div tw="hidden lg:flex space-x-12">
                                         <div tw="flex flex-col">
                                             <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Localização</span>
                                             <span tw="text-sm text-neutral-200 flex items-center">
@@ -142,6 +146,19 @@ export default () => {
                                         <div tw="flex flex-col">
                                             <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Egg</span>
                                             <span tw="text-sm text-neutral-200">{eggName || 'n/a'}</span>
+                                        </div>
+                                        <div tw="flex flex-col">
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">String de conexão</span>
+                                            <span
+                                                tw="text-sm text-neutral-200 cursor-pointer hover:text-neutral-100 transition-colors duration-150 flex items-center"
+                                                onClick={() => connectionString && onCopyText(connectionString, 'String de conexão')}
+                                                title="Clique para copiar"
+                                            >
+                                                <span tw="max-w-[150px] truncate text-xs">
+                                                    {connectionString || 'n/a'}
+                                                </span>
+                                                {connectionString && <FontAwesomeIcon icon={faCopy} tw="ml-2 text-[10px] text-neutral-500" />}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

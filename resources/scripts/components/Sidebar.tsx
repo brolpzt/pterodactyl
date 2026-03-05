@@ -16,6 +16,9 @@ import {
     faPuzzlePiece,
     faShieldAlt,
     faExternalLinkAlt,
+    faUserPlus,
+    faPlug,
+    faMicrochip,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState } from 'easy-peasy';
 import { ApplicationStore } from '@/state';
@@ -96,6 +99,30 @@ const ServerLinks = () => {
     return (
         <>
             <Divider />
+
+            <SectionTitle>Menu Rápido</SectionTitle>
+            <NavItem to={to('/quick/add-admin')} onClick={(e) => e.preventDefault()}>
+                <IconContainer className="icon-container" tw="text-green-500">
+                    <FontAwesomeIcon icon={faUserPlus} />
+                </IconContainer>
+                Adicionar admin
+            </NavItem>
+            <NavItem to={to('/quick/amxx')} onClick={(e) => e.preventDefault()}>
+                <IconContainer className="icon-container" tw="text-yellow-500">
+                    <FontAwesomeIcon icon={faPlug} />
+                </IconContainer>
+                Plugins AMXX
+            </NavItem>
+            <NavItem to={to('/quick/metamod')} onClick={(e) => e.preventDefault()}>
+                <IconContainer className="icon-container" tw="text-red-500">
+                    <FontAwesomeIcon icon={faMicrochip} />
+                </IconContainer>
+                Plugins Metamod
+            </NavItem>
+
+            <Divider />
+
+            <SectionTitle>Menu do Servidor</SectionTitle>
             {routes.server
                 .filter((route) => !!route.name)
                 .map((route) => (

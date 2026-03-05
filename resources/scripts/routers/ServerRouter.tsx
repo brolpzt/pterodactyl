@@ -10,6 +10,7 @@ import Can from '@/components/elements/Can';
 import Spinner from '@/components/elements/Spinner';
 import { NotFound, ServerError } from '@/components/elements/ScreenBlock';
 import { httpErrorToHuman } from '@/api/http';
+import { bytesToString, ip, mbToBytes } from '@/lib/formatters';
 import { useStoreState } from 'easy-peasy';
 import SubNavigation from '@/components/elements/SubNavigation';
 import InstallListener from '@/components/server/InstallListener';
@@ -35,9 +36,11 @@ export default () => {
     const id = ServerContext.useStoreState((state) => state.server.data?.id);
     const uuid = ServerContext.useStoreState((state) => state.server.data?.uuid);
     const node = ServerContext.useStoreState((state) => state.server.data?.node);
+    const limits = ServerContext.useStoreState((state) => state.server.data?.limits);
     const inConflictState = ServerContext.useStoreState((state) => state.server.inConflictState);
     const serverId = ServerContext.useStoreState((state) => state.server.data?.internalId);
     const allocation = ServerContext.useStoreState((state) => state.server.data?.allocations.find((a) => a.isDefault));
+    const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
     const clearServerState = ServerContext.useStoreActions((actions) => actions.clearServerState);
 
@@ -84,18 +87,40 @@ export default () => {
                         <>
                             {/* Content Header with Server Info */}
                             <div tw="bg-neutral-700/50 border-b border-neutral-700 px-8 py-4 flex items-center justify-between">
-                                <div>
-                                    <h1 tw="text-xl font-header font-medium text-neutral-100 italic">{name}</h1>
-                                    <p tw="text-xs text-neutral-400 mt-1">
-                                        <span tw="font-mono bg-neutral-800 px-2 py-0.5 rounded mr-2 text-cyan-400">
-                                            {id}
-                                        </span>
-                                        {allocation ? `${allocation.ip}:${allocation.port}` : 'n/a'}
-                                    </p>
+                                <div tw="flex items-center">
+                                    <div tw="mr-6 pr-6 border-r border-neutral-700">
+                                        <h1 tw="text-xl font-header font-medium text-neutral-100 italic">{name}</h1>
+                                        <p tw="text-xs text-neutral-400 mt-1">
+                                            <span tw="font-mono bg-neutral-800 px-2 py-0.5 rounded mr-2 text-cyan-400 text-[10px]">
+                                                {id}
+                                            </span>
+                                            {allocation ? `${allocation.ip}:${allocation.port}` : 'n/a'}
+                                        </p>
+                                    </div>
+                                    <div tw="hidden lg:flex space-x-8">
+                                        <div tw="flex flex-col">
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Location</span>
+                                            <span tw="text-sm text-neutral-200">{locationName || 'n/a'}</span>
+                                        </div>
+                                        <div tw="flex flex-col">
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">CPU Limit</span>
+                                            <span tw="text-sm text-neutral-200">{!limits || limits.cpu === 0 ? 'Unlimited' : `${limits.cpu}%`}</span>
+                                        </div>
+                                        <div tw="flex flex-col">
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Memory</span>
+                                            <span tw="text-sm text-neutral-200">{!limits || limits.memory === 0 ? 'Unlimited' : bytesToString(mbToBytes(limits.memory))}</span>
+                                        </div>
+                                        <div tw="flex flex-col">
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Disk</span>
+                                            <span tw="text-sm text-neutral-200">{!limits || limits.disk === 0 ? 'Unlimited' : bytesToString(mbToBytes(limits.disk))}</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div tw="hidden md:flex flex-col items-end">
-                                    <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Node</span>
-                                    <span tw="text-sm text-neutral-300">{node}</span>
+                                    <div tw="flex items-center bg-cyan-900/30 border border-cyan-800/50 rounded-full px-3 py-1">
+                                        <div tw="w-2 h-2 rounded-full bg-cyan-400 mr-2 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
+                                        <span tw="text-[10px] uppercase font-bold text-cyan-100 tracking-wider">Server Connected</span>
+                                    </div>
                                 </div>
                             </div>
 

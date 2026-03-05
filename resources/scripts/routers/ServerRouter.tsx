@@ -24,6 +24,7 @@ import routes from '@/routers/routes';
 
 import Sidebar from '@/components/Sidebar';
 import tw from 'twin.macro';
+import useFlash from '@/plugins/useFlash';
 
 export default () => {
     const match = useRouteMatch<{ id: string }>();
@@ -43,6 +44,14 @@ export default () => {
     const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
     const clearServerState = ServerContext.useStoreActions((actions) => actions.clearServerState);
+
+    const { addFlash, clearFlashes } = useFlash();
+
+    const onCopyIp = (ip: string) => {
+        navigator.clipboard.writeText(ip);
+        clearFlashes('server:ip-copy');
+        addFlash({ key: 'server:ip-copy', type: 'success', message: 'IP copiado para a área de transferência!' });
+    };
 
     const to = (value: string, url = false) => {
         if (value === '/') {
@@ -90,29 +99,37 @@ export default () => {
                                 <div tw="flex items-center">
                                     <div tw="mr-6 pr-6 border-r border-neutral-700">
                                         <h1 tw="text-xl font-header font-medium text-neutral-100">{name}</h1>
-                                        <p tw="text-xs text-neutral-400 mt-1">
+                                        <p tw="text-xs text-neutral-400 mt-1 flex items-center">
                                             <span tw="font-mono bg-neutral-800 px-2 py-0.5 rounded mr-2 text-cyan-400 text-[10px]">
                                                 {id}
                                             </span>
-                                            {allocation ? `${allocation.ip}:${allocation.port}` : 'n/a'}
+                                            <span
+                                                tw="cursor-pointer hover:text-neutral-200 transition-colors duration-150"
+                                                onClick={() => allocation && onCopyIp(`${allocation.ip}:${allocation.port}`)}
+                                                title="Clique para copiar"
+                                            >
+                                                {allocation ? `${allocation.ip}:${allocation.port}` : 'n/a'}
+                                            </span>
                                         </p>
                                     </div>
-                                    <div tw="hidden lg:flex space-x-8">
+                                    <div tw="hidden lg:flex space-x-12">
+                                        <div tw="flex flex-col">
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Localização</span>
+                                            <span tw="text-sm text-neutral-200 flex items-center">
+                                                <span tw="mr-2 text-base">🇧🇷</span> {locationName || 'Brasil'}
+                                            </span>
+                                        </div>
                                         <div tw="flex flex-col">
                                             <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Players</span>
                                             <span tw="text-sm text-neutral-200">12 / 32</span>
                                         </div>
                                         <div tw="flex flex-col">
                                             <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Mapa</span>
-                                            <span tw="text-sm text-neutral-200">de_dust2</span>
+                                            <span tw="text-sm text-neutral-200">cs_assault_up</span>
                                         </div>
                                         <div tw="flex flex-col">
                                             <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Versão</span>
-                                            <span tw="text-sm text-neutral-200">1.1.2.7 (Build 8648)</span>
-                                        </div>
-                                        <div tw="flex flex-col">
-                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Tickrate</span>
-                                            <span tw="text-sm text-neutral-200">100 / 100</span>
+                                            <span tw="text-sm text-neutral-200">1.1.2.7/Std (Build 8648)</span>
                                         </div>
                                     </div>
                                 </div>

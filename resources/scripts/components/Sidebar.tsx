@@ -76,7 +76,7 @@ const NavItemLabel = styled.span<{ collapsed: boolean }>`
 `;
 
 const NavSectionTitle = styled.div<{ collapsed: boolean }>`
-    ${tw`px-4 pt-4 pb-1 text-[10px] font-bold text-neutral-500 uppercase tracking-widest truncate transition-colors duration-300`};
+    ${tw`px-4 pt-4 pb-2 text-[10px] font-bold text-neutral-500 uppercase tracking-widest truncate transition-colors duration-300`};
     ${props => props.collapsed ? tw`text-transparent` : ''};
 `;
 

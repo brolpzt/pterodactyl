@@ -2,8 +2,8 @@ import * as React from 'react';
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCogs, faLayerGroup, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-import { useStoreState } from 'easy-peasy';
+import { faCogs, faLayerGroup, faSignOutAlt, faBars } from '@fortawesome/free-solid-svg-icons';
+import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
 import SearchContainer from '@/components/dashboard/search/SearchContainer';
 import tw, { theme } from 'twin.macro';
@@ -33,9 +33,11 @@ const RightNavigation = styled.div`
 `;
 
 export default () => {
-    const name = useStoreState((state: ApplicationStore) => state.settings.data!.name);
-    const rootAdmin = useStoreState((state: ApplicationStore) => state.user.data!.rootAdmin);
+    const name = useStoreState((state: any) => state.settings.data!.name);
+    const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
+    const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
 
     const onTriggerLogout = () => {
         setIsLoggingOut(true);
@@ -49,11 +51,18 @@ export default () => {
         <div className={'w-full bg-neutral-900 shadow-md overflow-x-auto fixed top-0 z-50'}>
             <SpinnerOverlay visible={isLoggingOut} />
             <div className={'w-full flex items-center h-[3.5rem] px-4'}>
-                <div id={'logo'} className={'flex-1'}>
+                <div id={'logo'} className={'flex items-center flex-1 gap-2'}>
+                    <button
+                        onClick={() => toggleSidebar()}
+                        className={'flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150 ml-1'}
+                        title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
+                    >
+                        <FontAwesomeIcon icon={faBars} />
+                    </button>
                     <Link
                         to={'/'}
                         className={
-                            'text-2xl font-header font-medium px-4 no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150'
+                            'text-2xl font-header font-medium px-2 no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150'
                         }
                     >
                         {name}

@@ -37,8 +37,8 @@ const SidebarContainer = styled.div<{ collapsed: boolean }>`
 `;
 
 const NavItemLabel = styled.span<{ collapsed: boolean }>`
-    ${tw`transition-opacity duration-300 ml-3`};
-    ${props => props.collapsed ? tw`opacity-0 w-0 overflow-hidden` : tw`opacity-100`};
+    ${tw`transition-all duration-300 whitespace-nowrap overflow-hidden`};
+    ${props => props.collapsed ? 'max-width: 0; opacity: 0; margin: 0;' : 'max-width: 200px; opacity: 1; margin-left: 0.5rem;'};
 `;
 
 const NavSectionTitle = styled.div<{ collapsed: boolean }>`
@@ -51,8 +51,11 @@ const SidebarFooter = styled.div<{ collapsed: boolean }>`
     ${props => props.collapsed ? tw`text-center px-0` : ''};
 `;
 
-const NavItem = styled(NavLink)`
-    ${tw`flex items-center px-4 py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
+const NavItem = styled(NavLink) <{ collapsed?: boolean }>`
+    ${tw`flex items-center py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    justify-content: ${props => props.collapsed ? 'center' : 'flex-start'};
     &.active {
         ${tw`bg-neutral-800 text-neutral-100 border-r-2 border-neutral-100`};
         & .icon-container {
@@ -61,8 +64,9 @@ const NavItem = styled(NavLink)`
     }
 `;
 
-const IconContainer = styled.div`
-    ${tw`flex items-center justify-center w-8 mr-2 flex-shrink-0 text-neutral-500 transition-colors duration-150`};
+const IconContainer = styled.div<{ collapsed?: boolean }>`
+    ${tw`flex items-center justify-center flex-shrink-0 text-neutral-500 transition-colors duration-150`};
+    width: 1.25rem;
 `;
 
 const SectionTitle = ({ children, collapsed }: { children: React.ReactNode, collapsed: boolean }) => (
@@ -85,7 +89,7 @@ const SidebarScroll = styled.div`
 
 const ServerLinks = () => {
     const internalId = ServerContext.useStoreState((state) => state.server.data?.internalId);
-    const rootAdmin = useStoreState((state: ApplicationStore) => state.user.data!.rootAdmin);
+    const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
 
     const match = useRouteMatch<{ id: string }>('/server/:id');
 
@@ -124,7 +128,7 @@ const ServerLinks = () => {
                 .map((route) => (
                     route.permission ? (
                         <Can key={route.path} action={route.permission as any} matchAny>
-                            <NavItem to={to(route.path)} exact={route.exact} title={collapsed ? route.name : undefined}>
+                            <NavItem to={to(route.path)} exact={route.exact} collapsed={collapsed} title={route.name}>
                                 <IconContainer className="icon-container">
                                     <FontAwesomeIcon icon={getIcon(route.name!)} />
                                 </IconContainer>
@@ -132,7 +136,7 @@ const ServerLinks = () => {
                             </NavItem>
                         </Can>
                     ) : (
-                        <NavItem key={route.path} to={to(route.path)} exact={route.exact} title={collapsed ? route.name : undefined}>
+                        <NavItem key={route.path} to={to(route.path)} exact={route.exact} collapsed={collapsed} title={route.name}>
                             <IconContainer className="icon-container">
                                 <FontAwesomeIcon icon={getIcon(route.name!)} />
                             </IconContainer>
@@ -167,7 +171,7 @@ const Sidebar = () => {
         <SidebarContainer collapsed={collapsed}>
             <SidebarScroll>
                 <SectionTitle collapsed={collapsed}>Navigation</SectionTitle>
-                <NavItem to={'/'} exact title={collapsed ? 'Dashboard' : undefined}>
+                <NavItem to={'/'} exact collapsed={collapsed} title={collapsed ? 'Dashboard' : undefined}>
                     <IconContainer className="icon-container">
                         <FontAwesomeIcon icon={faLayerGroup} />
                     </IconContainer>
@@ -181,15 +185,8 @@ const Sidebar = () => {
                 )}
             </SidebarScroll>
 
-            <NavItem as="button" onClick={() => toggleSidebar()} tw="border-t border-neutral-800 outline-none!">
-                <IconContainer className="icon-container">
-                    <FontAwesomeIcon icon={collapsed ? faAngleDoubleRight : faAngleDoubleLeft} />
-                </IconContainer>
-                <NavItemLabel collapsed={collapsed}>Minimizar Menu</NavItemLabel>
-            </NavItem>
-
             <SidebarFooter collapsed={collapsed}>
-                {collapsed ? 'v2.0' : 'HostGamer Control v2.0'}
+                {collapsed ? 'v2.0' : 'Hostgamer Control v2.0'}
             </SidebarFooter>
         </SidebarContainer>
     );

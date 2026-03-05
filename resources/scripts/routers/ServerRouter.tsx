@@ -42,6 +42,7 @@ export default () => {
     const serverId = ServerContext.useStoreState((state) => state.server.data?.internalId);
     const allocation = ServerContext.useStoreState((state) => state.server.data?.allocations.find((a) => a.isDefault));
     const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
+    const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
     const clearServerState = ServerContext.useStoreActions((actions) => actions.clearServerState);
 
@@ -99,8 +100,8 @@ export default () => {
                                 <div tw="flex items-center">
                                     <div tw="mr-6 pr-6 border-r border-neutral-700">
                                         <h1 tw="text-xl font-header font-medium text-neutral-100">{name}</h1>
-                                        <p tw="text-xs text-neutral-400 mt-1 flex items-center">
-                                            <span tw="font-mono bg-neutral-800 px-2 py-0.5 rounded mr-2 text-cyan-400 text-[10px]">
+                                        <p tw="text-sm text-neutral-400 mt-1 flex items-center">
+                                            <span tw="font-mono bg-neutral-800 px-2 py-0.5 rounded mr-2 text-neutral-100 text-[11px]">
                                                 {id}
                                             </span>
                                             <span
@@ -128,8 +129,8 @@ export default () => {
                                             <span tw="text-sm text-neutral-200">cs_assault_up</span>
                                         </div>
                                         <div tw="flex flex-col">
-                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Versão</span>
-                                            <span tw="text-sm text-neutral-200">1.1.2.7/Std (Build 8648)</span>
+                                            <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Egg</span>
+                                            <span tw="text-sm text-neutral-200">{eggName || 'n/a'}</span>
                                         </div>
                                     </div>
                                 </div>

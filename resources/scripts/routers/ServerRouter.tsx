@@ -106,7 +106,7 @@ export default () => {
                     ) : (
                         <>
                             {/* Content Header with Server Info */}
-                            <div tw="bg-neutral-700/50 border-b border-neutral-700 px-8 py-4 flex items-center justify-between">
+                            <div tw="bg-neutral-700/95 border-b border-neutral-700 px-8 py-4 flex items-center justify-between sticky top-[3.5rem] z-30 shadow-md backdrop-blur-sm">
                                 <div tw="flex items-center">
                                     <div tw="mr-6 pr-6 border-r border-neutral-700">
                                         <h1 tw="text-xl font-header font-medium text-neutral-100">{name}</h1>
@@ -149,27 +149,29 @@ export default () => {
                                 </div>
                             </div>
 
-                            <InstallListener />
-                            <TransferListener />
-                            <WebsocketHandler />
-                            {inConflictState && (!rootAdmin || (rootAdmin && !location.pathname.endsWith(`/server/${id}`))) ? (
-                                <ConflictStateRenderer />
-                            ) : (
-                                <ErrorBoundary>
-                                    <TransitionRouter>
-                                        <Switch location={location}>
-                                            {routes.server.map(({ path, permission, component: Component }) => (
-                                                <PermissionRoute key={path} permission={permission} path={to(path)} exact>
-                                                    <Spinner.Suspense>
-                                                        <Component />
-                                                    </Spinner.Suspense>
-                                                </PermissionRoute>
-                                            ))}
-                                            <Route path={'*'} component={NotFound} />
-                                        </Switch>
-                                    </TransitionRouter>
-                                </ErrorBoundary>
-                            )}
+                            <div tw="p-8">
+                                <InstallListener />
+                                <TransferListener />
+                                <WebsocketHandler />
+                                {inConflictState && (!rootAdmin || (rootAdmin && !location.pathname.endsWith(`/server/${id}`))) ? (
+                                    <ConflictStateRenderer />
+                                ) : (
+                                    <ErrorBoundary>
+                                        <TransitionRouter>
+                                            <Switch location={location}>
+                                                {routes.server.map(({ path, permission, component: Component }) => (
+                                                    <PermissionRoute key={path} permission={permission} path={to(path)} exact>
+                                                        <Spinner.Suspense>
+                                                            <Component />
+                                                        </Spinner.Suspense>
+                                                    </PermissionRoute>
+                                                ))}
+                                                <Route path={'*'} component={NotFound} />
+                                            </Switch>
+                                        </TransitionRouter>
+                                    </ErrorBoundary>
+                                )}
+                            </div>
                         </>
                     )}
                 </div>

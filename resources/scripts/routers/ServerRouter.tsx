@@ -1,6 +1,6 @@
 import TransferListener from '@/components/server/TransferListener';
 import React, { useEffect, useState } from 'react';
-import { NavLink, Route, Switch, useRouteMatch } from 'react-router-dom';
+import { NavLink, Route, Switch, useRouteMatch, matchPath } from 'react-router-dom';
 import NavigationBar from '@/components/NavigationBar';
 import TransitionRouter from '@/TransitionRouter';
 import WebsocketHandler from '@/components/server/WebsocketHandler';
@@ -16,7 +16,7 @@ import SubNavigation from '@/components/elements/SubNavigation';
 import InstallListener from '@/components/server/InstallListener';
 import ErrorBoundary from '@/components/elements/ErrorBoundary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { faExternalLinkAlt, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router';
 import ConflictStateRenderer from '@/components/server/ConflictStateRenderer';
 import PermissionRoute from '@/components/elements/PermissionRoute';
@@ -115,11 +115,12 @@ export default () => {
                                                 {id}
                                             </span>
                                             <span
-                                                tw="cursor-pointer hover:text-neutral-200 transition-colors duration-150 text-xs"
+                                                tw="cursor-pointer hover:text-neutral-200 transition-colors duration-150 text-sm flex items-center"
                                                 onClick={() => allocation && onCopyIp(`${allocation.ip}:${allocation.port}`)}
                                                 title="Clique para copiar"
                                             >
                                                 {allocation ? `${allocation.ip}:${allocation.port}` : 'n/a'}
+                                                <FontAwesomeIcon icon={faCopy} tw="ml-2 text-[10px] text-neutral-500" />
                                             </span>
                                         </p>
                                     </div>
@@ -150,6 +151,17 @@ export default () => {
                             </div>
 
                             <div tw="p-8">
+                                <div tw="flex items-center text-[11px] uppercase tracking-wider text-neutral-500 mb-6 bg-neutral-700/30 px-3 py-1.5 rounded-md border border-neutral-700/50">
+                                    <NavLink to="/" tw="hover:text-neutral-300 transition-colors duration-150">Início</NavLink>
+                                    <span tw="mx-2 text-neutral-600">/</span>
+                                    <NavLink to={`/server/${match.params.id}`} tw="hover:text-neutral-300 transition-colors duration-150">{name}</NavLink>
+                                    {routes.server.find(r => matchPath(location.pathname, { path: to(r.path, true), exact: r.exact }))?.name && (
+                                        <>
+                                            <span tw="mx-2 text-neutral-600">/</span>
+                                            <span tw="text-neutral-200 font-bold">{routes.server.find(r => matchPath(location.pathname, { path: to(r.path, true), exact: r.exact }))?.name}</span>
+                                        </>
+                                    )}
+                                </div>
                                 <InstallListener />
                                 <TransferListener />
                                 <WebsocketHandler />

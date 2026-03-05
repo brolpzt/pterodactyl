@@ -54,6 +54,15 @@ export default () => {
         addFlash({ key: 'server:ip-copy', type: 'success', message: 'IP copiado para a área de transferência!' });
     };
 
+    const getFlagEmoji = (code: string) => {
+        if (!code || code.length < 2) return '🌐';
+        const countryCode = code.toUpperCase().substring(0, 2);
+        return countryCode
+            .split('')
+            .map((char) => String.fromCodePoint(char.charCodeAt(0) + 127397))
+            .join('');
+    };
+
     const to = (value: string, url = false) => {
         if (value === '/') {
             return url ? match.url : match.path;
@@ -117,7 +126,7 @@ export default () => {
                                         <div tw="flex flex-col">
                                             <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Localização</span>
                                             <span tw="text-sm text-neutral-200 flex items-center">
-                                                <span tw="mr-2 text-base">🇧🇷</span> {locationName || 'Brasil'}
+                                                <span tw="mr-2 text-base">{locationName ? getFlagEmoji(locationName.split(' ')[0]) : '🌐'}</span> {locationName || 'n/a'}
                                             </span>
                                         </div>
                                         <div tw="flex flex-col">

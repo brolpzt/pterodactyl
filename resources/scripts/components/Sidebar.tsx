@@ -26,7 +26,7 @@ import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 
 const SidebarContainer = styled.div`
-    ${tw`flex flex-col bg-neutral-900 shadow-xl border-r border-neutral-800 w-[240px] fixed left-0 bottom-0 z-40 transition-all duration-300`};
+    ${tw`flex flex-col bg-neutral-900 shadow-md border-r border-neutral-800 w-[240px] fixed left-0 bottom-0 z-40 transition-all duration-300`};
     top: 3.5rem;
 `;
 

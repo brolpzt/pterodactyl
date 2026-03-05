@@ -103,7 +103,7 @@ const ServerLinks = () => {
                 <IconContainer className="icon-container" tw="text-green-500">
                     <FontAwesomeIcon icon={faUserPlus} />
                 </IconContainer>
-                Adicionar admin
+                Adicionar Admin
             </NavItem>
             <NavItem to={to('/quick/amxx')} onClick={(e) => e.preventDefault()}>
                 <IconContainer className="icon-container" tw="text-yellow-500">

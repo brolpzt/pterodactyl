@@ -31,18 +31,22 @@ import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 
 const SidebarContainer = styled.div`
-    ${tw`flex flex-col h-screen bg-neutral-900 shadow-xl border-r border-neutral-800 w-[250px] fixed left-0 top-0 z-50 transition-all duration-300`};
+    ${tw`flex flex-col h-screen bg-neutral-900 shadow-xl border-r border-neutral-800 w-[240px] fixed left-0 top-0 z-50 transition-all duration-300`};
 `;
 
 const NavItem = styled(NavLink)`
-    ${tw`flex items-center px-4 py-3 text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
+    ${tw`flex items-center px-4 py-2 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
     &.active {
-        ${tw`bg-neutral-800 text-cyan-400 border-r-4 border-cyan-600`};
+        ${tw`bg-neutral-800 text-cyan-400 border-r-2 border-cyan-600`};
     }
 `;
 
 const SectionTitle = styled.div`
-    ${tw`px-4 pt-6 pb-2 text-xs font-bold text-neutral-500 uppercase tracking-widest`};
+    ${tw`px-4 pt-6 pb-2 text-[10px] font-bold text-neutral-500 uppercase tracking-widest`};
+`;
+
+const ServerHeader = styled.div`
+    ${tw`mx-3 mt-4 mb-2 p-3 bg-cyan-900/20 border border-cyan-700/30 rounded-lg`};
 `;
 
 const SidebarScroll = styled.div`
@@ -91,20 +95,24 @@ const ServerLinks = () => {
 
     return (
         <>
-            <SectionTitle tw="truncate">Server: {serverName}</SectionTitle>
+            <ServerHeader>
+                <div tw="text-[10px] text-cyan-500 font-bold uppercase tracking-wider mb-1">Active Server</div>
+                <div tw="text-sm font-bold text-neutral-100 truncate">{serverName}</div>
+            </ServerHeader>
+
             {routes.server
                 .filter((route) => !!route.name)
                 .map((route) => (
                     route.permission ? (
                         <Can key={route.path} action={route.permission as any} matchAny>
                             <NavItem to={to(route.path)} exact={route.exact}>
-                                <FontAwesomeIcon icon={getIcon(route.name!)} tw="mr-3 w-5 text-center" />
+                                <FontAwesomeIcon icon={getIcon(route.name!)} tw="mr-3 w-4 text-center text-xs" />
                                 {route.name}
                             </NavItem>
                         </Can>
                     ) : (
                         <NavItem key={route.path} to={to(route.path)} exact={route.exact}>
-                            <FontAwesomeIcon icon={getIcon(route.name!)} tw="mr-3 w-5 text-center" />
+                            <FontAwesomeIcon icon={getIcon(route.name!)} tw="mr-3 w-4 text-center text-xs" />
                             {route.name}
                         </NavItem>
                     )
@@ -115,9 +123,9 @@ const ServerLinks = () => {
                     href={`/admin/servers/view/${internalId}`}
                     target={'_blank'}
                     rel="noreferrer"
-                    tw="flex items-center px-4 py-3 text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100"
+                    tw="flex items-center px-4 py-2 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100"
                 >
-                    <FontAwesomeIcon icon={faExternalLinkAlt} tw="mr-3 w-5 text-center" />
+                    <FontAwesomeIcon icon={faExternalLinkAlt} tw="mr-3 w-4 text-center text-xs" />
                     Admin View
                 </a>
             )}
@@ -143,30 +151,24 @@ const Sidebar = () => {
     return (
         <SidebarContainer>
             <SpinnerOverlay visible={isLoggingOut} />
-            <div tw="p-6">
-                <Link to={'/'} tw="text-2xl font-header font-bold text-neutral-100 no-underline block truncate">
+            <div tw="p-6 pb-2">
+                <Link to={'/'} tw="text-xl font-header font-bold text-neutral-100 no-underline block truncate">
                     {name}
                 </Link>
             </div>
 
             <SidebarScroll>
-                <SectionTitle>Global</SectionTitle>
+                <SectionTitle>Main Menu</SectionTitle>
                 <NavItem to={'/'} exact>
-                    <FontAwesomeIcon icon={faLayerGroup} tw="mr-3 w-5 text-center" />
+                    <FontAwesomeIcon icon={faLayerGroup} tw="mr-3 w-4 text-center text-xs" />
                     Dashboard
                 </NavItem>
                 <NavItem to={'/account'}>
-                    <div tw="mr-3 w-5 flex justify-center">
+                    <div tw="mr-3 w-4 flex justify-center text-xs">
                         <Avatar.User />
                     </div>
                     Account Settings
                 </NavItem>
-                {rootAdmin && (
-                    <a href={'/admin'} tw="flex items-center px-4 py-3 text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100">
-                        <FontAwesomeIcon icon={faCogs} tw="mr-3 w-5 text-center" />
-                        Admin Panel
-                    </a>
-                )}
 
                 {match && (
                     <React.Suspense fallback={null}>
@@ -175,9 +177,18 @@ const Sidebar = () => {
                 )}
             </SidebarScroll>
 
-            <div tw="p-4 border-t border-neutral-800">
-                <button onClick={onTriggerLogout} tw="w-full flex items-center px-4 py-2 text-red-500 hover:bg-red-900/20 rounded transition-colors">
-                    <FontAwesomeIcon icon={faSignOutAlt} tw="mr-3 w-5" />
+            <div tw="p-3 border-t border-neutral-800 space-y-1">
+                {rootAdmin && (
+                    <a href={'/admin'} tw="flex items-center px-3 py-2 text-xs text-neutral-500 hover:text-neutral-200 no-underline transition-colors hover:bg-neutral-800 rounded">
+                        <FontAwesomeIcon icon={faCogs} tw="mr-3 w-4" />
+                        Admin Panel
+                    </a>
+                )}
+                <button
+                    onClick={onTriggerLogout}
+                    tw="w-full flex items-center px-3 py-2 text-xs text-red-500/70 hover:text-red-500 hover:bg-red-900/10 rounded transition-colors"
+                >
+                    <FontAwesomeIcon icon={faSignOutAlt} tw="mr-3 w-4" />
                     Sign Out
                 </button>
             </div>

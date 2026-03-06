@@ -326,7 +326,9 @@ const CreateServerContainer = () => {
                         {selectedEgg ? (
                             selectedEgg.plans?.length > 0 ? (
                                 <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-3`}>
-                                    {selectedEgg.plans.map((plan) => (
+                                    {[...selectedEgg.plans]
+                                        .sort((a, b) => a.monthly_price - b.monthly_price)
+                                        .map((plan) => (
                                         <SelectableCard
                                             key={plan.id}
                                             type="button"
@@ -346,7 +348,7 @@ const CreateServerContainer = () => {
                                                 ${plan.hourly_rate.toFixed(3)}/hr · ${plan.monthly_price.toFixed(2)}/mo
                                             </span>
                                         </SelectableCard>
-                                    ))}
+                                        ))}
                                 </div>
                             ) : (
                                 <p css={tw`text-neutral-500 text-sm`}>No plans available for this game. Contact the administrator.</p>

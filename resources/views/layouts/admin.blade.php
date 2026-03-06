@@ -137,6 +137,17 @@
                                 <i class="fa fa-tags"></i> <span>Addon Categories</span>
                             </a>
                         </li>
+                        <li class="header">SUPPORT</li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.tickets') ?: 'active' }}">
+                            <a href="{{ route('admin.tickets') }}">
+                                <i class="fa fa-ticket"></i> <span>Tickets</span>
+                            </a>
+                        </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.departments') ?: 'active' }}">
+                            <a href="{{ route('admin.departments') }}">
+                                <i class="fa fa-sitemap"></i> <span>Departments</span>
+                            </a>
+                        </li>
                     </ul>
                 </section>
             </aside>

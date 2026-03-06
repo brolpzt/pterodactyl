@@ -284,3 +284,22 @@ Route::group(['prefix' => 'addon-categories'], function () {
     Route::delete('/view/{category:id}/delete', [Admin\AddonCategoriesController::class, 'delete'])->name('admin.addon-categories.delete');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Tickets Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/tickets
+|
+*/
+Route::group(['prefix' => 'tickets'], function () {
+    Route::get('/', [Admin\TicketController::class, 'index'])->name('admin.tickets');
+    Route::get('/view/{ticket:id}', [Admin\TicketController::class, 'view'])->name('admin.tickets.view');
+});
+
+Route::group(['prefix' => 'departments'], function () {
+    Route::get('/', [Admin\TicketDepartmentController::class, 'index'])->name('admin.departments');
+    Route::post('/', [Admin\TicketDepartmentController::class, 'store']);
+    Route::delete('/{department}', [Admin\TicketDepartmentController::class, 'delete'])->name('admin.departments.delete');
+});
+

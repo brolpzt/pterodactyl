@@ -42,6 +42,14 @@ Route::prefix('/account')->middleware(AccountSubject::class)->group(function () 
         Route::post('/', [Client\SSHKeyController::class, 'store']);
         Route::post('/remove', [Client\SSHKeyController::class, 'delete']);
     });
+
+    Route::prefix('/tickets')->group(function () {
+        Route::get('/', [Client\TicketController::class, 'index']);
+        Route::get('/departments', [Client\TicketController::class, 'departments']);
+        Route::post('/', [Client\TicketController::class, 'store']);
+        Route::get('/{ticket}', [Client\TicketController::class, 'view']);
+        Route::post('/{ticket}', [Client\TicketController::class, 'reply']);
+    });
 });
 
 /*

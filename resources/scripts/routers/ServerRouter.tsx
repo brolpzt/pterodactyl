@@ -147,7 +147,7 @@ export default () => {
                                                 <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Localização</span>
                                                 <span tw="text-[13px] text-neutral-200 flex items-center whitespace-nowrap">
                                                     <span tw="mr-1 text-sm">{locationName ? getFlagEmoji(locationName.split(' ')[0]) : '🌐'}</span>
-                                                    <span tw="max-w-[80px] truncate">{locationName || 'n/a'}</span>
+                                                    <span>{locationName || 'n/a'}</span>
                                                 </span>
                                             </div>
                                             {/* Players — lg+ */}

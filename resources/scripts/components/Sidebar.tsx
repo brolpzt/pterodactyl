@@ -21,6 +21,8 @@ import {
     faMicrochip,
     faAngleDoubleLeft,
     faAngleDoubleRight,
+    faWallet,
+    faLifeRing,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
@@ -202,6 +204,7 @@ const Sidebar = () => {
     const match = useRouteMatch<{ id: string }>('/server/:id');
     const collapsed = useStoreState((state) => state.sidebarCollapsed);
     const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
+    const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
 
     return (
         <SidebarContainer collapsed={collapsed}>
@@ -213,6 +216,23 @@ const Sidebar = () => {
                     </IconContainer>
                     <NavItemLabel collapsed={collapsed}>Dashboard</NavItemLabel>
                 </NavItem>
+
+                {rootAdmin && (
+                    <>
+                        <NavItem to={'/account/billing'} exact collapsed={collapsed} title={collapsed ? 'Billing' : undefined}>
+                            <IconContainer className="icon-container">
+                                <FontAwesomeIcon icon={faWallet} />
+                            </IconContainer>
+                            <NavItemLabel collapsed={collapsed}>Billing</NavItemLabel>
+                        </NavItem>
+                        <NavItem to={'/account/support'} exact collapsed={collapsed} title={collapsed ? 'Support' : undefined}>
+                            <IconContainer className="icon-container">
+                                <FontAwesomeIcon icon={faLifeRing} />
+                            </IconContainer>
+                            <NavItemLabel collapsed={collapsed}>Support</NavItemLabel>
+                        </NavItem>
+                    </>
+                )}
 
                 {match && (
                     <React.Suspense fallback={<ServerLinksPlaceholder />}>

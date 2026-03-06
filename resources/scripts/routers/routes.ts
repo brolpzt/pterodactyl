@@ -12,6 +12,10 @@ import AccountOverviewContainer from '@/components/dashboard/AccountOverviewCont
 import AccountApiContainer from '@/components/dashboard/AccountApiContainer';
 import AccountSSHContainer from '@/components/dashboard/ssh/AccountSSHContainer';
 import ActivityLogContainer from '@/components/dashboard/activity/ActivityLogContainer';
+import BillingContainer from '@/components/dashboard/BillingContainer';
+import SupportContainer from '@/components/dashboard/SupportContainer';
+import CreateTicketContainer from '@/components/dashboard/CreateTicketContainer';
+import ViewTicketContainer from '@/components/dashboard/ViewTicketContainer';
 import ServerActivityLogContainer from '@/components/server/ServerActivityLogContainer';
 
 // Each of the router files is already code split out appropriately — so
@@ -29,6 +33,7 @@ interface RouteDefinition {
     name: string | undefined;
     component: React.ComponentType;
     exact?: boolean;
+    adminOnly?: boolean;
 }
 
 interface ServerRouteDefinition extends RouteDefinition {
@@ -64,6 +69,30 @@ export default {
             path: '/activity',
             name: 'Activity',
             component: ActivityLogContainer,
+        },
+        {
+            path: '/billing',
+            name: 'Billing',
+            component: BillingContainer,
+            adminOnly: true,
+        },
+        {
+            path: '/support',
+            name: 'Support',
+            component: SupportContainer,
+            adminOnly: true,
+        },
+        {
+            path: '/support/new',
+            name: undefined,
+            component: CreateTicketContainer,
+            adminOnly: true,
+        },
+        {
+            path: '/support/:id',
+            name: undefined,
+            component: ViewTicketContainer,
+            adminOnly: true,
         },
     ],
     server: [
@@ -125,20 +154,8 @@ export default {
         {
             path: '/startup',
             permission: 'startup.*',
-            name: 'Startup',
+            name: undefined,
             component: StartupContainer,
-        },
-        {
-            path: '/settings',
-            permission: ['settings.*', 'file.sftp'],
-            name: 'Settings',
-            component: SettingsContainer,
-        },
-        {
-            path: '/activity',
-            permission: 'activity.*',
-            name: 'Activity',
-            component: ServerActivityLogContainer,
         },
         {
             path: '/addons',
@@ -152,6 +169,17 @@ export default {
             name: 'Firewall',
             component: lazy(() => import('@/components/server/firewall/FirewallContainer')),
         },
+        {
+            path: '/activity',
+            permission: 'activity.*',
+            name: 'Activity',
+            component: ServerActivityLogContainer,
+        },
+        {
+            path: '/settings',
+            permission: ['settings.*', 'file.sftp'],
+            name: 'Settings',
+            component: SettingsContainer,
+        },
     ],
 } as Routes;
-

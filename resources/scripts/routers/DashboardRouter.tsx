@@ -3,6 +3,7 @@ import { NavLink, Route, Switch } from 'react-router-dom';
 import { useStoreState } from 'easy-peasy';
 import NavigationBar from '@/components/NavigationBar';
 import DashboardContainer from '@/components/dashboard/DashboardContainer';
+import CreateServerContainer from '@/components/dashboard/CreateServerContainer';
 import { NotFound } from '@/components/elements/ScreenBlock';
 import TransitionRouter from '@/TransitionRouter';
 import SubNavigation from '@/components/elements/SubNavigation';
@@ -16,6 +17,7 @@ import tw from 'twin.macro';
 export default () => {
     const location = useLocation();
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
+    const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
 
     return (
         <>
@@ -30,7 +32,7 @@ export default () => {
                         <SubNavigation>
                             <div>
                                 {routes.account
-                                    .filter((route) => !!route.name)
+                                    .filter((route) => !!route.name && (!route.adminOnly || rootAdmin))
                                     .map(({ path, name, exact = false }) => (
                                         <NavLink key={path} to={`/account/${path}`.replace('//', '/')} exact={exact}>
                                             {name}
@@ -45,11 +47,18 @@ export default () => {
                                 <Route path={'/'} exact>
                                     <DashboardContainer />
                                 </Route>
-                                {routes.account.map(({ path, component: Component }) => (
-                                    <Route key={path} path={`/account/${path}`.replace('//', '/')} exact>
-                                        <Component />
+                                {rootAdmin && (
+                                    <Route path={'/create-server'} exact>
+                                        <CreateServerContainer />
                                     </Route>
-                                ))}
+                                )}
+                                {routes.account
+                                    .filter((route) => !route.adminOnly || rootAdmin)
+                                    .map(({ path, component: Component }) => (
+                                        <Route key={path} path={`/account/${path}`.replace('//', '/')} exact>
+                                            <Component />
+                                        </Route>
+                                    ))}
                                 <Route path={'*'}>
                                     <NotFound />
                                 </Route>

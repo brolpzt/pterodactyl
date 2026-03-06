@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCogs, faLayerGroup, faSignOutAlt, faBars, faLanguage, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faLayerGroup, faSignOutAlt, faBars, faLanguage, faChevronDown, faWallet } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
 import SearchContainer from '@/components/dashboard/search/SearchContainer';
@@ -11,7 +11,34 @@ import styled from 'styled-components/macro';
 import http from '@/api/http';
 import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
+import DropdownMenu from '@/components/elements/DropdownMenu';
 import Avatar from '@/components/Avatar';
+
+const StyledRow = styled.div<{ $active?: boolean }>`
+    ${tw`p-2 flex items-center rounded cursor-pointer text-sm`};
+    ${(props) =>
+        props.$active ? tw`bg-neutral-100 text-neutral-700 font-bold` : tw`hover:bg-neutral-100 hover:text-neutral-700 text-neutral-500`};
+`;
+
+interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
+    icon?: any;
+    title: string;
+    $active?: boolean;
+}
+
+const Row = ({ icon, title, ...props }: RowProps) => (
+    <StyledRow {...props}>
+        {icon && <span css={tw`text-base w-5 flex items-center justify-center`}>{icon}</span>}
+        <span css={tw`ml-2`}>{title}</span>
+    </StyledRow>
+);
+
+const MenuWrapper = styled.div`
+    ${tw`h-full flex items-center`};
+    & > div {
+        ${tw`h-full`};
+    }
+`;
 
 const RightNavigation = styled.div`
     & > a,
@@ -39,12 +66,18 @@ export default () => {
     const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
     const [language, setLanguage] = useState({ code: 'BR', flag: '🇧🇷' });
-    const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+    const [currency, setCurrency] = useState({ code: 'USD', symbol: '$' });
 
     const languages = [
         { name: 'English (US)', code: 'US', flag: '🇺🇸' },
         { name: 'Português (BR)', code: 'BR', flag: '🇧🇷' },
         { name: 'Español (AR)', code: 'ES', flag: '🇦🇷' },
+    ];
+
+    const currencies = [
+        { name: 'US Dollar', code: 'USD', symbol: '$' },
+        { name: 'Brazilian Real', code: 'BRL', symbol: 'R$' },
+        { name: 'Euro', code: 'EUR', symbol: '€' },
     ];
 
     const onTriggerLogout = () => {
@@ -84,6 +117,16 @@ export default () => {
                 {/* Spacer */}
                 <div className={'flex-1'} />
                 <RightNavigation className={'flex h-full items-center justify-center'}>
+                    {rootAdmin && (
+                        <Tooltip placement={'bottom'} content={'Account Balance'}>
+                            <NavLink to={'/account/billing'} className={'!px-4'}>
+                                <div className={'flex items-center bg-neutral-800 rounded px-3 py-1.5 border border-neutral-700 hover:border-cyan-500 transition-colors'}>
+                                    <FontAwesomeIcon icon={faWallet} className={'text-cyan-400 mr-2'} />
+                                    <span className={'font-mono text-sm font-semibold'}>$14.50</span>
+                                </div>
+                            </NavLink>
+                        </Tooltip>
+                    )}
                     <SearchContainer />
                     <Tooltip placement={'bottom'} content={'Dashboard'}>
                         <NavLink to={'/'} exact>
@@ -98,42 +141,59 @@ export default () => {
                         </Tooltip>
                     )}
 
-                    <div className={'relative h-full flex items-center'}>
-                        <button
-                            onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                            className={'flex items-center h-full px-6 text-neutral-300 hover:text-neutral-100 hover:bg-black transition-all duration-150'}
-                        >
-                            <span className={'mr-2 text-base'}>{language.flag}</span>
-                            <span className={'text-xs font-bold tracking-wide'}>{language.code}</span>
-                            <FontAwesomeIcon icon={faChevronDown} className={'ml-2 text-[10px]'} />
-                        </button>
-
-                        {showLanguageDropdown && (
-                            <div className={'absolute right-0 top-full mt-0 w-64 bg-neutral-800 border border-neutral-700 rounded-b shadow-2xl z-50'}>
-                                {languages.map((lang) => (
-                                    <button
-                                        key={lang.code}
-                                        onClick={() => {
-                                            setLanguage(lang);
-                                            setShowLanguageDropdown(false);
-                                        }}
-                                        className={
-                                            `w-full flex items-center px-5 py-4 text-sm transition-all duration-150 group border-l-2
-                                            ${language.code === lang.code
-                                                ? 'bg-neutral-700/50 text-neutral-100 border-cyan-500'
-                                                : 'text-neutral-400 hover:bg-neutral-700 hover:text-neutral-100 border-transparent'}`
-                                        }
-                                    >
-                                        <span className={'mr-4 text-xl'}>{lang.flag}</span>
-                                        <div className={'flex flex-col items-start'}>
-                                            <span className={'font-medium'}>{lang.name}</span>
-                                            {language.code === lang.code && <span className={'text-[10px] text-cyan-400 uppercase tracking-widest font-bold mt-1'}>Ativo</span>}
+                    {rootAdmin && (
+                        <>
+                            <MenuWrapper className={'navigation-link'} style={{ padding: 0 }}>
+                                <DropdownMenu
+                                    renderToggle={(onClick) => (
+                                        <div
+                                            onClick={onClick}
+                                            className={'flex items-center h-full px-6 cursor-pointer'}
+                                        >
+                                            <span className={'text-xs font-bold tracking-wide mr-2'}>{currency.symbol}</span>
+                                            <span className={'text-xs font-bold tracking-wide'}>{currency.code}</span>
+                                            <FontAwesomeIcon icon={faChevronDown} className={'ml-2 text-[10px]'} />
                                         </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                    )}
+                                >
+                                    {currencies.map((curr) => (
+                                        <Row
+                                            key={curr.code}
+                                            icon={<span css={tw`font-mono`}>{curr.symbol}</span>}
+                                            title={curr.name}
+                                            $active={currency.code === curr.code}
+                                            onClick={() => setCurrency(curr)}
+                                        />
+                                    ))}
+                                </DropdownMenu>
+                            </MenuWrapper>
+
+                            <MenuWrapper className={'navigation-link'} style={{ padding: 0 }}>
+                                <DropdownMenu
+                                    renderToggle={(onClick) => (
+                                        <div
+                                            onClick={onClick}
+                                            className={'flex items-center h-full px-6 cursor-pointer'}
+                                        >
+                                            <span className={'mr-2 text-base'}>{language.flag}</span>
+                                            <span className={'text-xs font-bold tracking-wide'}>{language.code}</span>
+                                            <FontAwesomeIcon icon={faChevronDown} className={'ml-2 text-[10px]'} />
+                                        </div>
+                                    )}
+                                >
+                                    {languages.map((lang) => (
+                                        <Row
+                                            key={lang.code}
+                                            icon={lang.flag}
+                                            title={lang.name}
+                                            $active={language.code === lang.code}
+                                            onClick={() => setLanguage(lang)}
+                                        />
+                                    ))}
+                                </DropdownMenu>
+                            </MenuWrapper>
+                        </>
+                    )}
 
                     <Tooltip placement={'bottom'} content={'Account Settings'}>
                         <NavLink to={'/account'}>

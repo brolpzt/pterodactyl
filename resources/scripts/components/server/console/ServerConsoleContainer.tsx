@@ -10,6 +10,7 @@ import StatGraphs from '@/components/server/console/StatGraphs';
 import PowerButtons from '@/components/server/console/PowerButtons';
 import ServerDetailsBlock from '@/components/server/console/ServerDetailsBlock';
 import { Alert } from '@/components/elements/alert';
+import StartupContainer from '@/components/server/startup/StartupContainer';
 
 export type PowerAction = 'start' | 'stop' | 'restart' | 'kill';
 
@@ -45,6 +46,11 @@ const ServerConsoleContainer = () => {
                     <StatGraphs />
                 </Spinner.Suspense>
             </div>
+            <Can action={'startup.*'}>
+                <Spinner.Suspense>
+                    <StartupContainer />
+                </Spinner.Suspense>
+            </Can>
             <Features enabled={eggFeatures} />
         </ServerContentBlock>
     );

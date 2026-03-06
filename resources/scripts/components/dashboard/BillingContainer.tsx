@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWallet, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import PaymentModal from '@/components/dashboard/PaymentModal';
+import FlashMessageRender from '@/components/FlashMessageRender';
+import Spinner from '@/components/elements/Spinner';
+import { getBillingInfo, BillingInfo, WalletTransaction } from '@/api/account/billing';
 import styled from 'styled-components';
 
 const QUICK_AMOUNTS = [5, 10, 20] as const;
@@ -14,17 +17,44 @@ const QuickButton = styled.button`
     &:hover { ${tw`transform scale-[1.02] shadow-md`}; }
 `;
 
+const formatTransactionType = (type: string) => {
+    if (type === 'deposit') return 'Top-Up';
+    if (type === 'charge') return 'Charge';
+    return type;
+};
+
+const formatTransactionDescription = (t: WalletTransaction) => {
+    if (t.type === 'deposit') return t.description || 'Added funds';
+    return t.description || 'Service charge';
+};
+
 const BillingContainer = () => {
     const [paymentModalVisible, setPaymentModalVisible] = useState(false);
     const [paymentModalAmount, setPaymentModalAmount] = useState<number | null>(null);
+    const [billing, setBilling] = useState<BillingInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const refreshBilling = () => {
+        getBillingInfo()
+            .then(setBilling)
+            .catch(() => setBilling(null))
+            .finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        refreshBilling();
+    }, []);
 
     const openPaymentModal = (amount: number | null) => {
         setPaymentModalAmount(amount);
         setPaymentModalVisible(true);
     };
 
+    const balance = billing?.balance ?? 0;
+
     return (
         <PageContentBlock title={'Billing & Wallet'}>
+            <FlashMessageRender byKey={'billing'} css={tw`mb-4`} />
             <div css={tw`flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6`}>
                 <div>
                     <h1 css={tw`text-2xl font-black text-neutral-100`}>Wallet & Billing</h1>
@@ -44,11 +74,17 @@ const BillingContainer = () => {
                             </div>
                         }
                     >
-                        <div css={tw`text-center py-2`}>
-                            <p css={tw`text-[10px] text-neutral-500 font-black uppercase tracking-widest mb-1`}>Available Credits</p>
-                            <p css={tw`text-4xl font-mono font-black text-neutral-100`}>$14.50</p>
-                            <p css={tw`text-[10px] text-neutral-500 mt-2 font-medium`}>Available for service charges</p>
-                        </div>
+                        {loading ? (
+                            <div css={tw`flex justify-center py-8`}>
+                                <Spinner size={'large'} />
+                            </div>
+                        ) : (
+                            <div css={tw`text-center py-2`}>
+                                <p css={tw`text-[10px] text-neutral-500 font-black uppercase tracking-widest mb-1`}>Available Credits</p>
+                                <p css={tw`text-4xl font-mono font-black text-neutral-100`}>${balance.toFixed(2)}</p>
+                                <p css={tw`text-[10px] text-neutral-500 mt-2 font-medium`}>Available for service charges</p>
+                            </div>
+                        )}
                     </TitledGreyBox>
                 </div>
 
@@ -79,6 +115,7 @@ const BillingContainer = () => {
                         <PaymentModal
                             visible={paymentModalVisible}
                             onDismissed={() => setPaymentModalVisible(false)}
+                            onSuccess={refreshBilling}
                             initialAmount={paymentModalAmount}
                         />
                     </TitledGreyBox>
@@ -106,45 +143,43 @@ const BillingContainer = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
-                                <td css={tw`px-3 py-4 text-xs text-neutral-500 font-medium`}>Today, 14:30</td>
-                                <td css={tw`px-3 py-4`}>
-                                    <div css={tw`flex items-center`}>
-                                        <span css={tw`bg-neutral-800 text-[9px] px-1.5 py-0.5 rounded mr-3 text-neutral-400 font-bold uppercase tracking-wider border border-neutral-600 shadow-sm`}>Hourly</span>
-                                        <span css={tw`text-sm text-neutral-100 font-medium whitespace-nowrap overflow-hidden truncate max-w-[300px]`}>Hourly charge for server "My CS 1.6 Server" (10 hrs)</span>
-                                    </div>
-                                </td>
-                                <td css={tw`px-3 py-4 text-sm font-black text-red-500 tracking-tighter`}>-$0.20</td>
-                                <td css={tw`px-3 py-4 text-right`}>
-                                    <span css={tw`bg-green-600 text-green-50 text-[9px] px-2 py-0.5 rounded uppercase font-black tracking-widest shadow-sm`}>Completed</span>
-                                </td>
-                            </tr>
-                            <tr css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
-                                <td css={tw`px-3 py-4 text-xs text-neutral-500 font-medium`}>Apr 02, 09:15</td>
-                                <td css={tw`px-3 py-4`}>
-                                    <div css={tw`flex items-center`}>
-                                        <span css={tw`bg-neutral-800 text-[9px] px-1.5 py-0.5 rounded mr-3 text-neutral-400 font-bold uppercase tracking-wider border border-neutral-600 shadow-sm`}>Top-Up</span>
-                                        <span css={tw`text-sm text-neutral-100 font-medium`}>Added funds via Pix</span>
-                                    </div>
-                                </td>
-                                <td css={tw`px-3 py-4 text-sm font-black text-green-500 tracking-tighter`}>+$10.00</td>
-                                <td css={tw`px-3 py-4 text-right`}>
-                                    <span css={tw`bg-green-600 text-green-50 text-[9px] px-2 py-0.5 rounded uppercase font-black tracking-widest shadow-sm`}>Completed</span>
-                                </td>
-                            </tr>
-                            <tr css={tw`hover:bg-neutral-600/20 transition-colors duration-100`}>
-                                <td css={tw`px-3 py-4 text-xs text-neutral-500 font-medium`}>Mar 15, 18:00</td>
-                                <td css={tw`px-3 py-4`}>
-                                    <div css={tw`flex items-center`}>
-                                        <span css={tw`bg-neutral-800 text-[9px] px-1.5 py-0.5 rounded mr-3 text-neutral-400 font-bold uppercase tracking-wider border border-neutral-600 shadow-sm`}>Monthly</span>
-                                        <span css={tw`text-sm text-neutral-100 font-medium`}>Monthly renewal for server "Rust Clan Server"</span>
-                                    </div>
-                                </td>
-                                <td css={tw`px-3 py-4 text-sm font-black text-red-500 tracking-tighter`}>-$15.00</td>
-                                <td css={tw`px-3 py-4 text-right`}>
-                                    <span css={tw`bg-green-600 text-green-50 text-[9px] px-2 py-0.5 rounded uppercase font-black tracking-widest shadow-sm`}>Completed</span>
-                                </td>
-                            </tr>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={4} css={tw`px-3 py-8 text-center`}>
+                                        <Spinner size={'small'} />
+                                    </td>
+                                </tr>
+                            ) : !billing?.transactions?.length ? (
+                                <tr>
+                                    <td colSpan={4} css={tw`px-3 py-8 text-center text-neutral-500 text-sm`}>
+                                        No transactions yet.
+                                    </td>
+                                </tr>
+                            ) : (
+                                billing.transactions.map((t) => (
+                                    <tr key={t.id} css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
+                                        <td css={tw`px-3 py-4 text-xs text-neutral-500 font-medium`}>
+                                            {new Date(t.created_at).toLocaleString()}
+                                        </td>
+                                        <td css={tw`px-3 py-4`}>
+                                            <div css={tw`flex items-center`}>
+                                                <span css={tw`bg-neutral-800 text-[9px] px-1.5 py-0.5 rounded mr-3 text-neutral-400 font-bold uppercase tracking-wider border border-neutral-600 shadow-sm`}>
+                                                    {formatTransactionType(t.type)}
+                                                </span>
+                                                <span css={tw`text-sm text-neutral-100 font-medium whitespace-nowrap overflow-hidden truncate max-w-[300px]`}>
+                                                    {formatTransactionDescription(t)}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td css={tw`px-3 py-4 text-sm font-black tracking-tighter`, t.amount >= 0 ? tw`text-green-500` : tw`text-red-500`}>
+                                            {t.amount >= 0 ? '+' : ''}${t.amount.toFixed(2)}
+                                        </td>
+                                        <td css={tw`px-3 py-4 text-right`}>
+                                            <span css={tw`bg-green-600 text-green-50 text-[9px] px-2 py-0.5 rounded uppercase font-black tracking-widest shadow-sm`}>Completed</span>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

@@ -5,7 +5,7 @@ Este documento detalha a arquitetura do sistema de faturamento sugerido para a p
 ## 1. Visão Geral
 
 O sistema baseia-se em um modelo onde o usuário adiciona fundos à sua conta (criando um saldo na sua "Wallet" ou Carteira). A partir desse saldo, o sistema desconta o valor do uso dos servidores de duas formas distintas, escolhidas pelo usuário no momento do checkout:
-- **Cobrança por Hora (Hourly):** Pagamento flexível para uso temporário.
+- **Cobrança por Hora (Hourly):** Pagamento flexível para uso temporário. A cobrança ocorre enquanto o servidor existir e estiver ativo — **mesmo com o servidor desligado (stopped)**. O servidor reserva espaço no node (RAM, disco, etc.), portanto a cobrança é por hora de reserva, não por hora de CPU em uso.
 - **Cobrança por Período (Mensal, Trimestral, etc.):** Desconto integral antecipado na contratação, para uso prolongado e previsível.
 
 ## 2. A "Wallet" (Carteira de Créditos)
@@ -44,6 +44,7 @@ O sistema de faturamento funcionará inteiramente em segundo plano monitorando a
 
 ### 5.1 O "Comedor de Horas" (Worker de Faturamento Horário)
 - **Frequência Típica:** A cada 1 hora.
+- **Importante:** A cobrança é por hora de **reserva** do servidor (existência no node), não por tempo ligado. Servidor desligado (stopped) continua sendo cobrado, pois ocupa recursos alocados.
 - **Função:** 
   1. Busca no Banco de Dados todos os servidores em que \`status = 'active'\` e o \`billing_type = 'hourly'\`.
   2. Subtrai o custo por hora correspondente àquele servidor diretamente do saldo atual da *Wallet* atrelada.

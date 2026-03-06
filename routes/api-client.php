@@ -43,6 +43,11 @@ Route::prefix('/account')->middleware(AccountSubject::class)->group(function () 
         Route::post('/remove', [Client\SSHKeyController::class, 'delete']);
     });
 
+    Route::prefix('/billing')->group(function () {
+        Route::get('/', [Client\BillingController::class, 'index']);
+        Route::post('/deposit', [Client\BillingController::class, 'deposit']);
+    });
+
     Route::prefix('/tickets')->group(function () {
         Route::get('/', [Client\TicketController::class, 'index']);
         Route::get('/departments', [Client\TicketController::class, 'departments']);

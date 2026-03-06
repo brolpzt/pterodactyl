@@ -40,7 +40,7 @@ export default () => {
                     <p css={tw`text-neutral-500 text-sm font-medium`}>Track your current issues and requests.</p>
                 </div>
                 <Link to={'/account/support/new'}>
-                    <Button color={'primary'} css={tw`px-6 py-3 font-bold`}>
+                    <Button color={'primary'}>
                         <FontAwesomeIcon icon={faPlus} css={tw`mr-2`} />
                         Create New Ticket
                     </Button>

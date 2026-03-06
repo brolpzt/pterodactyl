@@ -34,18 +34,16 @@ const BillingContainer = () => {
                             </div>
                         }
                     >
-                        <div css={tw`text-center py-4`}>
+                        <div css={tw`text-center py-2 mb-4`}>
                             <p css={tw`text-[10px] text-neutral-500 font-black uppercase tracking-widest mb-1`}>Available Credits</p>
                             <p css={tw`text-4xl font-mono font-black text-neutral-100`}>$14.50</p>
-                            <p css={tw`text-[11px] text-neutral-500 mt-3 font-medium`}>Available for hourly & monthly charges</p>
+                            <p css={tw`text-[10px] text-neutral-500 mt-2 font-medium`}>Available for service charges</p>
                         </div>
 
-                        <div css={tw`mt-6 pt-6 border-t border-neutral-600`}>
-                            <Button color={'primary'} css={tw`w-full font-bold shadow-lg`}>
-                                <FontAwesomeIcon icon={faCoins} css={tw`mr-2 opacity-50 text-[10px]`} />
-                                Add Funds to Wallet
-                            </Button>
-                        </div>
+                        <Button color={'primary'} css={tw`w-full font-bold shadow-lg`}>
+                            <FontAwesomeIcon icon={faCoins} css={tw`mr-2 opacity-50 text-[10px]`} />
+                            Add Funds to Wallet
+                        </Button>
                     </TitledGreyBox>
                 </div>
 
@@ -79,7 +77,7 @@ const BillingContainer = () => {
                             </QuickButton>
                         </div>
 
-                        <div css={tw`mt-6 p-4 bg-neutral-900/50 rounded-lg border border-neutral-700 flex items-center shadow-inner`}>
+                        <div css={tw`mt-4 p-4 bg-neutral-900/50 rounded-lg border border-neutral-700 flex items-center shadow-inner`}>
                             <div css={tw`h-8 w-8 rounded-full bg-neutral-800 flex items-center justify-center mr-4 shadow-md`}>
                                 <FontAwesomeIcon icon={faCreditCard} css={tw`text-[11px] text-neutral-500`} />
                             </div>

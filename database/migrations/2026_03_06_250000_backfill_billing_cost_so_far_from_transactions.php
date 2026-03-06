@@ -29,9 +29,8 @@ return new class extends Migration
             if ($server->billing_type === 'hourly') {
                 $initialCharge = (float) $server->hourly_rate;
             } elseif (in_array($server->billing_type, ['monthly', 'quarterly', 'semi_annually', 'annually'], true)) {
-                $discount = config("billing.period_discounts.{$server->billing_type}", 1);
                 $days = config("billing.period_days.{$server->billing_type}", 30);
-                $initialCharge = round((float) $server->hourly_rate * $days * 24 * $discount, 2);
+                $initialCharge = round((float) $server->hourly_rate * $days * 24, 2);
             }
 
             $total = round($initialCharge + (float) $serverCharges, 2);

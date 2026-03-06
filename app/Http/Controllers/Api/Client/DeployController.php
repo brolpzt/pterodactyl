@@ -197,7 +197,6 @@ class DeployController extends ClientApiController
      */
     protected function getAvailableEggs(): array
     {
-        $discount = config("billing.period_discounts.monthly", 0.75);
         $days = config("billing.period_days.monthly", 30);
 
         $eggs = Egg::whereHas('deployPlans')
@@ -205,7 +204,7 @@ class DeployController extends ClientApiController
             ->orderBy('nest_id')
             ->orderBy('name')
             ->get()
-            ->map(function (Egg $egg) use ($discount, $days) {
+            ->map(function (Egg $egg) use ($days) {
                 $plans = $egg->deployPlans->map(fn ($p) => [
                     'id' => $p->id,
                     'name' => $p->name,
@@ -214,7 +213,7 @@ class DeployController extends ClientApiController
                     'disk' => $p->disk,
                     'cpu' => $p->cpu,
                     'hourly_rate' => (float) $p->hourly_rate,
-                    'monthly_price' => round($p->hourly_rate * $days * 24 * $discount, 2),
+                    'monthly_price' => round($p->hourly_rate * $days * 24, 2),
                 ])->values()->toArray();
 
                 return [

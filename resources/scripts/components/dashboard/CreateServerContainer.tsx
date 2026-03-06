@@ -467,7 +467,7 @@ const CreateServerContainer = () => {
                                     <p css={tw`text-[10px] text-neutral-500`}>
                                         {id === 'hourly'
                                             ? 'Billed per hour. Flexible, destroy anytime.'
-                                            : 'Billed upfront. Big discount for 24/7 usage.'}
+                                            : 'Billed upfront for the full period.'}
                                     </p>
                                 </SelectableCard>
                             ))}

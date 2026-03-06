@@ -262,10 +262,9 @@ class ServerCreationService
             return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate, 'next_due_date' => null];
         }
 
-        $discount = config("billing.period_discounts.{$billingType}", 1);
         $days = config("billing.period_days.{$billingType}", 30);
         $hours = $days * 24;
-        $amount = round($hourlyRate * $hours * $discount, 2);
+        $amount = round($hourlyRate * $hours, 2);
 
         $user = User::query()->findOrFail(Arr::get($data, 'owner_id'));
         $serverName = Arr::get($data, 'name', 'Server');

@@ -60,17 +60,16 @@ class BillingChargeService
     public function chargePeriod(Server $server): bool
     {
         $billingType = $server->billing_type;
-        $periodConfig = config("billing.period_discounts.{$billingType}");
         $periodDays = config("billing.period_days.{$billingType}");
 
-        if (!$periodConfig || !$periodDays) {
+        if (!$periodDays) {
             Log::warning("Billing: Unknown period type {$billingType} for server {$server->id}");
             return false;
         }
 
         $hourlyRate = (float) ($server->hourly_rate ?? 0);
         $hoursInPeriod = $periodDays * 24;
-        $amount = round($hourlyRate * $hoursInPeriod * $periodConfig, 2);
+        $amount = round($hourlyRate * $hoursInPeriod, 2);
 
         if ($amount <= 0) {
             return true;

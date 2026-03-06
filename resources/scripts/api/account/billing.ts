@@ -6,12 +6,23 @@ export interface WalletTransaction {
     amount: number;
     balance_after: number | null;
     description: string | null;
+    reference_type?: string | null;
+    reference_id?: number | null;
+    reference?: { server_name: string; server_uuid: string };
     created_at: string;
+}
+
+export interface BillingServer {
+    id: number;
+    uuid: string;
+    name: string;
+    status: string | null;
 }
 
 export interface BillingInfo {
     balance: number;
     transactions: WalletTransaction[];
+    servers: BillingServer[];
     available_methods: string[];
 }
 

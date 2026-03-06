@@ -219,13 +219,13 @@ const Sidebar = () => {
 
                 {rootAdmin && (
                     <>
-                        <NavItem to={'/account/billing'} exact collapsed={collapsed} title={collapsed ? 'Billing' : undefined}>
+                        <NavItem to={'/account/billing'} collapsed={collapsed} title={collapsed ? 'Billing' : undefined}>
                             <IconContainer className="icon-container">
                                 <FontAwesomeIcon icon={faWallet} />
                             </IconContainer>
                             <NavItemLabel collapsed={collapsed}>Billing</NavItemLabel>
                         </NavItem>
-                        <NavItem to={'/account/support'} exact collapsed={collapsed} title={collapsed ? 'Support' : undefined}>
+                        <NavItem to={'/account/support'} collapsed={collapsed} title={collapsed ? 'Support' : undefined}>
                             <IconContainer className="icon-container">
                                 <FontAwesomeIcon icon={faLifeRing} />
                             </IconContainer>

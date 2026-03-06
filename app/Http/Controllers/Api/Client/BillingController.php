@@ -27,18 +27,45 @@ class BillingController extends ClientApiController
         $transactions = $wallet->transactions()
             ->limit(20)
             ->get()
-            ->map(fn ($t) => [
-                'id' => $t->id,
-                'type' => $t->type,
-                'amount' => (float) $t->amount,
-                'balance_after' => $t->balance_after ? (float) $t->balance_after : null,
-                'description' => $t->description,
-                'created_at' => $t->created_at->toIso8601String(),
+            ->map(function ($t) {
+                $data = [
+                    'id' => $t->id,
+                    'type' => $t->type,
+                    'amount' => (float) $t->amount,
+                    'balance_after' => $t->balance_after ? (float) $t->balance_after : null,
+                    'description' => $t->description,
+                    'reference_type' => $t->reference_type,
+                    'reference_id' => $t->reference_id,
+                    'created_at' => $t->created_at->toIso8601String(),
+                ];
+
+                if ($t->reference_type === 'server' && $t->reference_id) {
+                    $server = \Pterodactyl\Models\Server::find($t->reference_id);
+                    if ($server) {
+                        $data['reference'] = [
+                            'server_name' => $server->name,
+                            'server_uuid' => $server->uuid,
+                        ];
+                    }
+                }
+
+                return $data;
+            });
+
+        $servers = $user->servers()
+            ->select('id', 'uuid', 'name', 'status')
+            ->get()
+            ->map(fn ($s) => [
+                'id' => $s->id,
+                'uuid' => $s->uuid,
+                'name' => $s->name,
+                'status' => $s->status,
             ]);
 
         return [
             'balance' => (float) $wallet->balance,
             'transactions' => $transactions,
+            'servers' => $servers,
             'available_methods' => $this->gatewayResolver->getAvailableMethods(),
         ];
     }

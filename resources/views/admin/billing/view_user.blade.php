@@ -92,6 +92,17 @@
                     </thead>
                     <tbody>
                         @forelse ($transactions as $tx)
+                            @php
+                                $serverName = null;
+                                if ($tx->reference_type === 'server' && $tx->reference_id) {
+                                    $server = \Pterodactyl\Models\Server::find($tx->reference_id);
+                                    $serverName = $server?->name;
+                                }
+                                $displayDesc = $tx->description ?? '-';
+                                if ($serverName) {
+                                    $displayDesc .= ' (' . $serverName . ')';
+                                }
+                            @endphp
                             <tr>
                                 <td>{{ $tx->created_at->format('M d, Y H:i') }}</td>
                                 <td>
@@ -99,7 +110,7 @@
                                         {{ ucfirst($tx->type) }}
                                     </span>
                                 </td>
-                                <td>{{ $tx->description ?? '-' }}</td>
+                                <td>{{ $displayDesc }}</td>
                                 <td class="text-right {{ $tx->amount >= 0 ? 'text-green' : 'text-red' }}">
                                     {{ $tx->amount >= 0 ? '+' : '' }}${{ number_format((float) $tx->amount, 2) }}
                                 </td>

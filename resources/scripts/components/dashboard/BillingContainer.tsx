@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
+import { faWallet, faExchangeAlt, faServer } from '@fortawesome/free-solid-svg-icons';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import PaymentModal from '@/components/dashboard/PaymentModal';
 import FlashMessageRender from '@/components/FlashMessageRender';
 import Spinner from '@/components/elements/Spinner';
-import { getBillingInfo, BillingInfo, WalletTransaction } from '@/api/account/billing';
+import { getBillingInfo, BillingInfo, WalletTransaction, BillingServer } from '@/api/account/billing';
 import styled from 'styled-components';
 
 const QUICK_AMOUNTS = [5, 10, 20] as const;
@@ -24,6 +24,9 @@ const formatTransactionType = (type: string) => {
 };
 
 const formatTransactionDescription = (t: WalletTransaction) => {
+    if (t.reference?.server_name) {
+        return `${t.description || 'Charge'} — ${t.reference.server_name}`;
+    }
     if (t.type === 'deposit') return t.description || 'Added funds';
     return t.description || 'Service charge';
 };
@@ -121,6 +124,46 @@ const BillingContainer = () => {
                     </TitledGreyBox>
                 </div>
             </div>
+
+            {billing?.servers && billing.servers.length > 0 && (
+                <TitledGreyBox
+                    className={'mb-8'}
+                    title={
+                        <div css={tw`flex items-center justify-between w-full`}>
+                            <div css={tw`flex items-center`}>
+                                <FontAwesomeIcon icon={faServer} css={tw`text-xs text-neutral-500 mr-2`} />
+                                <span css={tw`text-sm uppercase`}>O que está sendo cobrado</span>
+                            </div>
+                        </div>
+                    }
+                >
+                    <p css={tw`text-xs text-neutral-500 mb-4`}>
+                        Seus servidores ativos. As cobranças aparecem em Transações Recentes quando aplicadas.
+                    </p>
+                    <div css={tw`space-y-2`}>
+                        {billing.servers.map((server) => (
+                            <div
+                                key={server.id}
+                                css={tw`flex items-center justify-between p-3 rounded bg-neutral-900/50 border border-neutral-700`}
+                            >
+                                <div css={tw`flex items-center gap-3`}>
+                                    <FontAwesomeIcon icon={faServer} css={tw`text-neutral-500`} />
+                                    <div>
+                                        <p css={tw`text-sm font-bold text-neutral-100`}>{server.name}</p>
+                                        <p css={tw`text-[10px] text-neutral-500 font-mono`}>{server.uuid}</p>
+                                    </div>
+                                </div>
+                                <a
+                                    href={`/server/${server.uuid}`}
+                                    css={tw`text-xs font-semibold text-primary-400 hover:text-primary-300`}
+                                >
+                                    Ver servidor →
+                                </a>
+                            </div>
+                        ))}
+                    </div>
+                </TitledGreyBox>
+            )}
 
             <TitledGreyBox
                 title={

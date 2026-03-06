@@ -7,6 +7,8 @@ use Pterodactyl\Models\Server;
 
 class TicketTransformer extends BaseClientTransformer
 {
+    protected array $availableIncludes = ['messages'];
+
     /**
      * @return string
      */
@@ -31,5 +33,14 @@ class TicketTransformer extends BaseClientTransformer
             'created_at' => $ticket->created_at->toIso8601String(),
             'updated_at' => $ticket->updated_at->toIso8601String(),
         ];
+    }
+
+    /**
+     * @param \Pterodactyl\Models\Ticket $ticket
+     * @return \League\Fractal\Resource\Collection
+     */
+    public function includeMessages(Ticket $ticket)
+    {
+        return $this->collection($ticket->messages, $this->makeTransformer(TicketMessageTransformer::class), 'ticket_message');
     }
 }

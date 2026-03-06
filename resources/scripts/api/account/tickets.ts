@@ -61,7 +61,7 @@ const transformTicket = (data: any): Ticket => ({
     serverName: data.server_name,
     createdAt: new Date(data.created_at),
     updatedAt: new Date(data.updated_at),
-    messages: data.messages ? data.messages.map((msg: any) => transformTicketMessage(msg.attributes)) : undefined,
+    messages: data.relationships?.messages?.data ? data.relationships.messages.data.map((msg: any) => transformTicketMessage(msg.attributes)) : undefined,
 });
 
 export const useTickets = (config?: ConfigInterface<Ticket[], AxiosError>) => {

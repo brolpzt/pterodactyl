@@ -101,17 +101,10 @@ class TicketController extends ClientApiController
             ->with(['server', 'ticketDepartment', 'messages.user'])
             ->firstOrFail();
 
-        $ticketData = $this->fractal->item($ticket)
+        return $this->fractal->item($ticket)
+            ->parseIncludes(['messages'])
             ->transformWith($this->getTransformer(TicketTransformer::class))
             ->toArray();
-
-        $messagesData = $this->fractal->collection($ticket->messages)
-            ->transformWith($this->getTransformer(TicketMessageTransformer::class))
-            ->toArray();
-
-        $ticketData['messages'] = $messagesData['data'];
-
-        return $ticketData;
     }
 
     /**

@@ -79,7 +79,7 @@ export default () => {
                                 <Select value={relatedServer} onChange={(e) => setRelatedServer(e.target.value)}>
                                     <option value="">-- None --</option>
                                     {servers?.items.map((server) => (
-                                        <option key={server.id} value={server.id}>{server.name}</option>
+                                        <option key={server.id} value={server.internalId}>{server.name}</option>
                                     ))}
                                 </Select>
                                 <p css={tw`text-xs text-neutral-400 mt-1`}>Optional: Select the server you need help with.</p>

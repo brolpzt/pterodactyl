@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('deploy_plan_variable_overrides', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('deploy_plan_id');
-            $table->unsignedBigInteger('egg_variable_id');
+            $table->unsignedInteger('egg_variable_id');
             $table->text('value')->nullable();
             $table->timestamps();
 

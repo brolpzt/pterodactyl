@@ -1,18 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet, faCoins, faCreditCard, faHistory, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
+import { faWallet, faCoins, faCreditCard, faExchangeAlt, faBolt } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/elements/Button';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import styled from 'styled-components';
 
-const QuickButton = styled.button`
-    ${tw`p-4 rounded border border-neutral-600 hover:border-neutral-500 hover:bg-neutral-700 transition-all duration-200 bg-neutral-900 flex flex-col items-center justify-center gap-1 shadow-sm`};
-    &:hover { ${tw`transform scale-[1.02] shadow-md`}; }
+const QUICK_AMOUNTS = [5, 10, 20] as const;
+
+const QuickButton = styled.button<{ $selected?: boolean }>`
+    ${tw`p-5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 shadow-sm relative overflow-hidden`};
+    ${(p) =>
+        p.$selected
+            ? tw`border-primary-500 bg-primary-500/15 shadow-lg ring-2 ring-primary-500/30`
+            : tw`border-neutral-600 bg-neutral-900 hover:border-neutral-500 hover:bg-neutral-800`};
+    &:hover:not([data-selected]) { ${tw`transform scale-[1.02] shadow-md`}; }
 `;
 
 const BillingContainer = () => {
+    const [selectedAmount, setSelectedAmount] = useState<number | 'custom' | null>(null);
+    const [customAmount, setCustomAmount] = useState('');
+
+    const parsedCustom = parseFloat(customAmount);
+    const isValidCustom = !isNaN(parsedCustom) && parsedCustom > 0;
+    const displayAmount =
+        selectedAmount === 'custom'
+            ? customAmount && isValidCustom
+                ? `$${parsedCustom.toFixed(2)}`
+                : null
+            : selectedAmount != null
+              ? `$${selectedAmount.toFixed(2)}`
+              : null;
+
     return (
         <PageContentBlock title={'Billing & Wallet'}>
             <div css={tw`flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6`}>
@@ -51,39 +71,80 @@ const BillingContainer = () => {
                     <TitledGreyBox
                         title={
                             <div css={tw`flex items-center justify-between w-full`}>
-                                <div css={tw`flex items-center`}>
-                                    <span css={tw`text-sm uppercase`}>Quick Recharge</span>
+                                <div css={tw`flex items-center gap-2`}>
+                                    <FontAwesomeIcon icon={faBolt} css={tw`text-primary-400 text-sm`} />
+                                    <span css={tw`text-sm font-bold uppercase tracking-wider text-neutral-200`}>Quick Recharge</span>
                                 </div>
-                                <span css={tw`text-[10px] bg-neutral-900 px-2 py-0.5 rounded-full text-neutral-500 uppercase font-black`}>Instant top-up</span>
+                                <span css={tw`text-[10px] bg-primary-500/20 text-primary-300 px-2.5 py-1 rounded-full uppercase font-bold tracking-wider border border-primary-500/30`}>
+                                    Instant top-up
+                                </span>
                             </div>
                         }
                     >
-                        <div css={tw`grid grid-cols-2 md:grid-cols-4 gap-4`}>
-                            <QuickButton>
-                                <p css={tw`text-lg font-black text-neutral-100`}>$5.00</p>
-                                <span css={tw`text-[9px] uppercase font-bold text-neutral-500 tracking-tighter`}>Credits</span>
-                            </QuickButton>
-                            <QuickButton>
-                                <p css={tw`text-lg font-black text-neutral-100`}>$10.00</p>
-                                <span css={tw`text-[9px] uppercase font-bold text-neutral-500 tracking-tighter`}>Credits</span>
-                            </QuickButton>
-                            <QuickButton>
-                                <p css={tw`text-lg font-black text-neutral-100`}>$20.00</p>
-                                <span css={tw`text-[9px] uppercase font-bold text-neutral-500 tracking-tighter`}>Credits</span>
-                            </QuickButton>
-                            <QuickButton>
-                                <p css={tw`text-lg font-black text-neutral-400`}>Custom</p>
-                                <span css={tw`text-[9px] uppercase font-bold text-neutral-500 tracking-tighter`}>Amount</span>
+                        <div css={tw`grid grid-cols-2 md:grid-cols-4 gap-3`}>
+                            {QUICK_AMOUNTS.map((amount) => (
+                                <QuickButton
+                                    key={amount}
+                                    type="button"
+                                    $selected={selectedAmount === amount}
+                                    data-selected={selectedAmount === amount ? '' : undefined}
+                                    onClick={() => setSelectedAmount(amount)}
+                                >
+                                    <p css={[tw`text-xl font-black`, selectedAmount === amount && tw`text-primary-300`]}>${amount.toFixed(2)}</p>
+                                    <span css={tw`text-[10px] uppercase font-semibold text-neutral-500 tracking-tight`}>Credits</span>
+                                </QuickButton>
+                            ))}
+                            <QuickButton
+                                type="button"
+                                $selected={selectedAmount === 'custom'}
+                                data-selected={selectedAmount === 'custom' ? '' : undefined}
+                                onClick={() => setSelectedAmount('custom')}
+                            >
+                                <p css={[tw`text-lg font-black`, selectedAmount === 'custom' && tw`text-primary-300`]}>Custom</p>
+                                <span css={tw`text-[10px] uppercase font-semibold text-neutral-500 tracking-tight`}>Amount</span>
                             </QuickButton>
                         </div>
 
-                        <div css={tw`mt-4 p-4 bg-neutral-900/50 rounded-lg border border-neutral-700 flex items-center shadow-inner`}>
-                            <div css={tw`h-8 w-8 rounded-full bg-neutral-800 flex items-center justify-center mr-4 shadow-md`}>
-                                <FontAwesomeIcon icon={faCreditCard} css={tw`text-[11px] text-neutral-500`} />
+                        {selectedAmount === 'custom' && (
+                            <div css={tw`mt-4 flex items-center gap-3`}>
+                                <span css={tw`text-sm font-semibold text-neutral-400`}>$</span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    value={customAmount}
+                                    onChange={(e) => setCustomAmount(e.target.value)}
+                                    css={tw`flex-1 px-4 py-3 rounded-lg bg-neutral-900 border border-neutral-600 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-neutral-100 font-mono font-bold text-lg outline-none transition-all`}
+                                />
+                            </div>
+                        )}
+
+                        {displayAmount && (
+                            <div css={tw`mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl bg-neutral-900/60 border border-neutral-600`}>
+                                <div css={tw`flex items-center gap-3`}>
+                                    <div css={tw`h-10 w-10 rounded-lg bg-primary-500/20 flex items-center justify-center`}>
+                                        <FontAwesomeIcon icon={faCoins} css={tw`text-primary-400`} />
+                                    </div>
+                                    <div>
+                                        <p css={tw`text-xs font-bold text-neutral-400 uppercase tracking-wider`}>Amount to add</p>
+                                        <p css={tw`text-xl font-mono font-black text-neutral-100`}>{displayAmount}</p>
+                                    </div>
+                                </div>
+                                <Button color={'primary'} size={'large'} css={tw`font-bold shadow-lg whitespace-nowrap`}>
+                                    <FontAwesomeIcon icon={faCreditCard} css={tw`mr-2`} />
+                                    Proceed to Payment
+                                </Button>
+                            </div>
+                        )}
+
+                        <div css={tw`mt-4 p-4 rounded-xl bg-neutral-900/40 border border-neutral-700/80 flex items-center gap-4`}>
+                            <div css={tw`h-10 w-10 rounded-lg bg-neutral-800 flex items-center justify-center shrink-0`}>
+                                <FontAwesomeIcon icon={faCreditCard} css={tw`text-neutral-400`} />
                             </div>
                             <div>
-                                <p css={tw`text-xs font-bold text-neutral-200`}>Supported Payment Methods</p>
-                                <p css={tw`text-[10px] text-neutral-500 mt-0.5 font-medium`}>Stripe, PayPal, and Pix are available for worldwide payments.</p>
+                                <p css={tw`text-sm font-bold text-neutral-200`}>Supported Payment Methods</p>
+                                <p css={tw`text-xs text-neutral-500 mt-0.5`}>Stripe, PayPal, and Pix available for worldwide payments.</p>
                             </div>
                         </div>
                     </TitledGreyBox>

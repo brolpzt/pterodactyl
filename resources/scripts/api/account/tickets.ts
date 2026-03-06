@@ -113,3 +113,9 @@ export const replyTicket = async (id: number, message: string): Promise<TicketMe
 
     return transformTicketMessage(data.attributes);
 };
+
+export const updateTicketStatus = async (id: number, status: 'open' | 'closed'): Promise<Ticket> => {
+    const { data } = await http.post(`/api/client/account/tickets/${id}/status`, { status });
+
+    return transformTicket(data.attributes);
+};

@@ -146,4 +146,28 @@ class TicketController extends ClientApiController
             ->transformWith($this->getTransformer(TicketMessageTransformer::class))
             ->toArray();
     }
+
+    /**
+     * Update the status of a ticket.
+     *
+     * @param \Pterodactyl\Http\Requests\Api\Client\ClientApiRequest $request
+     * @param int $ticketId
+     * @return array
+     */
+    public function status(ClientApiRequest $request, int $ticketId): array
+    {
+        $request->validate([
+            'status' => 'required|string|in:open,closed',
+        ]);
+
+        $ticket = Ticket::where('id', $ticketId)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $ticket->update(['status' => $request->input('status')]);
+
+        return $this->fractal->item($ticket)
+            ->transformWith($this->getTransformer(TicketTransformer::class))
+            ->toArray();
+    }
 }

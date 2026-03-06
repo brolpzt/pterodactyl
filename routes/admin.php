@@ -295,6 +295,8 @@ Route::group(['prefix' => 'addon-categories'], function () {
 Route::group(['prefix' => 'tickets'], function () {
     Route::get('/', [Admin\TicketController::class, 'index'])->name('admin.tickets');
     Route::get('/view/{ticket:id}', [Admin\TicketController::class, 'view'])->name('admin.tickets.view');
+    Route::post('/view/{ticket:id}', [Admin\TicketController::class, 'reply']);
+    Route::post('/view/{ticket:id}/status', [Admin\TicketController::class, 'toggleStatus'])->name('admin.tickets.status');
 });
 
 Route::group(['prefix' => 'departments'], function () {

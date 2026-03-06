@@ -6,7 +6,7 @@ import { faPaperPlane, faArrowLeft, faUserTie, faUser, faClock, faServer } from 
 import Button from '@/components/elements/Button';
 import ContentBox from '@/components/elements/ContentBox';
 import { Link, useParams } from 'react-router-dom';
-import { useTicket, replyTicket } from '@/api/account/tickets';
+import { useTicket, replyTicket, updateTicketStatus } from '@/api/account/tickets';
 import useFlash from '@/plugins/useFlash';
 import Spinner from '@/components/elements/Spinner';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -35,6 +35,21 @@ export default () => {
             .catch((error) => {
                 setIsSubmitting(false);
                 addFlash({ type: 'error', title: 'Error', message: error.response?.data?.errors[0]?.detail || 'An error occurred while replying.', key: 'support' });
+            });
+    };
+
+    const toggleStatus = () => {
+        if (!ticket) return;
+        clearFlashes('support');
+        const newStatus = ticket.status === 'open' ? 'closed' : 'open';
+
+        updateTicketStatus(ticketId, newStatus)
+            .then(() => {
+                mutate();
+                addFlash({ type: 'success', title: 'Success', message: `Ticket has been ${newStatus}.`, key: 'support' });
+            })
+            .catch((error) => {
+                addFlash({ type: 'error', title: 'Error', message: error.response?.data?.errors[0]?.detail || 'An error occurred.', key: 'support' });
             });
     };
 
@@ -77,8 +92,8 @@ export default () => {
                         </p>
                     </div>
                 </div>
-                <Button color={'red'} isSecondary>
-                    Close Ticket
+                <Button color={ticket.status === 'open' ? 'red' : 'green'} isSecondary onClick={toggleStatus}>
+                    {ticket.status === 'open' ? 'Close Ticket' : 'Re-open Ticket'}
                 </Button>
             </div>
 

@@ -110,7 +110,7 @@ export default () => {
                                 title={
                                     <div css={tw`flex items-center justify-between w-full`}>
                                         <div css={tw`flex items-center`}>
-                                            <span css={tw`text-xs uppercase font-bold text-neutral-100`}>{msg.userName}</span>
+                                            <span css={tw`text-sm uppercase text-neutral-100`}>{msg.userName}</span>
                                             {msg.isStaff && <span css={tw`ml-2 px-1.5 py-0.5 rounded bg-neutral-600 text-[10px] text-neutral-100 font-bold uppercase tracking-wider`}>Staff</span>}
                                         </div>
                                         <div css={tw`flex items-center text-[10px] text-neutral-500 font-bold uppercase`}>
@@ -151,7 +151,7 @@ export default () => {
                             <TitledGreyBox
                                 title={
                                     <div css={tw`flex items-center`}>
-                                        <span css={tw`text-xs uppercase font-bold text-neutral-100`}>Post a Reply</span>
+                                        <span css={tw`text-sm uppercase`}>Post a Reply</span>
                                     </div>
                                 }
                             >
@@ -197,7 +197,7 @@ export default () => {
                     <TitledGreyBox
                         title={
                             <div css={tw`flex items-center`}>
-                                <span css={tw`text-xs uppercase font-bold text-neutral-100`}>Ticket Details</span>
+                                <span css={tw`text-sm uppercase`}>Ticket Details</span>
                             </div>
                         }
                     >

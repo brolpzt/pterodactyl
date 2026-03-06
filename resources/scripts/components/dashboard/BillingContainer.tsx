@@ -28,7 +28,7 @@ const BillingContainer = () => {
                         title={
                             <div css={tw`flex items-center justify-between w-full`}>
                                 <div css={tw`flex items-center`}>
-                                    <span css={tw`text-xs uppercase font-bold text-neutral-100`}>Current Balance</span>
+                                    <span css={tw`text-sm uppercase`}>Current Balance</span>
                                 </div>
                                 <FontAwesomeIcon icon={faWallet} css={tw`text-xs text-neutral-500`} />
                             </div>
@@ -52,7 +52,7 @@ const BillingContainer = () => {
                         title={
                             <div css={tw`flex items-center justify-between w-full`}>
                                 <div css={tw`flex items-center`}>
-                                    <span css={tw`text-xs uppercase font-bold text-neutral-100`}>Quick Recharge</span>
+                                    <span css={tw`text-sm uppercase`}>Quick Recharge</span>
                                 </div>
                                 <span css={tw`text-[10px] bg-neutral-900 px-2 py-0.5 rounded-full text-neutral-500 uppercase font-black`}>Instant top-up</span>
                             </div>
@@ -94,7 +94,7 @@ const BillingContainer = () => {
                 title={
                     <div css={tw`flex items-center justify-between w-full`}>
                         <div css={tw`flex items-center`}>
-                            <span css={tw`text-xs uppercase font-bold text-neutral-100`}>Recent Transactions</span>
+                            <span css={tw`text-sm uppercase`}>Recent Transactions</span>
                         </div>
                         <FontAwesomeIcon icon={faExchangeAlt} css={tw`text-xs text-neutral-500 opacity-30`} />
                     </div>

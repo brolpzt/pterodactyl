@@ -13,7 +13,7 @@ import useFlash from '@/plugins/useFlash';
 import getServers from '@/api/getServers';
 import { Server } from '@/api/server/getServer';
 import Spinner from '@/components/elements/Spinner';
-import ContentBox from '@/components/elements/ContentBox';
+import TitledGreyBox from '@/components/elements/TitledGreyBox';
 
 export default () => {
     const history = useHistory();
@@ -58,9 +58,15 @@ export default () => {
                 <h1 css={tw`text-2xl`}>Create Ticket</h1>
             </div>
 
-            <ContentBox title={'Ticket Details'} showFlashes={'support'}>
+            <TitledGreyBox
+                title={
+                    <div css={tw`flex items-center`}>
+                        <span css={tw`text-sm uppercase`}>Ticket Details</span>
+                    </div>
+                }
+            >
                 <form onSubmit={handleSubmit}>
-                    <div css={tw`mb-6`}>
+                    <div css={tw`mb-6 text-sm`}>
                         <Label>Subject</Label>
                         <Input
                             value={subject}
@@ -69,7 +75,7 @@ export default () => {
                             required
                         />
                     </div>
-                    <div css={tw`flex flex-wrap mb-6`}>
+                    <div css={tw`flex flex-wrap mb-6 text-sm`}>
                         <div css={tw`w-full md:flex-1 md:mr-4`}>
                             <Label>Department</Label>
                             {!departments ? (
@@ -93,17 +99,17 @@ export default () => {
                             </Select>
                         </div>
                     </div>
-                    <div css={tw`mb-6`}>
+                    <div css={tw`mb-6 text-sm`}>
                         <Label>Message</Label>
                         <textarea
-                            css={tw`p-3 w-full border border-neutral-700 bg-neutral-900 rounded-md shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-shadow h-48 resize-y`}
-                            placeholder={'Message...'}
+                            css={tw`p-3 w-full border border-neutral-700 bg-neutral-900 rounded-md shadow-inner text-sm focus:outline-none focus:border-neutral-600 transition-all h-48 resize-y text-neutral-100 placeholder-neutral-600`}
+                            placeholder={'Specify any details...'}
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             required
                         />
                     </div>
-                    <div css={tw`mb-6`}>
+                    <div css={tw`mb-6 text-sm`}>
                         <Label>Attachments</Label>
                         <div css={tw`flex items-center`}>
                             <Input
@@ -114,15 +120,15 @@ export default () => {
                             />
                             <FontAwesomeIcon icon={faPaperclip} css={tw`ml-3 text-neutral-500`} />
                         </div>
-                        <p css={tw`text-xs text-neutral-500 mt-1`}>You can select multiple files.</p>
+                        <p css={tw`text-xs text-neutral-500 mt-1 uppercase font-black tracking-widest`}>You can select multiple files.</p>
                     </div>
                     <div css={tw`flex justify-end`}>
-                        <Button type={'submit'} disabled={isSubmitting}>
+                        <Button type={'submit'} disabled={isSubmitting} css={tw`font-bold shadow-lg`}>
                             Create Ticket
                         </Button>
                     </div>
                 </form>
-            </ContentBox>
+            </TitledGreyBox>
         </PageContentBlock>
     );
 };

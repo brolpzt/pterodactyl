@@ -90,14 +90,14 @@ export default ({ server, className }: { server: Server; className?: string }) =
 
     return (
         <StatusIndicatorBox as={Link} to={`/server/${server.id}`} className={className} $status={stats?.status}>
-            <div css={tw`flex items-center col-span-12 sm:col-span-5 lg:col-span-5`}>
-                <div className={'icon mr-4'}>
+            <div css={tw`flex items-center col-span-12 sm:col-span-4 lg:col-span-4 min-w-0`}>
+                <div className={'icon mr-3 flex-shrink-0'}>
                     <FontAwesomeIcon icon={faServer} />
                 </div>
-                <div>
-                    <p css={tw`text-lg break-words`}>{server.name}</p>
+                <div css={tw`min-w-0 flex-1 overflow-hidden`}>
+                    <p css={tw`text-lg truncate`} title={server.name}>{server.name}</p>
                     {!!server.description && (
-                        <p css={tw`text-sm text-neutral-300 break-words line-clamp-2`}>{server.description}</p>
+                        <p css={tw`text-sm text-neutral-300 truncate`} title={server.description}>{server.description}</p>
                     )}
                 </div>
             </div>
@@ -133,7 +133,7 @@ export default ({ server, className }: { server: Server; className?: string }) =
                     </p>
                 </div>
             </div>
-            <div css={tw`hidden col-span-7 lg:col-span-3 sm:flex items-baseline justify-center`}>
+            <div css={tw`hidden col-span-7 lg:col-span-4 sm:flex items-baseline justify-center`}>
                 {!stats || isSuspended ? (
                     isSuspended ? (
                         <div css={tw`flex-1 text-center`}>

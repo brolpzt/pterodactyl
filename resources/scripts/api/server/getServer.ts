@@ -23,6 +23,8 @@ export interface Server {
     billingType?: string | null;
     hourlyRate?: number | null;
     billingCostSoFar?: number | null;
+    createdAt?: string | null;
+    nextDueDate?: string | null;
     isNodeUnderMaintenance: boolean;
     status: ServerStatus;
     sftpDetails: {
@@ -65,6 +67,8 @@ export const rawDataToServerObject = ({ attributes: data }: FractalResponseData)
     billingType: data.billing_type,
     hourlyRate: data.hourly_rate,
     billingCostSoFar: data.billing_cost_so_far,
+    createdAt: data.created_at,
+    nextDueDate: data.next_due_date,
     isNodeUnderMaintenance: data.is_node_under_maintenance,
     status: data.status,
     invocation: data.invocation,

@@ -17,6 +17,8 @@ import InstallListener from '@/components/server/InstallListener';
 import ErrorBoundary from '@/components/elements/ErrorBoundary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExternalLinkAlt, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { useLocation } from 'react-router';
 import ConflictStateRenderer from '@/components/server/ConflictStateRenderer';
 import PermissionRoute from '@/components/elements/PermissionRoute';
@@ -46,13 +48,12 @@ export default () => {
     const allocation = ServerContext.useStoreState((state) => state.server.data?.allocations.find((a) => a.isDefault));
     const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
     const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
+    const billingCostSoFar = ServerContext.useStoreState((state) => state.server.data?.billingCostSoFar);
+    const hourlyRate = ServerContext.useStoreState((state) => state.server.data?.hourlyRate);
+    const createdAt = ServerContext.useStoreState((state) => state.server.data?.createdAt);
+    const nextDueDate = ServerContext.useStoreState((state) => state.server.data?.nextDueDate);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
     const clearServerState = ServerContext.useStoreActions((actions) => actions.clearServerState);
-    const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
-
-    const password = variables?.find((v) => v.envVariable === 'SV_PASSWORD')?.serverValue || '';
-    const connectionString = allocation ? `connect ${allocation.ip}:${allocation.port};${password ? ` password ${password};` : ''}` : '';
-
     const { addFlash, clearFlashes } = useFlash();
 
     const onCopyText = (text: string, label: string) => {
@@ -150,32 +151,38 @@ export default () => {
                                                     <span>{locationName || 'n/a'}</span>
                                                 </span>
                                             </div>
-                                            {/* Players — lg+ */}
+                                            {/* Custo atual — lg+ */}
                                             <div tw="hidden lg:flex flex-col flex-shrink-0">
-                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Players</span>
-                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap">12 / 32</span>
+                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Custo atual</span>
+                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap font-mono">
+                                                    {billingCostSoFar != null ? `$${billingCostSoFar.toFixed(2)}` : '—'}
+                                                </span>
                                             </div>
-                                            {/* Mapa — lg+ */}
+                                            {/* Custo do servidor — lg+ */}
                                             <div tw="hidden lg:flex flex-col flex-shrink-0">
-                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Mapa</span>
-                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap">cs_assault_up</span>
+                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Custo do servidor</span>
+                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap font-mono">
+                                                    {hourlyRate != null && hourlyRate > 0 ? `$${Number(hourlyRate).toFixed(2)}/h` : '—'}
+                                                </span>
+                                            </div>
+                                            {/* Data de ativação — xl+ */}
+                                            <div tw="hidden xl:flex flex-col flex-shrink-0">
+                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Data de ativação</span>
+                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap">
+                                                    {createdAt ? format(new Date(createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—'}
+                                                </span>
+                                            </div>
+                                            {/* Próximo vencimento — xl+ */}
+                                            <div tw="hidden xl:flex flex-col flex-shrink-0">
+                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Próximo vencimento</span>
+                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap">
+                                                    {nextDueDate ? format(new Date(nextDueDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—'}
+                                                </span>
                                             </div>
                                             {/* Egg — xl+ */}
                                             <div tw="hidden xl:flex flex-col flex-shrink-0">
                                                 <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Egg</span>
                                                 <span tw="text-[13px] text-neutral-200 whitespace-nowrap">{eggName || 'n/a'}</span>
-                                            </div>
-                                            {/* String de conexão — xl+ */}
-                                            <div tw="hidden xl:flex flex-col flex-shrink-0">
-                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Conexão</span>
-                                                <span
-                                                    tw="text-[13px] text-neutral-200 cursor-pointer hover:text-neutral-100 transition-colors duration-150 flex items-center whitespace-nowrap"
-                                                    onClick={() => connectionString && onCopyText(connectionString, 'String de conexão')}
-                                                    title="Clique para copiar"
-                                                >
-                                                    <span tw="max-w-[130px] truncate">{connectionString || 'n/a'}</span>
-                                                    {connectionString && <FontAwesomeIcon icon={faCopy} tw="ml-1.5 text-[10px] text-neutral-500 flex-shrink-0" />}
-                                                </span>
                                             </div>
                                         </div>
 

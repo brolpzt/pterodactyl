@@ -34,7 +34,7 @@ class BillingController extends Controller
             ->allowedFilters(['username', 'email', 'uuid'])
             ->defaultSort('-wallet_balance')
             ->allowedSorts(['id', 'username', 'email', 'wallet_balance'])
-            ->paginate(50);
+            ->paginate(25);
 
         return view('admin.billing.index', ['users' => $users]);
     }

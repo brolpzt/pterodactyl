@@ -62,7 +62,9 @@
             </div>
             @if($users->hasPages())
                 <div class="box-footer with-border">
-                    <div class="col-md-12 text-center">{!! $users->appends(request()->query())->render() !!}</div>
+                    <div class="row">
+                        <div class="col-md-12 text-center">{!! $users->appends(request()->query())->render() !!}</div>
+                    </div>
                 </div>
             @endif
         </div>

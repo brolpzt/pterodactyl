@@ -103,7 +103,7 @@
                             <td class="text-right"><a href="{{ route('admin.users.view', $ticket->user->id) }}">{{ $ticket->user->email }}</a></td>
                         </tr>
                         <tr>
-                            <td>Instance</td>
+                            <td>Server</td>
                             <td class="text-right">
                                 @if($ticket->server)
                                     <a href="{{ route('admin.servers.view', $ticket->server->id) }}">{{ $ticket->server->name }}</a>

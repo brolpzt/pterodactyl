@@ -21,6 +21,11 @@ const AttachmentItem = styled.a`
     &:hover .dl-icon { color: #d4d4d4; }
 `;
 
+const StatusLabel = styled.span<{ $isOpen: boolean }>`
+    ${tw`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider`};
+    ${props => props.$isOpen ? tw`bg-green-600 text-green-50` : tw`bg-neutral-600 text-neutral-100`};
+`;
+
 export default () => {
     const { id } = useParams<{ id: string }>();
     const ticketId = parseInt(id);
@@ -88,8 +93,7 @@ export default () => {
                 </div>
                 <div css={tw`flex gap-3`}>
                     <Button
-                        color={ticket.status === 'open' ? 'red' : 'green'}
-                        isSecondary
+                        color={'primary'}
                         onClick={toggleStatus}
                     >
                         {ticket.status === 'open' ? 'Mark as Resolved' : 'Re-open Ticket'}
@@ -131,7 +135,7 @@ export default () => {
                                                     </div>
                                                     <div css={tw`flex flex-col`}>
                                                         <span css={tw`truncate max-w-[150px] font-bold`}>{att.filename}</span>
-                                                        <span css={tw`text-[8px] opacity-40 uppercase font-black`}>{Math.round(att.size / 1024)} KB</span>
+                                                        <span css={tw`text-[8px] opacity-40 uppercase font-black`}>{Math.round(att.size / 1024) * 1} KB</span>
                                                     </div>
                                                 </AttachmentItem>
                                             ))}
@@ -193,7 +197,7 @@ export default () => {
                     <TitledGreyBox
                         title={
                             <div css={tw`flex items-center`}>
-                                <span css={tw`text-xs uppercase font-bold text-neutral-100`}>Management</span>
+                                <span css={tw`text-xs uppercase font-bold text-neutral-100`}>Ticket Details</span>
                             </div>
                         }
                     >
@@ -202,7 +206,9 @@ export default () => {
                                 <tr css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
                                     <td css={tw`px-3 py-3 text-neutral-400 text-[11px] font-bold uppercase tracking-wider`}>Status</td>
                                     <td css={tw`px-3 py-3 text-right text-sm font-bold text-neutral-100`}>
-                                        {ticket.status.toUpperCase()}
+                                        <StatusLabel $isOpen={ticket.status === 'open'}>
+                                            {ticket.status}
+                                        </StatusLabel>
                                     </td>
                                 </tr>
                                 <tr css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
@@ -211,7 +217,7 @@ export default () => {
                                 </tr>
                                 {ticket.serverName && (
                                     <tr css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
-                                        <td css={tw`px-3 py-3 text-neutral-400 text-[11px] font-bold uppercase tracking-wider`}>Instance</td>
+                                        <td css={tw`px-3 py-3 text-neutral-400 text-[11px] font-bold uppercase tracking-wider`}>Server</td>
                                         <td css={tw`px-3 py-3 text-right text-sm font-semibold text-neutral-100`}>{ticket.serverName}</td>
                                     </tr>
                                 )}

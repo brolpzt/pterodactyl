@@ -2,30 +2,30 @@ import React from 'react';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faLifeRing, faChevronRight, faClock, faExclamationCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faChevronRight, faClock, faExclamationCircle, faCheckCircle, faLifeRing } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/elements/Button';
 import GreyRowBox from '@/components/elements/GreyRowBox';
 import { Link, useHistory } from 'react-router-dom';
 import { useTickets } from '@/api/account/tickets';
 import Spinner from '@/components/elements/Spinner';
 import { formatDistanceToNow } from 'date-fns';
-import styled from 'styled-components/macro';
+import styled from 'styled-components';
 
 const Container = styled.div`
     ${tw`flex flex-col gap-3 shadow-none bg-transparent p-0`};
 `;
 
 const TicketRow = styled(GreyRowBox)`
-    ${tw`flex items-center p-4 cursor-pointer transition-all duration-200 border border-neutral-700 hover:border-cyan-500 hover:bg-neutral-700 shadow-sm rounded-lg`};
+    ${tw`flex items-center p-4 cursor-pointer transition-all duration-200 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-700 shadow-sm rounded-lg`};
 
     &:hover .ticket-chevron {
-        ${tw`text-cyan-400`};
+        ${tw`text-neutral-200`};
     }
 `;
 
 const StatusBadge = styled.span<{ $isOpen: boolean }>`
-    ${tw`px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest flex items-center shadow-sm`};
-    ${props => props.$isOpen ? tw`bg-cyan-500 text-cyan-50 border border-cyan-500` : tw`bg-neutral-600 text-neutral-400 border border-neutral-700`};
+    ${tw`px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest flex items-center shadow-sm border`};
+    ${props => props.$isOpen ? tw`bg-neutral-600 text-neutral-100 border-neutral-500` : tw`bg-neutral-800 text-neutral-500 border-neutral-700`};
 `;
 
 export default () => {
@@ -35,17 +35,12 @@ export default () => {
     return (
         <PageContentBlock title={'Support Center'} showFlashKey={'support'}>
             <div css={tw`flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6`}>
-                <div css={tw`flex items-center`}>
-                    <div css={tw`h-12 w-12 bg-cyan-500 rounded-xl flex items-center justify-center mr-4 shadow-lg`}>
-                        <FontAwesomeIcon icon={faLifeRing} css={tw`text-white text-xl`} />
-                    </div>
-                    <div>
-                        <h1 css={tw`text-3xl font-black text-neutral-100`}>Support Center</h1>
-                        <p css={tw`text-neutral-500 text-sm font-medium`}>Track your current issues and requests.</p>
-                    </div>
+                <div>
+                    <h1 css={tw`text-3xl font-black text-neutral-100`}>Support Center</h1>
+                    <p css={tw`text-neutral-500 text-sm font-medium`}>Track your current issues and requests.</p>
                 </div>
                 <Link to={'/account/support/new'}>
-                    <Button color={'primary'} css={tw`shadow-xl px-6 py-3 font-bold border-none transition-transform hover:scale-105 active:scale-95`}>
+                    <Button color={'primary'} css={tw`px-6 py-3 font-bold`}>
                         <FontAwesomeIcon icon={faPlus} css={tw`mr-2`} />
                         Create New Ticket
                     </Button>
@@ -73,12 +68,12 @@ export default () => {
                                     onClick={() => history.push(`/account/support/${ticket.id}`)}
                                 >
                                     <div css={tw`h-10 w-10 flex items-center justify-center rounded-lg bg-neutral-900 mr-4 text-neutral-500 shadow-inner`}>
-                                        <FontAwesomeIcon icon={ticket.status === 'open' ? faExclamationCircle : faCheckCircle} css={ticket.status === 'open' ? tw`text-cyan-500` : tw`text-neutral-600`} />
+                                        <FontAwesomeIcon icon={ticket.status === 'open' ? faExclamationCircle : faCheckCircle} />
                                     </div>
                                     <div css={tw`flex-1 min-w-0`}>
                                         <h3 css={tw`text-base font-bold text-neutral-100 mb-1 truncate`}>{ticket.subject}</h3>
                                         <p css={tw`text-[11px] text-neutral-500 font-bold uppercase tracking-widest`}>
-                                            ID #{ticket.id} &bull; <span css={tw`text-neutral-400`}>{ticket.department}</span> {ticket.serverName ? <>&bull; <span css={tw`text-cyan-600`}>{ticket.serverName}</span></> : ''}
+                                            ID #{ticket.id} &bull; <span css={tw`text-neutral-400`}>{ticket.department}</span> {ticket.serverName ? <>&bull; <span css={tw`text-neutral-500`}>{ticket.serverName}</span></> : ''}
                                         </p>
                                     </div>
                                     <div css={tw`flex items-center gap-6 ml-4`}>

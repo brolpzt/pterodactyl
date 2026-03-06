@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faPaperPlane, faPaperclip, faDownload, faUser, faShieldAlt, faCalendarAlt, faClock, faLifeRing } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faPaperPlane, faPaperclip, faDownload, faClock, faLifeRing } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/elements/Button';
 import { Link, useParams } from 'react-router-dom';
 import { useTicket, replyTicket, updateTicketStatus } from '@/api/account/tickets';
@@ -14,17 +14,11 @@ import Label from '@/components/elements/Label';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import styled from 'styled-components';
 
-const Badge = styled.span<{ $variant?: string }>`
-    ${tw`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider`};
-    background-color: ${props => props.$variant === 'cyan' ? '#06b6d4' : '#404040'};
-    color: ${props => props.$variant === 'cyan' ? '#ecfeff' : '#d4d4d4'};
-`;
-
 const AttachmentItem = styled.a`
     ${tw`flex items-center bg-neutral-900 border border-neutral-700 p-2.5 rounded-lg text-xs text-neutral-400 transition-all no-underline shadow-sm`};
-    &:hover { ${tw`text-cyan-400 border-cyan-500 bg-neutral-800`}; }
-    &:hover .dl-icon-box { background-color: rgba(6, 182, 212, 0.2); }
-    &:hover .dl-icon { color: #22d3ee; }
+    &:hover { ${tw`text-neutral-100 border-neutral-600 bg-neutral-800`}; }
+    &:hover .dl-icon-box { background-color: rgba(255, 255, 255, 0.05); }
+    &:hover .dl-icon { color: #d4d4d4; }
 `;
 
 export default () => {
@@ -79,33 +73,32 @@ export default () => {
             <div css={tw`flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4`}>
                 <div css={tw`flex items-center`}>
                     <Link to={'/account/support'}>
-                        <Button color={'grey'} isSecondary css={tw`mr-4 px-3 shadow-md`}>
+                        <Button color={'grey'} isSecondary css={tw`mr-4 px-3`}>
                             <FontAwesomeIcon icon={faArrowLeft} />
                         </Button>
                     </Link>
                     <div>
                         <h1 css={tw`text-3xl font-black text-neutral-100 leading-none`}>{ticket.subject}</h1>
                         <div css={tw`flex items-center mt-2`}>
-                            <Badge $variant={ticket.status === 'open' ? 'cyan' : undefined}>
-                                {ticket.status.toUpperCase()}
-                            </Badge>
-                            <span css={tw`mx-2 text-neutral-600 font-bold`}>&bull;</span>
                             <span css={tw`text-[10px] text-neutral-400 uppercase tracking-widest font-bold`}>ID # {ticket.id}</span>
+                            <span css={tw`mx-2 text-neutral-600 font-bold`}>&bull;</span>
+                            <span css={tw`text-[10px] text-neutral-500 uppercase tracking-widest font-bold`}>{ticket.status.toUpperCase()}</span>
                         </div>
                     </div>
                 </div>
-                <Button
-                    color={ticket.status === 'open' ? 'red' : 'green'}
-                    isSecondary
-                    onClick={toggleStatus}
-                    css={tw`shadow-lg font-bold border-none transition-transform hover:scale-105 active:scale-95`}
-                >
-                    {ticket.status === 'open' ? 'Mark as Resolved' : 'Re-open Ticket'}
-                </Button>
+                <div css={tw`flex gap-3`}>
+                    <Button
+                        color={ticket.status === 'open' ? 'red' : 'green'}
+                        isSecondary
+                        onClick={toggleStatus}
+                    >
+                        {ticket.status === 'open' ? 'Mark as Resolved' : 'Re-open Ticket'}
+                    </Button>
+                </div>
             </div>
 
             <div css={tw`flex flex-col-reverse md:flex-row gap-8 mb-10`}>
-                <div css={tw`w-full md:w-2/3 flex flex-col`}>
+                <div css={tw`w-full md:w-2/3 flex flex-col gap-6`}>
                     <div css={tw`flex flex-col gap-6`}>
                         {ticket.messages?.map(msg => (
                             <TitledGreyBox
@@ -113,9 +106,8 @@ export default () => {
                                 title={
                                     <div css={tw`flex items-center justify-between w-full`}>
                                         <div css={tw`flex items-center`}>
-                                            <FontAwesomeIcon icon={msg.isStaff ? faShieldAlt : faUser} css={[tw`mr-2 text-xs`, msg.isStaff ? tw`text-cyan-400` : tw`text-neutral-400`]} />
                                             <span css={tw`text-xs uppercase font-bold text-neutral-100`}>{msg.userName}</span>
-                                            {msg.isStaff && <Badge $variant={'cyan'} css={tw`ml-2`}>Staff</Badge>}
+                                            {msg.isStaff && <span css={tw`ml-2 px-1.5 py-0.5 rounded bg-neutral-600 text-[10px] text-neutral-100 font-bold uppercase tracking-wider`}>Staff</span>}
                                         </div>
                                         <div css={tw`flex items-center text-[10px] text-neutral-500 font-bold uppercase`}>
                                             <FontAwesomeIcon icon={faClock} css={tw`mr-1.5 opacity-40`} />
@@ -134,7 +126,7 @@ export default () => {
                                         <div css={tw`flex flex-wrap gap-2`}>
                                             {msg.attachments.map(att => (
                                                 <AttachmentItem key={att.id} href={att.url} target={'_blank'} rel={'noreferrer'}>
-                                                    <div className={'dl-icon-box'} css={tw`h-6 w-6 bg-neutral-800 rounded flex items-center justify-center mr-2 shadow-sm transition-colors`}>
+                                                    <div className={'dl-icon-box'} css={tw`h-6 w-6 bg-neutral-800 rounded flex items-center justify-center mr-2 transition-colors`}>
                                                         <FontAwesomeIcon icon={faDownload} className={'dl-icon'} css={tw`text-[10px] text-neutral-600 transition-colors`} />
                                                     </div>
                                                     <div css={tw`flex flex-col`}>
@@ -155,23 +147,22 @@ export default () => {
                             <TitledGreyBox
                                 title={
                                     <div css={tw`flex items-center`}>
-                                        <FontAwesomeIcon icon={faPaperPlane} css={tw`mr-2 text-xs text-neutral-300`} />
                                         <span css={tw`text-xs uppercase font-bold text-neutral-100`}>Post a Reply</span>
                                     </div>
                                 }
                             >
                                 <form onSubmit={handleSubmitReply}>
                                     <textarea
-                                        css={tw`p-5 w-full border-2 border-neutral-700 bg-neutral-900 rounded-xl shadow-inner text-sm focus:outline-none focus:border-cyan-500 transition-all h-40 resize-y text-neutral-100 placeholder-neutral-600 font-medium`}
-                                        placeholder={'Specify any error logs...'}
+                                        css={tw`p-5 w-full border-2 border-neutral-700 bg-neutral-900 rounded-xl text-sm focus:outline-none focus:border-neutral-600 transition-all h-40 resize-y text-neutral-100 placeholder-neutral-600 font-medium`}
+                                        placeholder={'Specify any details...'}
                                         value={reply}
                                         onChange={(e) => setReply(e.target.value)}
                                         required
                                     />
-                                    <div css={tw`mt-4 p-4 bg-neutral-900 rounded-xl border-2 border-dashed border-neutral-700 transition-colors hover:border-cyan-500`}>
+                                    <div css={tw`mt-4 p-4 bg-neutral-900 rounded-xl border-2 border-dashed border-neutral-700 transition-colors hover:border-neutral-600`}>
                                         <Label css={tw`mb-2 block text-[10px] font-bold text-neutral-500 uppercase tracking-widest`}>Attachments</Label>
                                         <div css={tw`flex items-center`}>
-                                            <Input
+                                            <input
                                                 type={'file'}
                                                 onChange={(e) => setFiles(e.target.files)}
                                                 css={tw`flex-1 text-xs text-neutral-400 cursor-pointer`}
@@ -181,7 +172,7 @@ export default () => {
                                         </div>
                                     </div>
                                     <div css={tw`flex justify-end mt-6`}>
-                                        <Button type={'submit'} disabled={isSubmitting || !reply.trim()} css={tw`py-2.5 px-6 shadow-xl border-none`}>
+                                        <Button type={'submit'} disabled={isSubmitting || !reply.trim()} css={tw`py-2.5 px-6`}>
                                             <FontAwesomeIcon icon={faPaperPlane} css={tw`mr-2`} />
                                             Submit Reply
                                         </Button>
@@ -190,7 +181,7 @@ export default () => {
                             </TitledGreyBox>
                         </div>
                     ) : (
-                        <div css={tw`mt-10 p-10 bg-neutral-800 border-2 border-dashed border-neutral-700 rounded-2xl flex flex-col items-center text-center shadow-lg text-neutral-500`}>
+                        <div css={tw`mt-10 p-10 bg-neutral-800 border-2 border-dashed border-neutral-700 rounded-2xl flex flex-col items-center text-center text-neutral-500`}>
                             <FontAwesomeIcon icon={faLifeRing} size={'2x'} css={tw`mb-4 opacity-30`} />
                             <h3 css={tw`text-lg font-bold text-neutral-400 mb-2 uppercase tracking-wide`}>Ticket Resolved</h3>
                             <p css={tw`text-xs max-w-sm`}>This ticket has been marked as resolved and is now locked for further conversation.</p>
@@ -202,30 +193,29 @@ export default () => {
                     <TitledGreyBox
                         title={
                             <div css={tw`flex items-center`}>
-                                <FontAwesomeIcon icon={faLifeRing} css={tw`mr-2 text-xs text-neutral-300`} />
                                 <span css={tw`text-xs uppercase font-bold text-neutral-100`}>Management</span>
                             </div>
                         }
                     >
                         <table css={tw`w-full text-left`}>
                             <tbody>
-                                <tr css={tw`border-b border-neutral-600/50 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
+                                <tr css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
                                     <td css={tw`px-3 py-3 text-neutral-400 text-[11px] font-bold uppercase tracking-wider`}>Status</td>
-                                    <td css={tw`px-3 py-3 text-right text-sm font-bold`} style={{ color: ticket.status === 'open' ? '#06b6d4' : '#10b981' }}>
+                                    <td css={tw`px-3 py-3 text-right text-sm font-bold text-neutral-100`}>
                                         {ticket.status.toUpperCase()}
                                     </td>
                                 </tr>
-                                <tr css={tw`border-b border-neutral-600/50 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
+                                <tr css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
                                     <td css={tw`px-3 py-3 text-neutral-400 text-[11px] font-bold uppercase tracking-wider`}>Department</td>
                                     <td css={tw`px-3 py-3 text-right text-sm font-semibold text-neutral-100`}>{ticket.department}</td>
                                 </tr>
                                 {ticket.serverName && (
-                                    <tr css={tw`border-b border-neutral-600/50 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
+                                    <tr css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
                                         <td css={tw`px-3 py-3 text-neutral-400 text-[11px] font-bold uppercase tracking-wider`}>Instance</td>
                                         <td css={tw`px-3 py-3 text-right text-sm font-semibold text-neutral-100`}>{ticket.serverName}</td>
                                     </tr>
                                 )}
-                                <tr css={tw`border-b border-neutral-600/50 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
+                                <tr css={tw`border-b border-neutral-600 last:border-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
                                     <td css={tw`px-3 py-3 text-neutral-400 text-[11px] font-bold uppercase tracking-wider`}>Created</td>
                                     <td css={tw`px-3 py-3 text-right text-sm font-semibold text-neutral-100`}>{format(ticket.createdAt, 'MMM dd, yyyy')}</td>
                                 </tr>
@@ -236,11 +226,6 @@ export default () => {
                             </tbody>
                         </table>
                     </TitledGreyBox>
-
-                    <div css={tw`p-6 bg-neutral-800 rounded-lg border border-neutral-700 relative overflow-hidden shadow-lg`}>
-                        <h4 css={tw`text-cyan-400 text-[10px] font-black uppercase tracking-widest mb-4`}>Support Tip</h4>
-                        <p css={tw`text-xs text-neutral-400 leading-relaxed font-medium`}>Provide as much detail as possible. Log files and screenshots are highly encouraged for faster resolution.</p>
-                    </div>
                 </div>
             </div>
         </PageContentBlock>

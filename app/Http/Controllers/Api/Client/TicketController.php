@@ -2,6 +2,9 @@
 
 namespace Pterodactyl\Http\Controllers\Api\Client;
 
+use Pterodactyl\Models\Ticket;
+use Pterodactyl\Models\TicketMessage;
+use Pterodactyl\Models\TicketDepartment;
 use Pterodactyl\Models\TicketAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;

@@ -62,6 +62,8 @@ class DeployController extends ClientApiController
             'location_ids' => 'required|array',
             'location_ids.*' => 'integer|exists:locations,id',
             'billing_type' => 'required|string|in:hourly,monthly,quarterly,semi_annually,annually',
+            'environment' => 'sometimes|array',
+            'environment.*' => 'nullable|string',
         ]);
 
         $planConfig = config("deploy.plans.{$request->input('plan_id')}");
@@ -69,10 +71,12 @@ class DeployController extends ClientApiController
             return new JsonResponse(['error' => 'Invalid plan'], 422);
         }
 
-        $egg = Egg::with('nest')->find($planConfig['egg_id']);
+        $egg = Egg::with(['nest', 'variables'])->find($planConfig['egg_id']);
         if (!$egg) {
             return new JsonResponse(['error' => 'Plan configuration error: egg not found'], 500);
         }
+
+        $environment = $this->buildEnvironment($egg, $request->input('environment', []));
 
         $dockerImages = $egg->docker_images ?? [];
         $image = is_array($dockerImages) ? (array_values($dockerImages)[0] ?? $egg->image ?? 'ghcr.io/pterodactyl/yolks:java_17') : $egg->image;
@@ -97,7 +101,7 @@ class DeployController extends ClientApiController
             'database_limit' => 0,
             'allocation_limit' => 0,
             'backup_limit' => 0,
-            'environment' => [],
+            'environment' => $environment,
             'billing_type' => $request->input('billing_type'),
             'hourly_rate' => $planConfig['hourly_rate'],
             'start_on_completion' => false,
@@ -121,17 +125,48 @@ class DeployController extends ClientApiController
         ], 201);
     }
 
+    /**
+     * Build full environment array from user input and egg defaults.
+     * User-editable vars use request values; others use default_value.
+     */
+    protected function buildEnvironment(Egg $egg, array $userInput): array
+    {
+        $environment = [];
+        foreach ($egg->variables as $variable) {
+            if ($variable->user_editable && $variable->user_viewable) {
+                $value = $userInput[$variable->env_variable] ?? $variable->default_value;
+                $environment[$variable->env_variable] = $value !== null ? (string) $value : $variable->default_value;
+            } else {
+                $environment[$variable->env_variable] = $variable->default_value ?? '';
+            }
+        }
+        return $environment;
+    }
+
     protected function getAvailablePlans(): array
     {
         $plans = [];
         foreach (config('deploy.plans', []) as $id => $config) {
-            $egg = Egg::find($config['egg_id'] ?? 0);
+            $egg = Egg::with('variables')->find($config['egg_id'] ?? 0);
             if (!$egg) {
                 continue;
             }
             $discount = config("billing.period_discounts.monthly", 0.75);
             $days = config("billing.period_days.monthly", 30);
             $monthlyPrice = round($config['hourly_rate'] * $days * 24 * $discount, 2);
+
+            $variables = $egg->variables
+                ->where('user_viewable', true)
+                ->values()
+                ->map(fn ($v) => [
+                    'name' => $v->name,
+                    'description' => $v->description,
+                    'env_variable' => $v->env_variable,
+                    'default_value' => $v->default_value,
+                    'user_editable' => $v->user_editable,
+                    'rules' => explode('|', $v->rules),
+                ])
+                ->toArray();
 
             $plans[] = [
                 'id' => $id,
@@ -141,6 +176,7 @@ class DeployController extends ClientApiController
                 'memory' => $config['memory'],
                 'disk' => $config['disk'],
                 'cpu' => $config['cpu'],
+                'egg_variables' => $variables,
             ];
         }
         return $plans;

@@ -2,15 +2,28 @@ import React, { useState, useEffect } from 'react';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faServer, faGlobe, faWallet, faClock, faCalendar, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faGlobe, faWallet, faClock, faCalendar, faSpinner, faCog } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/elements/Button';
-import ContentBox from '@/components/elements/ContentBox';
 import Input from '@/components/elements/Input';
 import Select from '@/components/elements/Select';
+import Switch from '@/components/elements/Switch';
+import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import { useHistory } from 'react-router-dom';
 import useFlash from '@/plugins/useFlash';
 import FlashMessageRender from '@/components/FlashMessageRender';
-import { getDeployOptions, createServer, DeployPlan, DeployLocation } from '@/api/deploy';
+import { getDeployOptions, createServer, DeployPlan, DeployLocation, DeployEggVariable } from '@/api/deploy';
+import styled from 'styled-components';
+
+const SelectableCard = styled.button<{ $selected?: boolean }>`
+    ${tw`p-4 rounded border transition-all duration-200 flex flex-col items-start justify-center gap-1 shadow-sm text-left w-full`};
+    ${({ $selected }) =>
+        $selected
+            ? tw`border-primary-500 bg-neutral-800`
+            : tw`border-neutral-600 bg-neutral-900 hover:border-neutral-500 hover:bg-neutral-700`};
+    &:hover {
+        ${tw`transform scale-[1.01] shadow-md`};
+    }
+`;
 
 const BILLING_TYPES = [
     { id: 'hourly', name: 'Hourly', icon: faClock },
@@ -29,6 +42,7 @@ const CreateServerContainer = () => {
     const [selectedPlan, setSelectedPlan] = useState<string>('');
     const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
     const [billingType, setBillingType] = useState<'hourly' | 'monthly'>('hourly');
+    const [environment, setEnvironment] = useState<Record<string, string>>({});
 
     useEffect(() => {
         getDeployOptions()
@@ -42,6 +56,7 @@ const CreateServerContainer = () => {
                 if (data.locations.length > 0) {
                     setSelectedLocation((s) => (s !== null ? s : data.locations[0].id));
                 }
+                setEnvironment({});
             })
             .catch(() => {
                 addFlash({ key: 'deploy', type: 'error', message: 'Failed to load deploy options.' });
@@ -49,10 +64,87 @@ const CreateServerContainer = () => {
             .finally(() => setLoading(false));
     }, [addFlash]);
 
+    useEffect(() => {
+        setEnvironment({});
+    }, [selectedPlan]);
+
     const currentPlan = plans.find((p) => p.id === selectedPlan);
+
+    const setEnvValue = (key: string, value: string) => {
+        setEnvironment((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const getEnvValue = (variable: DeployEggVariable): string => {
+        if (variable.env_variable in environment) {
+            return environment[variable.env_variable];
+        }
+        return variable.default_value ?? '';
+    };
+
+    const renderVariableInput = (variable: DeployEggVariable) => {
+        const useSwitch = variable.rules.some(
+            (v) => v === 'boolean' || v === 'in:0,1' || v === 'in:1,0' || v === 'in:true,false' || v === 'in:false,true'
+        );
+        const isStringSwitch = variable.rules.some((v) => v === 'string');
+        const inRule = variable.rules.find((v) => v.startsWith('in:'));
+        const selectValues = inRule ? inRule.replace(/^in:/, '').split(',') : [];
+
+        const value = getEnvValue(variable);
+        const displayValue = value || variable.default_value || '';
+
+        if (useSwitch && variable.user_editable) {
+            const checked = isStringSwitch ? displayValue === 'true' : displayValue === '1';
+            return (
+                <Switch
+                    name={variable.env_variable}
+                    checked={checked}
+                    onChange={() => {
+                        const next = isStringSwitch ? (checked ? 'false' : 'true') : checked ? '0' : '1';
+                        setEnvValue(variable.env_variable, next);
+                    }}
+                />
+            );
+        }
+        if (selectValues.length > 0 && variable.user_editable) {
+            const selectValue = displayValue && selectValues.includes(displayValue) ? displayValue : (selectValues[0]?.trim() ?? '');
+            return (
+                <Select
+                    value={selectValue}
+                    onChange={(e) => setEnvValue(variable.env_variable, e.target.value)}
+                    name={variable.env_variable}
+                >
+                    {selectValues.map((opt) => (
+                        <option key={opt} value={opt.trim()}>
+                            {opt.trim()}
+                        </option>
+                    ))}
+                </Select>
+            );
+        }
+        return (
+            <Input
+                value={variable.user_editable ? displayValue : variable.default_value}
+                onChange={(e) => variable.user_editable && setEnvValue(variable.env_variable, e.target.value)}
+                readOnly={!variable.user_editable}
+                name={variable.env_variable}
+                placeholder={variable.default_value}
+            />
+        );
+    };
     const chargeToday = billingType === 'monthly' && currentPlan ? currentPlan.monthly_price : 0;
     const canDeploy = !submitting && serverName.trim().length > 0 && selectedPlan && selectedLocation !== null;
     const hasInsufficientFunds = billingType === 'monthly' && currentPlan && currentPlan.monthly_price > walletBalance;
+
+    const buildEnvironmentPayload = (): Record<string, string> => {
+        if (!currentPlan?.egg_variables) return {};
+        const payload: Record<string, string> = {};
+        for (const v of currentPlan.egg_variables) {
+            if (v.user_editable) {
+                payload[v.env_variable] = environment[v.env_variable] ?? v.default_value ?? '';
+            }
+        }
+        return payload;
+    };
 
     const handleDeploy = () => {
         if (!canDeploy || hasInsufficientFunds || !selectedLocation) return;
@@ -63,6 +155,7 @@ const CreateServerContainer = () => {
             plan_id: selectedPlan,
             location_ids: [selectedLocation],
             billing_type: billingType,
+            environment: buildEnvironmentPayload(),
         })
             .then((res) => {
                 addFlash({ key: 'deploy', type: 'success', message: `Server "${res.server.name}" created successfully!` });
@@ -88,15 +181,15 @@ const CreateServerContainer = () => {
     if (plans.length === 0) {
         return (
             <PageContentBlock title={'Create New Server'}>
-                <ContentBox title={'No Plans Available'}>
-                    <p css={tw`text-neutral-400`}>
+                <TitledGreyBox title={'No Plans Available'}>
+                    <p css={tw`text-neutral-400 text-sm`}>
                         No deploy plans are configured. Please contact the administrator or configure deploy plans in{' '}
-                        <code>config/deploy.php</code>.
+                        <code css={tw`bg-neutral-900 px-1 rounded`}>config/deploy.php</code>.
                     </p>
                     <Button css={tw`mt-4`} onClick={() => history.push('/')}>
                         Back to Dashboard
                     </Button>
-                </ContentBox>
+                </TitledGreyBox>
             </PageContentBlock>
         );
     }
@@ -104,11 +197,11 @@ const CreateServerContainer = () => {
     return (
         <PageContentBlock title={'Create New Server'}>
             <FlashMessageRender byKey={'deploy'} css={tw`mb-4`} />
-            <div css={tw`flex justify-between items-center mb-6`}>
-                <h1 css={tw`text-2xl font-bold flex items-center`}>
-                    <FontAwesomeIcon icon={faServer} css={tw`mr-3 text-cyan-500`} />
-                    Deploy New Server
-                </h1>
+            <div css={tw`flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6`}>
+                <div>
+                    <h1 css={tw`text-2xl font-black text-neutral-100`}>Deploy New Server</h1>
+                    <p css={tw`text-neutral-500 text-sm font-medium`}>Choose your plan, location and billing cycle.</p>
+                </div>
                 <Button color={'grey'} onClick={() => history.push('/')}>
                     Cancel
                 </Button>
@@ -116,9 +209,15 @@ const CreateServerContainer = () => {
 
             <div css={tw`grid grid-cols-1 lg:grid-cols-3 gap-8`}>
                 <div css={tw`lg:col-span-2 space-y-6`}>
-                    <ContentBox title={'1. Server Details'}>
+                    <TitledGreyBox
+                        title={
+                            <div css={tw`flex items-center justify-between w-full`}>
+                                <span css={tw`text-sm uppercase`}>1. Server Details</span>
+                            </div>
+                        }
+                    >
                         <div css={tw`mb-4`}>
-                            <label css={tw`block text-sm font-medium text-neutral-300 mb-2`}>Server Name</label>
+                            <label css={tw`block text-xs text-neutral-500 font-semibold uppercase tracking-wider mb-2`}>Server Name</label>
                             <Input
                                 placeholder={'e.g., My Awesome Server'}
                                 value={serverName}
@@ -126,8 +225,8 @@ const CreateServerContainer = () => {
                             />
                         </div>
 
-                        <div css={tw`mb-4`}>
-                            <label css={tw`block text-sm font-medium text-neutral-300 mb-2`}>Select Plan</label>
+                        <div>
+                            <label css={tw`block text-xs text-neutral-500 font-semibold uppercase tracking-wider mb-2`}>Select Plan</label>
                             <Select value={selectedPlan} onChange={(e) => setSelectedPlan(e.target.value)}>
                                 {plans.map((p) => (
                                     <option key={p.id} value={p.id}>
@@ -136,68 +235,121 @@ const CreateServerContainer = () => {
                                 ))}
                             </Select>
                         </div>
-                    </ContentBox>
+                    </TitledGreyBox>
 
-                    <ContentBox title={'2. Location'}>
-                        <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-4`}>
+                    <TitledGreyBox
+                        title={
+                            <div css={tw`flex items-center justify-between w-full`}>
+                                <div css={tw`flex items-center`}>
+                                    <FontAwesomeIcon icon={faGlobe} css={tw`text-xs text-neutral-500 mr-2`} />
+                                    <span css={tw`text-sm uppercase`}>2. Location</span>
+                                </div>
+                            </div>
+                        }
+                    >
+                        <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-3`}>
                             {locations.map((loc) => (
-                                <button
+                                <SelectableCard
                                     key={loc.id}
                                     type="button"
                                     onClick={() => setSelectedLocation(loc.id)}
-                                    css={[
-                                        tw`p-4 border-2 rounded-lg text-left transition-colors`,
-                                        selectedLocation === loc.id
-                                            ? tw`border-cyan-500 bg-neutral-800`
-                                            : tw`border-neutral-700 bg-neutral-900 hover:border-neutral-500`,
-                                    ]}
+                                    $selected={selectedLocation === loc.id}
                                 >
-                                    <div css={tw`font-bold text-lg mb-1`}>{loc.long || loc.short}</div>
-                                    <div css={tw`text-sm text-neutral-400`}>{loc.short}</div>
-                                </button>
+                                    <span css={tw`font-bold text-neutral-100`}>{loc.long || loc.short}</span>
+                                    <span css={tw`text-[10px] text-neutral-500 uppercase tracking-tight`}>{loc.short}</span>
+                                </SelectableCard>
                             ))}
                         </div>
-                    </ContentBox>
+                    </TitledGreyBox>
 
-                    <ContentBox title={'3. Billing Cycle'}>
-                        <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-4`}>
+                    {currentPlan && currentPlan.egg_variables && currentPlan.egg_variables.length > 0 && (
+                        <TitledGreyBox
+                            title={
+                                <div css={tw`flex items-center justify-between w-full`}>
+                                    <div css={tw`flex items-center`}>
+                                        <FontAwesomeIcon icon={faCog} css={tw`text-xs text-neutral-500 mr-2`} />
+                                        <span css={tw`text-sm uppercase`}>3. Server Configuration</span>
+                                    </div>
+                                </div>
+                            }
+                        >
+                            <p css={tw`text-neutral-400 text-sm mb-4`}>
+                                Configure your server variables. These can be changed later in the Startup tab.
+                            </p>
+                            <div css={tw`space-y-4`}>
+                                {currentPlan.egg_variables.map((variable) => (
+                                    <div key={variable.env_variable}>
+                                        <label css={tw`block text-xs text-neutral-500 font-semibold uppercase tracking-wider mb-2`}>
+                                            {!variable.user_editable && (
+                                                <span css={tw`bg-neutral-700 text-[10px] py-0.5 px-1.5 rounded mr-2`}>Read Only</span>
+                                            )}
+                                            {variable.name}
+                                        </label>
+                                        {renderVariableInput(variable)}
+                                        {variable.description && (
+                                            <p css={tw`mt-1 text-xs text-neutral-300`}>{variable.description}</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </TitledGreyBox>
+                    )}
+
+                    <TitledGreyBox
+                        title={
+                            <div css={tw`flex items-center justify-between w-full`}>
+                                <span css={tw`text-sm uppercase`}>
+                                    {currentPlan?.egg_variables?.length ? '4' : '3'}. Billing Cycle
+                                </span>
+                                <span css={tw`text-[10px] bg-neutral-900 px-2 py-0.5 rounded-full text-neutral-500 font-medium`}>
+                                    Hourly or monthly
+                                </span>
+                            </div>
+                        }
+                    >
+                        <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-3`}>
                             {BILLING_TYPES.map(({ id, name, icon }) => (
-                                <button
+                                <SelectableCard
                                     key={id}
                                     type="button"
                                     onClick={() => setBillingType(id)}
-                                    css={[
-                                        tw`p-5 border-2 rounded-lg text-left transition-all relative overflow-hidden`,
-                                        billingType === id ? tw`border-cyan-500 bg-neutral-800` : tw`border-neutral-700 bg-neutral-900 hover:border-neutral-500`,
-                                    ]}
+                                    $selected={billingType === id}
                                 >
-                                    <div css={tw`flex items-center justify-between mb-2`}>
-                                        <h3 css={tw`font-bold text-lg flex items-center`}>
-                                            <FontAwesomeIcon
-                                                icon={icon}
-                                                css={[tw`mr-2`, billingType === id ? tw`text-cyan-400` : tw`text-neutral-500`]}
-                                            />
-                                            {name}
-                                        </h3>
+                                    <div css={tw`flex items-center gap-2`}>
+                                        <FontAwesomeIcon
+                                            icon={icon}
+                                            css={[tw`text-xs`, billingType === id ? tw`text-primary-400` : tw`text-neutral-500`]}
+                                        />
+                                        <span css={tw`font-bold text-neutral-100`}>{name}</span>
                                     </div>
-                                    <p css={tw`text-3xl font-mono font-bold text-neutral-100 mb-2`}>
+                                    <p css={tw`text-2xl font-mono font-black text-neutral-100`}>
                                         ${id === 'hourly' ? (currentPlan?.hourly_rate ?? 0).toFixed(3) : (currentPlan?.monthly_price ?? 0).toFixed(2)}
                                     </p>
-                                    <p css={tw`text-sm text-neutral-400`}>
+                                    <p css={tw`text-[10px] text-neutral-500`}>
                                         {id === 'hourly'
                                             ? 'Billed per hour. Flexible, destroy anytime.'
                                             : 'Billed upfront. Big discount for 24/7 usage.'}
                                     </p>
-                                </button>
+                                </SelectableCard>
                             ))}
                         </div>
-                    </ContentBox>
+                    </TitledGreyBox>
                 </div>
 
                 <div css={tw`lg:col-span-1`}>
-                    <ContentBox title={'Order Summary'} css={tw`sticky top-24`}>
+                    <TitledGreyBox
+                        className={'sticky top-24'}
+                        title={
+                            <div css={tw`flex items-center justify-between w-full`}>
+                                <div css={tw`flex items-center`}>
+                                    <FontAwesomeIcon icon={faWallet} css={tw`text-xs text-neutral-500 mr-2`} />
+                                    <span css={tw`text-sm uppercase`}>Order Summary</span>
+                                </div>
+                            </div>
+                        }
+                    >
                         <div css={tw`mb-6`}>
-                            <h4 css={tw`text-neutral-400 uppercase text-xs font-bold tracking-widest mb-3`}>Server Resources</h4>
+                            <h4 css={tw`text-neutral-500 text-[10px] font-bold uppercase tracking-widest mb-3`}>Server Resources</h4>
                             {currentPlan && (
                                 <>
                                     <div css={tw`flex items-center justify-between mb-2`}>
@@ -216,8 +368,8 @@ const CreateServerContainer = () => {
                             )}
                         </div>
 
-                        <div css={tw`border-t border-neutral-700 pt-6 mb-6`}>
-                            <h4 css={tw`text-neutral-400 uppercase text-xs font-bold tracking-widest mb-3`}>Wallet Impact</h4>
+                        <div css={tw`border-t border-neutral-600 pt-6 mb-6`}>
+                            <h4 css={tw`text-neutral-500 text-[10px] font-bold uppercase tracking-widest mb-3`}>Wallet Impact</h4>
                             <div css={tw`bg-neutral-900 p-4 rounded border border-neutral-700`}>
                                 <div css={tw`flex items-center justify-between mb-3`}>
                                     <span css={tw`text-sm`}>Current Wallet Balance</span>
@@ -243,13 +395,13 @@ const CreateServerContainer = () => {
                             </div>
 
                             {hasInsufficientFunds && (
-                                <p css={tw`text-red-400 text-xs mt-3 flex items-center`}>
+                                <p css={tw`text-red-400 text-[10px] mt-3 flex items-center`}>
                                     <FontAwesomeIcon icon={faWallet} css={tw`mr-2`} />
                                     Insufficient funds for monthly cycle.
                                 </p>
                             )}
                             {billingType === 'hourly' && currentPlan && (
-                                <p css={tw`text-cyan-400 text-xs mt-3`}>
+                                <p css={tw`text-primary-400 text-[10px] mt-3`}>
                                     <FontAwesomeIcon icon={faClock} css={tw`mr-2`} />
                                     System will deduct ${currentPlan.hourly_rate.toFixed(3)}/hr from your balance.
                                 </p>
@@ -272,7 +424,7 @@ const CreateServerContainer = () => {
                                 'Deploy Server'
                             )}
                         </Button>
-                    </ContentBox>
+                    </TitledGreyBox>
                 </div>
             </div>
         </PageContentBlock>

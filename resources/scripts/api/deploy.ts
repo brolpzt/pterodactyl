@@ -1,5 +1,14 @@
 import http from '@/api/http';
 
+export interface DeployEggVariable {
+    name: string;
+    description: string;
+    env_variable: string;
+    default_value: string;
+    user_editable: boolean;
+    rules: string[];
+}
+
 export interface DeployPlan {
     id: string;
     name: string;
@@ -8,6 +17,7 @@ export interface DeployPlan {
     memory: number;
     disk: number;
     cpu: number;
+    egg_variables?: DeployEggVariable[];
 }
 
 export interface DeployLocation {
@@ -31,6 +41,7 @@ export const createServer = (params: {
     plan_id: string;
     location_ids: number[];
     billing_type: string;
+    environment?: Record<string, string>;
 }): Promise<{ success: boolean; server: { id: number; uuid: string; name: string } }> => {
     return http.post('/api/client/deploy', params).then(({ data }) => data);
 };

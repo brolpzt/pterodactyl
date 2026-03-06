@@ -83,7 +83,7 @@ export default () => {
                         </Button>
                     </Link>
                     <div>
-                        <h1 css={tw`text-3xl font-black text-neutral-100 leading-none`}>{ticket.subject}</h1>
+                        <h1 css={tw`text-2xl font-black text-neutral-100 leading-none`}>{ticket.subject}</h1>
                         <div css={tw`flex items-center mt-2`}>
                             <span css={tw`text-[10px] text-neutral-400 uppercase tracking-widest font-bold`}>ID # {ticket.id}</span>
                             <span css={tw`mx-2 text-neutral-600 font-bold`}>&bull;</span>

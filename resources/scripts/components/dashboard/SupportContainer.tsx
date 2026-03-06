@@ -36,7 +36,7 @@ export default () => {
         <PageContentBlock title={'Support Center'} showFlashKey={'support'}>
             <div css={tw`flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6`}>
                 <div>
-                    <h1 css={tw`text-3xl font-black text-neutral-100`}>Support Center</h1>
+                    <h1 css={tw`text-2xl font-black text-neutral-100`}>Support Center</h1>
                     <p css={tw`text-neutral-500 text-sm font-medium`}>Track your current issues and requests.</p>
                 </div>
                 <Link to={'/account/support/new'}>

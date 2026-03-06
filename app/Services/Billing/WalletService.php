@@ -98,4 +98,25 @@ class WalletService
             ]);
         });
     }
+
+    /**
+     * Admin: Add credit to user's wallet (manual adjustment).
+     *
+     * @throws \Throwable
+     */
+    public function adminAddCredit(User $user, float $amount, string $description = 'Admin credit adjustment'): WalletTransaction
+    {
+        return $this->deposit($user, $amount, $description, ['source' => 'admin']);
+    }
+
+    /**
+     * Admin: Deduct credit from user's wallet (manual adjustment).
+     *
+     * @throws \Throwable
+     * @throws \RuntimeException if insufficient balance
+     */
+    public function adminDeductCredit(User $user, float $amount, string $description = 'Admin deduction'): WalletTransaction
+    {
+        return $this->charge($user, $amount, $description, 'admin_adjustment', null);
+    }
 }

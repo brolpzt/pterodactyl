@@ -78,6 +78,21 @@ Route::group(['prefix' => 'settings'], function () {
 
 /*
 |--------------------------------------------------------------------------
+| Billing Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/billing
+|
+*/
+Route::group(['prefix' => 'billing'], function () {
+    Route::get('/', [Admin\BillingController::class, 'index'])->name('admin.billing');
+    Route::get('/user/{user:id}', [Admin\BillingController::class, 'viewUser'])->name('admin.billing.view_user');
+    Route::post('/user/{user:id}/add-credit', [Admin\BillingController::class, 'addCredit'])->name('admin.billing.add_credit');
+    Route::post('/user/{user:id}/deduct-credit', [Admin\BillingController::class, 'deductCredit'])->name('admin.billing.deduct_credit');
+});
+
+/*
+|--------------------------------------------------------------------------
 | User Controller Routes
 |--------------------------------------------------------------------------
 |

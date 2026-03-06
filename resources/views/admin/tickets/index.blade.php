@@ -18,25 +18,31 @@
         <div class="box box-primary">
             <div class="box-header with-border">
                 <h3 class="box-title">Ticket List</h3>
-                <div class="box-tools search01">
-                    <form action="{{ route('admin.tickets') }}" method="GET">
-                        <div class="input-group input-group-sm" style="width: 450px;">
-                            <select name="status" class="form-control" style="width: 150px; float: left;">
-                                <option value="">All Statuses</option>
-                                <option value="open" @if($filters['status'] === 'open') selected @endif>Open</option>
-                                <option value="closed" @if($filters['status'] === 'closed') selected @endif>Closed</option>
-                            </select>
-                            <select name="department" class="form-control" style="width: 250px; float: left;">
-                                <option value="">All Departments</option>
-                                @foreach($departments as $department)
-                                    <option value="{{ $department->id }}" @if($filters['department'] == $department->id) selected @endif>{{ $department->name }}</option>
-                                @endforeach
-                            </select>
-                            <div class="input-group-btn">
-                                <button type="submit" class="btn btn-default"><i class="fa fa-search"></i> Filter</button>
-                                <a href="{{ route('admin.tickets') }}" class="btn btn-default">Clear</a>
-                            </div>
-                        </div>
+                <div class="box-tools">
+                    <form action="{{ route('admin.tickets') }}" method="GET" style="display: inline-block;">
+                        <ul class="list-inline no-margin">
+                            <li>
+                                <select name="status" class="form-control input-sm" style="width: 130px;">
+                                    <option value="">All Statuses</option>
+                                    <option value="open" @if($filters['status'] === 'open') selected @endif>Open</option>
+                                    <option value="closed" @if($filters['status'] === 'closed') selected @endif>Closed</option>
+                                </select>
+                            </li>
+                            <li>
+                                <select name="department" class="form-control input-sm" style="width: 180px;">
+                                    <option value="">All Departments</option>
+                                    @foreach($departments as $department)
+                                        <option value="{{ $department->id }}" @if($filters['department'] == $department->id) selected @endif>{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                            </li>
+                            <li class="no-padding">
+                                <div class="btn-group">
+                                    <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-filter"></i> Filter</button>
+                                    <a href="{{ route('admin.tickets') }}" class="btn btn-sm btn-default">Clear</a>
+                                </div>
+                            </li>
+                        </ul>
                     </form>
                 </div>
             </div>

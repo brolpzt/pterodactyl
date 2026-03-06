@@ -37,6 +37,7 @@ class DeployPlanController extends Controller
         $data = $request->normalize();
         $data['swap'] = $data['swap'] ?? 0;
         $data['io'] = $data['io'] ?? 500;
+        $data['monthly_rate'] = isset($data['monthly_rate']) && $data['monthly_rate'] !== '' ? $data['monthly_rate'] : null;
 
         DeployPlan::create($data);
         $this->alert->success('Deploy plan was created successfully.')->flash();
@@ -64,6 +65,7 @@ class DeployPlanController extends Controller
 
         $data['swap'] = $data['swap'] ?? 0;
         $data['io'] = $data['io'] ?? 500;
+        $data['monthly_rate'] = isset($data['monthly_rate']) && $data['monthly_rate'] !== '' ? $data['monthly_rate'] : null;
 
         $eggChanged = isset($data['egg_id']) && (int) $data['egg_id'] !== (int) $plan->egg_id;
         if ($eggChanged) {

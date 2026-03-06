@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $swap
  * @property int $io
  * @property float $hourly_rate
+ * @property float|null $monthly_rate
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property Egg $egg
@@ -33,6 +34,7 @@ class DeployPlan extends Model
         'swap',
         'io',
         'hourly_rate',
+        'monthly_rate',
     ];
 
     protected $casts = [
@@ -43,6 +45,7 @@ class DeployPlan extends Model
         'swap' => 'integer',
         'io' => 'integer',
         'hourly_rate' => 'float',
+        'monthly_rate' => 'float',
     ];
 
     public static array $validationRules = [
@@ -55,6 +58,7 @@ class DeployPlan extends Model
         'swap' => 'nullable|integer|min:0',
         'io' => 'nullable|integer|min:10',
         'hourly_rate' => 'required|numeric|min:0',
+        'monthly_rate' => 'nullable|numeric|min:0',
     ];
 
     public function egg(): BelongsTo

@@ -187,6 +187,7 @@ class ServerCreationService
             'fastdl_enabled' => Arr::get($data, 'fastdl_enabled') ?? false,
             'billing_type' => Arr::get($data, 'billing_type'),
             'hourly_rate' => Arr::get($data, 'hourly_rate'),
+            'monthly_rate' => Arr::get($data, 'monthly_rate'),
             'billing_cost_so_far' => Arr::get($data, 'billing_cost_so_far'),
             'next_due_date' => Arr::get($data, 'next_due_date'),
         ]);
@@ -237,12 +238,16 @@ class ServerCreationService
     {
         $billingType = Arr::get($data, 'billing_type');
         $hourlyRate = (float) (Arr::get($data, 'hourly_rate') ?? 0);
+        $monthlyRate = (float) (Arr::get($data, 'monthly_rate') ?? 0);
 
-        if (!$billingType || $hourlyRate <= 0) {
-            return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate ?: null, 'next_due_date' => null];
+        if (!$billingType) {
+            return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate ?: null, 'monthly_rate' => $monthlyRate ?: null, 'next_due_date' => null];
         }
 
         if ($billingType === 'hourly') {
+            if ($hourlyRate <= 0) {
+                return ['billing_type' => $billingType, 'hourly_rate' => null, 'monthly_rate' => null, 'next_due_date' => null];
+            }
             $user = User::query()->findOrFail(Arr::get($data, 'owner_id'));
             $serverName = Arr::get($data, 'name', 'Server');
             $description = "Hourly initial: {$serverName}";
@@ -252,6 +257,7 @@ class ServerCreationService
             return [
                 'billing_type' => $billingType,
                 'hourly_rate' => $hourlyRate,
+                'monthly_rate' => null,
                 'billing_cost_so_far' => round($hourlyRate, 2),
                 'next_due_date' => now()->addHour(),
             ];
@@ -259,12 +265,19 @@ class ServerCreationService
 
         $periods = ['monthly', 'quarterly', 'semi_annually', 'annually'];
         if (!in_array($billingType, $periods, true)) {
-            return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate, 'next_due_date' => null];
+            return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate, 'monthly_rate' => $monthlyRate ?: null, 'next_due_date' => null];
         }
 
+        $multipliers = ['monthly' => 1, 'quarterly' => 3, 'semi_annually' => 6, 'annually' => 12];
         $days = config("billing.period_days.{$billingType}", 30);
-        $hours = $days * 24;
-        $amount = round($hourlyRate * $hours, 2);
+
+        $amount = $monthlyRate > 0
+            ? round($monthlyRate * ($multipliers[$billingType] ?? 1), 2)
+            : round($hourlyRate * $days * 24, 2);
+
+        if ($amount <= 0) {
+            return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate, 'monthly_rate' => $monthlyRate ?: null, 'next_due_date' => null];
+        }
 
         $user = User::query()->findOrFail(Arr::get($data, 'owner_id'));
         $serverName = Arr::get($data, 'name', 'Server');
@@ -275,6 +288,7 @@ class ServerCreationService
         return [
             'billing_type' => $billingType,
             'hourly_rate' => $hourlyRate,
+            'monthly_rate' => $monthlyRate ?: null,
             'billing_cost_so_far' => $amount,
             'next_due_date' => now()->addDays($days),
         ];

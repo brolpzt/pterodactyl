@@ -67,9 +67,11 @@ class BillingChargeService
             return false;
         }
 
-        $hourlyRate = (float) ($server->hourly_rate ?? 0);
-        $hoursInPeriod = $periodDays * 24;
-        $amount = round($hourlyRate * $hoursInPeriod, 2);
+        $monthlyRate = (float) ($server->monthly_rate ?? 0);
+        $multipliers = ['monthly' => 1, 'quarterly' => 3, 'semi_annually' => 6, 'annually' => 12];
+        $amount = $monthlyRate > 0
+            ? round($monthlyRate * ($multipliers[$billingType] ?? 1), 2)
+            : round((float) ($server->hourly_rate ?? 0) * $periodDays * 24, 2);
 
         if ($amount <= 0) {
             return true;

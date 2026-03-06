@@ -150,6 +150,7 @@ class DeployController extends ClientApiController
             'environment' => $environment,
             'billing_type' => $request->input('billing_type'),
             'hourly_rate' => $plan->hourly_rate,
+            'monthly_rate' => $plan->monthly_rate,
             'start_on_completion' => false,
         ];
 
@@ -213,7 +214,7 @@ class DeployController extends ClientApiController
                     'disk' => $p->disk,
                     'cpu' => $p->cpu,
                     'hourly_rate' => (float) $p->hourly_rate,
-                    'monthly_price' => round($p->hourly_rate * $days * 24, 2),
+                    'monthly_price' => $p->monthly_rate !== null ? (float) $p->monthly_rate : round($p->hourly_rate * $days * 24, 2),
                 ])->values()->toArray();
 
                 return [

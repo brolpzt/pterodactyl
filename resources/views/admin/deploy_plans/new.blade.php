@@ -75,6 +75,12 @@
                     <div class="form-group">
                         <label for="hourly_rate" class="form-label">Hourly Rate ($)</label>
                         <input type="number" name="hourly_rate" id="hourly_rate" class="form-control" step="0.000001" min="0" value="0.015" required />
+                        <p class="help-block">Usado para cobrança por hora.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="monthly_rate" class="form-label">Monthly Rate ($)</label>
+                        <input type="number" name="monthly_rate" id="monthly_rate" class="form-control" step="0.01" min="0" value="" placeholder="Opcional" />
+                        <p class="help-block">Usado para cobrança mensal/trimestral/etc. Se vazio, usa hourly_rate × 720.</p>
                     </div>
                 </div>
                 <div class="box-footer">

@@ -16,53 +16,67 @@
 @section('content')
 <div class="row">
     <div class="col-md-9">
-        <div class="box box-primary">
-            <div class="box-header with-border">
-                <h3 class="box-title">Ticket Conversation</h3>
-            </div>
-            <div class="box-body chat" id="chat-box" style="display: flex; flex-direction: column; gap: 15px;">
-                @foreach($ticket->messages as $message)
-                    <div class="item" style="border-bottom: 1px solid #f4f4f4; padding-bottom: 10px;">
-                        <img src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim($message->user->email))) }}?s=160" alt="user image" class="@if($message->user->root_admin) online @else offline @endif" style="width: 40px; height: 40px; border-radius: 50%; float: left; margin-right: 15px;">
-                        <p class="message" style="margin-left: 55px;">
-                            <a href="{{ route('admin.users.view', $message->user->id) }}" class="name">
-                                <small class="text-muted pull-right"><i class="fa fa-clock-o"></i> {{ $message->created_at->diffForHumans() }}</small>
-                                {{ $message->user->name_first }} {{ $message->user->name_last }}
-                                @if($message->user->root_admin)
-                                    <span class="label label-info ml-2">Staff</span>
-                                @endif
-                            </a>
-                            <div style="margin-left: 55px; color: #444; margin-top: 5px;">
-                                {!! nl2br(e($message->message)) !!}
-                            </div>
-                        </p>
+        @foreach($ticket->messages as $message)
+            <div class="box @if($message->user->root_admin) box-info @else box-primary @endif">
+                <div class="box-header with-border">
+                    <h3 class="box-title">
+                        <img src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim($message->user->email))) }}?s=160" class="img-circle" style="width: 25px; height: 25px; margin-right: 10px;">
+                        {{ $message->user->name_first }} {{ $message->user->name_last }}
+                        @if($message->user->root_admin)
+                            <span class="label label-info">Staff</span>
+                        @endif
+                    </h3>
+                    <div class="box-tools pull-right">
+                        <span class="text-muted">{{ $message->created_at->format('M j, Y H:i') }} ({{ $message->created_at->diffForHumans() }})</span>
                     </div>
-                @endforeach
+                </div>
+                <div class="box-body">
+                    {!! nl2br(e($message->message)) !!}
+                    
+                    @if($message->attachments->count() > 0)
+                        <hr>
+                        <p class="text-muted small uppercase">Attachments</p>
+                        <div class="row">
+                            @foreach($message->attachments as $attachment)
+                                <div class="col-sm-4">
+                                    <a href="{{ route('admin.tickets.attachment', $attachment->hash) }}" class="btn btn-default btn-xs btn-block overflow-hidden" style="text-overflow: ellipsis; white-space: nowrap;">
+                                        <i class="fa fa-download"></i> {{ $attachment->filename }}
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
             </div>
-        </div>
+        @endforeach
 
         <div class="box box-success">
             <div class="box-header with-border">
-                <h3 class="box-title">Post a Reply</h3>
+                <h3 class="box-title">Reply to Ticket</h3>
             </div>
-            <form action="{{ route('admin.tickets.view', $ticket->id) }}" method="POST">
+            <form action="{{ route('admin.tickets.view', $ticket->id) }}" method="POST" enctype="multipart/form-data">
+                {!! csrf_field() !!}
                 <div class="box-body">
                     <div class="form-group">
-                        <textarea name="message" class="form-control" rows="6" placeholder="Type your reply to the user..." required></textarea>
+                        <label for="message">Message</label>
+                        <textarea name="message" class="form-control" rows="8" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="attachments">Attachments</label>
+                        <input type="file" name="attachments[]" class="form-control" multiple>
+                        <p class="help-block">You can select multiple files.</p>
                     </div>
                 </div>
-                <div class="box-footer text-right">
-                    {!! csrf_field() !!}
-                    <button type="submit" class="btn btn-success"><i class="fa fa-paper-plane"></i> Send Reply</button>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-success pull-right">Send Reply</button>
                 </div>
             </form>
         </div>
     </div>
-    
     <div class="col-md-3">
         <div class="box box-primary">
             <div class="box-header with-border">
-                <h3 class="box-title">Ticket Details</h3>
+                <h3 class="box-title">Ticket Information</h3>
             </div>
             <div class="box-body no-padding">
                 <table class="table table-striped">
@@ -83,7 +97,7 @@
                         </tr>
                         <tr>
                             <td><strong>User</strong></td>
-                            <td><a href="{{ route('admin.users.view', $ticket->user->id) }}">{{ $ticket->user->name_last }}</a></td>
+                            <td><a href="{{ route('admin.users.view', $ticket->user->id) }}">{{ $ticket->user->email }}</a></td>
                         </tr>
                         <tr>
                             <td><strong>Server</strong></td>
@@ -97,11 +111,7 @@
                         </tr>
                         <tr>
                             <td><strong>Created</strong></td>
-                            <td><small>{{ $ticket->created_at->format('M j, Y H:i') }}</small></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Updated</strong></td>
-                            <td><small>{{ $ticket->updated_at->diffForHumans() }}</small></td>
+                            <td>{{ $ticket->created_at->format('M j, Y H:i') }}</td>
                         </tr>
                     </tbody>
                 </table>

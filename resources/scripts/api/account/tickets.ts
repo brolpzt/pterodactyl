@@ -8,6 +8,13 @@ export interface TicketDepartment {
     description: string | null;
 }
 
+export interface TicketAttachment {
+    id: number;
+    filename: string;
+    size: number;
+    url: string;
+}
+
 export interface TicketMessage {
     id: number;
     ticketId: number;
@@ -18,6 +25,7 @@ export interface TicketMessage {
     message: string;
     createdAt: Date;
     updatedAt: Date;
+    attachments?: TicketAttachment[];
 }
 
 export interface Ticket {
@@ -49,6 +57,12 @@ const transformTicketMessage = (data: any): TicketMessage => ({
     message: data.message,
     createdAt: new Date(data.created_at),
     updatedAt: new Date(data.updated_at),
+    attachments: data.relationships?.attachments?.data ? data.relationships.attachments.data.map((att: any) => ({
+        id: att.attributes.id,
+        filename: att.attributes.filename,
+        size: att.attributes.size,
+        url: att.attributes.url,
+    })) : undefined,
 });
 
 const transformTicket = (data: any): Ticket => ({
@@ -97,21 +111,37 @@ export const useTicketDepartments = (config?: ConfigInterface<TicketDepartment[]
     );
 };
 
-export const createTicket = async (subject: string, departmentId: number, message: string, serverId?: number | null): Promise<Ticket> => {
-    const { data } = await http.post('/api/client/account/tickets', {
-        subject,
-        department_id: departmentId,
-        message,
-        server_id: serverId || null,
-    });
+export const createTicket = async (subject: string, departmentId: number, message: string, serverId?: number | null, files?: FileList | null): Promise<Ticket> => {
+    const data = new FormData();
+    data.append('subject', subject);
+    data.append('department_id', departmentId.toString());
+    data.append('message', message);
+    if (serverId) data.append('server_id', serverId.toString());
 
-    return transformTicket(data.attributes);
+    if (files) {
+        for (let i = 0; i < files.length; i++) {
+            data.append('attachments[]', files[i]);
+        }
+    }
+
+    const { data: res } = await http.post('/api/client/account/tickets', data);
+
+    return transformTicket(res.attributes);
 };
 
-export const replyTicket = async (id: number, message: string): Promise<TicketMessage> => {
-    const { data } = await http.post(`/api/client/account/tickets/${id}`, { message });
+export const replyTicket = async (id: number, message: string, files?: FileList | null): Promise<TicketMessage> => {
+    const data = new FormData();
+    data.append('message', message);
 
-    return transformTicketMessage(data.attributes);
+    if (files) {
+        for (let i = 0; i < files.length; i++) {
+            data.append('attachments[]', files[i]);
+        }
+    }
+
+    const { data: res } = await http.post(`/api/client/account/tickets/${id}`, data);
+
+    return transformTicketMessage(res.attributes);
 };
 
 export const updateTicketStatus = async (id: number, status: 'open' | 'closed'): Promise<Ticket> => {

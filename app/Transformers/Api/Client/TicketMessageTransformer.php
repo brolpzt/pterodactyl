@@ -6,6 +6,8 @@ use Pterodactyl\Models\TicketMessage;
 
 class TicketMessageTransformer extends BaseClientTransformer
 {
+    protected array $availableIncludes = ['attachments'];
+
     /**
      * @return string
      */
@@ -31,5 +33,14 @@ class TicketMessageTransformer extends BaseClientTransformer
             'created_at' => $message->created_at->toIso8601String(),
             'updated_at' => $message->updated_at->toIso8601String(),
         ];
+    }
+
+    /**
+     * @param \Pterodactyl\Models\TicketMessage $message
+     * @return \League\Fractal\Resource\Collection
+     */
+    public function includeAttachments(TicketMessage $message)
+    {
+        return $this->collection($message->attachments, $this->makeTransformer(TicketAttachmentTransformer::class), 'ticket_attachment');
     }
 }

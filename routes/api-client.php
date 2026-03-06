@@ -46,6 +46,7 @@ Route::prefix('/account')->middleware(AccountSubject::class)->group(function () 
     Route::prefix('/tickets')->group(function () {
         Route::get('/', [Client\TicketController::class, 'index']);
         Route::get('/departments', [Client\TicketController::class, 'departments']);
+        Route::get('/attachments/{hash}', [Client\TicketController::class, 'attachment'])->name('api.client.account.tickets.attachment');
         Route::post('/', [Client\TicketController::class, 'store']);
         Route::get('/{ticket}', [Client\TicketController::class, 'view']);
         Route::post('/{ticket}', [Client\TicketController::class, 'reply']);

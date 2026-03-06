@@ -297,6 +297,7 @@ Route::group(['prefix' => 'tickets'], function () {
     Route::get('/view/{ticket:id}', [Admin\TicketController::class, 'view'])->name('admin.tickets.view');
     Route::post('/view/{ticket:id}', [Admin\TicketController::class, 'reply']);
     Route::post('/view/{ticket:id}/status', [Admin\TicketController::class, 'toggleStatus'])->name('admin.tickets.status');
+    Route::get('/attachments/{hash}', [Admin\TicketController::class, 'attachment'])->name('admin.tickets.attachment');
 });
 
 Route::group(['prefix' => 'departments'], function () {

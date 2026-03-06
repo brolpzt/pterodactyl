@@ -8,7 +8,11 @@ use Illuminate\Http\RedirectResponse;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Models\Ticket;
 use Pterodactyl\Models\TicketMessage;
+use Pterodactyl\Models\TicketAttachment;
 use Pterodactyl\Models\TicketDepartment;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Prologue\Alerts\AlertsMessageBag;
 
 class TicketController extends Controller
@@ -86,11 +90,26 @@ class TicketController extends Controller
             'message' => 'required|string',
         ]);
 
-        TicketMessage::create([
+        $message = TicketMessage::create([
             'ticket_id' => $ticket->id,
             'user_id' => $request->user()->id,
             'message' => $request->input('message'),
         ]);
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $hash = Str::random(40);
+                Storage::putFileAs('tickets/' . $ticket->id, $file, $hash);
+
+                TicketAttachment::create([
+                    'ticket_message_id' => $message->id,
+                    'filename' => $file->getClientOriginalName(),
+                    'hash' => $hash,
+                    'mime_type' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+        }
 
         $ticket->update(['status' => 'open']);
         $ticket->touch();
@@ -114,5 +133,22 @@ class TicketController extends Controller
         $this->alert->success('Ticket status updated successfully.')->flash();
 
         return redirect()->route('admin.tickets.view', $ticket->id);
+    }
+
+    /**
+     * Download a ticket attachment for admin.
+     *
+     * @param string $hash
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    public function attachment(string $hash): StreamedResponse
+    {
+        $attachment = TicketAttachment::where('hash', $hash)->firstOrFail();
+        $message = $attachment->message;
+
+        return Storage::download(
+            'tickets/' . $message->ticket_id . '/' . $attachment->hash,
+            $attachment->filename
+        );
     }
 }

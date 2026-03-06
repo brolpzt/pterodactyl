@@ -2,16 +2,17 @@
 
 namespace Pterodactyl\Http\Controllers\Api\Client;
 
-use Pterodactyl\Models\Ticket;
-use Pterodactyl\Models\TicketMessage;
-use Pterodactyl\Models\TicketDepartment;
+use Pterodactyl\Models\TicketAttachment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Transformers\Api\Client\TicketTransformer;
 use Pterodactyl\Transformers\Api\Client\TicketMessageTransformer;
 use Pterodactyl\Transformers\Api\Client\TicketDepartmentTransformer;
 use Pterodactyl\Http\Requests\Api\Client\ClientApiRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TicketController extends ClientApiController
 {
@@ -59,11 +60,26 @@ class TicketController extends ClientApiController
             'status' => 'open',
         ]);
 
-        TicketMessage::create([
+        $message = TicketMessage::create([
             'ticket_id' => $ticket->id,
             'user_id' => $request->user()->id,
             'message' => $request->input('message'),
         ]);
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $hash = Str::random(40);
+                Storage::putFileAs('tickets/' . $ticket->id, $file, $hash);
+
+                TicketAttachment::create([
+                    'ticket_message_id' => $message->id,
+                    'filename' => $file->getClientOriginalName(),
+                    'hash' => $hash,
+                    'mime_type' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+        }
 
         $ticket->load(['server', 'ticketDepartment']);
 
@@ -98,11 +114,11 @@ class TicketController extends ClientApiController
     {
         $ticket = Ticket::where('id', $ticketId)
             ->where('user_id', $request->user()->id)
-            ->with(['server', 'ticketDepartment', 'messages.user'])
+            ->with(['server', 'ticketDepartment', 'messages.user', 'messages.attachments'])
             ->firstOrFail();
 
         return $this->fractal->item($ticket)
-            ->parseIncludes(['messages'])
+            ->parseIncludes(['messages', 'messages.attachments'])
             ->transformWith($this->getTransformer(TicketTransformer::class))
             ->toArray();
     }
@@ -129,6 +145,21 @@ class TicketController extends ClientApiController
             'user_id' => $request->user()->id,
             'message' => $request->input('message'),
         ]);
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $hash = Str::random(40);
+                Storage::putFileAs('tickets/' . $ticket->id, $file, $hash);
+
+                TicketAttachment::create([
+                    'ticket_message_id' => $message->id,
+                    'filename' => $file->getClientOriginalName(),
+                    'hash' => $hash,
+                    'mime_type' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+        }
 
         $ticket->update(['status' => 'open']);
         $ticket->touch(); // Update the ticket's updated_at timestamp
@@ -162,5 +193,28 @@ class TicketController extends ClientApiController
         return $this->fractal->item($ticket)
             ->transformWith($this->getTransformer(TicketTransformer::class))
             ->toArray();
+    }
+
+    /**
+     * Download a ticket attachment.
+     *
+     * @param \Pterodactyl\Http\Requests\Api\Client\ClientApiRequest $request
+     * @param string $hash
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    public function attachment(ClientApiRequest $request, string $hash): StreamedResponse
+    {
+        $attachment = TicketAttachment::where('hash', $hash)->firstOrFail();
+        $message = $attachment->message;
+        
+        // Ensure the user has access to this ticket
+        if ($message->ticket->user_id !== $request->user()->id && !$request->user()->root_admin) {
+            abort(403);
+        }
+
+        return Storage::download(
+            'tickets/' . $message->ticket_id . '/' . $attachment->hash,
+            $attachment->filename
+        );
     }
 }

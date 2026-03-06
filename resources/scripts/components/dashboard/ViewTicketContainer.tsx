@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faArrowLeft, faUserTie, faUser, faClock, faServer, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faPaperPlane, faPaperclip, faDownload } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/elements/Button';
 import ContentBox from '@/components/elements/ContentBox';
 import { Link, useParams } from 'react-router-dom';
@@ -10,6 +10,7 @@ import { useTicket, replyTicket, updateTicketStatus } from '@/api/account/ticket
 import useFlash from '@/plugins/useFlash';
 import Spinner from '@/components/elements/Spinner';
 import { formatDistanceToNow, format } from 'date-fns';
+import Input from '@/components/elements/Input';
 
 export default () => {
     const { id } = useParams<{ id: string }>();
@@ -18,6 +19,7 @@ export default () => {
     const { data: ticket, error, mutate } = useTicket(ticketId);
 
     const [reply, setReply] = useState('');
+    const [files, setFiles] = useState<FileList | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmitReply = (e: React.FormEvent) => {
@@ -25,16 +27,17 @@ export default () => {
         clearFlashes('support');
         setIsSubmitting(true);
 
-        replyTicket(ticketId, reply)
+        replyTicket(ticketId, reply, files)
             .then(() => {
                 setReply('');
+                setFiles(null);
                 mutate();
-                addFlash({ type: 'success', title: 'Success', message: 'Your reply has been added.', key: 'support' });
+                addFlash({ type: 'success', title: 'Success', message: 'Reply added successfully.', key: 'support' });
                 setIsSubmitting(false);
             })
             .catch((error) => {
                 setIsSubmitting(false);
-                addFlash({ type: 'error', title: 'Error', message: error.response?.data?.errors[0]?.detail || 'An error occurred while replying.', key: 'support' });
+                addFlash({ type: 'error', title: 'Error', message: error.response?.data?.errors[0]?.detail || 'An error occurred.', key: 'support' });
             });
     };
 
@@ -46,7 +49,7 @@ export default () => {
         updateTicketStatus(ticketId, newStatus)
             .then(() => {
                 mutate();
-                addFlash({ type: 'success', title: 'Success', message: `Ticket has been ${newStatus}.`, key: 'support' });
+                addFlash({ type: 'success', title: 'Success', message: `Ticket ${newStatus} successfully.`, key: 'support' });
             })
             .catch((error) => {
                 addFlash({ type: 'error', title: 'Error', message: error.response?.data?.errors[0]?.detail || 'An error occurred.', key: 'support' });
@@ -56,12 +59,7 @@ export default () => {
     if (error) {
         return (
             <PageContentBlock title={'Error'}>
-                <div css={tw`bg-neutral-800 border-2 border-red-500/20 rounded-xl p-10 text-center shadow-2xl`}>
-                    <p css={tw`text-red-400 font-bold text-lg mb-4`}>Failed to load ticket.</p>
-                    <Link to={'/account/support'}>
-                        <Button color={'grey'} isSecondary>Return to list</Button>
-                    </Link>
-                </div>
+                <p css={tw`text-center text-red-500`}>Failed to load ticket.</p>
             </PageContentBlock>
         );
     }
@@ -69,153 +67,115 @@ export default () => {
     if (!ticket) {
         return (
             <PageContentBlock title={'Loading...'}>
-                <div css={tw`flex justify-center py-20`}>
-                    <Spinner size={'large'} />
-                </div>
+                <Spinner size={'large'} centered />
             </PageContentBlock>
         );
     }
 
     return (
-        <PageContentBlock title={`Viewing Ticket #${ticket.id}`}>
-            <div css={tw`flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-4`}>
-                <div css={tw`flex items-start lg:items-center`}>
+        <PageContentBlock title={`Ticket #${ticket.id}`} showFlashKey={'support'}>
+            <div css={tw`flex items-center justify-between mb-6`}>
+                <div css={tw`flex items-center`}>
                     <Link to={'/account/support'}>
-                        <Button color={'grey'} isSecondary css={tw`mr-6 px-4 py-3 bg-neutral-800 shadow-md`}>
+                        <Button color={'grey'} isSecondary css={tw`mr-4`}>
                             <FontAwesomeIcon icon={faArrowLeft} />
                         </Button>
                     </Link>
-                    <div>
-                        <h1 css={tw`text-3xl font-black text-neutral-100 tracking-tight`}>
-                            {ticket.subject}
-                        </h1>
-                        <div css={tw`text-xs text-neutral-400 mt-2 flex flex-wrap items-center gap-2`}>
-                            <span css={tw`bg-neutral-800 border border-neutral-700 px-2 py-0.5 rounded font-mono text-cyan-400 font-bold`}>#{ticket.id}</span>
-                            <span css={[
-                                tw`px-3 py-0.5 rounded-full text-[10px] uppercase font-black tracking-widest border`,
-                                ticket.status === 'open' ? tw`bg-yellow-500/10 text-yellow-500 border-yellow-500/20` : tw`bg-green-500/10 text-green-500 border-green-500/20`
-                            ]}>
-                                {ticket.status === 'open' ? 'Open' : 'Closed'}
-                            </span>
-                            <span css={tw`text-neutral-500`}>•</span>
-                            <span css={tw`flex items-center`}><FontAwesomeIcon icon={faClock} css={tw`mr-1.5`} /> {formatDistanceToNow(ticket.updatedAt, { addSuffix: true })}</span>
-                            {ticket.serverName && (
-                                <>
-                                    <span css={tw`text-neutral-500`}>•</span>
-                                    <span css={tw`flex items-center text-cyan-500/80 font-medium`}><FontAwesomeIcon icon={faServer} css={tw`mr-1.5`} /> {ticket.serverName}</span>
-                                </>
-                            )}
-                        </div>
-                    </div>
+                    <h1 css={tw`text-2xl`}>{ticket.subject}</h1>
                 </div>
-                <Button
-                    color={ticket.status === 'open' ? 'red' : 'green'}
-                    isSecondary
-                    onClick={toggleStatus}
-                    css={tw`shadow-lg`}
-                >
-                    <FontAwesomeIcon icon={ticket.status === 'open' ? faUser : faUndo} css={tw`mr-2`} />
+                <Button color={ticket.status === 'open' ? 'red' : 'green'} isSecondary onClick={toggleStatus}>
                     {ticket.status === 'open' ? 'Close Ticket' : 'Re-open Ticket'}
                 </Button>
             </div>
 
-            <div css={tw`grid grid-cols-1 lg:grid-cols-3 gap-8`}>
-                <div css={tw`lg:col-span-2 space-y-6`}>
-                    <div css={tw`space-y-4`}>
-                        {ticket.messages?.map(msg => (
-                            <div key={msg.id} css={[
-                                tw`rounded-2xl p-6 shadow-sm border transition-shadow hover:shadow-md`,
-                                msg.isStaff ? tw`bg-cyan-900/5 border-cyan-800/20 md:ml-6` : tw`bg-neutral-800 border-neutral-700`
-                            ]}>
-                                <div css={tw`flex items-center justify-between border-b border-neutral-700/50 pb-4 mb-4`}>
-                                    <div css={tw`flex items-center`}>
-                                        <div css={[
-                                            tw`w-10 h-10 rounded-xl flex items-center justify-center mr-4 text-white shadow-inner`,
-                                            msg.isStaff ? tw`bg-cyan-600` : tw`bg-neutral-600`
-                                        ]}>
-                                            <FontAwesomeIcon icon={msg.isStaff ? faUserTie : faUser} />
-                                        </div>
-                                        <div>
-                                            <span css={tw`font-bold text-base text-neutral-100 block`}>
-                                                {msg.userName}
-                                            </span>
-                                            {msg.isStaff && (
-                                                <span css={tw`px-2 py-0.5 bg-cyan-600/20 text-cyan-400 text-[9px] rounded uppercase font-black tracking-widest border border-cyan-500/20`}>Company Staff</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <span css={tw`text-[11px] text-neutral-500`}>
-                                        {formatDistanceToNow(msg.createdAt, { addSuffix: true })}
-                                    </span>
-                                </div>
-                                <div css={tw`text-neutral-300 text-sm whitespace-pre-wrap leading-relaxed px-1`}>
-                                    {msg.message}
-                                </div>
+            <div css={tw`grid grid-cols-1 md:grid-cols-3 gap-6 mb-10`}>
+                <div css={tw`md:col-span-2 space-y-4`}>
+                    {ticket.messages?.map(msg => (
+                        <ContentBox key={msg.id} title={msg.userName} css={msg.isStaff ? tw`bg-neutral-700/50` : undefined}>
+                            <div css={tw`flex justify-between items-start mb-4 border-b border-neutral-700 pb-2`}>
+                                <span css={tw`text-xs uppercase font-bold text-neutral-400`}>
+                                    {msg.isStaff ? 'Staff' : 'User'} &bull; {formatDistanceToNow(msg.createdAt, { addSuffix: true })}
+                                </span>
                             </div>
-                        ))}
-                    </div>
+                            <p css={tw`text-sm whitespace-pre-wrap`}>{msg.message}</p>
+
+                            {msg.attachments && msg.attachments.length > 0 && (
+                                <div css={tw`mt-4 pt-4 border-t border-neutral-700`}>
+                                    <p css={tw`text-xs font-bold uppercase text-neutral-400 mb-2`}>Attachments</p>
+                                    <div css={tw`flex flex-wrap gap-2`}>
+                                        {msg.attachments.map(att => (
+                                            <a
+                                                key={att.id}
+                                                href={att.url}
+                                                target={'_blank'}
+                                                rel={'noreferrer'}
+                                                css={tw`flex items-center bg-neutral-900 border border-neutral-700 px-3 py-1.5 rounded text-xs text-neutral-300 hover:text-white hover:border-neutral-500 transition-colors no-underline`}
+                                            >
+                                                <FontAwesomeIcon icon={faDownload} css={tw`mr-2`} />
+                                                {att.filename} ({Math.round(att.size / 1024)} KB)
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </ContentBox>
+                    ))}
 
                     {ticket.status === 'open' && (
-                        <div css={tw`mt-10 bg-neutral-800/30 border border-neutral-700/50 rounded-2xl p-1 shadow-inner`}>
-                            <form onSubmit={handleSubmitReply} css={tw`p-6`}>
-                                <label css={tw`block text-sm font-bold text-neutral-200 mb-4`}>Post a Reply</label>
+                        <ContentBox title={'Reply'} showFlashes={'support'}>
+                            <form onSubmit={handleSubmitReply}>
                                 <textarea
-                                    css={tw`p-4 w-full border border-neutral-700 bg-neutral-900 rounded-xl shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all h-40 resize-y text-neutral-200`}
-                                    placeholder={'Type your message to the support team...'}
+                                    css={tw`p-3 w-full border border-neutral-700 bg-neutral-900 rounded-md shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-shadow h-32 resize-y`}
+                                    placeholder={'Reply...'}
                                     value={reply}
                                     onChange={(e) => setReply(e.target.value)}
                                     required
                                 />
+                                <div css={tw`mt-4 mb-4`}>
+                                    <div css={tw`flex items-center`}>
+                                        <Input
+                                            type={'file'}
+                                            onChange={(e) => setFiles(e.target.files)}
+                                            css={tw`flex-1`}
+                                            multiple
+                                        />
+                                        <FontAwesomeIcon icon={faPaperclip} css={tw`ml-3 text-neutral-500`} />
+                                    </div>
+                                </div>
                                 <div css={tw`flex justify-end mt-4`}>
-                                    <Button type={'submit'} color={'primary'} disabled={isSubmitting || !reply.trim()} css={tw`px-6 py-2.5 shadow-lg`}>
+                                    <Button type={'submit'} disabled={isSubmitting || !reply.trim()}>
                                         <FontAwesomeIcon icon={faPaperPlane} css={tw`mr-2`} />
-                                        Send Message
+                                        Send Reply
                                     </Button>
                                 </div>
                             </form>
-                        </div>
+                        </ContentBox>
                     )}
                 </div>
 
-                <div css={tw`lg:col-span-1 space-y-6`}>
-                    <ContentBox title={'Ticket Details'} css={tw`shadow-lg border-neutral-700/50`}>
-                        <div css={tw`space-y-6 text-sm`}>
+                <div css={tw`space-y-6`}>
+                    <ContentBox title={'Information'}>
+                        <div css={tw`space-y-4 text-sm`}>
                             <div>
-                                <span css={tw`block text-neutral-500 font-bold uppercase tracking-wider text-[10px] mb-2`}>Department</span>
-                                <span css={tw`text-neutral-200 bg-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-700 inline-block w-full`}>{ticket.department}</span>
+                                <p css={tw`text-neutral-500 mb-0 font-bold uppercase text-[10px]`}>Status</p>
+                                <p css={ticket.status === 'open' ? tw`text-yellow-500` : tw`text-green-500`}>{ticket.status.toUpperCase()}</p>
+                            </div>
+                            <div>
+                                <p css={tw`text-neutral-500 mb-0 font-bold uppercase text-[10px]`}>Department</p>
+                                <p>{ticket.department}</p>
                             </div>
                             {ticket.serverName && (
                                 <div>
-                                    <span css={tw`block text-neutral-500 font-bold uppercase tracking-wider text-[10px] mb-2`}>Related Server</span>
-                                    <span css={tw`text-cyan-400 bg-cyan-900/10 px-3 py-1.5 rounded-lg border border-cyan-800/20 inline-block w-full cursor-pointer hover:bg-cyan-900/20 transition-colors`}>{ticket.serverName}</span>
+                                    <p css={tw`text-neutral-500 mb-0 font-bold uppercase text-[10px]`}>Server</p>
+                                    <p>{ticket.serverName}</p>
                                 </div>
                             )}
                             <div>
-                                <span css={tw`block text-neutral-500 font-bold uppercase tracking-wider text-[10px] mb-2`}>Current Status</span>
-                                <div css={[
-                                    tw`px-3 py-1.5 rounded-lg border inline-block w-full text-center font-bold`,
-                                    ticket.status === 'open' ? tw`bg-yellow-500/10 text-yellow-500 border-yellow-500/20` : tw`bg-green-500/10 text-green-500 border-green-500/20`
-                                ]}>
-                                    {ticket.status === 'open' ? 'Awaiting Interaction' : 'Solved / Closed'}
-                                </div>
-                            </div>
-                            <div css={tw`pt-4 border-t border-neutral-700/50 flex justify-between items-center`}>
-                                <div>
-                                    <span css={tw`block text-neutral-500 text-[10px] uppercase font-bold`}>Created</span>
-                                    <span css={tw`text-neutral-400`}>{format(ticket.createdAt, 'MMM dd, yyyy')}</span>
-                                </div>
-                                <div css={tw`text-right`}>
-                                    <span css={tw`block text-neutral-500 text-[10px] uppercase font-bold`}>Time</span>
-                                    <span css={tw`text-neutral-400`}>{format(ticket.createdAt, 'HH:mm')}</span>
-                                </div>
+                                <p css={tw`text-neutral-500 mb-0 font-bold uppercase text-[10px]`}>Created At</p>
+                                <p>{format(ticket.createdAt, 'MMM dd, yyyy HH:mm')}</p>
                             </div>
                         </div>
                     </ContentBox>
-
-                    <div css={tw`bg-cyan-900/10 border border-cyan-800/20 rounded-xl p-5 shadow-sm`}>
-                        <h5 css={tw`text-cyan-400 font-bold text-xs uppercase mb-2 tracking-widest`}>Staff Note</h5>
-                        <p css={tw`text-neutral-400 text-[11px] italic`}>Please allow up to 24 hours for a response during business days.</p>
-                    </div>
                 </div>
             </div>
         </PageContentBlock>

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('ticket_attachments', function (Blueprint $blueprint) {
             $blueprint->id();
-            $blueprint->unsignedInteger('ticket_message_id');
+            $blueprint->unsignedBigInteger('ticket_message_id');
             $blueprint->string('filename');
             $blueprint->string('hash');
             $blueprint->string('mime_type');

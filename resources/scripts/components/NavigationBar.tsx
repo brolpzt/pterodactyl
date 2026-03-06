@@ -14,6 +14,7 @@ import Tooltip from '@/components/elements/tooltip/Tooltip';
 import DropdownMenu from '@/components/elements/DropdownMenu';
 import Avatar from '@/components/Avatar';
 import { getBillingInfo } from '@/api/account/billing';
+import { useCurrency, CURRENCIES } from '@/context/CurrencyContext';
 
 const StyledRow = styled.div<{ $active?: boolean }>`
     ${tw`p-2 flex items-center rounded cursor-pointer text-sm`};
@@ -67,7 +68,7 @@ export default () => {
     const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
     const [language, setLanguage] = useState({ code: 'BR', flag: '🇧🇷' });
-    const [currency, setCurrency] = useState({ code: 'USD', symbol: '$' });
+    const { currency, setCurrency, formatPrice } = useCurrency();
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
     useEffect(() => {
@@ -83,11 +84,6 @@ export default () => {
         { name: 'Español (AR)', code: 'ES', flag: '🇦🇷' },
     ];
 
-    const currencies = [
-        { name: 'US Dollar', code: 'USD', symbol: '$' },
-        { name: 'Brazilian Real', code: 'BRL', symbol: 'R$' },
-        { name: 'Euro', code: 'EUR', symbol: '€' },
-    ];
 
     const onTriggerLogout = () => {
         setIsLoggingOut(true);
@@ -132,7 +128,7 @@ export default () => {
                                 <div className={'flex items-center bg-neutral-800 rounded px-3 py-1.5 border border-neutral-700 hover:border-cyan-500 transition-colors'}>
                                     <FontAwesomeIcon icon={faWallet} className={'text-cyan-400 mr-2'} />
                                     <span className={'font-mono text-sm font-semibold'}>
-                                        {walletBalance !== null ? `$${walletBalance.toFixed(2)}` : '—'}
+                                        {walletBalance !== null ? formatPrice(walletBalance) : '—'}
                                     </span>
                                 </div>
                             </NavLink>
@@ -167,7 +163,7 @@ export default () => {
                                         </div>
                                     )}
                                 >
-                                    {currencies.map((curr) => (
+                                    {CURRENCIES.map((curr) => (
                                         <Row
                                             key={curr.code}
                                             icon={<span css={tw`font-mono`}>{curr.symbol}</span>}

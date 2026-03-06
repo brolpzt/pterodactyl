@@ -7,6 +7,7 @@ import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCreditCard, faWallet, faHandHoldingUsd } from '@fortawesome/free-solid-svg-icons';
 import { createDeposit } from '@/api/account/billing';
+import { useCurrency } from '@/context/CurrencyContext';
 import { httpErrorToHuman } from '@/api/http';
 import useFlash from '@/plugins/useFlash';
 
@@ -33,6 +34,7 @@ interface PaymentModalProps {
 }
 
 const PaymentModal = ({ visible, onDismissed, onSuccess, initialAmount }: PaymentModalProps) => {
+    const { formatPrice } = useCurrency();
     const { addError, clearFlashes } = useFlash();
     const [customAmount, setCustomAmount] = useState('');
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
@@ -100,7 +102,7 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, initialAmount }: Paymen
                         />
                     </div>
                 ) : (
-                    <p css={tw`text-2xl font-mono font-black text-neutral-100 py-2`}>${displayAmount!.toFixed(2)}</p>
+                    <p css={tw`text-2xl font-mono font-black text-neutral-100 py-2`}>{formatPrice(displayAmount!)}</p>
                 )}
             </div>
 
@@ -134,7 +136,7 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, initialAmount }: Paymen
                     Cancelar
                 </Button>
                 <Button color={'primary'} onClick={handleSubmit} disabled={!canSubmit} isLoading={isSubmitting} css={tw`w-full sm:w-auto`}>
-                    {canSubmit ? `Pagar $${displayAmount!.toFixed(2)}` : 'Pagar'}
+                    {canSubmit ? `Pagar ${formatPrice(displayAmount!)}` : 'Pagar'}
                 </Button>
             </div>
         </Modal>

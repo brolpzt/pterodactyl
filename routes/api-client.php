@@ -53,6 +53,7 @@ Route::prefix('/account')->middleware(AccountSubject::class)->group(function () 
         Route::get('/', [Client\BillingController::class, 'index']);
         Route::post('/deposit', [Client\BillingController::class, 'deposit']);
     });
+    Route::get('/exchange-rates', [Client\BillingController::class, 'exchangeRates']);
 
     Route::prefix('/tickets')->group(function () {
         Route::get('/', [Client\TicketController::class, 'index']);

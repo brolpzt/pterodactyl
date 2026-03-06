@@ -48,7 +48,7 @@
                                 <td>{{ number_format($plan->memory) }} MB</td>
                                 <td>{{ number_format($plan->disk) }} MB</td>
                                 <td>{{ $plan->cpu }}%</td>
-                                <td>${{ number_format($plan->hourly_rate, 4) }}/hr</td>
+                                <td>${{ number_format($plan->hourly_rate, 2) }}/hr</td>
                                 <td>{{ $plan->monthly_rate !== null ? '$'.number_format($plan->monthly_rate, 2).'/mo' : '—' }}</td>
                             </tr>
                         @endforeach

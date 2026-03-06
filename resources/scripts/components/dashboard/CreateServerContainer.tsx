@@ -12,6 +12,7 @@ import { useHistory } from 'react-router-dom';
 import useFlash from '@/plugins/useFlash';
 import FlashMessageRender from '@/components/FlashMessageRender';
 import { getDeployOptions, getDeployEggVariables, createServer, DeployEgg, DeployPlan, DeployLocation, DeployEggVariable } from '@/api/deploy';
+import { useCurrency } from '@/context/CurrencyContext';
 import styled from 'styled-components';
 
 const SelectableCard = styled.button<{ $selected?: boolean }>`
@@ -53,6 +54,7 @@ const countryCodeToFlag = (code: string): string => {
 
 const CreateServerContainer = () => {
     const history = useHistory();
+    const { formatPrice } = useCurrency();
     const { addFlash, clearFlashes } = useFlash();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -345,7 +347,7 @@ const CreateServerContainer = () => {
                                                 <span>{plan.cpu}% CPU</span>
                                             </div>
                                             <span css={tw`font-mono font-semibold text-cyan-400 mt-1`}>
-                                                ${plan.hourly_rate.toFixed(3)}/hr · ${plan.monthly_price.toFixed(2)}/mo
+                                                {formatPrice(plan.hourly_rate)}/hr · {formatPrice(plan.monthly_price)}/mo
                                             </span>
                                         </SelectableCard>
                                         ))}
@@ -464,7 +466,7 @@ const CreateServerContainer = () => {
                                         <span css={tw`font-bold text-neutral-100`}>{name}</span>
                                     </div>
                                     <p css={tw`text-2xl font-mono font-black text-neutral-100`}>
-                                        ${id === 'hourly' ? (currentPlan?.hourly_rate ?? 0).toFixed(3) : (currentPlan?.monthly_price ?? 0).toFixed(2)}
+                                        {formatPrice(id === 'hourly' ? (currentPlan?.hourly_rate ?? 0) : (currentPlan?.monthly_price ?? 0))}
                                     </p>
                                     <p css={tw`text-[10px] text-neutral-500`}>
                                         {id === 'hourly'
@@ -514,12 +516,12 @@ const CreateServerContainer = () => {
                             <div css={tw`bg-neutral-900 p-4 rounded border border-neutral-700`}>
                                 <div css={tw`flex items-center justify-between mb-3`}>
                                     <span css={tw`text-sm`}>Current Wallet Balance</span>
-                                    <span css={tw`font-mono font-bold text-green-400`}>${walletBalance.toFixed(2)}</span>
+                                    <span css={tw`font-mono font-bold text-green-400`}>{formatPrice(walletBalance)}</span>
                                 </div>
                                 <div css={tw`flex items-center justify-between mb-3`}>
                                     <span css={tw`text-sm`}>Charge Today</span>
                                     <span css={tw`font-mono font-bold text-red-400`}>
-                                        {chargeToday > 0 ? `-$${chargeToday.toFixed(2)}` : '$0.00'}
+                                        {chargeToday > 0 ? `-${formatPrice(chargeToday)}` : formatPrice(0)}
                                     </span>
                                 </div>
                                 <div css={tw`border-t border-neutral-800 pt-3 flex items-center justify-between`}>
@@ -530,7 +532,7 @@ const CreateServerContainer = () => {
                                             hasInsufficientFunds ? tw`text-red-500` : tw`text-neutral-100`,
                                         ]}
                                     >
-                                        ${(walletBalance - chargeToday).toFixed(2)}
+                                        {formatPrice(walletBalance - chargeToday)}
                                     </span>
                                 </div>
                             </div>
@@ -544,7 +546,7 @@ const CreateServerContainer = () => {
                             {billingType === 'hourly' && currentPlan && (
                                 <p css={tw`text-primary-400 text-[10px] mt-3`}>
                                     <FontAwesomeIcon icon={faClock} css={tw`mr-2`} />
-                                    System will deduct ${currentPlan.hourly_rate.toFixed(3)}/hr from your balance.
+                                    System will deduct {formatPrice(currentPlan.hourly_rate)}/hr from your balance.
                                 </p>
                             )}
                         </div>

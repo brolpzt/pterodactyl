@@ -8,6 +8,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Exchange rates (USD base). Fetched daily via p:billing:fetch-exchange-rates.
+    | API: ExchangeRate-API - https://www.exchangerate-api.com
+    | Open (no key): https://open.er-api.com/v6/latest/USD
+    | With key: https://v6.exchangerate-api.com/v6/{key}/latest/USD
+    |--------------------------------------------------------------------------
+    */
+    'exchange_rate_api_key' => env('BILLING_EXCHANGE_RATE_API_KEY', null),
+    'exchange_rates_key' => 'billing:exchange_rates',
+
+    /*
+    |--------------------------------------------------------------------------
     | Period days (used for pricing: hourly_rate * days * 24 = full price)
     | No discount applied - full price per period.
     |--------------------------------------------------------------------------

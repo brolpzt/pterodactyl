@@ -8,6 +8,7 @@ import PaymentModal from '@/components/dashboard/PaymentModal';
 import FlashMessageRender from '@/components/FlashMessageRender';
 import Spinner from '@/components/elements/Spinner';
 import { getBillingInfo, BillingInfo, WalletTransaction, BillingServer } from '@/api/account/billing';
+import { useCurrency } from '@/context/CurrencyContext';
 import styled from 'styled-components';
 
 const QUICK_AMOUNTS = [5, 10, 20] as const;
@@ -32,6 +33,7 @@ const formatTransactionDescription = (t: WalletTransaction) => {
 };
 
 const BillingContainer = () => {
+    const { formatPrice } = useCurrency();
     const [paymentModalVisible, setPaymentModalVisible] = useState(false);
     const [paymentModalAmount, setPaymentModalAmount] = useState<number | null>(null);
     const [billing, setBilling] = useState<BillingInfo | null>(null);
@@ -84,7 +86,7 @@ const BillingContainer = () => {
                         ) : (
                             <div css={tw`text-center py-2`}>
                                 <p css={tw`text-[10px] text-neutral-500 font-black uppercase tracking-widest mb-1`}>Available Credits</p>
-                                <p css={tw`text-4xl font-mono font-black text-neutral-100`}>${balance.toFixed(2)}</p>
+                                <p css={tw`text-4xl font-mono font-black text-neutral-100`}>{formatPrice(balance)}</p>
                                 <p css={tw`text-[10px] text-neutral-500 mt-2 font-medium`}>Available for service charges</p>
                             </div>
                         )}
@@ -105,7 +107,7 @@ const BillingContainer = () => {
                         <div css={tw`grid grid-cols-2 md:grid-cols-4 gap-3`}>
                             {QUICK_AMOUNTS.map((amount) => (
                                 <QuickButton key={amount} type="button" onClick={() => openPaymentModal(amount)}>
-                                    <p css={tw`text-xl font-black text-neutral-100`}>${amount.toFixed(2)}</p>
+                                    <p css={tw`text-xl font-black text-neutral-100`}>{formatPrice(amount)}</p>
                                     <span css={tw`text-[10px] uppercase font-semibold text-neutral-500 tracking-tight`}>Credits</span>
                                 </QuickButton>
                             ))}
@@ -215,7 +217,7 @@ const BillingContainer = () => {
                                             </div>
                                         </td>
                                         <td css={tw`px-3 py-4 text-sm font-black tracking-tighter`, t.amount >= 0 ? tw`text-green-500` : tw`text-red-500`}>
-                                            {t.amount >= 0 ? '+' : ''}${t.amount.toFixed(2)}
+                                            {t.amount >= 0 ? '+' : '-'}{formatPrice(Math.abs(t.amount))}
                                         </td>
                                         <td css={tw`px-3 py-4 text-right`}>
                                             <span css={tw`bg-green-600 text-green-50 text-[9px] px-2 py-0.5 rounded uppercase font-black tracking-widest shadow-sm`}>Completed</span>

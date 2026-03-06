@@ -5,6 +5,7 @@ namespace Pterodactyl\Http\Controllers\Api\Client;
 use Illuminate\Http\JsonResponse;
 use Pterodactyl\Services\Billing\BillingChargeService;
 use Pterodactyl\Services\Billing\WalletService;
+use Pterodactyl\Services\Billing\ExchangeRateService;
 use Pterodactyl\Services\Billing\PaymentGatewayResolver;
 use Pterodactyl\Http\Requests\Api\Client\Billing\DepositRequest;
 
@@ -13,7 +14,8 @@ class BillingController extends ClientApiController
     public function __construct(
         private WalletService $walletService,
         private PaymentGatewayResolver $gatewayResolver,
-        private BillingChargeService $billingChargeService
+        private BillingChargeService $billingChargeService,
+        private ExchangeRateService $exchangeRateService
     ) {
         parent::__construct();
     }
@@ -67,11 +69,26 @@ class BillingController extends ClientApiController
                 'next_due_date' => $s->next_due_date?->toIso8601String(),
             ]);
 
+        $exchangeRates = $this->exchangeRateService->getRates();
+
         return [
             'balance' => (float) $wallet->balance,
             'transactions' => $transactions,
             'servers' => $servers,
             'available_methods' => $this->gatewayResolver->getAvailableMethods(),
+            'exchange_rates' => $exchangeRates,
+        ];
+    }
+
+    /**
+     * Get exchange rates for frontend currency display (USD base).
+     */
+    public function exchangeRates(): array
+    {
+        $rates = $this->exchangeRateService->getRates();
+
+        return [
+            'exchange_rates' => $rates ?? ['USD' => 1.0, 'EUR' => 0, 'BRL' => 0, 'updated_at' => null],
         ];
     }
 

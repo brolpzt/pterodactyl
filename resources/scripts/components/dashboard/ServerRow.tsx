@@ -10,6 +10,7 @@ import GreyRowBox from '@/components/elements/GreyRowBox';
 import Spinner from '@/components/elements/Spinner';
 import styled from 'styled-components/macro';
 import isEqual from 'react-fast-compare';
+import { useCurrency } from '@/context/CurrencyContext';
 
 // Determines if the current value is in an alarm threshold so we can show it in red rather
 // than the more faded default style.
@@ -50,6 +51,7 @@ const StatusIndicatorBox = styled(GreyRowBox)<{ $status: ServerPowerState | unde
 type Timer = ReturnType<typeof setInterval>;
 
 export default ({ server, className }: { server: Server; className?: string }) => {
+    const { formatPrice } = useCurrency();
     const interval = useRef<Timer>(null) as React.MutableRefObject<Timer>;
     const [isSuspended, setIsSuspended] = useState(server.status === 'suspended');
     const [stats, setStats] = useState<ServerStats | null>(null);
@@ -128,7 +130,7 @@ export default ({ server, className }: { server: Server; className?: string }) =
                     <FontAwesomeIcon icon={faWallet} css={tw`text-neutral-500 text-xs`} />
                     <p css={tw`text-xs text-neutral-400 mt-1 font-mono`}>
                         {server.billingType === 'hourly' && server.billingCostSoFar != null
-                            ? `$${server.billingCostSoFar.toFixed(2)}`
+                            ? formatPrice(server.billingCostSoFar)
                             : '—'}
                     </p>
                 </div>

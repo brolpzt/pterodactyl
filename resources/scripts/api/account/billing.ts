@@ -19,15 +19,27 @@ export interface BillingServer {
     status: string | null;
 }
 
+export interface ExchangeRates {
+    USD: number;
+    EUR: number;
+    BRL: number;
+    updated_at: string | null;
+}
+
 export interface BillingInfo {
     balance: number;
     transactions: WalletTransaction[];
     servers: BillingServer[];
     available_methods: string[];
+    exchange_rates?: ExchangeRates | null;
 }
 
 export const getBillingInfo = (): Promise<BillingInfo> => {
     return http.get('/api/client/account/billing').then(({ data }) => data);
+};
+
+export const getExchangeRates = (): Promise<{ exchange_rates: ExchangeRates | null }> => {
+    return http.get('/api/client/account/exchange-rates').then(({ data }) => data);
 };
 
 export const createDeposit = (amount: number, method: string): Promise<{ balance: number }> => {

@@ -27,6 +27,7 @@ import routes from '@/routers/routes';
 import Sidebar from '@/components/Sidebar';
 import tw from 'twin.macro';
 import useFlash from '@/plugins/useFlash';
+import { useCurrency } from '@/context/CurrencyContext';
 import PowerButtons from '@/components/server/console/PowerButtons';
 import ContentContainer from '@/components/elements/ContentContainer';
 import Fade from '@/components/elements/Fade';
@@ -54,6 +55,7 @@ export default () => {
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
     const clearServerState = ServerContext.useStoreActions((actions) => actions.clearServerState);
     const { addFlash, clearFlashes } = useFlash();
+    const { formatPrice } = useCurrency();
 
     const onCopyText = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
@@ -154,7 +156,7 @@ export default () => {
                                             <div tw="hidden lg:flex flex-col flex-shrink-0">
                                                 <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Custo atual</span>
                                                 <span tw="text-[13px] text-neutral-200 whitespace-nowrap font-mono">
-                                                    {billingCostSoFar != null ? `$${billingCostSoFar.toFixed(2)}` : '—'}
+                                                    {billingCostSoFar != null ? formatPrice(billingCostSoFar) : '—'}
                                                 </span>
                                             </div>
                                             {/* Data de ativação — xl+ */}

@@ -9,6 +9,7 @@ use Illuminate\Database\Console\PruneCommand;
 use Pterodactyl\Repositories\Eloquent\SettingsRepository;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Pterodactyl\Services\Telemetry\TelemetryCollectionService;
+use Pterodactyl\Console\Commands\Billing\FetchExchangeRatesCommand;
 use Pterodactyl\Console\Commands\Billing\ProcessHourlyChargesCommand;
 use Pterodactyl\Console\Commands\Billing\ProcessPeriodRenewalsCommand;
 use Pterodactyl\Console\Commands\Schedule\ProcessRunnableCommand;
@@ -41,6 +42,10 @@ class Kernel extends ConsoleKernel
 
         // Billing: period renewals (monthly, quarterly, semi_annually, annually)
         $schedule->command(ProcessPeriodRenewalsCommand::class)->daily()->withoutOverlapping();
+
+        // Billing: fetch exchange rates (USD/EUR/BRL) for frontend display
+        $schedule->command(FetchExchangeRatesCommand::class)->daily();
+
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 
         if (config('backups.prune_age')) {

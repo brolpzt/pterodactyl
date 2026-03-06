@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('value')->nullable();
             $table->timestamps();
 
-            $table->unique(['deploy_plan_id', 'egg_variable_id']);
+            $table->unique(['deploy_plan_id', 'egg_variable_id'], 'deploy_plan_var_overrides_plan_var_unique');
             $table->foreign('deploy_plan_id')->references('id')->on('deploy_plans')->onDelete('cascade');
             $table->foreign('egg_variable_id')->references('id')->on('egg_variables')->onDelete('cascade');
         });

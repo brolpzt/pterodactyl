@@ -19,6 +19,9 @@ class ProcessHourlyChargesCommand extends Command
             ->whereNull('status')
             ->whereNotNull('hourly_rate')
             ->where('hourly_rate', '>', 0)
+            ->where(function ($q) {
+                $q->whereNull('next_due_date')->orWhere('next_due_date', '<=', now());
+            })
             ->with('user')
             ->get();
 

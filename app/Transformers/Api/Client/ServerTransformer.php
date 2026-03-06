@@ -46,7 +46,11 @@ class ServerTransformer extends BaseClientTransformer
             'name' => $server->name,
             'node' => $server->node->name,
             'egg' => $server->egg->name,
-            'location' => $server->node->location->short,
+            'location' => $server->node->location?->short ?? '—',
+            'location_long' => $server->node->location?->long ?? null,
+            'billing_type' => $server->billing_type,
+            'hourly_rate' => $server->hourly_rate ? (float) $server->hourly_rate : null,
+            'billing_cost_so_far' => $this->calculateBillingCostSoFar($server),
             'is_node_under_maintenance' => $server->node->isUnderMaintenance(),
             'sftp_details' => [
                 'ip' => $server->node->fqdn,
@@ -79,6 +83,19 @@ class ServerTransformer extends BaseClientTransformer
             'is_installing' => !$server->isInstalled(),
             'is_transferring' => !is_null($server->transfer),
         ];
+    }
+
+    /**
+     * Calculate billing cost so far for hourly servers (hours since creation * hourly_rate).
+     */
+    private function calculateBillingCostSoFar(Server $server): ?float
+    {
+        if ($server->billing_type !== 'hourly' || !$server->hourly_rate || !$server->created_at) {
+            return null;
+        }
+        $hours = max(0, $server->created_at->diffInSeconds(now()) / 3600);
+
+        return round($hours * (float) $server->hourly_rate, 4);
     }
 
     /**

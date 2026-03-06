@@ -241,6 +241,20 @@ class ServerCreationService
             return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate ?: null, 'next_due_date' => null];
         }
 
+        if ($billingType === 'hourly') {
+            $user = User::query()->findOrFail(Arr::get($data, 'owner_id'));
+            $serverName = Arr::get($data, 'name', 'Server');
+            $description = "Hourly initial: {$serverName}";
+
+            $this->walletService->charge($user, round($hourlyRate, 2), $description, 'server_creation', null);
+
+            return [
+                'billing_type' => $billingType,
+                'hourly_rate' => $hourlyRate,
+                'next_due_date' => now()->addHour(),
+            ];
+        }
+
         $periods = ['monthly', 'quarterly', 'semi_annually', 'annually'];
         if (!in_array($billingType, $periods, true)) {
             return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate, 'next_due_date' => null];

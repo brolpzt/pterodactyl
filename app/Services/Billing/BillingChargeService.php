@@ -37,6 +37,9 @@ class BillingChargeService
                 'server',
                 $server->id
             );
+
+            $server->update(['next_due_date' => now()->addHour()]);
+
             return true;
         } catch (\RuntimeException $e) {
             if (str_contains($e->getMessage(), 'Insufficient balance')) {

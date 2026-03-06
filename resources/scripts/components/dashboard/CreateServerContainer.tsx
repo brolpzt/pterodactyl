@@ -30,6 +30,15 @@ const BILLING_TYPES = [
     { id: 'monthly', name: 'Monthly', icon: faCalendar },
 ] as const;
 
+/** Formats MB value: shows GB when >= 1024 (e.g. 4096 -> "4 GB", 512 -> "512 MB"). */
+const formatMb = (mb: number): string => {
+    if (mb >= 1024) {
+        const gb = mb / 1024;
+        return `${gb % 1 === 0 ? gb : gb.toFixed(1)} GB`;
+    }
+    return `${mb} MB`;
+};
+
 /** Converts 2-letter ISO country code to flag emoji (e.g. "BR" -> 🇧🇷). */
 const countryCodeToFlag = (code: string): string => {
     if (!code || code.length !== 2) return '';
@@ -258,10 +267,9 @@ const CreateServerContainer = () => {
                         <p css={tw`text-neutral-400 text-sm mb-4`}>Choose the game or application for your server.</p>
                         <div css={tw`mb-4`}>
                             <div css={tw`relative`}>
-                                <FontAwesomeIcon
-                                    icon={faSearch}
-                                    css={tw`absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-sm`}
-                                />
+                                <span css={tw`absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-neutral-500`}>
+                                    <FontAwesomeIcon icon={faSearch} css={tw`text-sm`} />
+                                </span>
                                 <Input
                                     placeholder="Search games..."
                                     value={eggSearch}
@@ -318,8 +326,8 @@ const CreateServerContainer = () => {
                                                 <span css={tw`text-xs text-neutral-400`}>{plan.description}</span>
                                             )}
                                             <div css={tw`flex flex-wrap gap-3 mt-2 text-xs`}>
-                                                <span>{plan.memory} MB RAM</span>
-                                                <span>{plan.disk} MB disk</span>
+                                                <span>{formatMb(plan.memory)} RAM</span>
+                                                <span>{formatMb(plan.disk)} disk</span>
                                                 <span>{plan.cpu}% CPU</span>
                                             </div>
                                             <span css={tw`font-mono font-semibold text-cyan-400 mt-1`}>
@@ -473,11 +481,11 @@ const CreateServerContainer = () => {
                                 <>
                                     <div css={tw`flex items-center justify-between mb-2`}>
                                         <span>Memory (RAM)</span>
-                                        <span css={tw`font-mono`}>{currentPlan.memory} MB</span>
+                                        <span css={tw`font-mono`}>{formatMb(currentPlan.memory)}</span>
                                     </div>
                                     <div css={tw`flex items-center justify-between mb-2`}>
                                         <span>Disk</span>
-                                        <span css={tw`font-mono`}>{currentPlan.disk} MB</span>
+                                        <span css={tw`font-mono`}>{formatMb(currentPlan.disk)}</span>
                                     </div>
                                     <div css={tw`flex items-center justify-between mb-2`}>
                                         <span>CPU</span>

@@ -22,6 +22,7 @@ Route::get('/permissions', [Client\ClientController::class, 'permissions']);
 
 Route::prefix('/deploy')->middleware(AccountSubject::class)->group(function () {
     Route::get('/', [Client\DeployController::class, 'index']);
+    Route::get('/variables/{plan_id}', [Client\DeployController::class, 'variables']);
     Route::post('/', [Client\DeployController::class, 'store']);
 });
 

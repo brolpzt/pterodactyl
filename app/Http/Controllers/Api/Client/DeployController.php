@@ -27,22 +27,59 @@ class DeployController extends ClientApiController
         $user = $this->request->user();
 
         if (!$user->root_admin) {
-            return ['plans' => [], 'locations' => [], 'wallet_balance' => 0];
+            return ['eggs' => [], 'locations' => [], 'wallet_balance' => 0];
         }
 
         $wallet = $this->walletService->getOrCreateWallet($user);
-        $plans = $this->getAvailablePlans();
         $locations = Location::with('nodes')->get()->map(fn ($loc) => [
             'id' => $loc->id,
             'short' => $loc->short,
             'long' => $loc->long,
         ]);
 
+        $eggs = $this->getAvailableEggs();
+
         return [
-            'plans' => $plans,
+            'eggs' => $eggs,
             'locations' => $locations,
             'wallet_balance' => (float) $wallet->balance,
         ];
+    }
+
+    /**
+     * Get egg variables for a plan (loaded dynamically when plan is selected).
+     */
+    public function variables(string $planId): JsonResponse
+    {
+        $user = $this->request->user();
+        if (!$user->root_admin) {
+            return new JsonResponse(['error' => 'Unauthorized'], 403);
+        }
+
+        $planConfig = config("deploy.plans.{$planId}");
+        if (!$planConfig) {
+            return new JsonResponse(['error' => 'Invalid plan'], 404);
+        }
+
+        $egg = Egg::with('variables')->find($planConfig['egg_id'] ?? 0);
+        if (!$egg) {
+            return new JsonResponse(['egg_variables' => []]);
+        }
+
+        $variables = $egg->variables
+            ->where('user_viewable', true)
+            ->values()
+            ->map(fn ($v) => [
+                'name' => $v->name,
+                'description' => $v->description,
+                'env_variable' => $v->env_variable,
+                'default_value' => $v->default_value,
+                'user_editable' => $v->user_editable,
+                'rules' => explode('|', $v->rules),
+            ])
+            ->toArray();
+
+        return new JsonResponse(['egg_variables' => $variables]);
     }
 
     /**
@@ -56,9 +93,10 @@ class DeployController extends ClientApiController
             return new JsonResponse(['error' => 'Unauthorized'], 403);
         }
 
+        $planIds = implode(',', array_keys(config('deploy.plans', [])));
         $request->validate([
-            'name' => 'required|string|min:1|max:191',
-            'plan_id' => 'required|string|in:retro,esports,heavyduty',
+            'name' => 'sometimes|nullable|string|min:1|max:191',
+            'plan_id' => 'required|string|in:' . $planIds,
             'location_ids' => 'required|array',
             'location_ids.*' => 'integer|exists:locations,id',
             'billing_type' => 'required|string|in:hourly,monthly,quarterly,semi_annually,annually',
@@ -86,8 +124,9 @@ class DeployController extends ClientApiController
         $deployment->setDedicated(false);
         $deployment->setPorts([]);
 
+        $serverName = $request->input('name') ?: 'New Server';
         $data = [
-            'name' => $request->input('name'),
+            'name' => $serverName,
             'owner_id' => $user->id,
             'egg_id' => $egg->id,
             'nest_id' => $egg->nest_id,
@@ -143,11 +182,14 @@ class DeployController extends ClientApiController
         return $environment;
     }
 
-    protected function getAvailablePlans(): array
+    /**
+     * Return eggs with their plan. User selects Egg first, then sees the plan for that egg.
+     */
+    protected function getAvailableEggs(): array
     {
-        $plans = [];
-        foreach (config('deploy.plans', []) as $id => $config) {
-            $egg = Egg::with('variables')->find($config['egg_id'] ?? 0);
+        $eggs = [];
+        foreach (config('deploy.plans', []) as $planId => $config) {
+            $egg = Egg::find($config['egg_id'] ?? 0);
             if (!$egg) {
                 continue;
             }
@@ -155,30 +197,20 @@ class DeployController extends ClientApiController
             $days = config("billing.period_days.monthly", 30);
             $monthlyPrice = round($config['hourly_rate'] * $days * 24 * $discount, 2);
 
-            $variables = $egg->variables
-                ->where('user_viewable', true)
-                ->values()
-                ->map(fn ($v) => [
-                    'name' => $v->name,
-                    'description' => $v->description,
-                    'env_variable' => $v->env_variable,
-                    'default_value' => $v->default_value,
-                    'user_editable' => $v->user_editable,
-                    'rules' => explode('|', $v->rules),
-                ])
-                ->toArray();
-
-            $plans[] = [
-                'id' => $id,
-                'name' => $config['name'],
-                'hourly_rate' => $config['hourly_rate'],
-                'monthly_price' => $monthlyPrice,
-                'memory' => $config['memory'],
-                'disk' => $config['disk'],
-                'cpu' => $config['cpu'],
-                'egg_variables' => $variables,
+            $eggs[] = [
+                'egg_id' => $egg->id,
+                'egg_name' => $egg->name,
+                'plan_id' => $planId,
+                'plan' => [
+                    'name' => $config['name'],
+                    'hourly_rate' => $config['hourly_rate'],
+                    'monthly_price' => $monthlyPrice,
+                    'memory' => $config['memory'],
+                    'disk' => $config['disk'],
+                    'cpu' => $config['cpu'],
+                ],
             ];
         }
-        return $plans;
+        return $eggs;
     }
 }

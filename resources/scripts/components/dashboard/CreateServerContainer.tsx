@@ -11,7 +11,7 @@ import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import { useHistory } from 'react-router-dom';
 import useFlash from '@/plugins/useFlash';
 import FlashMessageRender from '@/components/FlashMessageRender';
-import { getDeployOptions, createServer, DeployPlan, DeployLocation, DeployEggVariable } from '@/api/deploy';
+import { getDeployOptions, getDeployEggVariables, createServer, DeployEgg, DeployLocation, DeployEggVariable } from '@/api/deploy';
 import styled from 'styled-components';
 
 const SelectableCard = styled.button<{ $selected?: boolean }>`
@@ -35,25 +35,28 @@ const CreateServerContainer = () => {
     const { addFlash, clearFlashes } = useFlash();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [plans, setPlans] = useState<DeployPlan[]>([]);
+    const [eggs, setEggs] = useState<DeployEgg[]>([]);
     const [locations, setLocations] = useState<DeployLocation[]>([]);
     const [walletBalance, setWalletBalance] = useState(0);
-    const [serverName, setServerName] = useState('');
-    const [selectedPlan, setSelectedPlan] = useState<string>('');
+    const [selectedEgg, setSelectedEgg] = useState<DeployEgg | null>(null);
     const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
     const [billingType, setBillingType] = useState<'hourly' | 'monthly'>('hourly');
     const [environment, setEnvironment] = useState<Record<string, string>>({});
+    const [eggVariables, setEggVariables] = useState<DeployEggVariable[]>([]);
+    const [variablesLoading, setVariablesLoading] = useState(false);
 
     useEffect(() => {
         getDeployOptions()
             .then((data) => {
-                setPlans(data.plans);
+                setEggs(data.eggs || []);
                 setLocations(data.locations);
                 setWalletBalance(data.wallet_balance);
-                if (data.plans.length > 0) {
-                    setSelectedPlan((s) => s || data.plans[0].id);
+                if (data.eggs?.length) {
+                    setSelectedEgg(data.eggs[0]);
+                } else {
+                    setSelectedEgg(null);
                 }
-                if (data.locations.length > 0) {
+                if (data.locations?.length) {
                     setSelectedLocation((s) => (s !== null ? s : data.locations[0].id));
                 }
                 setEnvironment({});
@@ -66,9 +69,18 @@ const CreateServerContainer = () => {
 
     useEffect(() => {
         setEnvironment({});
-    }, [selectedPlan]);
+        if (!selectedEgg) {
+            setEggVariables([]);
+            return;
+        }
+        setVariablesLoading(true);
+        getDeployEggVariables(selectedEgg.plan_id)
+            .then((data) => setEggVariables(data.egg_variables || []))
+            .catch(() => setEggVariables([]))
+            .finally(() => setVariablesLoading(false));
+    }, [selectedEgg]);
 
-    const currentPlan = plans.find((p) => p.id === selectedPlan);
+    const currentPlan = selectedEgg?.plan;
 
     const setEnvValue = (key: string, value: string) => {
         setEnvironment((prev) => ({ ...prev, [key]: value }));
@@ -132,13 +144,13 @@ const CreateServerContainer = () => {
         );
     };
     const chargeToday = billingType === 'monthly' && currentPlan ? currentPlan.monthly_price : 0;
-    const canDeploy = !submitting && serverName.trim().length > 0 && selectedPlan && selectedLocation !== null;
+    const canDeploy = !submitting && selectedEgg && selectedLocation !== null;
     const hasInsufficientFunds = billingType === 'monthly' && currentPlan && currentPlan.monthly_price > walletBalance;
 
     const buildEnvironmentPayload = (): Record<string, string> => {
-        if (!currentPlan?.egg_variables) return {};
+        if (!eggVariables.length) return {};
         const payload: Record<string, string> = {};
-        for (const v of currentPlan.egg_variables) {
+        for (const v of eggVariables) {
             if (v.user_editable) {
                 payload[v.env_variable] = environment[v.env_variable] ?? v.default_value ?? '';
             }
@@ -151,8 +163,7 @@ const CreateServerContainer = () => {
         clearFlashes('deploy');
         setSubmitting(true);
         createServer({
-            name: serverName.trim(),
-            plan_id: selectedPlan,
+            plan_id: selectedEgg.plan_id,
             location_ids: [selectedLocation],
             billing_type: billingType,
             environment: buildEnvironmentPayload(),
@@ -178,7 +189,7 @@ const CreateServerContainer = () => {
         );
     }
 
-    if (plans.length === 0) {
+    if (eggs.length === 0) {
         return (
             <PageContentBlock title={'Create New Server'}>
                 <TitledGreyBox title={'No Plans Available'}>
@@ -200,7 +211,7 @@ const CreateServerContainer = () => {
             <div css={tw`flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6`}>
                 <div>
                     <h1 css={tw`text-2xl font-black text-neutral-100`}>Deploy New Server</h1>
-                    <p css={tw`text-neutral-500 text-sm font-medium`}>Choose your plan, location and billing cycle.</p>
+                    <p css={tw`text-neutral-500 text-sm font-medium`}>Choose your game, plan, location and billing cycle.</p>
                 </div>
                 <Button color={'grey'} onClick={() => history.push('/')}>
                     Cancel
@@ -212,29 +223,58 @@ const CreateServerContainer = () => {
                     <TitledGreyBox
                         title={
                             <div css={tw`flex items-center justify-between w-full`}>
-                                <span css={tw`text-sm uppercase`}>1. Server Details</span>
+                                <span css={tw`text-sm uppercase`}>1. Select Game (Egg)</span>
                             </div>
                         }
                     >
-                        <div css={tw`mb-4`}>
-                            <label css={tw`block text-xs text-neutral-500 font-semibold uppercase tracking-wider mb-2`}>Server Name</label>
-                            <Input
-                                placeholder={'e.g., My Awesome Server'}
-                                value={serverName}
-                                onChange={(e) => setServerName(e.target.value)}
-                            />
+                        <p css={tw`text-neutral-400 text-sm mb-4`}>Choose the game or application for your server.</p>
+                        <div css={tw`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3`}>
+                            {eggs.map((egg) => (
+                                <SelectableCard
+                                    key={egg.plan_id}
+                                    type="button"
+                                    onClick={() => setSelectedEgg(egg)}
+                                    $selected={selectedEgg?.plan_id === egg.plan_id}
+                                >
+                                    <span css={tw`font-bold text-neutral-100`}>{egg.egg_name}</span>
+                                    <span css={tw`text-[10px] text-neutral-500`}>{egg.plan.name}</span>
+                                </SelectableCard>
+                            ))}
                         </div>
+                    </TitledGreyBox>
 
-                        <div>
-                            <label css={tw`block text-xs text-neutral-500 font-semibold uppercase tracking-wider mb-2`}>Select Plan</label>
-                            <Select value={selectedPlan} onChange={(e) => setSelectedPlan(e.target.value)}>
-                                {plans.map((p) => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.name} — {p.memory}MB RAM, {p.disk}MB disk
-                                    </option>
-                                ))}
-                            </Select>
-                        </div>
+                    <TitledGreyBox
+                        title={
+                            <div css={tw`flex items-center justify-between w-full`}>
+                                <span css={tw`text-sm uppercase`}>2. Plan & Resources</span>
+                            </div>
+                        }
+                    >
+                        {selectedEgg ? (
+                            <div css={tw`bg-neutral-800 rounded-lg p-4 border border-neutral-700`}>
+                                <h4 css={tw`font-bold text-neutral-100 mb-3`}>{selectedEgg.plan.name}</h4>
+                                <div css={tw`grid grid-cols-2 md:grid-cols-4 gap-4 text-sm`}>
+                                    <div>
+                                        <span css={tw`text-neutral-500 block text-[10px] uppercase`}>Memory</span>
+                                        <span css={tw`font-mono font-semibold`}>{selectedEgg.plan.memory} MB</span>
+                                    </div>
+                                    <div>
+                                        <span css={tw`text-neutral-500 block text-[10px] uppercase`}>Disk</span>
+                                        <span css={tw`font-mono font-semibold`}>{selectedEgg.plan.disk} MB</span>
+                                    </div>
+                                    <div>
+                                        <span css={tw`text-neutral-500 block text-[10px] uppercase`}>CPU</span>
+                                        <span css={tw`font-mono font-semibold`}>{selectedEgg.plan.cpu}%</span>
+                                    </div>
+                                    <div>
+                                        <span css={tw`text-neutral-500 block text-[10px] uppercase`}>Hourly</span>
+                                        <span css={tw`font-mono font-semibold text-cyan-400`}>${selectedEgg.plan.hourly_rate.toFixed(3)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <p css={tw`text-neutral-500 text-sm`}>Select a game first.</p>
+                        )}
                     </TitledGreyBox>
 
                     <TitledGreyBox
@@ -242,7 +282,7 @@ const CreateServerContainer = () => {
                             <div css={tw`flex items-center justify-between w-full`}>
                                 <div css={tw`flex items-center`}>
                                     <FontAwesomeIcon icon={faGlobe} css={tw`text-xs text-neutral-500 mr-2`} />
-                                    <span css={tw`text-sm uppercase`}>2. Location</span>
+                                    <span css={tw`text-sm uppercase`}>3. Location</span>
                                 </div>
                             </div>
                         }
@@ -262,22 +302,28 @@ const CreateServerContainer = () => {
                         </div>
                     </TitledGreyBox>
 
-                    {currentPlan && currentPlan.egg_variables && currentPlan.egg_variables.length > 0 && (
+                    {selectedEgg && (
                         <TitledGreyBox
                             title={
                                 <div css={tw`flex items-center justify-between w-full`}>
                                     <div css={tw`flex items-center`}>
                                         <FontAwesomeIcon icon={faCog} css={tw`text-xs text-neutral-500 mr-2`} />
-                                        <span css={tw`text-sm uppercase`}>3. Server Configuration</span>
+                                        <span css={tw`text-sm uppercase`}>4. Server Configuration</span>
                                     </div>
                                 </div>
                             }
                         >
-                            <p css={tw`text-neutral-400 text-sm mb-4`}>
-                                Configure your server variables. These can be changed later in the Startup tab.
-                            </p>
-                            <div css={tw`space-y-4`}>
-                                {currentPlan.egg_variables.map((variable) => (
+                            {variablesLoading ? (
+                                <div css={tw`flex justify-center py-8`}>
+                                    <FontAwesomeIcon icon={faSpinner} spin css={tw`text-2xl text-neutral-400`} />
+                                </div>
+                            ) : eggVariables.length > 0 ? (
+                                <>
+                                    <p css={tw`text-neutral-400 text-sm mb-4`}>
+                                        Configure your server variables. These can be changed later in the Startup tab.
+                                    </p>
+                                    <div css={tw`space-y-4`}>
+                                        {eggVariables.map((variable) => (
                                     <div key={variable.env_variable}>
                                         <label css={tw`block text-xs text-neutral-500 font-semibold uppercase tracking-wider mb-2`}>
                                             {!variable.user_editable && (
@@ -291,7 +337,11 @@ const CreateServerContainer = () => {
                                         )}
                                     </div>
                                 ))}
-                            </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <p css={tw`text-neutral-500 text-sm`}>No configuration options for this plan.</p>
+                            )}
                         </TitledGreyBox>
                     )}
 
@@ -299,7 +349,7 @@ const CreateServerContainer = () => {
                         title={
                             <div css={tw`flex items-center justify-between w-full`}>
                                 <span css={tw`text-sm uppercase`}>
-                                    {currentPlan?.egg_variables?.length ? '4' : '3'}. Billing Cycle
+                                    {eggVariables.length ? '5' : '4'}. Billing Cycle
                                 </span>
                                 <span css={tw`text-[10px] bg-neutral-900 px-2 py-0.5 rounded-full text-neutral-500 font-medium`}>
                                     Hourly or monthly

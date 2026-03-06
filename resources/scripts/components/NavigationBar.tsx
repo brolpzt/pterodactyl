@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCogs, faLayerGroup, faSignOutAlt, faBars, faLanguage, faChevronDown, faWallet } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +13,7 @@ import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
 import DropdownMenu from '@/components/elements/DropdownMenu';
 import Avatar from '@/components/Avatar';
+import { getBillingInfo } from '@/api/account/billing';
 
 const StyledRow = styled.div<{ $active?: boolean }>`
     ${tw`p-2 flex items-center rounded cursor-pointer text-sm`};
@@ -67,6 +68,14 @@ export default () => {
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
     const [language, setLanguage] = useState({ code: 'BR', flag: '🇧🇷' });
     const [currency, setCurrency] = useState({ code: 'USD', symbol: '$' });
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (!rootAdmin) return;
+        getBillingInfo()
+            .then((data) => setWalletBalance(data.balance))
+            .catch(() => setWalletBalance(null));
+    }, [rootAdmin]);
 
     const languages = [
         { name: 'English (US)', code: 'US', flag: '🇺🇸' },
@@ -122,7 +131,9 @@ export default () => {
                             <NavLink to={'/account/billing'} className={'!px-4'}>
                                 <div className={'flex items-center bg-neutral-800 rounded px-3 py-1.5 border border-neutral-700 hover:border-cyan-500 transition-colors'}>
                                     <FontAwesomeIcon icon={faWallet} className={'text-cyan-400 mr-2'} />
-                                    <span className={'font-mono text-sm font-semibold'}>$14.50</span>
+                                    <span className={'font-mono text-sm font-semibold'}>
+                                        {walletBalance !== null ? `$${walletBalance.toFixed(2)}` : '—'}
+                                    </span>
                                 </div>
                             </NavLink>
                         </Tooltip>

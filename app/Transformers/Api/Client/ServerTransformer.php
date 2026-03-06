@@ -50,7 +50,7 @@ class ServerTransformer extends BaseClientTransformer
             'location_long' => $server->node->location?->long ?? null,
             'billing_type' => $server->billing_type,
             'hourly_rate' => $server->hourly_rate ? (float) $server->hourly_rate : null,
-            'billing_cost_so_far' => $this->calculateBillingCostSoFar($server),
+            'billing_cost_so_far' => $server->billing_cost_so_far !== null ? (float) $server->billing_cost_so_far : null,
             'created_at' => $server->created_at?->toIso8601String(),
             'next_due_date' => $server->next_due_date?->toIso8601String(),
             'is_node_under_maintenance' => $server->node->isUnderMaintenance(),
@@ -85,19 +85,6 @@ class ServerTransformer extends BaseClientTransformer
             'is_installing' => !$server->isInstalled(),
             'is_transferring' => !is_null($server->transfer),
         ];
-    }
-
-    /**
-     * Calculate billing cost so far for hourly servers (hours since creation * hourly_rate).
-     */
-    private function calculateBillingCostSoFar(Server $server): ?float
-    {
-        if ($server->billing_type !== 'hourly' || !$server->hourly_rate || !$server->created_at) {
-            return null;
-        }
-        $hours = max(0, $server->created_at->diffInSeconds(now()) / 3600);
-
-        return round($hours * (float) $server->hourly_rate, 4);
     }
 
     /**

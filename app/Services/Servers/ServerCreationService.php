@@ -187,6 +187,7 @@ class ServerCreationService
             'fastdl_enabled' => Arr::get($data, 'fastdl_enabled') ?? false,
             'billing_type' => Arr::get($data, 'billing_type'),
             'hourly_rate' => Arr::get($data, 'hourly_rate'),
+            'billing_cost_so_far' => Arr::get($data, 'billing_cost_so_far'),
             'next_due_date' => Arr::get($data, 'next_due_date'),
         ]);
 
@@ -251,6 +252,7 @@ class ServerCreationService
             return [
                 'billing_type' => $billingType,
                 'hourly_rate' => $hourlyRate,
+                'billing_cost_so_far' => round($hourlyRate, 2),
                 'next_due_date' => now()->addHour(),
             ];
         }
@@ -274,6 +276,7 @@ class ServerCreationService
         return [
             'billing_type' => $billingType,
             'hourly_rate' => $hourlyRate,
+            'billing_cost_so_far' => $amount,
             'next_due_date' => now()->addDays($days),
         ];
     }

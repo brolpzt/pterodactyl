@@ -47,9 +47,8 @@ export default () => {
     const serverId = ServerContext.useStoreState((state) => state.server.data?.internalId);
     const allocation = ServerContext.useStoreState((state) => state.server.data?.allocations.find((a) => a.isDefault));
     const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
-    const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
     const billingCostSoFar = ServerContext.useStoreState((state) => state.server.data?.billingCostSoFar);
-    const hourlyRate = ServerContext.useStoreState((state) => state.server.data?.hourlyRate);
+    const billingType = ServerContext.useStoreState((state) => state.server.data?.billingType);
     const createdAt = ServerContext.useStoreState((state) => state.server.data?.createdAt);
     const nextDueDate = ServerContext.useStoreState((state) => state.server.data?.nextDueDate);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
@@ -151,18 +150,11 @@ export default () => {
                                                     <span>{locationName || 'n/a'}</span>
                                                 </span>
                                             </div>
-                                            {/* Custo atual — lg+ */}
+                                            {/* Custo atual — lg+ (custo cobrado até o momento) */}
                                             <div tw="hidden lg:flex flex-col flex-shrink-0">
                                                 <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Custo atual</span>
                                                 <span tw="text-[13px] text-neutral-200 whitespace-nowrap font-mono">
                                                     {billingCostSoFar != null ? `$${billingCostSoFar.toFixed(2)}` : '—'}
-                                                </span>
-                                            </div>
-                                            {/* Custo do servidor — lg+ */}
-                                            <div tw="hidden lg:flex flex-col flex-shrink-0">
-                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Custo do servidor</span>
-                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap font-mono">
-                                                    {hourlyRate != null && hourlyRate > 0 ? `$${Number(hourlyRate).toFixed(2)}/h` : '—'}
                                                 </span>
                                             </div>
                                             {/* Data de ativação — xl+ */}
@@ -172,18 +164,15 @@ export default () => {
                                                     {createdAt ? format(new Date(createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—'}
                                                 </span>
                                             </div>
-                                            {/* Próximo vencimento — xl+ */}
-                                            <div tw="hidden xl:flex flex-col flex-shrink-0">
-                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Próximo vencimento</span>
-                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap">
-                                                    {nextDueDate ? format(new Date(nextDueDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—'}
-                                                </span>
-                                            </div>
-                                            {/* Egg — xl+ */}
-                                            <div tw="hidden xl:flex flex-col flex-shrink-0">
-                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Egg</span>
-                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap">{eggName || 'n/a'}</span>
-                                            </div>
+                                            {/* Próximo vencimento — xl+ (apenas para planos não cobrados por hora) */}
+                                            {billingType && billingType !== 'hourly' && (
+                                                <div tw="hidden xl:flex flex-col flex-shrink-0">
+                                                    <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Próximo vencimento</span>
+                                                    <span tw="text-[13px] text-neutral-200 whitespace-nowrap">
+                                                        {nextDueDate ? format(new Date(nextDueDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—'}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* PowerButtons — always visible, pushed to the right */}

@@ -38,7 +38,11 @@ class BillingChargeService
                 $server->id
             );
 
-            $server->update(['next_due_date' => now()->addHour()]);
+            $currentCost = (float) ($server->billing_cost_so_far ?? 0);
+            $server->update([
+                'next_due_date' => now()->addHour(),
+                'billing_cost_so_far' => round($currentCost + $rate, 2),
+            ]);
 
             return true;
         } catch (\RuntimeException $e) {
@@ -84,8 +88,10 @@ class BillingChargeService
                 $server->id
             );
 
+            $currentCost = (float) ($server->billing_cost_so_far ?? 0);
             $server->update([
                 'next_due_date' => now()->addDays($periodDays),
+                'billing_cost_so_far' => round($currentCost + $amount, 2),
             ]);
 
             return true;

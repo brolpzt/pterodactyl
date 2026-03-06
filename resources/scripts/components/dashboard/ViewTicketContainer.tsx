@@ -116,7 +116,7 @@ export default () => {
                                     </div>
                                 }
                             >
-                                <div css={tw`text-sm text-neutral-200 leading-relaxed whitespace-pre-wrap font-medium`}>
+                                <div css={tw`text-sm text-neutral-200 leading-relaxed whitespace-pre-wrap font-normal`}>
                                     {msg.message}
                                 </div>
 

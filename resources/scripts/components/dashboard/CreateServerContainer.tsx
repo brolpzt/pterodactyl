@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGlobe, faWallet, faClock, faCalendar, faSpinner, faCog } from '@fortawesome/free-solid-svg-icons';
+import { faGlobe, faWallet, faClock, faCalendar, faSpinner, faCog, faSearch } from '@fortawesome/free-solid-svg-icons';
 import Button from '@/components/elements/Button';
 import Input from '@/components/elements/Input';
 import Select from '@/components/elements/Select';
@@ -11,7 +11,7 @@ import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import { useHistory } from 'react-router-dom';
 import useFlash from '@/plugins/useFlash';
 import FlashMessageRender from '@/components/FlashMessageRender';
-import { getDeployOptions, getDeployEggVariables, createServer, DeployEgg, DeployLocation, DeployEggVariable } from '@/api/deploy';
+import { getDeployOptions, getDeployEggVariables, createServer, DeployEgg, DeployPlan, DeployLocation, DeployEggVariable } from '@/api/deploy';
 import styled from 'styled-components';
 
 const SelectableCard = styled.button<{ $selected?: boolean }>`
@@ -30,6 +30,17 @@ const BILLING_TYPES = [
     { id: 'monthly', name: 'Monthly', icon: faCalendar },
 ] as const;
 
+/** Converts 2-letter ISO country code to flag emoji (e.g. "BR" -> 🇧🇷). */
+const countryCodeToFlag = (code: string): string => {
+    if (!code || code.length !== 2) return '';
+    const a = 0x1f1e6; // Regional Indicator A
+    const upper = code.toUpperCase();
+    return String.fromCodePoint(
+        a + (upper.charCodeAt(0) - 65),
+        a + (upper.charCodeAt(1) - 65)
+    );
+};
+
 const CreateServerContainer = () => {
     const history = useHistory();
     const { addFlash, clearFlashes } = useFlash();
@@ -39,6 +50,8 @@ const CreateServerContainer = () => {
     const [locations, setLocations] = useState<DeployLocation[]>([]);
     const [walletBalance, setWalletBalance] = useState(0);
     const [selectedEgg, setSelectedEgg] = useState<DeployEgg | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<DeployPlan | null>(null);
+    const [eggSearch, setEggSearch] = useState('');
     const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
     const [billingType, setBillingType] = useState<'hourly' | 'monthly'>('hourly');
     const [environment, setEnvironment] = useState<Record<string, string>>({});
@@ -52,9 +65,12 @@ const CreateServerContainer = () => {
                 setLocations(data.locations);
                 setWalletBalance(data.wallet_balance);
                 if (data.eggs?.length) {
-                    setSelectedEgg(data.eggs[0]);
+                    const first = data.eggs[0];
+                    setSelectedEgg(first);
+                    setSelectedPlan(first.plans?.[0] ?? null);
                 } else {
                     setSelectedEgg(null);
+                    setSelectedPlan(null);
                 }
                 if (data.locations?.length) {
                     setSelectedLocation((s) => (s !== null ? s : data.locations[0].id));
@@ -68,19 +84,31 @@ const CreateServerContainer = () => {
     }, [addFlash]);
 
     useEffect(() => {
+        if (selectedEgg && !selectedPlan && selectedEgg.plans?.length) {
+            setSelectedPlan(selectedEgg.plans[0]);
+        } else if (selectedEgg && selectedPlan && !selectedEgg.plans?.some((p) => p.id === selectedPlan.id)) {
+            setSelectedPlan(selectedEgg.plans?.[0] ?? null);
+        }
+    }, [selectedEgg, selectedPlan]);
+
+    useEffect(() => {
         setEnvironment({});
-        if (!selectedEgg) {
+        if (!selectedPlan) {
             setEggVariables([]);
             return;
         }
         setVariablesLoading(true);
-        getDeployEggVariables(selectedEgg.plan_id)
+        getDeployEggVariables(selectedPlan.id)
             .then((data) => setEggVariables(data.egg_variables || []))
             .catch(() => setEggVariables([]))
             .finally(() => setVariablesLoading(false));
-    }, [selectedEgg]);
+    }, [selectedPlan]);
 
-    const currentPlan = selectedEgg?.plan;
+    const currentPlan = selectedPlan;
+
+    const filteredEggs = eggs.filter(
+        (e) => !eggSearch.trim() || e.egg_name.toLowerCase().includes(eggSearch.toLowerCase())
+    );
 
     const setEnvValue = (key: string, value: string) => {
         setEnvironment((prev) => ({ ...prev, [key]: value }));
@@ -144,7 +172,7 @@ const CreateServerContainer = () => {
         );
     };
     const chargeToday = billingType === 'monthly' && currentPlan ? currentPlan.monthly_price : 0;
-    const canDeploy = !submitting && selectedEgg && selectedLocation !== null;
+    const canDeploy = !submitting && selectedEgg && selectedPlan && selectedLocation !== null;
     const hasInsufficientFunds = billingType === 'monthly' && currentPlan && currentPlan.monthly_price > walletBalance;
 
     const buildEnvironmentPayload = (): Record<string, string> => {
@@ -159,11 +187,11 @@ const CreateServerContainer = () => {
     };
 
     const handleDeploy = () => {
-        if (!canDeploy || hasInsufficientFunds || !selectedLocation) return;
+        if (!canDeploy || hasInsufficientFunds || !selectedLocation || !selectedPlan) return;
         clearFlashes('deploy');
         setSubmitting(true);
         createServer({
-            plan_id: selectedEgg.plan_id,
+            plan_id: selectedPlan.id,
             location_ids: [selectedLocation],
             billing_type: billingType,
             environment: buildEnvironmentPayload(),
@@ -228,19 +256,44 @@ const CreateServerContainer = () => {
                         }
                     >
                         <p css={tw`text-neutral-400 text-sm mb-4`}>Choose the game or application for your server.</p>
-                        <div css={tw`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3`}>
-                            {eggs.map((egg) => (
+                        <div css={tw`mb-4`}>
+                            <div css={tw`relative`}>
+                                <FontAwesomeIcon
+                                    icon={faSearch}
+                                    css={tw`absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-sm`}
+                                />
+                                <Input
+                                    placeholder="Search games..."
+                                    value={eggSearch}
+                                    onChange={(e) => setEggSearch(e.target.value)}
+                                    css={tw`pl-10`}
+                                />
+                            </div>
+                        </div>
+                        <div css={tw`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto`}>
+                            {filteredEggs.map((egg) => (
                                 <SelectableCard
-                                    key={egg.plan_id}
+                                    key={egg.egg_id}
                                     type="button"
-                                    onClick={() => setSelectedEgg(egg)}
-                                    $selected={selectedEgg?.plan_id === egg.plan_id}
+                                    onClick={() => {
+                                        setSelectedEgg(egg);
+                                        setSelectedPlan(egg.plans?.[0] ?? null);
+                                    }}
+                                    $selected={selectedEgg?.egg_id === egg.egg_id}
                                 >
                                     <span css={tw`font-bold text-neutral-100`}>{egg.egg_name}</span>
-                                    <span css={tw`text-[10px] text-neutral-500`}>{egg.plan.name}</span>
+                                    {egg.nest_name && (
+                                        <span css={tw`text-[10px] text-neutral-500`}>{egg.nest_name}</span>
+                                    )}
+                                    <span css={tw`text-[10px] text-neutral-400`}>
+                                        {egg.plans?.length ?? 0} plan{egg.plans?.length !== 1 ? 's' : ''}
+                                    </span>
                                 </SelectableCard>
                             ))}
                         </div>
+                        {filteredEggs.length === 0 && (
+                            <p css={tw`text-neutral-500 text-sm mt-2`}>No games match your search.</p>
+                        )}
                     </TitledGreyBox>
 
                     <TitledGreyBox
@@ -251,27 +304,30 @@ const CreateServerContainer = () => {
                         }
                     >
                         {selectedEgg ? (
-                            <div css={tw`bg-neutral-800 rounded-lg p-4 border border-neutral-700`}>
-                                <h4 css={tw`font-bold text-neutral-100 mb-3`}>{selectedEgg.plan.name}</h4>
-                                <div css={tw`grid grid-cols-2 md:grid-cols-4 gap-4 text-sm`}>
-                                    <div>
-                                        <span css={tw`text-neutral-500 block text-[10px] uppercase`}>Memory</span>
-                                        <span css={tw`font-mono font-semibold`}>{selectedEgg.plan.memory} MB</span>
-                                    </div>
-                                    <div>
-                                        <span css={tw`text-neutral-500 block text-[10px] uppercase`}>Disk</span>
-                                        <span css={tw`font-mono font-semibold`}>{selectedEgg.plan.disk} MB</span>
-                                    </div>
-                                    <div>
-                                        <span css={tw`text-neutral-500 block text-[10px] uppercase`}>CPU</span>
-                                        <span css={tw`font-mono font-semibold`}>{selectedEgg.plan.cpu}%</span>
-                                    </div>
-                                    <div>
-                                        <span css={tw`text-neutral-500 block text-[10px] uppercase`}>Hourly</span>
-                                        <span css={tw`font-mono font-semibold text-cyan-400`}>${selectedEgg.plan.hourly_rate.toFixed(3)}</span>
-                                    </div>
+                            selectedEgg.plans?.length > 0 ? (
+                                <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-3`}>
+                                    {selectedEgg.plans.map((plan) => (
+                                        <SelectableCard
+                                            key={plan.id}
+                                            type="button"
+                                            onClick={() => setSelectedPlan(plan)}
+                                            $selected={selectedPlan?.id === plan.id}
+                                        >
+                                            <span css={tw`font-bold text-neutral-100`}>{plan.name}</span>
+                                            <div css={tw`flex flex-wrap gap-3 mt-2 text-xs`}>
+                                                <span>{plan.memory} MB RAM</span>
+                                                <span>{plan.disk} MB disk</span>
+                                                <span>{plan.cpu}% CPU</span>
+                                            </div>
+                                            <span css={tw`font-mono font-semibold text-cyan-400 mt-1`}>
+                                                ${plan.hourly_rate.toFixed(3)}/hr · ${plan.monthly_price.toFixed(2)}/mo
+                                            </span>
+                                        </SelectableCard>
+                                    ))}
                                 </div>
-                            </div>
+                            ) : (
+                                <p css={tw`text-neutral-500 text-sm`}>No plans available for this game. Contact the administrator.</p>
+                            )
                         ) : (
                             <p css={tw`text-neutral-500 text-sm`}>Select a game first.</p>
                         )}
@@ -288,17 +344,27 @@ const CreateServerContainer = () => {
                         }
                     >
                         <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-3`}>
-                            {locations.map((loc) => (
-                                <SelectableCard
-                                    key={loc.id}
-                                    type="button"
-                                    onClick={() => setSelectedLocation(loc.id)}
-                                    $selected={selectedLocation === loc.id}
-                                >
-                                    <span css={tw`font-bold text-neutral-100`}>{loc.long || loc.short}</span>
-                                    <span css={tw`text-[10px] text-neutral-500 uppercase tracking-tight`}>{loc.short}</span>
-                                </SelectableCard>
-                            ))}
+                            {locations.map((loc) => {
+                                const flag = countryCodeToFlag(loc.short);
+                                return (
+                                    <SelectableCard
+                                        key={loc.id}
+                                        type="button"
+                                        onClick={() => setSelectedLocation(loc.id)}
+                                        $selected={selectedLocation === loc.id}
+                                    >
+                                        <div css={tw`flex items-center gap-3 w-full`}>
+                                            <span css={tw`text-2xl flex-shrink-0`} title={loc.short}>
+                                                {flag || <FontAwesomeIcon icon={faGlobe} css={tw`text-neutral-500`} />}
+                                            </span>
+                                            <div css={tw`flex flex-col items-start min-w-0`}>
+                                                <span css={tw`font-bold text-neutral-100`}>{loc.long || loc.short}</span>
+                                                <span css={tw`text-[10px] text-neutral-500 uppercase tracking-tight`}>{loc.short}</span>
+                                            </div>
+                                        </div>
+                                    </SelectableCard>
+                                );
+                            })}
                         </div>
                     </TitledGreyBox>
 

@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('deploy_plans', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedInteger('egg_id');
+            $table->string('name', 191);
+            $table->unsignedInteger('memory');
+            $table->unsignedInteger('disk');
+            $table->unsignedInteger('cpu');
+            $table->unsignedInteger('swap')->default(0);
+            $table->unsignedInteger('io')->default(500);
+            $table->decimal('hourly_rate', 10, 6);
+            $table->timestamps();
+
+            $table->foreign('egg_id')->references('id')->on('eggs')->onDelete('cascade');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('deploy_plans');
+    }
+};

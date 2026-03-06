@@ -10,6 +10,7 @@ export interface DeployEggVariable {
 }
 
 export interface DeployPlan {
+    id: number;
     name: string;
     hourly_rate: number;
     monthly_price: number;
@@ -21,8 +22,9 @@ export interface DeployPlan {
 export interface DeployEgg {
     egg_id: number;
     egg_name: string;
-    plan_id: string;
-    plan: DeployPlan;
+    egg_description?: string;
+    nest_name?: string;
+    plans: DeployPlan[];
 }
 
 export interface DeployLocation {
@@ -41,12 +43,12 @@ export const getDeployOptions = (): Promise<DeployOptions> => {
     return http.get('/api/client/deploy').then(({ data }) => data);
 };
 
-export const getDeployEggVariables = (planId: string): Promise<{ egg_variables: DeployEggVariable[] }> => {
+export const getDeployEggVariables = (planId: number): Promise<{ egg_variables: DeployEggVariable[] }> => {
     return http.get(`/api/client/deploy/variables/${planId}`).then(({ data }) => data);
 };
 
 export const createServer = (params: {
-    plan_id: string;
+    plan_id: number;
     location_ids: number[];
     billing_type: string;
     environment?: Record<string, string>;

@@ -121,6 +121,11 @@
                                 <i class="fa fa-credit-card"></i> <span>Billing</span>
                             </a>
                         </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.deploy_plans') ?: 'active' }}">
+                            <a href="{{ route('admin.deploy_plans') }}">
+                                <i class="fa fa-list-alt"></i> <span>Deploy Plans</span>
+                            </a>
+                        </li>
                         <li class="header">SERVICE MANAGEMENT</li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.mounts') ?: 'active' }}">
                             <a href="{{ route('admin.mounts') }}">

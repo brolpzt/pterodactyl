@@ -4,6 +4,7 @@ namespace Pterodactyl\Http\Controllers\Api\Client;
 
 use Illuminate\Http\JsonResponse;
 use Pterodactyl\Models\Egg;
+use Pterodactyl\Models\DeployPlan;
 use Pterodactyl\Models\Location;
 use Pterodactyl\Models\Objects\DeploymentObject;
 use Pterodactyl\Services\Billing\WalletService;
@@ -47,25 +48,21 @@ class DeployController extends ClientApiController
     }
 
     /**
-     * Get egg variables for a plan (loaded dynamically when plan is selected).
+     * Get egg variables for a plan (loaded dynamically when egg/plan is selected).
      */
-    public function variables(string $planId): JsonResponse
+    public function variables(int $planId): JsonResponse
     {
         $user = $this->request->user();
         if (!$user->root_admin) {
             return new JsonResponse(['error' => 'Unauthorized'], 403);
         }
 
-        $planConfig = config("deploy.plans.{$planId}");
-        if (!$planConfig) {
-            return new JsonResponse(['error' => 'Invalid plan'], 404);
-        }
-
-        $egg = Egg::with('variables')->find($planConfig['egg_id'] ?? 0);
-        if (!$egg) {
+        $plan = DeployPlan::with('egg.variables')->find($planId);
+        if (!$plan || !$plan->egg) {
             return new JsonResponse(['egg_variables' => []]);
         }
 
+        $egg = $plan->egg;
         $variables = $egg->variables
             ->where('user_viewable', true)
             ->values()
@@ -93,10 +90,9 @@ class DeployController extends ClientApiController
             return new JsonResponse(['error' => 'Unauthorized'], 403);
         }
 
-        $planIds = implode(',', array_keys(config('deploy.plans', [])));
         $request->validate([
             'name' => 'sometimes|nullable|string|min:1|max:191',
-            'plan_id' => 'required|string|in:' . $planIds,
+            'plan_id' => 'required|integer|exists:deploy_plans,id',
             'location_ids' => 'required|array',
             'location_ids.*' => 'integer|exists:locations,id',
             'billing_type' => 'required|string|in:hourly,monthly,quarterly,semi_annually,annually',
@@ -104,16 +100,12 @@ class DeployController extends ClientApiController
             'environment.*' => 'nullable|string',
         ]);
 
-        $planConfig = config("deploy.plans.{$request->input('plan_id')}");
-        if (!$planConfig) {
+        $plan = DeployPlan::with(['egg.nest', 'egg.variables'])->find($request->input('plan_id'));
+        if (!$plan || !$plan->egg) {
             return new JsonResponse(['error' => 'Invalid plan'], 422);
         }
 
-        $egg = Egg::with(['nest', 'variables'])->find($planConfig['egg_id']);
-        if (!$egg) {
-            return new JsonResponse(['error' => 'Plan configuration error: egg not found'], 500);
-        }
-
+        $egg = $plan->egg;
         $environment = $this->buildEnvironment($egg, $request->input('environment', []));
 
         $dockerImages = $egg->docker_images ?? [];
@@ -130,11 +122,11 @@ class DeployController extends ClientApiController
             'owner_id' => $user->id,
             'egg_id' => $egg->id,
             'nest_id' => $egg->nest_id,
-            'memory' => $planConfig['memory'],
-            'swap' => $planConfig['swap'] ?? 0,
-            'disk' => $planConfig['disk'],
-            'io' => $planConfig['io'] ?? 500,
-            'cpu' => $planConfig['cpu'],
+            'memory' => $plan->memory,
+            'swap' => $plan->swap ?? 0,
+            'disk' => $plan->disk,
+            'io' => $plan->io ?? 500,
+            'cpu' => $plan->cpu,
             'image' => $image,
             'startup' => $egg->startup ?? '',
             'database_limit' => 0,
@@ -142,7 +134,7 @@ class DeployController extends ClientApiController
             'backup_limit' => 0,
             'environment' => $environment,
             'billing_type' => $request->input('billing_type'),
-            'hourly_rate' => $planConfig['hourly_rate'],
+            'hourly_rate' => $plan->hourly_rate,
             'start_on_completion' => false,
         ];
 
@@ -183,34 +175,39 @@ class DeployController extends ClientApiController
     }
 
     /**
-     * Return eggs with their plan. User selects Egg first, then sees the plan for that egg.
+     * Return eggs from database that have deploy plans. Each egg includes its plans.
      */
     protected function getAvailableEggs(): array
     {
-        $eggs = [];
-        foreach (config('deploy.plans', []) as $planId => $config) {
-            $egg = Egg::find($config['egg_id'] ?? 0);
-            if (!$egg) {
-                continue;
-            }
-            $discount = config("billing.period_discounts.monthly", 0.75);
-            $days = config("billing.period_days.monthly", 30);
-            $monthlyPrice = round($config['hourly_rate'] * $days * 24 * $discount, 2);
+        $discount = config("billing.period_discounts.monthly", 0.75);
+        $days = config("billing.period_days.monthly", 30);
 
-            $eggs[] = [
-                'egg_id' => $egg->id,
-                'egg_name' => $egg->name,
-                'plan_id' => $planId,
-                'plan' => [
-                    'name' => $config['name'],
-                    'hourly_rate' => $config['hourly_rate'],
-                    'monthly_price' => $monthlyPrice,
-                    'memory' => $config['memory'],
-                    'disk' => $config['disk'],
-                    'cpu' => $config['cpu'],
-                ],
-            ];
-        }
+        $eggs = Egg::whereHas('deployPlans')
+            ->with(['deployPlans', 'nest'])
+            ->orderBy('nest_id')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Egg $egg) use ($discount, $days) {
+                $plans = $egg->deployPlans->map(fn ($p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'memory' => $p->memory,
+                    'disk' => $p->disk,
+                    'cpu' => $p->cpu,
+                    'hourly_rate' => (float) $p->hourly_rate,
+                    'monthly_price' => round($p->hourly_rate * $days * 24 * $discount, 2),
+                ])->values()->toArray();
+
+                return [
+                    'egg_id' => $egg->id,
+                    'egg_name' => $egg->name,
+                    'egg_description' => $egg->description,
+                    'nest_name' => $egg->nest->name ?? null,
+                    'plans' => $plans,
+                ];
+            })
+            ->toArray();
+
         return $eggs;
     }
 }

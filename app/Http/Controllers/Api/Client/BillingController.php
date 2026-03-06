@@ -3,6 +3,7 @@
 namespace Pterodactyl\Http\Controllers\Api\Client;
 
 use Illuminate\Http\JsonResponse;
+use Pterodactyl\Services\Billing\BillingChargeService;
 use Pterodactyl\Services\Billing\WalletService;
 use Pterodactyl\Services\Billing\PaymentGatewayResolver;
 use Pterodactyl\Http\Requests\Api\Client\Billing\DepositRequest;
@@ -11,7 +12,8 @@ class BillingController extends ClientApiController
 {
     public function __construct(
         private WalletService $walletService,
-        private PaymentGatewayResolver $gatewayResolver
+        private PaymentGatewayResolver $gatewayResolver,
+        private BillingChargeService $billingChargeService
     ) {
         parent::__construct();
     }
@@ -89,10 +91,14 @@ class BillingController extends ClientApiController
 
         $wallet = $this->walletService->getOrCreateWallet($user);
 
+        // Restore servers suspended for billing when user adds funds
+        $restoredCount = $this->billingChargeService->restoreBillingSuspendedServers($user);
+
         return new JsonResponse([
             'success' => true,
             'balance' => (float) $wallet->fresh()->balance,
             'intent_id' => $result['intent_id'] ?? null,
+            'servers_restored' => $restoredCount,
         ]);
     }
 }

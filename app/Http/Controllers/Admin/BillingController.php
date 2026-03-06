@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
 use Spatie\QueryBuilder\QueryBuilder;
 use Pterodactyl\Http\Controllers\Controller;
+use Pterodactyl\Services\Billing\BillingChargeService;
 use Pterodactyl\Services\Billing\WalletService;
 
 class BillingController extends Controller
@@ -17,6 +18,7 @@ class BillingController extends Controller
     public function __construct(
         protected AlertsMessageBag $alert,
         protected WalletService $walletService,
+        protected BillingChargeService $billingChargeService,
     ) {
     }
 
@@ -68,7 +70,13 @@ class BillingController extends Controller
         $description = $request->input('description') ?: 'Admin credit adjustment';
 
         $this->walletService->adminAddCredit($user, $amount, $description);
-        $this->alert->success("Added \${$amount} to {$user->username}'s wallet.")->flash();
+
+        $restored = $this->billingChargeService->restoreBillingSuspendedServers($user);
+        $msg = "Added \${$amount} to {$user->username}'s wallet.";
+        if ($restored > 0) {
+            $msg .= " {$restored} server(s) restored.";
+        }
+        $this->alert->success($msg)->flash();
 
         return redirect()->route('admin.billing.view_user', $user->id);
     }

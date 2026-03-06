@@ -4,6 +4,7 @@ namespace Pterodactyl\Services\Billing;
 
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\User;
+use Pterodactyl\Notifications\ServerSuspendedForBilling;
 use Pterodactyl\Services\Servers\SuspensionService;
 use Illuminate\Support\Facades\Log;
 
@@ -94,6 +95,31 @@ class BillingChargeService
         }
     }
 
+    /**
+     * Restore (unsuspend) servers that were suspended for billing. Call after user adds funds.
+     */
+    public function restoreBillingSuspendedServers(User $user): int
+    {
+        $servers = Server::query()
+            ->where('owner_id', $user->id)
+            ->where('status', Server::STATUS_SUSPENDED)
+            ->whereNotNull('suspended_for_billing_at')
+            ->get();
+
+        $restored = 0;
+        foreach ($servers as $server) {
+            try {
+                $server->update(['suspended_for_billing_at' => null]);
+                $this->suspensionService->toggle($server, SuspensionService::ACTION_UNSUSPEND);
+                $restored++;
+            } catch (\Throwable $e) {
+                Log::warning("Billing: Failed to restore server {$server->id}: {$e->getMessage()}");
+            }
+        }
+
+        return $restored;
+    }
+
     protected function suspendServer(Server $server, string $reason): void
     {
         if ($server->isSuspended()) {
@@ -103,7 +129,9 @@ class BillingChargeService
         Log::info("Billing: Suspending server {$server->id} ({$server->name}): {$reason}");
 
         try {
+            $server->update(['suspended_for_billing_at' => now()]);
             $this->suspensionService->toggle($server, SuspensionService::ACTION_SUSPEND);
+            $server->user->notify(new ServerSuspendedForBilling($server, $reason));
         } catch (\Throwable $e) {
             Log::error("Billing: Failed to suspend server {$server->id}: {$e->getMessage()}");
         }

@@ -39,14 +39,15 @@ const formatMb = (mb: number): string => {
     return `${mb} MB`;
 };
 
-/** Converts 2-letter ISO country code to flag emoji (e.g. "BR" -> 🇧🇷). */
+/** Converts 2-letter ISO country code to flag emoji (e.g. "BR" or "BR - São Paulo" -> 🇧🇷). Uses first 2 chars. */
 const countryCodeToFlag = (code: string): string => {
-    if (!code || code.length !== 2) return '';
+    if (!code || code.length < 2) return '';
+    const two = code.substring(0, 2).toUpperCase();
+    if (two.charCodeAt(0) < 65 || two.charCodeAt(0) > 90 || two.charCodeAt(1) < 65 || two.charCodeAt(1) > 90) return '';
     const a = 0x1f1e6; // Regional Indicator A
-    const upper = code.toUpperCase();
     return String.fromCodePoint(
-        a + (upper.charCodeAt(0) - 65),
-        a + (upper.charCodeAt(1) - 65)
+        a + (two.charCodeAt(0) - 65),
+        a + (two.charCodeAt(1) - 65)
     );
 };
 

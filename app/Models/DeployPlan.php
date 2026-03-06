@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $egg_id
  * @property string $name
+ * @property string|null $description
  * @property int $memory
  * @property int $disk
  * @property int $cpu
@@ -25,6 +26,7 @@ class DeployPlan extends Model
     protected $fillable = [
         'egg_id',
         'name',
+        'description',
         'memory',
         'disk',
         'cpu',
@@ -46,6 +48,7 @@ class DeployPlan extends Model
     public static array $validationRules = [
         'egg_id' => 'required|integer|exists:eggs,id',
         'name' => 'required|string|max:191',
+        'description' => 'nullable|string|max:500',
         'memory' => 'required|integer|min:128',
         'disk' => 'required|integer|min:512',
         'cpu' => 'required|integer|min:0',

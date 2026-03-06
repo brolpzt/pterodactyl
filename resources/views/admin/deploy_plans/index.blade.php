@@ -28,6 +28,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
+                            <th>Description</th>
                             <th>Egg</th>
                             <th>Memory</th>
                             <th>Disk</th>
@@ -38,6 +39,7 @@
                             <tr>
                                 <td><code>{{ $plan->id }}</code></td>
                                 <td><a href="{{ route('admin.deploy_plans.view', $plan->id) }}">{{ $plan->name }}</a></td>
+                                <td><span class="text-muted" style="max-width:200px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $plan->description }}">{{ $plan->description ?? '—' }}</span></td>
                                 <td>
                                     <a href="{{ route('admin.nests.egg.view', $plan->egg_id) }}">{{ $plan->egg->name }}</a>
                                     <span class="text-muted">({{ $plan->egg->nest->name ?? 'N/A' }})</span>

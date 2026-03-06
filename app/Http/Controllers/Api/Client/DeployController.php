@@ -191,6 +191,7 @@ class DeployController extends ClientApiController
                 $plans = $egg->deployPlans->map(fn ($p) => [
                     'id' => $p->id,
                     'name' => $p->name,
+                    'description' => $p->description,
                     'memory' => $p->memory,
                     'disk' => $p->disk,
                     'cpu' => $p->cpu,

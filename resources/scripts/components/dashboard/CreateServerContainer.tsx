@@ -314,6 +314,9 @@ const CreateServerContainer = () => {
                                             $selected={selectedPlan?.id === plan.id}
                                         >
                                             <span css={tw`font-bold text-neutral-100`}>{plan.name}</span>
+                                            {plan.description && (
+                                                <span css={tw`text-xs text-neutral-400`}>{plan.description}</span>
+                                            )}
                                             <div css={tw`flex flex-wrap gap-3 mt-2 text-xs`}>
                                                 <span>{plan.memory} MB RAM</span>
                                                 <span>{plan.disk} MB disk</span>

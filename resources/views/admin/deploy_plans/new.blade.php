@@ -35,6 +35,11 @@
                         <label for="name" class="form-label">Plan Name</label>
                         <input type="text" name="name" id="name" class="form-control" placeholder="e.g. Basic 4GB" required />
                     </div>
+                    <div class="form-group">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea name="description" id="description" class="form-control" rows="2" placeholder="e.g. Recomendado para 12 jogadores"></textarea>
+                        <p class="text-muted small">Optional. Shown to users when selecting the plan.</p>
+                    </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">

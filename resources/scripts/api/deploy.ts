@@ -12,6 +12,7 @@ export interface DeployEggVariable {
 export interface DeployPlan {
     id: number;
     name: string;
+    description?: string;
     hourly_rate: number;
     monthly_price: number;
     memory: number;

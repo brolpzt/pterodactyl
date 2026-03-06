@@ -79,7 +79,7 @@
     <div class="col-md-3">
         <div class="box">
             <div class="box-header with-border">
-                <h3 class="box-title">Management Console</h3>
+                <h3 class="box-title">Ticket Details</h3>
             </div>
             <div class="box-body table-responsive no-padding">
                 <table class="table table-hover">

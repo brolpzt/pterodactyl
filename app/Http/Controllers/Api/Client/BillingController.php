@@ -53,13 +53,16 @@ class BillingController extends ClientApiController
             });
 
         $servers = $user->servers()
-            ->select('id', 'uuid', 'name', 'status')
+            ->select('id', 'uuid', 'name', 'status', 'billing_type', 'hourly_rate', 'next_due_date')
             ->get()
             ->map(fn ($s) => [
                 'id' => $s->id,
                 'uuid' => $s->uuid,
                 'name' => $s->name,
                 'status' => $s->status,
+                'billing_type' => $s->billing_type,
+                'hourly_rate' => $s->hourly_rate ? (float) $s->hourly_rate : null,
+                'next_due_date' => $s->next_due_date?->toIso8601String(),
             ]);
 
         return [

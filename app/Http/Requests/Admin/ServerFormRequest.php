@@ -20,7 +20,8 @@ class ServerFormRequest extends AdminFormRequest
         $rules['mounts.*'] = 'numeric|exists:mounts,id';
         $rules['addons'] = 'sometimes|nullable|array';
         $rules['addons.*'] = 'numeric|exists:addons,id';
-
+        $rules['billing_type'] = 'sometimes|nullable|string|in:hourly,monthly,quarterly,semi_annually,annually';
+        $rules['hourly_rate'] = 'sometimes|nullable|numeric|min:0';
 
         return $rules;
     }

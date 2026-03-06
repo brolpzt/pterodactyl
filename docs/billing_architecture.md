@@ -32,6 +32,7 @@ Para viabilizar este controle, a tabela responsável pelos Serviços, Assinatura
 
 1. \`billing_type\` (Tipo de Contrato do Serviço)
    - Valores esperados: \`hourly\`, \`monthly\`, \`quarterly\`, \`semi_annually\`, \`annually\`.
+   - \`semi_annually\`: cobrança semestral (6 meses). \`annually\`: cobrança anual (12 meses).
 2. \`next_due_date\` (Data do Próximo Vencimento / Renovação)
    - Quando atrelado ao \`hourly\`: Recebe valor \`NULL\`, já que não há fim previsto além do esgotamento da carteira de forma gradativa.
    - Quando atrelado aos demais ciclos: Armazena a data exata do final do ciclo contratado (Data da Compra + X dias).

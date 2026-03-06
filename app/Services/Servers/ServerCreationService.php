@@ -14,6 +14,7 @@ use Illuminate\Database\ConnectionInterface;
 use Pterodactyl\Models\Objects\DeploymentObject;
 use Pterodactyl\Repositories\Eloquent\ServerRepository;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
+use Pterodactyl\Services\Billing\WalletService;
 use Pterodactyl\Services\Deployment\FindViableNodesService;
 use Pterodactyl\Repositories\Eloquent\ServerVariableRepository;
 use Pterodactyl\Services\Deployment\AllocationSelectionService;
@@ -33,6 +34,7 @@ class ServerCreationService
         private ServerDeletionService $serverDeletionService,
         private ServerVariableRepository $serverVariableRepository,
         private VariableValidatorService $validatorService,
+        private WalletService $walletService,
     ) {
     }
 
@@ -76,6 +78,10 @@ class ServerCreationService
         $eggVariableData = $this->validatorService
             ->setUserLevel(User::USER_LEVEL_ADMIN)
             ->handle(Arr::get($data, 'egg_id'), Arr::get($data, 'environment', []));
+
+        // Billing: charge initial period for monthly/quarterly/semi_annually/annually before creating server
+        $billingData = $this->processBillingCharge($data);
+        $data = array_merge($data, $billingData);
 
         // Due to the design of the Daemon, we need to persist this server to the disk
         // before we can actually create it on the Daemon.
@@ -179,6 +185,9 @@ class ServerCreationService
             'allocation_limit' => Arr::get($data, 'allocation_limit') ?? 0,
             'backup_limit' => Arr::get($data, 'backup_limit') ?? 0,
             'fastdl_enabled' => Arr::get($data, 'fastdl_enabled') ?? false,
+            'billing_type' => Arr::get($data, 'billing_type'),
+            'hourly_rate' => Arr::get($data, 'hourly_rate'),
+            'next_due_date' => Arr::get($data, 'next_due_date'),
         ]);
 
         return $model;
@@ -215,6 +224,44 @@ class ServerCreationService
         if (!empty($records)) {
             $this->serverVariableRepository->insert($records);
         }
+    }
+
+    /**
+     * Process billing charge for period-based plans. Charges wallet before server creation.
+     * Returns data with next_due_date set for period plans.
+     *
+     * @throws \RuntimeException if insufficient balance
+     */
+    private function processBillingCharge(array $data): array
+    {
+        $billingType = Arr::get($data, 'billing_type');
+        $hourlyRate = (float) (Arr::get($data, 'hourly_rate') ?? 0);
+
+        if (!$billingType || $hourlyRate <= 0) {
+            return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate ?: null, 'next_due_date' => null];
+        }
+
+        $periods = ['monthly', 'quarterly', 'semi_annually', 'annually'];
+        if (!in_array($billingType, $periods, true)) {
+            return ['billing_type' => $billingType, 'hourly_rate' => $hourlyRate, 'next_due_date' => null];
+        }
+
+        $discount = config("billing.period_discounts.{$billingType}", 1);
+        $days = config("billing.period_days.{$billingType}", 30);
+        $hours = $days * 24;
+        $amount = round($hourlyRate * $hours * $discount, 2);
+
+        $user = User::query()->findOrFail(Arr::get($data, 'owner_id'));
+        $serverName = Arr::get($data, 'name', 'Server');
+        $description = ucfirst(str_replace('_', ' ', $billingType)) . " initial: {$serverName}";
+
+        $this->walletService->charge($user, $amount, $description, 'server_creation', null);
+
+        return [
+            'billing_type' => $billingType,
+            'hourly_rate' => $hourlyRate,
+            'next_due_date' => now()->addDays($days),
+        ];
     }
 
     /**

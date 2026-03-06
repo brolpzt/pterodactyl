@@ -9,6 +9,8 @@ use Illuminate\Database\Console\PruneCommand;
 use Pterodactyl\Repositories\Eloquent\SettingsRepository;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Pterodactyl\Services\Telemetry\TelemetryCollectionService;
+use Pterodactyl\Console\Commands\Billing\ProcessHourlyChargesCommand;
+use Pterodactyl\Console\Commands\Billing\ProcessPeriodRenewalsCommand;
 use Pterodactyl\Console\Commands\Schedule\ProcessRunnableCommand;
 use Pterodactyl\Console\Commands\Maintenance\PruneOrphanedBackupsCommand;
 use Pterodactyl\Console\Commands\Maintenance\CleanServiceBackupFilesCommand;
@@ -33,6 +35,12 @@ class Kernel extends ConsoleKernel
 
         // Execute scheduled commands for servers every minute, as if there was a normal cron running.
         $schedule->command(ProcessRunnableCommand::class)->everyMinute()->withoutOverlapping();
+
+        // Billing: hourly charges for servers with billing_type=hourly
+        $schedule->command(ProcessHourlyChargesCommand::class)->hourly()->withoutOverlapping();
+
+        // Billing: period renewals (monthly, quarterly, semi_annually, annually)
+        $schedule->command(ProcessPeriodRenewalsCommand::class)->daily()->withoutOverlapping();
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 
         if (config('backups.prune_age')) {

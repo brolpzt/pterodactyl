@@ -309,6 +309,36 @@
             </div>
         </div>
     </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Billing (Optional)</h3>
+                </div>
+                <div class="box-body row">
+                    <div class="form-group col-sm-4">
+                        <label for="pBillingType">Billing Type</label>
+                        <select id="pBillingType" name="billing_type" class="form-control">
+                            <option value="">None</option>
+                            <option value="hourly" {{ old('billing_type') === 'hourly' ? 'selected' : '' }}>Hourly</option>
+                            <option value="monthly" {{ old('billing_type') === 'monthly' ? 'selected' : '' }}>Monthly</option>
+                            <option value="quarterly" {{ old('billing_type') === 'quarterly' ? 'selected' : '' }}>Quarterly</option>
+                            <option value="semi_annually" {{ old('billing_type') === 'semi_annually' ? 'selected' : '' }}>Semi-annually</option>
+                            <option value="annually" {{ old('billing_type') === 'annually' ? 'selected' : '' }}>Annually</option>
+                        </select>
+                        <p class="small text-muted no-margin">Hourly: charged each hour. Period plans: full amount debited at creation.</p>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <label for="pHourlyRate">Hourly Rate ($)</label>
+                        <input type="number" id="pHourlyRate" name="hourly_rate" class="form-control" step="0.0001" min="0" value="{{ old('hourly_rate') }}" placeholder="0.02">
+                        <p class="small text-muted no-margin">Base hourly rate. Period plans use discounted rate.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-xs-12">
             <div class="box box-secondary">

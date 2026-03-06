@@ -49,6 +49,7 @@ class DeployController extends ClientApiController
 
     /**
      * Get egg variables for a plan (loaded dynamically when egg/plan is selected).
+     * Plan variable overrides are used as default_value when set.
      */
     public function variables(int $planId): JsonResponse
     {
@@ -57,23 +58,32 @@ class DeployController extends ClientApiController
             return new JsonResponse(['error' => 'Unauthorized'], 403);
         }
 
-        $plan = DeployPlan::with('egg.variables')->find($planId);
+        $plan = DeployPlan::with(['egg.variables', 'variableOverrides'])->find($planId);
         if (!$plan || !$plan->egg) {
             return new JsonResponse(['egg_variables' => []]);
         }
+
+        $overrideByVariableId = $plan->variableOverrides->keyBy('egg_variable_id');
 
         $egg = $plan->egg;
         $variables = $egg->variables
             ->where('user_viewable', true)
             ->values()
-            ->map(fn ($v) => [
-                'name' => $v->name,
-                'description' => $v->description,
-                'env_variable' => $v->env_variable,
-                'default_value' => $v->default_value,
-                'user_editable' => $v->user_editable,
-                'rules' => explode('|', $v->rules),
-            ])
+            ->map(function ($v) use ($overrideByVariableId) {
+                $override = $overrideByVariableId->get($v->id);
+                $defaultValue = $override !== null && $override->value !== null && $override->value !== ''
+                    ? $override->value
+                    : $v->default_value;
+
+                return [
+                    'name' => $v->name,
+                    'description' => $v->description,
+                    'env_variable' => $v->env_variable,
+                    'default_value' => $defaultValue,
+                    'user_editable' => $v->user_editable,
+                    'rules' => explode('|', $v->rules),
+                ];
+            })
             ->toArray();
 
         return new JsonResponse(['egg_variables' => $variables]);
@@ -100,13 +110,18 @@ class DeployController extends ClientApiController
             'environment.*' => 'nullable|string',
         ]);
 
-        $plan = DeployPlan::with(['egg.nest', 'egg.variables'])->find($request->input('plan_id'));
+        $plan = DeployPlan::with(['egg.nest', 'egg.variables', 'variableOverrides.eggVariable'])->find($request->input('plan_id'));
         if (!$plan || !$plan->egg) {
             return new JsonResponse(['error' => 'Invalid plan'], 422);
         }
 
         $egg = $plan->egg;
-        $environment = $this->buildEnvironment($egg, $request->input('environment', []));
+        $planOverrides = $plan->variableOverrides
+            ->filter(fn ($o) => $o->value !== null && $o->value !== '' && $o->eggVariable)
+            ->mapWithKeys(fn ($o) => [$o->eggVariable->env_variable => $o->value])
+            ->toArray();
+
+        $environment = $this->buildEnvironment($egg, $request->input('environment', []), $planOverrides);
 
         $dockerImages = $egg->docker_images ?? [];
         $image = is_array($dockerImages) ? (array_values($dockerImages)[0] ?? $egg->image ?? 'ghcr.io/pterodactyl/yolks:java_17') : $egg->image;
@@ -157,18 +172,21 @@ class DeployController extends ClientApiController
     }
 
     /**
-     * Build full environment array from user input and egg defaults.
-     * User-editable vars use request values; others use default_value.
+     * Build full environment array from user input, plan overrides, and egg defaults.
+     * Precedence: userInput > planOverrides > variable.default_value
      */
-    protected function buildEnvironment(Egg $egg, array $userInput): array
+    protected function buildEnvironment(Egg $egg, array $userInput, array $planOverrides = []): array
     {
         $environment = [];
         foreach ($egg->variables as $variable) {
             if ($variable->user_editable && $variable->user_viewable) {
-                $value = $userInput[$variable->env_variable] ?? $variable->default_value;
-                $environment[$variable->env_variable] = $value !== null ? (string) $value : $variable->default_value;
+                $value = $userInput[$variable->env_variable]
+                    ?? $planOverrides[$variable->env_variable]
+                    ?? $variable->default_value;
+                $environment[$variable->env_variable] = $value !== null ? (string) $value : ($variable->default_value ?? '');
             } else {
-                $environment[$variable->env_variable] = $variable->default_value ?? '';
+                $value = $planOverrides[$variable->env_variable] ?? $variable->default_value;
+                $environment[$variable->env_variable] = $value !== null ? (string) $value : '';
             }
         }
         return $environment;

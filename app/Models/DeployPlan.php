@@ -61,4 +61,9 @@ class DeployPlan extends Model
     {
         return $this->belongsTo(Egg::class);
     }
+
+    public function variableOverrides(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DeployPlanVariableOverride::class);
+    }
 }

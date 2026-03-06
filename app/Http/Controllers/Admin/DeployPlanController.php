@@ -5,10 +5,12 @@ namespace Pterodactyl\Http\Controllers\Admin;
 use Illuminate\View\View;
 use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\DeployPlan;
+use Pterodactyl\Models\DeployPlanVariableOverride;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Http\Requests\Admin\DeployPlanFormRequest;
+
 class DeployPlanController extends Controller
 {
     public function __construct(
@@ -44,7 +46,7 @@ class DeployPlanController extends Controller
 
     public function view(DeployPlan $plan): View
     {
-        $plan->load('egg.nest');
+        $plan->load(['egg.nest', 'egg.variables', 'variableOverrides.eggVariable']);
         $eggs = Egg::with('nest')->orderBy('nest_id')->orderBy('name')->get();
 
         return view('admin.deploy_plans.view', ['plan' => $plan, 'eggs' => $eggs]);
@@ -57,10 +59,38 @@ class DeployPlanController extends Controller
         }
 
         $data = $request->normalize();
+        $variableOverrides = $data['variable_overrides'] ?? [];
+        unset($data['variable_overrides']);
+
         $data['swap'] = $data['swap'] ?? 0;
         $data['io'] = $data['io'] ?? 500;
 
+        $eggChanged = isset($data['egg_id']) && (int) $data['egg_id'] !== (int) $plan->egg_id;
+        if ($eggChanged) {
+            $plan->variableOverrides()->delete();
+        }
+
         $plan->update($data);
+
+        $plan->load('egg.variables');
+        $validVariableIds = $plan->egg->variables->pluck('id')->toArray();
+
+        foreach ($variableOverrides as $eggVariableId => $value) {
+            $eggVariableId = (int) $eggVariableId;
+            if (!in_array($eggVariableId, $validVariableIds, true)) {
+                continue;
+            }
+            DeployPlanVariableOverride::updateOrCreate(
+                [
+                    'deploy_plan_id' => $plan->id,
+                    'egg_variable_id' => $eggVariableId,
+                ],
+                ['value' => $value !== null && $value !== '' ? (string) $value : null]
+            );
+        }
+
+        $plan->variableOverrides()->whereNotIn('egg_variable_id', array_keys($variableOverrides))->delete();
+
         $this->alert->success('Deploy plan was updated successfully.')->flash();
 
         return redirect()->route('admin.deploy_plans.view', $plan->id);

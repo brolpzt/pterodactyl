@@ -115,9 +115,14 @@ const CreateServerContainer = () => {
 
     const currentPlan = selectedPlan;
 
-    const filteredEggs = eggs.filter(
-        (e) => !eggSearch.trim() || e.egg_name.toLowerCase().includes(eggSearch.toLowerCase())
-    );
+    const searchLower = eggSearch.trim().toLowerCase();
+    const filteredEggs = eggs.filter((e) => {
+        if (!searchLower) return true;
+        const name = (e.egg_name || '').toLowerCase();
+        const nest = (e.nest_name || '').toLowerCase();
+        const desc = (e.egg_description || '').toLowerCase();
+        return name.includes(searchLower) || nest.includes(searchLower) || desc.includes(searchLower);
+    });
 
     const setEnvValue = (key: string, value: string) => {
         setEnvironment((prev) => ({ ...prev, [key]: value }));
@@ -266,15 +271,21 @@ const CreateServerContainer = () => {
                     >
                         <p css={tw`text-neutral-400 text-sm mb-4`}>Choose the game or application for your server.</p>
                         <div css={tw`mb-4`}>
+                            <label htmlFor="egg-search" css={tw`sr-only`}>
+                                Search games
+                            </label>
                             <div css={tw`relative`}>
-                                <span css={tw`absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-neutral-500`}>
+                                <span css={tw`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500`}>
                                     <FontAwesomeIcon icon={faSearch} css={tw`text-sm`} />
                                 </span>
                                 <Input
+                                    id="egg-search"
+                                    type="text"
                                     placeholder="Search games..."
                                     value={eggSearch}
                                     onChange={(e) => setEggSearch(e.target.value)}
-                                    css={tw`pl-10`}
+                                    autoComplete="off"
+                                    css={tw`pl-10 w-full`}
                                 />
                             </div>
                         </div>

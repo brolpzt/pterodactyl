@@ -8,6 +8,11 @@ class DeployPlanFormRequest extends AdminFormRequest
 {
     public function rules(): array
     {
-        return DeployPlan::$validationRules;
+        $rules = DeployPlan::$validationRules;
+
+        $rules['variable_overrides'] = 'sometimes|array';
+        $rules['variable_overrides.*'] = 'nullable|string';
+
+        return $rules;
     }
 }

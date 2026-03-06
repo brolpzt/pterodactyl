@@ -75,6 +75,33 @@
                         <input type="number" name="hourly_rate" id="hourly_rate" class="form-control" step="0.000001" min="0" value="{{ $plan->hourly_rate }}" required />
                     </div>
                 </div>
+                <div class="box-header with-border">
+                    <h3 class="box-title">Variable Overrides</h3>
+                </div>
+                <div class="box-body">
+                    <p class="text-muted small">Valores padrão usados na criação do servidor. Variáveis <em>user_editable</em> ainda podem ser alteradas pelo usuário.</p>
+                    @forelse ($plan->egg->variables ?? [] as $variable)
+                        @php
+                            $override = $plan->variableOverrides->firstWhere('egg_variable_id', $variable->id);
+                            $displayValue = $override?->value ?? $variable->default_value ?? '';
+                        @endphp
+                        <div class="form-group">
+                            <label for="var_{{ $variable->id }}" class="form-label">
+                                {{ $variable->name }}
+                                <code class="text-muted small">({{ $variable->env_variable }})</code>
+                                @if($variable->user_editable)
+                                    <span class="label label-info">user_editable</span>
+                                @endif
+                            </label>
+                            <input type="text" name="variable_overrides[{{ $variable->id }}]" id="var_{{ $variable->id }}" class="form-control" value="{{ old('variable_overrides.'.$variable->id, $displayValue) }}" placeholder="{{ $variable->default_value }}" />
+                            @if($variable->description)
+                                <p class="help-block">{{ $variable->description }}</p>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="text-muted">Este egg não possui variáveis.</p>
+                    @endforelse
+                </div>
                 <div class="box-footer">
                     {!! csrf_field() !!}
                     {!! method_field('PATCH') !!}

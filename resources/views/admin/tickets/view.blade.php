@@ -16,35 +16,6 @@
 @section('content')
 <div class="row">
     <div class="col-md-9">
-        @if($ticket->status === 'open')
-            <div class="box box-primary">
-                <div class="box-header with-border">
-                    <h3 class="box-title">Post a Reply</h3>
-                </div>
-                <form action="{{ route('admin.tickets.view', $ticket->id) }}" method="POST" enctype="multipart/form-data">
-                    <div class="box-body">
-                        <div class="form-group">
-                            <label class="control-label">Message <span class="field-required"></span></label>
-                            <textarea name="message" class="form-control" rows="8" placeholder="Type your message here..." required></textarea>
-                        </div>
-                        <div class="form-group no-margin">
-                            <label class="control-label">Optional Attachments</label>
-                            <input type="file" name="attachments[]" class="form-control" multiple>
-                            <p class="text-muted small">You can upload multiple files at once.</p>
-                        </div>
-                    </div>
-                    <div class="box-footer">
-                        {!! csrf_field() !!}
-                        <button type="submit" class="btn btn-primary btn-sm pull-right">Send Reply</button>
-                    </div>
-                </form>
-            </div>
-        @else
-            <div class="alert alert-info">
-                This ticket is currently marked as <strong>Resolved</strong>. You can re-open it from the management console if needed.
-            </div>
-        @endif
-
         @foreach($ticket->messages as $message)
             <div class="box {{ $message->user->root_admin ? 'box-info' : '' }}">
                 <div class="box-header with-border">
@@ -74,6 +45,35 @@
                 </div>
             </div>
         @endforeach
+
+        @if($ticket->status === 'open')
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Post a Reply</h3>
+                </div>
+                <form action="{{ route('admin.tickets.view', $ticket->id) }}" method="POST" enctype="multipart/form-data">
+                    <div class="box-body">
+                        <div class="form-group">
+                            <label class="control-label">Message <span class="field-required"></span></label>
+                            <textarea name="message" class="form-control" rows="8" placeholder="Type your message here..." required></textarea>
+                        </div>
+                        <div class="form-group no-margin">
+                            <label class="control-label">Optional Attachments</label>
+                            <input type="file" name="attachments[]" class="form-control" multiple>
+                            <p class="text-muted small">You can upload multiple files at once.</p>
+                        </div>
+                    </div>
+                    <div class="box-footer">
+                        {!! csrf_field() !!}
+                        <button type="submit" class="btn btn-primary btn-sm pull-right">Send Reply</button>
+                    </div>
+                </form>
+            </div>
+        @else
+            <div class="alert alert-info border-radius-none">
+                This ticket is currently marked as <strong>Resolved</strong>. You can re-open it from the management console if needed.
+            </div>
+        @endif
     </div>
     
     <div class="col-md-3">

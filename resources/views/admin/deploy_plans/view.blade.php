@@ -14,10 +14,12 @@
 @endsection
 
 @section('content')
-<div class="row">
-    <div class="col-md-6">
-        <div class="box box-primary">
-            <form action="{{ route('admin.deploy_plans.view', $plan->id) }}" method="POST">
+<form action="{{ route('admin.deploy_plans.view', $plan->id) }}" method="POST">
+    {!! csrf_field() !!}
+    {!! method_field('PATCH') !!}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title">Plan Details</h3>
                 </div>
@@ -81,6 +83,13 @@
                         <p class="help-block">Usado para cobrança mensal/trimestral/etc. Se vazio, usa hourly_rate × 720.</p>
                     </div>
                 </div>
+                <div class="box-footer">
+                    <button name="action" value="edit" class="btn btn-sm btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title">Variable Overrides</h3>
                 </div>
@@ -108,14 +117,8 @@
                         <p class="text-muted">Este egg não possui variáveis.</p>
                     @endforelse
                 </div>
-                <div class="box-footer">
-                    {!! csrf_field() !!}
-                    {!! method_field('PATCH') !!}
-                    <button name="action" value="delete" class="btn btn-sm btn-danger pull-left muted muted-hover"><i class="fa fa-trash-o"></i> Delete</button>
-                    <button name="action" value="edit" class="btn btn-sm btn-primary pull-right">Save</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
-</div>
+</form>
 @endsection

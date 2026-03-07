@@ -88,9 +88,11 @@ Route::group(['prefix' => 'deploy-plans'], function () {
     Route::get('/', [Admin\DeployPlanController::class, 'index'])->name('admin.deploy_plans');
     Route::get('/new', [Admin\DeployPlanController::class, 'create'])->name('admin.deploy_plans.new');
     Route::get('/view/{plan:id}', [Admin\DeployPlanController::class, 'view'])->name('admin.deploy_plans.view');
+    Route::get('/view/{plan:id}/clone', [Admin\DeployPlanController::class, 'clone'])->name('admin.deploy_plans.clone');
 
     Route::post('/', [Admin\DeployPlanController::class, 'store']);
     Route::patch('/view/{plan:id}', [Admin\DeployPlanController::class, 'update']);
+    Route::delete('/view/{plan:id}', [Admin\DeployPlanController::class, 'destroy'])->name('admin.deploy_plans.destroy');
 });
 
 /*

@@ -55,10 +55,6 @@ class DeployPlanController extends Controller
 
     public function update(DeployPlanFormRequest $request, DeployPlan $plan): RedirectResponse
     {
-        if ($request->input('action') === 'delete') {
-            return $this->delete($plan);
-        }
-
         $data = $request->normalize();
         $variableOverrides = $data['variable_overrides'] ?? [];
         unset($data['variable_overrides']);
@@ -98,7 +94,26 @@ class DeployPlanController extends Controller
         return redirect()->route('admin.deploy_plans.view', $plan->id);
     }
 
-    public function delete(DeployPlan $plan): RedirectResponse
+    public function clone(DeployPlan $plan): RedirectResponse
+    {
+        $plan->load(['egg.variables', 'variableOverrides']);
+        $newPlan = $plan->replicate();
+        $newPlan->name = $plan->name . ' (copy)';
+        $newPlan->save();
+
+        foreach ($plan->variableOverrides as $override) {
+            $newPlan->variableOverrides()->create([
+                'egg_variable_id' => $override->egg_variable_id,
+                'value' => $override->value,
+            ]);
+        }
+
+        $this->alert->success('Deploy plan cloned. You can edit the new plan below.')->flash();
+
+        return redirect()->route('admin.deploy_plans.view', $newPlan->id);
+    }
+
+    public function destroy(DeployPlan $plan): RedirectResponse
     {
         $plan->delete();
         $this->alert->success('Deploy plan was deleted.')->flash();

@@ -35,6 +35,7 @@
                             <th>CPU</th>
                             <th>Hourly</th>
                             <th>Monthly</th>
+                            <th style="width:120px">Actions</th>
                         </tr>
                         @foreach ($plans as $plan)
                             <tr>
@@ -50,6 +51,14 @@
                                 <td>{{ $plan->cpu }}%</td>
                                 <td>${{ number_format($plan->hourly_rate, 2) }}/hr</td>
                                 <td>{{ $plan->monthly_rate !== null ? '$'.number_format($plan->monthly_rate, 2).'/mo' : '—' }}</td>
+                                <td>
+                                    <a href="{{ route('admin.deploy_plans.clone', $plan->id) }}" class="btn btn-xs btn-default" title="Clone plan"><i class="fa fa-copy"></i> Clone</a>
+                                    <form action="{{ route('admin.deploy_plans.destroy', $plan->id) }}" method="POST" style="display:inline;margin-left:4px" onsubmit="return confirm('Delete this deploy plan?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-xs btn-danger" title="Delete"><i class="fa fa-trash-o"></i> Delete</button>
+                                    </form>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

@@ -11,7 +11,7 @@ import styled from 'styled-components/macro';
 import http from '@/api/http';
 import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
-import DropdownMenu, { DropdownButtonRow } from '@/components/elements/DropdownMenu';
+import DropdownMenu from '@/components/elements/DropdownMenu';
 import Avatar from '@/components/Avatar';
 import { getBillingInfo } from '@/api/account/billing';
 import { useCurrency, CURRENCIES } from '@/context/CurrencyContext';
@@ -23,7 +23,7 @@ const StyledRow = styled.div<{ $active?: boolean }>`
 `;
 
 interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
-    icon?: any;
+    icon?: React.ReactNode;
     title: string;
     $active?: boolean;
 }
@@ -164,15 +164,13 @@ export default () => {
                                     )}
                                 >
                                     {CURRENCIES.map((curr) => (
-                                        <DropdownButtonRow
+                                        <Row
                                             key={curr.code}
-                                            type="button"
+                                            icon={<span css={tw`font-mono`}>{curr.symbol}</span>}
+                                            title={curr.name}
+                                            $active={currency.code === curr.code}
                                             onClick={() => setCurrency(curr)}
-                                            css={[tw`flex items-center`, currency.code === curr.code && tw`bg-neutral-200 font-bold text-neutral-800`]}
-                                        >
-                                            <span css={tw`font-mono w-5 flex justify-center`}>{curr.symbol}</span>
-                                            <span css={tw`ml-2`}>{curr.name}</span>
-                                        </DropdownButtonRow>
+                                        />
                                     ))}
                                 </DropdownMenu>
                             </MenuWrapper>

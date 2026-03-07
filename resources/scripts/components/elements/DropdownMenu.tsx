@@ -84,7 +84,7 @@ class DropdownMenu extends React.PureComponent<Props, State> {
 
     render() {
         return (
-            <div style={{ position: 'relative' }}>
+            <div>
                 {this.props.renderToggle(this.onClickHandler)}
                 <Fade timeout={150} in={this.state.visible} unmountOnExit>
                     <div

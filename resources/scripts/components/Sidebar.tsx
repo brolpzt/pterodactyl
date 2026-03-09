@@ -31,6 +31,7 @@ import tw from 'twin.macro';
 import styled from 'styled-components/macro';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
+import { useTranslation } from 'react-i18next';
 
 const serverLinksFade = `
     @keyframes fadeInItems {
@@ -126,6 +127,7 @@ const SidebarScroll = styled.div`
 const ServerLinks = () => {
     const internalId = ServerContext.useStoreState((state) => state.server.data?.internalId);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
+    const { t } = useTranslation('strings');
 
     const match = useRouteMatch<{ id: string }>('/server/:id');
 
@@ -136,19 +138,33 @@ const ServerLinks = () => {
         return `${url.replace(/\/*$/, '')}/${value.replace(/^\/+/, '')}`;
     };
 
-    const getIcon = (routeName: string) => {
-        switch (routeName) {
+    const getIcon = (nameKey: string | undefined, name: string | undefined) => {
+        const key = nameKey || name || '';
+        switch (key) {
+            case 'server.home':
+            case 'Início': return faLayerGroup;
+            case 'server.console':
             case 'Console': return faTerminal;
+            case 'server.files':
             case 'Files': return faFolderOpen;
+            case 'server.databases':
             case 'Databases': return faDatabase;
+            case 'server.schedules':
             case 'Schedules': return faCalendarAlt;
+            case 'server.users':
             case 'Users': return faUsers;
+            case 'server.backups':
             case 'Backups': return faCloudUploadAlt;
+            case 'server.network':
             case 'Network': return faNetworkWired;
             case 'Startup': return faPlayCircle;
+            case 'server.settings':
             case 'Settings': return faCogs;
+            case 'server.activity':
             case 'Activity': return faListUl;
+            case 'server.addons':
             case 'Addons': return faPuzzlePiece;
+            case 'server.firewall':
             case 'Firewall': return faShieldAlt;
             default: return faLayerGroup;
         }
@@ -158,25 +174,25 @@ const ServerLinks = () => {
 
     return (
         <>
-            <SectionTitle collapsed={collapsed}>Menu do Servidor</SectionTitle>
+            <SectionTitle collapsed={collapsed}>{t('nav.server_menu')}</SectionTitle>
             {routes.server
                 .filter((route) => !!route.name)
                 .map((route) => (
                     route.permission ? (
                         <Can key={route.path} action={route.permission as any} matchAny>
-                            <NavItem to={to(route.path)} exact={route.exact} collapsed={collapsed} title={route.name}>
+                            <NavItem to={to(route.path)} exact={route.exact} collapsed={collapsed} title={route.nameKey ? t(route.nameKey) : route.name!}>
                                 <IconContainer className="icon-container">
-                                    <FontAwesomeIcon icon={getIcon(route.name!)} />
+                                    <FontAwesomeIcon icon={getIcon((route as any).nameKey, route.name!)} />
                                 </IconContainer>
-                                <NavItemLabel collapsed={collapsed}>{route.name}</NavItemLabel>
+                                <NavItemLabel collapsed={collapsed}>{route.nameKey ? t(route.nameKey) : route.name!}</NavItemLabel>
                             </NavItem>
                         </Can>
                     ) : (
-                        <NavItem key={route.path} to={to(route.path)} exact={route.exact} collapsed={collapsed} title={route.name}>
+                        <NavItem key={route.path} to={to(route.path)} exact={route.exact} collapsed={collapsed} title={route.nameKey ? t(route.nameKey) : route.name!}>
                             <IconContainer className="icon-container">
-                                <FontAwesomeIcon icon={getIcon(route.name!)} />
+                                <FontAwesomeIcon icon={getIcon((route as any).nameKey, route.name!)} />
                             </IconContainer>
-                            <NavItemLabel collapsed={collapsed}>{route.name}</NavItemLabel>
+                            <NavItemLabel collapsed={collapsed}>{route.nameKey ? t(route.nameKey) : route.name!}</NavItemLabel>
                         </NavItem>
                     )
                 ))}
@@ -186,14 +202,14 @@ const ServerLinks = () => {
                     href={`/admin/servers/view/${internalId}`}
                     target={'_blank'}
                     rel="noreferrer"
-                    title={'Admin View'}
+                    title={t('nav.admin_view')}
                     style={{ justifyContent: collapsed ? 'center' : 'flex-start', paddingLeft: '1.25rem', paddingRight: '1.25rem' }}
                     tw="flex items-center py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100"
                 >
                     <IconContainer className="icon-container">
                         <FontAwesomeIcon icon={faExternalLinkAlt} />
                     </IconContainer>
-                    <NavItemLabel collapsed={collapsed}>Admin View</NavItemLabel>
+                    <NavItemLabel collapsed={collapsed}>{t('nav.admin_view')}</NavItemLabel>
                 </a>
             )}
         </>
@@ -205,31 +221,32 @@ const Sidebar = () => {
     const collapsed = useStoreState((state) => state.sidebarCollapsed);
     const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
+    const { t } = useTranslation('strings');
 
     return (
         <SidebarContainer collapsed={collapsed}>
             <SidebarScroll>
-                <SectionTitle collapsed={collapsed}>Navigation</SectionTitle>
-                <NavItem to={'/'} exact collapsed={collapsed} title={collapsed ? 'Dashboard' : undefined}>
+                <SectionTitle collapsed={collapsed}>{t('nav.navigation')}</SectionTitle>
+                <NavItem to={'/'} exact collapsed={collapsed} title={collapsed ? t('nav.dashboard') : undefined}>
                     <IconContainer className="icon-container">
                         <FontAwesomeIcon icon={faLayerGroup} />
                     </IconContainer>
-                    <NavItemLabel collapsed={collapsed}>Dashboard</NavItemLabel>
+                    <NavItemLabel collapsed={collapsed}>{t('nav.dashboard')}</NavItemLabel>
                 </NavItem>
 
                 {rootAdmin && (
                     <>
-                        <NavItem to={'/account/billing'} collapsed={collapsed} title={collapsed ? 'Billing' : undefined}>
+                        <NavItem to={'/account/billing'} collapsed={collapsed} title={collapsed ? t('nav.billing') : undefined}>
                             <IconContainer className="icon-container">
                                 <FontAwesomeIcon icon={faWallet} />
                             </IconContainer>
-                            <NavItemLabel collapsed={collapsed}>Billing</NavItemLabel>
+                            <NavItemLabel collapsed={collapsed}>{t('nav.billing')}</NavItemLabel>
                         </NavItem>
-                        <NavItem to={'/account/support'} collapsed={collapsed} title={collapsed ? 'Support' : undefined}>
+                        <NavItem to={'/account/support'} collapsed={collapsed} title={collapsed ? t('nav.support') : undefined}>
                             <IconContainer className="icon-container">
                                 <FontAwesomeIcon icon={faLifeRing} />
                             </IconContainer>
-                            <NavItemLabel collapsed={collapsed}>Support</NavItemLabel>
+                            <NavItemLabel collapsed={collapsed}>{t('nav.support')}</NavItemLabel>
                         </NavItem>
                     </>
                 )}

@@ -1,4 +1,5 @@
 import React, { lazy } from 'react';
+import ServerOverviewContainer from '@/components/server/ServerOverviewContainer';
 import ServerConsole from '@/components/server/console/ServerConsoleContainer';
 import DatabasesContainer from '@/components/server/databases/DatabasesContainer';
 import ScheduleContainer from '@/components/server/schedules/ScheduleContainer';
@@ -38,6 +39,7 @@ interface RouteDefinition {
 
 interface ServerRouteDefinition extends RouteDefinition {
     permission: string | string[] | null;
+    nameKey?: string;
 }
 
 interface Routes {
@@ -99,7 +101,16 @@ export default {
         {
             path: '/',
             permission: null,
+            name: 'Início',
+            nameKey: 'server.home',
+            component: ServerOverviewContainer,
+            exact: true,
+        },
+        {
+            path: '/console',
+            permission: null,
             name: 'Console',
+            nameKey: 'server.console',
             component: ServerConsole,
             exact: true,
         },
@@ -107,6 +118,7 @@ export default {
             path: '/files',
             permission: 'file.*',
             name: 'Files',
+            nameKey: 'server.files',
             component: FileManagerContainer,
         },
         {
@@ -119,12 +131,14 @@ export default {
             path: '/databases',
             permission: 'database.*',
             name: 'Databases',
+            nameKey: 'server.databases',
             component: DatabasesContainer,
         },
         {
             path: '/schedules',
             permission: 'schedule.*',
             name: 'Schedules',
+            nameKey: 'server.schedules',
             component: ScheduleContainer,
         },
         {
@@ -137,18 +151,21 @@ export default {
             path: '/users',
             permission: 'user.*',
             name: 'Users',
+            nameKey: 'server.users',
             component: UsersContainer,
         },
         {
             path: '/backups',
             permission: 'backup.*',
             name: 'Backups',
+            nameKey: 'server.backups',
             component: BackupContainer,
         },
         {
             path: '/network',
             permission: 'allocation.*',
             name: 'Network',
+            nameKey: 'server.network',
             component: NetworkContainer,
         },
         {
@@ -161,24 +178,28 @@ export default {
             path: '/addons',
             permission: 'addon.*',
             name: 'Addons',
+            nameKey: 'server.addons',
             component: lazy(() => import('@/components/server/addons/AddonsContainer')),
         },
         {
             path: '/firewall',
             permission: 'firewall.*',
             name: 'Firewall',
+            nameKey: 'server.firewall',
             component: lazy(() => import('@/components/server/firewall/FirewallContainer')),
         },
         {
             path: '/activity',
             permission: 'activity.*',
             name: 'Activity',
+            nameKey: 'server.activity',
             component: ServerActivityLogContainer,
         },
         {
             path: '/settings',
             permission: ['settings.*', 'file.sftp'],
             name: 'Settings',
+            nameKey: 'server.settings',
             component: SettingsContainer,
         },
     ],

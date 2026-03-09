@@ -15,6 +15,16 @@ import DropdownMenu from '@/components/elements/DropdownMenu';
 import Avatar from '@/components/Avatar';
 import { getBillingInfo } from '@/api/account/billing';
 import { useCurrency, CURRENCIES } from '@/context/CurrencyContext';
+import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
+
+const STORAGE_LNG = 'pterodactyl_lng';
+const UI_TO_LNG: Record<string, string> = { US: 'en', BR: 'pt', ES: 'es' };
+const LNG_TO_UI: Record<string, { code: string; name: string; flag: string }> = {
+    en: { code: 'US', name: 'English (US)', flag: '🇺🇸' },
+    pt: { code: 'BR', name: 'Português (BR)', flag: '🇧🇷' },
+    es: { code: 'ES', name: 'Español (AR)', flag: '🇦🇷' },
+};
 
 const StyledRow = styled.div<{ $active?: boolean }>`
     ${tw`p-2 flex items-center rounded cursor-pointer text-sm`};
@@ -64,10 +74,14 @@ const RightNavigation = styled.div`
 export default () => {
     const name = useStoreState((state: any) => state.settings.data!.name);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
+    const { t } = useTranslation('strings');
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
-    const [language, setLanguage] = useState({ code: 'BR', flag: '🇧🇷' });
+    const [language, setLanguage] = useState(() => {
+        const lng = i18n.language?.split('-')[0] || 'en';
+        return LNG_TO_UI[lng] || LNG_TO_UI.en;
+    });
     const { currency, setCurrency, formatPrice } = useCurrency();
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
@@ -79,10 +93,18 @@ export default () => {
     }, [rootAdmin]);
 
     const languages = [
-        { name: 'English (US)', code: 'US', flag: '🇺🇸' },
-        { name: 'Português (BR)', code: 'BR', flag: '🇧🇷' },
-        { name: 'Español (AR)', code: 'ES', flag: '🇦🇷' },
+        { name: LNG_TO_UI.en.name, code: 'US', flag: LNG_TO_UI.en.flag },
+        { name: LNG_TO_UI.pt.name, code: 'BR', flag: LNG_TO_UI.pt.flag },
+        { name: LNG_TO_UI.es.name, code: 'ES', flag: LNG_TO_UI.es.flag },
     ];
+
+    useEffect(() => {
+        const lng = UI_TO_LNG[language.code] || 'en';
+        if (i18n.language !== lng) {
+            i18n.changeLanguage(lng);
+            window.localStorage?.setItem(STORAGE_LNG, lng);
+        }
+    }, [language.code]);
 
 
     const onTriggerLogout = () => {
@@ -115,7 +137,7 @@ export default () => {
                 <button
                     onClick={() => toggleSidebar()}
                     className={'flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150 flex-shrink-0'}
-                    title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}
+                    title={sidebarCollapsed ? t('navbar.expand_menu') : t('navbar.collapse_menu')}
                 >
                     <FontAwesomeIcon icon={faBars} />
                 </button>
@@ -123,7 +145,7 @@ export default () => {
                 <div className={'flex-1'} />
                 <RightNavigation className={'flex h-full items-center justify-center'}>
                     {rootAdmin && (
-                        <Tooltip placement={'bottom'} content={'Account Balance'}>
+                        <Tooltip placement={'bottom'} content={t('navbar.account_balance')}>
                             <NavLink to={'/account/billing'} className={'!px-4'}>
                                 <div className={'flex items-center bg-neutral-800 rounded px-3 py-1.5 border border-neutral-700 hover:border-cyan-500 transition-colors'}>
                                     <FontAwesomeIcon icon={faWallet} className={'text-cyan-400 mr-2'} />
@@ -135,13 +157,13 @@ export default () => {
                         </Tooltip>
                     )}
                     <SearchContainer />
-                    <Tooltip placement={'bottom'} content={'Dashboard'}>
+                    <Tooltip placement={'bottom'} content={t('navbar.dashboard')}>
                         <NavLink to={'/'} exact>
                             <FontAwesomeIcon icon={faLayerGroup} />
                         </NavLink>
                     </Tooltip>
                     {rootAdmin && (
-                        <Tooltip placement={'bottom'} content={'Admin'}>
+                        <Tooltip placement={'bottom'} content={t('navbar.admin')}>
                             <a href={'/admin'} rel={'noreferrer'}>
                                 <FontAwesomeIcon icon={faCogs} />
                             </a>
@@ -202,14 +224,14 @@ export default () => {
                         </>
                     )}
 
-                    <Tooltip placement={'bottom'} content={'Account Settings'}>
+                    <Tooltip placement={'bottom'} content={t('navbar.account_settings')}>
                         <NavLink to={'/account'}>
                             <span className={'flex items-center w-5 h-5'}>
                                 <Avatar.User />
                             </span>
                         </NavLink>
                     </Tooltip>
-                    <Tooltip placement={'bottom'} content={'Sign Out'}>
+                    <Tooltip placement={'bottom'} content={t('navbar.sign_out')}>
                         <button onClick={onTriggerLogout}>
                             <FontAwesomeIcon icon={faSignOutAlt} />
                         </button>

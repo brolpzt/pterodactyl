@@ -8,12 +8,18 @@ import I18NextMultiloadBackendAdapter from 'i18next-multiload-backend-adapter';
 // the URL to allow cache busting to occur whenever the front-end is rebuilt.
 const hash = module.hot ? Date.now().toString(16) : process.env.WEBPACK_BUILD_HASH;
 
+const STORAGE_LNG = 'pterodactyl_lng';
+const supportedLngs = ['en', 'pt', 'es'] as const;
+const saved = typeof window !== 'undefined' && supportedLngs.includes(window.localStorage?.getItem(STORAGE_LNG) as any);
+const initialLng = saved ? window.localStorage.getItem(STORAGE_LNG)! : 'en';
+
 i18n.use(I18NextMultiloadBackendAdapter)
     .use(initReactI18next)
     .init({
         debug: process.env.DEBUG === 'true',
-        lng: 'en',
+        lng: initialLng,
         fallbackLng: 'en',
+        supportedLngs: supportedLngs as unknown as string[],
         keySeparator: '.',
         backend: {
             backend: I18NextHttpBackend,

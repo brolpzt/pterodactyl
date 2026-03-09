@@ -158,6 +158,11 @@ export default () => {
                                                 <span tw="text-[13px] text-neutral-200 whitespace-nowrap font-mono">
                                                     {billingCostSoFar != null ? formatPrice(billingCostSoFar) : '—'}
                                                 </span>
+                                                {createdAt && (
+                                                    <span tw="text-[11px] text-neutral-500 mt-0.5 whitespace-nowrap">
+                                                        {Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60)))}h ativo
+                                                    </span>
+                                                )}
                                             </div>
                                             {/* Data de ativação — xl+ */}
                                             <div tw="hidden xl:flex flex-col flex-shrink-0">

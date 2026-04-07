@@ -38,8 +38,10 @@ class Ts3QueryService
         stream_set_timeout($socket, self::DEFAULT_TIMEOUT_SECONDS);
 
         try {
-            // Consume welcome lines before issuing commands.
-            $this->readUntilErrorLine($socket);
+            // Some TS3 builds only flush the welcome banner after receiving a first newline.
+            @fwrite($socket, "\n");
+            // Consume TS3 welcome banner before issuing commands.
+            $this->readWelcomeBanner($socket);
 
             $this->sendCommand(
                 $socket,
@@ -187,7 +189,24 @@ class Ts3QueryService
         $rows = [];
 
         while (!feof($socket)) {
-            $line = trim((string) fgets($socket));
+            $rawLine = fgets($socket);
+            if ($rawLine === false) {
+                $meta = stream_get_meta_data($socket);
+                if (($meta['timed_out'] ?? false) === true) {
+                    throw new Ts3QueryException(
+                        'TS3 Query read timed out while waiting for command response.',
+                        Response::HTTP_GATEWAY_TIMEOUT
+                    );
+                }
+
+                if (feof($socket)) {
+                    break;
+                }
+
+                continue;
+            }
+
+            $line = trim($rawLine);
             if ($line === '') {
                 continue;
             }
@@ -212,6 +231,59 @@ class Ts3QueryService
 
         throw new Ts3QueryException(
             'TS3 Query connection closed unexpectedly.',
+            Response::HTTP_BAD_GATEWAY
+        );
+    }
+
+    /**
+     * Reads the initial TS3 welcome banner.
+     */
+    private function readWelcomeBanner($socket): void
+    {
+        while (!feof($socket)) {
+            $rawLine = fgets($socket);
+            if ($rawLine === false) {
+                $meta = stream_get_meta_data($socket);
+                if (($meta['timed_out'] ?? false) === true) {
+                    throw new Ts3QueryException(
+                        'TS3 Query welcome banner timed out.',
+                        Response::HTTP_GATEWAY_TIMEOUT
+                    );
+                }
+
+                if (feof($socket)) {
+                    break;
+                }
+
+                continue;
+            }
+
+            $line = trim($rawLine);
+            if ($line === '' || $line === 'TS3') {
+                continue;
+            }
+
+            if (str_contains($line, 'Welcome to the TeamSpeak 3 ServerQuery interface')) {
+                return;
+            }
+
+            // Some builds can send "error id=0 msg=ok" as part of initial handshake.
+            if (str_starts_with($line, 'error ')) {
+                $error = $this->parseRow($line)[0] ?? [];
+                $errorId = (int) ($error['id'] ?? -1);
+                if ($errorId === 0) {
+                    return;
+                }
+
+                throw new Ts3QueryException(
+                    'TS3 Query handshake failed: ' . ($error['msg'] ?? 'unknown_error') . " (code: {$errorId}).",
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+        }
+
+        throw new Ts3QueryException(
+            'TS3 Query did not return a valid welcome banner.',
             Response::HTTP_BAD_GATEWAY
         );
     }

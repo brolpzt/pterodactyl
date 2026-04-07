@@ -264,18 +264,17 @@ class Ts3QueryService
     {
         $server->loadMissing(['allocation', 'node', 'variables']);
 
-        $variables = $server->variables
-            ->mapWithKeys(fn ($variable) => [
-                $variable->env_variable => (
-                    is_null($variable->server_value) || $variable->server_value === ''
-                        ? $variable->default_value
-                        : $variable->server_value
-                ),
-            ])
-            ->all();
+        $variables = [];
+        foreach ($server->variables as $variable) {
+            $value = (is_null($variable->server_value) || $variable->server_value === '')
+                ? $variable->default_value
+                : $variable->server_value;
 
-        $user = (string) ($variables['TS3_QUERY_USER'] ?? '');
-        $password = (string) ($variables['TS3_QUERY_PASS'] ?? '');
+            $variables[strtoupper(trim((string) $variable->env_variable))] = is_string($value) ? trim($value) : $value;
+        }
+
+        $user = (string) ($variables['TS3_QUERY_USER'] ?? $variables['QUERY_USER'] ?? '');
+        $password = (string) ($variables['TS3_QUERY_PASS'] ?? $variables['QUERY_PASS'] ?? '');
 
         if ($user === '' || $password === '') {
             throw new Ts3QueryException(
@@ -285,7 +284,7 @@ class Ts3QueryService
         }
 
         return [
-            'host' => (string) ($variables['TS3_QUERY_HOST'] ?? $server->allocation?->ip ?? $server->node->fqdn),
+            'host' => (string) ($variables['TS3_QUERY_HOST'] ?? $variables['QUERY_HOST'] ?? $server->allocation?->ip ?? $server->node->fqdn),
             // Backward compatible mapping for existing TS3 eggs:
             // - QUERY_PORT is commonly used as the startup variable name.
             'query_port' => (int) ($variables['TS3_QUERY_PORT'] ?? $variables['QUERY_PORT'] ?? self::DEFAULT_QUERY_PORT),

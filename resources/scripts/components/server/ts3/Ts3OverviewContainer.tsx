@@ -81,7 +81,6 @@ export default () => {
                         <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Status</td><td>{data?.status || '—'}</td></tr>
                         <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Version</td><td>{data?.version || '—'} {data?.build ? `(Build ${data.build})` : ''}</td></tr>
                         <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Platform</td><td>{data?.platform || '—'}</td></tr>
-                        <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Query IP/Port</td><td>{data?.query_ip || '—'}:{data?.query_port || '—'}</td></tr>
                         <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Server name</td><td>{data?.server_name || '—'}</td></tr>
                         <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Uptime (s)</td><td>{data?.uptime_seconds ?? '—'}</td></tr>
                         <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Clients online</td><td>{data?.clients_online ?? '—'}</td></tr>

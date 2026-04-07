@@ -216,6 +216,12 @@ class Ts3QueryService
                 $errorId = (int) ($error['id'] ?? -1);
                 $errorMessage = $error['msg'] ?? 'unknown_error';
 
+                // TS3 uses 1281 to indicate an empty result set for some list commands.
+                // Treat it as a successful empty response instead of raising an error.
+                if ($errorId === 1281) {
+                    return [];
+                }
+
                 if ($errorId !== 0) {
                     throw new Ts3QueryException(
                         "TS3 Query command failed: {$errorMessage} (code: {$errorId}).",

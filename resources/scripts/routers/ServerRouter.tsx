@@ -103,7 +103,7 @@ export default () => {
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
     const isTs3 = eggId === 12;
     const isBlockedRouteForTs3 = (path: string) =>
-        path === '/console' || path === '/files' || path === '/files/:action(edit|new)' || path === '/backups';
+        path === '/backups' || ((!rootAdmin) && (path === '/console' || path === '/files' || path === '/files/:action(edit|new)'));
     const isTs3OnlyRoute = (path: string) => path.startsWith('/ts3');
     const isRootAdminOnlyTs3Route = (path: string) => path === '/ts3/query';
 

@@ -13,8 +13,9 @@ class DenyConsoleForTs3
     public function handle(Request $request, Closure $next): mixed
     {
         $server = $request->route()->parameter('server');
+        $user = $request->user();
 
-        if ($server instanceof Server && ServerType::isTs3($server)) {
+        if ($server instanceof Server && ServerType::isTs3($server) && !($user?->root_admin ?? false)) {
             throw new AccessDeniedHttpException('Console access is disabled for TeamSpeak 3 servers.');
         }
 

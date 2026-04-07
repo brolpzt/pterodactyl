@@ -312,7 +312,7 @@ class Ts3QueryService
         }
 
         return [
-            'host' => (string) ($variables['TS3_QUERY_HOST'] ?? $variables['QUERY_HOST'] ?? $server->allocation?->ip ?? $server->node->fqdn),
+            'host' => (string) ($server->allocation?->ip ?? $server->node->fqdn),
             // Backward compatible mapping for existing TS3 eggs:
             // - QUERY_PORT is commonly used as the startup variable name.
             'query_port' => (int) ($variables['TS3_QUERY_PORT'] ?? $variables['QUERY_PORT'] ?? self::DEFAULT_QUERY_PORT),

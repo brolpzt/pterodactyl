@@ -32,6 +32,7 @@ const Ts3BansContainer = lazy(() => import('@/components/server/ts3/Ts3BansConta
 const Ts3TokensContainer = lazy(() => import('@/components/server/ts3/Ts3TokensContainer'));
 const Ts3LogsContainer = lazy(() => import('@/components/server/ts3/Ts3LogsContainer'));
 const Ts3HtmlViewerContainer = lazy(() => import('@/components/server/ts3/Ts3HtmlViewerContainer'));
+const Ts3QueryTerminalContainer = lazy(() => import('@/components/server/ts3/Ts3QueryTerminalContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -244,6 +245,12 @@ export default {
             permission: 'activity.*',
             name: 'HTML Viewer',
             component: Ts3HtmlViewerContainer,
+        },
+        {
+            path: '/ts3/query',
+            permission: 'activity.*',
+            name: 'Query Terminal',
+            component: Ts3QueryTerminalContainer,
         },
     ],
 } as Routes;

@@ -105,6 +105,7 @@ export default () => {
     const isBlockedRouteForTs3 = (path: string) =>
         path === '/console' || path === '/files' || path === '/files/:action(edit|new)' || path === '/backups';
     const isTs3OnlyRoute = (path: string) => path.startsWith('/ts3');
+    const isRootAdminOnlyTs3Route = (path: string) => path === '/ts3/query';
 
     return (
         <React.Fragment key={'server-router'}>
@@ -219,7 +220,9 @@ export default () => {
                                         <TransitionRouter>
                                             <Switch location={location}>
                                                 {routes.server.map(({ path, permission, component: Component }) => (
-                                                    (isTs3 && isBlockedRouteForTs3(path)) || (!isTs3 && isTs3OnlyRoute(path)) ? (
+                                                    (isTs3 && isBlockedRouteForTs3(path)) ||
+                                                    (!isTs3 && isTs3OnlyRoute(path)) ||
+                                                    (isTs3 && isRootAdminOnlyTs3Route(path) && !rootAdmin) ? (
                                                         <Route key={path} path={to(path)} exact>
                                                             <Redirect to={to('/')} />
                                                         </Route>

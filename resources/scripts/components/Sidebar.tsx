@@ -174,6 +174,7 @@ const ServerLinks = () => {
             case 'Tokens': return faPlug;
             case 'Logs': return faListUl;
             case 'HTML Viewer': return faExternalLinkAlt;
+            case 'Query Terminal': return faTerminal;
             default: return faLayerGroup;
         }
     };
@@ -186,6 +187,7 @@ const ServerLinks = () => {
         '/ts3/bans',
         '/ts3/tokens',
         '/ts3/logs',
+        '/ts3/query',
         '/activity',
         '/ts3/html-viewer',
         '/settings',
@@ -197,6 +199,7 @@ const ServerLinks = () => {
             {routes.server
                 .filter((route) => (isTs3 ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/activity' || route.path === '/settings' : !route.path.startsWith('/ts3')))
                 .filter((route) => !(isTs3 && (route.path === '/files' || route.path === '/backups')))
+                .filter((route) => route.path !== '/ts3/query' || rootAdmin)
                 .sort((a, b) => {
                     if (!isTs3) return 0;
 

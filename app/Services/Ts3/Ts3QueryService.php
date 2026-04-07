@@ -172,6 +172,24 @@ class Ts3QueryService
     }
 
     /**
+     * Executes an arbitrary ServerQuery command and returns parsed rows.
+     *
+     * @return array<int, array<string, string>>
+     */
+    public function executeCustomCommand(Server $server, string $command): array
+    {
+        $trimmed = trim($command);
+        if ($trimmed === '') {
+            throw new Ts3QueryException(
+                'TS3 Query command cannot be empty.',
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        return $this->withQuery($server, fn ($socket) => $this->sendCommand($socket, $trimmed));
+    }
+
+    /**
      * @return array<int, array<string, string>>
      */
     private function sendCommand($socket, string $command): array

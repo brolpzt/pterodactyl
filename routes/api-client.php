@@ -189,6 +189,7 @@ Route::group([
     Route::group(['prefix' => '/ts3'], function () {
         Route::get('/overview', [Client\Servers\Ts3QueryController::class, 'overview']);
         Route::post('/actions/{action}', [Client\Servers\Ts3QueryController::class, 'action']);
+        Route::post('/query/execute', [Client\Servers\Ts3QueryController::class, 'executeQuery']);
 
         Route::get('/bans', [Client\Servers\Ts3QueryController::class, 'listBans']);
         Route::post('/bans', [Client\Servers\Ts3QueryController::class, 'createBan']);

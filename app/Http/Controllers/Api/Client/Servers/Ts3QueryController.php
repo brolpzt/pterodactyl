@@ -281,6 +281,27 @@ class Ts3QueryController extends ClientApiController
         throw new NotFoundHttpException('Unknown TS3 action.');
     }
 
+    public function executeQuery(Request $request, Server $server): array
+    {
+        $this->assertTs3($server);
+        $this->assertRootAdmin($request);
+
+        $data = $request->validate([
+            'command' => ['required', 'string', 'max:500'],
+        ]);
+
+        $result = $this->ts3QueryService->executeCustomCommand($server, $data['command']);
+
+        Activity::event('server:ts3.query.execute')
+            ->property(['command' => $data['command']])
+            ->log();
+
+        return [
+            'object' => 'list',
+            'data' => $result,
+        ];
+    }
+
     private function assertTs3(Server $server): void
     {
         if (!ServerType::isTs3($server)) {
@@ -342,5 +363,12 @@ class Ts3QueryController extends ClientApiController
         }
 
         return $snapshot;
+    }
+
+    private function assertRootAdmin(Request $request): void
+    {
+        if (!$request->user()->root_admin) {
+            throw new AccessDeniedHttpException('Only root administrators can execute TS3 query commands.');
+        }
     }
 }

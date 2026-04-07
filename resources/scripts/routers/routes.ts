@@ -212,7 +212,7 @@ export default {
         {
             path: '/ts3',
             permission: 'activity.*',
-            name: 'TS3',
+            name: undefined,
             component: Ts3OverviewContainer,
             exact: true,
         },
@@ -243,7 +243,7 @@ export default {
         {
             path: '/ts3/html-viewer',
             permission: 'activity.*',
-            name: 'HTML Viewer',
+            name: 'TS3 Viewer',
             component: Ts3HtmlViewerContainer,
         },
         {

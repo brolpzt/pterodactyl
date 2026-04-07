@@ -77,7 +77,7 @@ export default () => {
     };
 
     return (
-        <ServerContentBlock title={'TS3 HTML Viewer'}>
+        <ServerContentBlock title={'TS3 Viewer'}>
             <FlashMessageRender byKey={'ts3:html'} css={tw`mb-4`} />
             <TitledGreyBox title={'TS3 Viewer (Canais e Usuários)'}>
                 {loading ? (

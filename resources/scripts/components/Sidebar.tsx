@@ -168,12 +168,11 @@ const ServerLinks = () => {
             case 'Addons': return faPuzzlePiece;
             case 'server.firewall':
             case 'Firewall': return faShieldAlt;
-            case 'TS3': return faMicrochip;
             case 'Snapshots': return faCloudUploadAlt;
             case 'Bans': return faShieldAlt;
             case 'Tokens': return faPlug;
             case 'Logs': return faListUl;
-            case 'HTML Viewer': return faExternalLinkAlt;
+            case 'TS3 Viewer': return faExternalLinkAlt;
             case 'Query Terminal': return faTerminal;
             default: return faLayerGroup;
         }
@@ -182,7 +181,6 @@ const ServerLinks = () => {
     const collapsed = useStoreState((state) => state.sidebarCollapsed);
     const ts3RouteOrder = [
         '/',
-        '/ts3',
         '/ts3/snapshots',
         '/ts3/bans',
         '/ts3/tokens',

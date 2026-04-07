@@ -187,7 +187,23 @@ class Ts3QueryService
         $rows = [];
 
         while (!feof($socket)) {
-            $line = trim((string) fgets($socket));
+            $rawLine = fgets($socket);
+            if ($rawLine === false) {
+                $meta = stream_get_meta_data($socket);
+                if (($meta['timed_out'] ?? false) === true) {
+                    throw new Ts3QueryException(
+                        'TS3 Query read timed out while waiting for response.',
+                        Response::HTTP_GATEWAY_TIMEOUT
+                    );
+                }
+
+                throw new Ts3QueryException(
+                    'TS3 Query returned an empty response stream.',
+                    Response::HTTP_BAD_GATEWAY
+                );
+            }
+
+            $line = trim($rawLine);
             if ($line === '') {
                 continue;
             }

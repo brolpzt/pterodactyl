@@ -26,6 +26,12 @@ import ServerActivityLogContainer from '@/components/server/ServerActivityLogCon
 // for the server dashboard when they're only needed for specific instances.
 const FileEditContainer = lazy(() => import('@/components/server/files/FileEditContainer'));
 const ScheduleEditContainer = lazy(() => import('@/components/server/schedules/ScheduleEditContainer'));
+const Ts3OverviewContainer = lazy(() => import('@/components/server/ts3/Ts3OverviewContainer'));
+const Ts3SnapshotsContainer = lazy(() => import('@/components/server/ts3/Ts3SnapshotsContainer'));
+const Ts3BansContainer = lazy(() => import('@/components/server/ts3/Ts3BansContainer'));
+const Ts3TokensContainer = lazy(() => import('@/components/server/ts3/Ts3TokensContainer'));
+const Ts3LogsContainer = lazy(() => import('@/components/server/ts3/Ts3LogsContainer'));
+const Ts3HtmlViewerContainer = lazy(() => import('@/components/server/ts3/Ts3HtmlViewerContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -201,6 +207,43 @@ export default {
             name: 'Settings',
             nameKey: 'server.settings',
             component: SettingsContainer,
+        },
+        {
+            path: '/ts3',
+            permission: 'activity.*',
+            name: 'TS3',
+            component: Ts3OverviewContainer,
+            exact: true,
+        },
+        {
+            path: '/ts3/snapshots',
+            permission: 'backup.*',
+            name: 'Snapshots',
+            component: Ts3SnapshotsContainer,
+        },
+        {
+            path: '/ts3/bans',
+            permission: 'firewall.*',
+            name: 'Bans',
+            component: Ts3BansContainer,
+        },
+        {
+            path: '/ts3/tokens',
+            permission: 'control.console',
+            name: 'Tokens',
+            component: Ts3TokensContainer,
+        },
+        {
+            path: '/ts3/logs',
+            permission: 'activity.*',
+            name: 'Logs',
+            component: Ts3LogsContainer,
+        },
+        {
+            path: '/ts3/html-viewer',
+            permission: 'activity.*',
+            name: 'HTML Viewer',
+            component: Ts3HtmlViewerContainer,
         },
     ],
 } as Routes;

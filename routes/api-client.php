@@ -6,6 +6,8 @@ use Pterodactyl\Http\Controllers\Api\Client;
 use Pterodactyl\Http\Middleware\Activity\ServerSubject;
 use Pterodactyl\Http\Middleware\Activity\AccountSubject;
 use Pterodactyl\Http\Middleware\RequireTwoFactorAuthentication;
+use Pterodactyl\Http\Middleware\Api\Client\Server\DenyFilesForTs3;
+use Pterodactyl\Http\Middleware\Api\Client\Server\DenyBackupsForTs3;
 use Pterodactyl\Http\Middleware\Api\Client\Server\ResourceBelongsToServer;
 use Pterodactyl\Http\Middleware\Api\Client\Server\AuthenticateServerAccess;
 
@@ -100,7 +102,7 @@ Route::group([
         Route::delete('/{database}', [Client\Servers\DatabaseController::class, 'delete']);
     });
 
-    Route::group(['prefix' => '/files'], function () {
+    Route::group(['prefix' => '/files', 'middleware' => [DenyFilesForTs3::class]], function () {
         Route::get('/list', [Client\Servers\FileController::class, 'directory']);
         Route::get('/contents', [Client\Servers\FileController::class, 'contents']);
         Route::get('/download', [Client\Servers\FileController::class, 'download']);
@@ -149,7 +151,7 @@ Route::group([
         Route::delete('/{user}', [Client\Servers\SubuserController::class, 'delete']);
     });
 
-    Route::group(['prefix' => '/backups'], function () {
+    Route::group(['prefix' => '/backups', 'middleware' => [DenyBackupsForTs3::class]], function () {
         Route::get('/', [Client\Servers\BackupController::class, 'index']);
         Route::post('/', [Client\Servers\BackupController::class, 'store']);
         Route::get('/{backup}', [Client\Servers\BackupController::class, 'view']);
@@ -182,4 +184,25 @@ Route::group([
     });
 
     Route::post('/fastdl/sync', [Client\Servers\FastDlController::class, 'sync']);
+
+    Route::group(['prefix' => '/ts3'], function () {
+        Route::get('/overview', [Client\Servers\Ts3QueryController::class, 'overview']);
+        Route::post('/actions/{action}', [Client\Servers\Ts3QueryController::class, 'action']);
+
+        Route::get('/bans', [Client\Servers\Ts3QueryController::class, 'listBans']);
+        Route::post('/bans', [Client\Servers\Ts3QueryController::class, 'createBan']);
+        Route::delete('/bans/{banId}', [Client\Servers\Ts3QueryController::class, 'deleteBan']);
+
+        Route::get('/tokens', [Client\Servers\Ts3QueryController::class, 'listTokens']);
+        Route::post('/tokens', [Client\Servers\Ts3QueryController::class, 'createToken']);
+        Route::delete('/tokens', [Client\Servers\Ts3QueryController::class, 'deleteToken']);
+
+        Route::get('/logs', [Client\Servers\Ts3QueryController::class, 'logs']);
+        Route::get('/html-viewer', [Client\Servers\Ts3QueryController::class, 'htmlViewer']);
+
+        Route::get('/snapshots', [Client\Servers\Ts3QueryController::class, 'listSnapshots']);
+        Route::post('/snapshots', [Client\Servers\Ts3QueryController::class, 'createSnapshot']);
+        Route::post('/snapshots/{snapshotUuid}/restore', [Client\Servers\Ts3QueryController::class, 'restoreSnapshot']);
+        Route::delete('/snapshots/{snapshotUuid}', [Client\Servers\Ts3QueryController::class, 'deleteSnapshot']);
+    });
 });

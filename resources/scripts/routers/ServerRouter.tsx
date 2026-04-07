@@ -1,6 +1,6 @@
 import TransferListener from '@/components/server/TransferListener';
 import React, { useEffect, useState } from 'react';
-import { NavLink, Route, Switch, useRouteMatch, matchPath } from 'react-router-dom';
+import { NavLink, Redirect, Route, Switch, useRouteMatch, matchPath } from 'react-router-dom';
 import NavigationBar from '@/components/NavigationBar';
 import TransitionRouter from '@/TransitionRouter';
 import WebsocketHandler from '@/components/server/WebsocketHandler';
@@ -46,6 +46,7 @@ export default () => {
     const limits = ServerContext.useStoreState((state) => state.server.data?.limits);
     const inConflictState = ServerContext.useStoreState((state) => state.server.inConflictState);
     const serverId = ServerContext.useStoreState((state) => state.server.data?.internalId);
+    const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
     const allocation = ServerContext.useStoreState((state) => state.server.data?.allocations.find((a) => a.isDefault));
     const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
     const billingCostSoFar = ServerContext.useStoreState((state) => state.server.data?.billingCostSoFar);
@@ -100,6 +101,9 @@ export default () => {
     }, [match.params.id]);
 
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
+    const isTs3 = eggId === 12;
+    const isBlockedRouteForTs3 = (path: string) => path === '/files' || path === '/files/:action(edit|new)' || path === '/backups';
+    const isTs3OnlyRoute = (path: string) => path.startsWith('/ts3');
 
     return (
         <React.Fragment key={'server-router'}>
@@ -214,11 +218,17 @@ export default () => {
                                         <TransitionRouter>
                                             <Switch location={location}>
                                                 {routes.server.map(({ path, permission, component: Component }) => (
-                                                    <PermissionRoute key={path} permission={permission} path={to(path)} exact>
-                                                        <Spinner.Suspense>
-                                                            <Component />
-                                                        </Spinner.Suspense>
-                                                    </PermissionRoute>
+                                                    (isTs3 && isBlockedRouteForTs3(path)) || (!isTs3 && isTs3OnlyRoute(path)) ? (
+                                                        <Route key={path} path={to(path)} exact>
+                                                            <Redirect to={to('/')} />
+                                                        </Route>
+                                                    ) : (
+                                                        <PermissionRoute key={path} permission={permission} path={to(path)} exact>
+                                                            <Spinner.Suspense>
+                                                                <Component />
+                                                            </Spinner.Suspense>
+                                                        </PermissionRoute>
+                                                    )
                                                 ))}
                                                 <Route path={'*'} component={NotFound} />
                                             </Switch>

@@ -126,8 +126,10 @@ const SidebarScroll = styled.div`
 
 const ServerLinks = () => {
     const internalId = ServerContext.useStoreState((state) => state.server.data?.internalId);
+    const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
     const { t } = useTranslation('strings');
+    const isTs3 = eggId === 12;
 
     const match = useRouteMatch<{ id: string }>('/server/:id');
 
@@ -166,6 +168,12 @@ const ServerLinks = () => {
             case 'Addons': return faPuzzlePiece;
             case 'server.firewall':
             case 'Firewall': return faShieldAlt;
+            case 'TS3': return faMicrochip;
+            case 'Snapshots': return faCloudUploadAlt;
+            case 'Bans': return faShieldAlt;
+            case 'Tokens': return faPlug;
+            case 'Logs': return faListUl;
+            case 'HTML Viewer': return faExternalLinkAlt;
             default: return faLayerGroup;
         }
     };
@@ -176,6 +184,8 @@ const ServerLinks = () => {
         <>
             <SectionTitle collapsed={collapsed}>{t('nav.server_menu')}</SectionTitle>
             {routes.server
+                .filter((route) => (isTs3 ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/console' || route.path === '/activity' || route.path === '/settings' : !route.path.startsWith('/ts3')))
+                .filter((route) => !(isTs3 && (route.path === '/files' || route.path === '/backups')))
                 .filter((route) => !!route.name)
                 .map((route) => (
                     route.permission ? (

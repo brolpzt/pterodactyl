@@ -102,7 +102,8 @@ export default () => {
 
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
     const isTs3 = eggId === 12;
-    const isBlockedRouteForTs3 = (path: string) => path === '/files' || path === '/files/:action(edit|new)' || path === '/backups';
+    const isBlockedRouteForTs3 = (path: string) =>
+        path === '/console' || path === '/files' || path === '/files/:action(edit|new)' || path === '/backups';
     const isTs3OnlyRoute = (path: string) => path.startsWith('/ts3');
 
     return (

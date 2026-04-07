@@ -181,7 +181,6 @@ const ServerLinks = () => {
     const collapsed = useStoreState((state) => state.sidebarCollapsed);
     const ts3RouteOrder = [
         '/',
-        '/console',
         '/ts3',
         '/ts3/snapshots',
         '/ts3/bans',
@@ -196,7 +195,7 @@ const ServerLinks = () => {
         <>
             <SectionTitle collapsed={collapsed}>{t('nav.server_menu')}</SectionTitle>
             {routes.server
-                .filter((route) => (isTs3 ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/console' || route.path === '/activity' || route.path === '/settings' : !route.path.startsWith('/ts3')))
+                .filter((route) => (isTs3 ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/activity' || route.path === '/settings' : !route.path.startsWith('/ts3')))
                 .filter((route) => !(isTs3 && (route.path === '/files' || route.path === '/backups')))
                 .sort((a, b) => {
                     if (!isTs3) return 0;

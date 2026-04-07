@@ -6,6 +6,7 @@ use Pterodactyl\Http\Controllers\Api\Client;
 use Pterodactyl\Http\Middleware\Activity\ServerSubject;
 use Pterodactyl\Http\Middleware\Activity\AccountSubject;
 use Pterodactyl\Http\Middleware\RequireTwoFactorAuthentication;
+use Pterodactyl\Http\Middleware\Api\Client\Server\DenyConsoleForTs3;
 use Pterodactyl\Http\Middleware\Api\Client\Server\DenyFilesForTs3;
 use Pterodactyl\Http\Middleware\Api\Client\Server\DenyBackupsForTs3;
 use Pterodactyl\Http\Middleware\Api\Client\Server\ResourceBelongsToServer;
@@ -91,7 +92,7 @@ Route::group([
     Route::get('/resources', Client\Servers\ResourceUtilizationController::class)->name('api:client:server.resources');
     Route::get('/activity', Client\Servers\ActivityLogController::class)->name('api:client:server.activity');
 
-    Route::post('/command', [Client\Servers\CommandController::class, 'index']);
+    Route::post('/command', [Client\Servers\CommandController::class, 'index'])->middleware([DenyConsoleForTs3::class]);
     Route::post('/power', [Client\Servers\PowerController::class, 'index']);
 
     Route::group(['prefix' => '/databases'], function () {

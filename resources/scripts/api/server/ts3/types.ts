@@ -41,4 +41,26 @@ export interface Ts3HtmlViewer {
     url: string;
     server_name: string | null;
     welcome_message: string | null;
+    channels: Ts3HtmlViewerChannel[];
+    clients: Ts3HtmlViewerClient[];
+}
+
+export interface Ts3HtmlViewerChannel {
+    cid?: string;
+    pid?: string;
+    channel_name?: string;
+    total_clients?: string;
+    channel_flag_password?: string;
+    channel_needed_talk_power?: string;
+    [key: string]: string | undefined;
+}
+
+export interface Ts3HtmlViewerClient {
+    clid?: string;
+    cid?: string;
+    client_type?: string;
+    client_nickname?: string;
+    client_unique_identifier?: string;
+    client_away?: string;
+    [key: string]: string | undefined;
 }

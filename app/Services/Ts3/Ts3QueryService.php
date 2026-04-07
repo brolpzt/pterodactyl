@@ -140,13 +140,19 @@ class Ts3QueryService
 
     public function htmlViewer(Server $server): array
     {
-        $overview = $this->overview($server);
+        return $this->withQuery($server, function ($socket) use ($server) {
+            $serverInfo = $this->sendCommand($socket, 'serverinfo')[0] ?? [];
+            $channels = $this->sendCommand($socket, 'channellist -flags -voice');
+            $clients = $this->sendCommand($socket, 'clientlist -uid -away -voice -groups');
 
-        return [
-            'url' => $this->resolveConfiguration($server)['html_viewer_url'],
-            'server_name' => $overview['server_name'] ?? null,
-            'welcome_message' => $overview['welcome_message'] ?? null,
-        ];
+            return [
+                'url' => $this->resolveConfiguration($server)['html_viewer_url'],
+                'server_name' => $serverInfo['virtualserver_name'] ?? null,
+                'welcome_message' => $serverInfo['virtualserver_welcomemessage'] ?? null,
+                'channels' => $channels,
+                'clients' => $clients,
+            ];
+        });
     }
 
     public function createSnapshot(Server $server): string

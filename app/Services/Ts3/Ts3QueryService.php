@@ -265,7 +265,13 @@ class Ts3QueryService
         $server->loadMissing(['allocation', 'node', 'variables']);
 
         $variables = $server->variables
-            ->mapWithKeys(fn ($variable) => [$variable->env_variable => $variable->server_value])
+            ->mapWithKeys(fn ($variable) => [
+                $variable->env_variable => (
+                    is_null($variable->server_value) || $variable->server_value === ''
+                        ? $variable->default_value
+                        : $variable->server_value
+                ),
+            ])
             ->all();
 
         $user = (string) ($variables['TS3_QUERY_USER'] ?? '');

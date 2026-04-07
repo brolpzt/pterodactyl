@@ -179,6 +179,18 @@ const ServerLinks = () => {
     };
 
     const collapsed = useStoreState((state) => state.sidebarCollapsed);
+    const ts3RouteOrder = [
+        '/',
+        '/console',
+        '/ts3',
+        '/ts3/snapshots',
+        '/ts3/bans',
+        '/ts3/tokens',
+        '/ts3/logs',
+        '/activity',
+        '/ts3/html-viewer',
+        '/settings',
+    ];
 
     return (
         <>
@@ -186,6 +198,16 @@ const ServerLinks = () => {
             {routes.server
                 .filter((route) => (isTs3 ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/console' || route.path === '/activity' || route.path === '/settings' : !route.path.startsWith('/ts3')))
                 .filter((route) => !(isTs3 && (route.path === '/files' || route.path === '/backups')))
+                .sort((a, b) => {
+                    if (!isTs3) return 0;
+
+                    const aIndex = ts3RouteOrder.indexOf(a.path);
+                    const bIndex = ts3RouteOrder.indexOf(b.path);
+                    const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+                    const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+
+                    return safeA - safeB;
+                })
                 .filter((route) => !!route.name)
                 .map((route) => (
                     route.permission ? (

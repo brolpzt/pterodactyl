@@ -3,7 +3,9 @@
 namespace Pterodactyl\Services\Ts3;
 
 use Illuminate\Http\Response;
+use Pterodactyl\Models\EggVariable;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Models\ServerVariable;
 use Pterodactyl\Exceptions\Service\Ts3\Ts3QueryException;
 
 class Ts3QueryService
@@ -262,13 +264,23 @@ class Ts3QueryService
 
     private function resolveConfiguration(Server $server): array
     {
-        $server->loadMissing(['allocation', 'node', 'variables']);
+        $server->loadMissing(['allocation', 'node']);
+
+        $eggVariables = EggVariable::query()
+            ->where('egg_id', $server->egg_id)
+            ->get(['id', 'env_variable', 'default_value']);
+
+        $overrides = ServerVariable::query()
+            ->where('server_id', $server->id)
+            ->whereIn('variable_id', $eggVariables->pluck('id'))
+            ->pluck('variable_value', 'variable_id');
 
         $variables = [];
-        foreach ($server->variables as $variable) {
-            $value = (is_null($variable->server_value) || $variable->server_value === '')
+        foreach ($eggVariables as $variable) {
+            $override = $overrides->get($variable->id);
+            $value = (is_null($override) || $override === '')
                 ? $variable->default_value
-                : $variable->server_value;
+                : $override;
 
             $variables[strtoupper(trim((string) $variable->env_variable))] = is_string($value) ? trim($value) : $value;
         }

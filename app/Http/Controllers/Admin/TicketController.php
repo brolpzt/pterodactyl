@@ -151,4 +151,17 @@ class TicketController extends Controller
             $attachment->filename
         );
     }
+
+    /**
+     * Delete a ticket and all its attachments.
+     */
+    public function delete(Ticket $ticket): RedirectResponse
+    {
+        Storage::deleteDirectory('tickets/' . $ticket->id);
+        $ticket->delete();
+
+        $this->alert->success('Ticket deleted successfully.')->flash();
+
+        return redirect()->route('admin.tickets');
+    }
 }

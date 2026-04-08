@@ -136,6 +136,17 @@
                         </button>
                     @endif
                 </form>
+                <form action="{{ route('admin.tickets.delete', $ticket->id) }}" method="POST" style="margin-top: 8px;">
+                    {!! csrf_field() !!}
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button
+                        type="submit"
+                        class="btn btn-default btn-block btn-xs text-red"
+                        onclick="return confirm('Tem certeza que deseja deletar este ticket? Esta ação não pode ser desfeita.');"
+                    >
+                        Delete Ticket
+                    </button>
+                </form>
             </div>
         </div>
     </div>

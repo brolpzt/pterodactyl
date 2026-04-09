@@ -4,6 +4,7 @@ namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use RuntimeException;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Permission;
 use Illuminate\Support\Str;
@@ -202,7 +203,7 @@ class Ts3QueryController extends ClientApiController
             'server_id' => $server->id,
             'uuid' => Str::uuid()->toString(),
             'name' => (string) ($data['name'] ?? ('Snapshot ' . now()->format('Y-m-d H:i:s'))),
-            'snapshot' => $snapshotPayload,
+            'snapshot' => $this->encodeSnapshotPayload($snapshotPayload),
             'created_by' => $request->user()->id,
         ]);
 
@@ -222,7 +223,7 @@ class Ts3QueryController extends ClientApiController
         $this->assertCanBackupRestore($request, $server);
 
         $snapshot = $this->findSnapshotOrFail($server, $snapshotUuid);
-        $this->ts3QueryService->restoreSnapshot($server, $snapshot->snapshot);
+        $this->ts3QueryService->restoreSnapshot($server, $this->decodeSnapshotPayload($snapshot->snapshot));
 
         Activity::event('server:ts3.snapshot.restore')
             ->property(['snapshot_uuid' => $snapshot->uuid, 'name' => $snapshot->name])
@@ -370,5 +371,41 @@ class Ts3QueryController extends ClientApiController
         if (!$request->user()->root_admin) {
             throw new AccessDeniedHttpException('Only root administrators can execute TS3 query commands.');
         }
+    }
+
+    /**
+     * Compresses snapshot payloads before persisting to reduce DB/proxy pressure.
+     */
+    private function encodeSnapshotPayload(string $payload): string
+    {
+        $compressed = gzencode($payload, 6);
+        if ($compressed === false) {
+            return $payload;
+        }
+
+        return 'gz:' . base64_encode($compressed);
+    }
+
+    /**
+     * Supports both legacy plain snapshots and compressed snapshots.
+     */
+    private function decodeSnapshotPayload(string $stored): string
+    {
+        if (!str_starts_with($stored, 'gz:')) {
+            return $stored;
+        }
+
+        $encoded = substr($stored, 3);
+        $decoded = base64_decode($encoded, true);
+        if ($decoded === false) {
+            throw new RuntimeException('Invalid encoded TS3 snapshot payload.');
+        }
+
+        $payload = gzdecode($decoded);
+        if ($payload === false) {
+            throw new RuntimeException('Invalid compressed TS3 snapshot payload.');
+        }
+
+        return $payload;
     }
 }

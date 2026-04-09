@@ -387,18 +387,31 @@ class Ts3QueryService
             $variables[strtoupper(trim((string) $variable->env_variable))] = is_string($value) ? trim($value) : $value;
         }
 
-        $user = (string) ($variables['TS3_QUERY_USER'] ?? $variables['QUERY_USER'] ?? '');
-        $password = (string) ($variables['TS3_QUERY_PASS'] ?? $variables['QUERY_PASS'] ?? '');
+        $user = (string) ($variables['TS3_QUERY_USER']
+            ?? $variables['QUERY_USER']
+            ?? $variables['SERVERADMIN_USER']
+            ?? 'serveradmin');
+        $password = (string) ($variables['TS3_QUERY_PASS']
+            ?? $variables['TS3_QUERY_PASSWORD']
+            ?? $variables['QUERY_PASS']
+            ?? $variables['QUERY_PASSWORD']
+            ?? $variables['SERVERADMIN_PASSWORD']
+            ?? '');
 
         if ($user === '' || $password === '') {
             throw new Ts3QueryException(
-                'TS3 Query credentials are not configured for this server.',
+                'TS3 Query credentials are not configured for this server. Configure QUERY_USER/QUERY_PASS or SERVERADMIN_PASSWORD.',
                 Response::HTTP_BAD_REQUEST
             );
         }
 
+        $allocationHost = trim((string) ($server->allocation?->ip ?? ''));
+        $host = in_array($allocationHost, ['', '0.0.0.0', '::', '::0'], true)
+            ? (string) $server->node->fqdn
+            : $allocationHost;
+
         return [
-            'host' => (string) ($server->allocation?->ip ?? $server->node->fqdn),
+            'host' => $host,
             // Backward compatible mapping for existing TS3 eggs:
             // - QUERY_PORT is commonly used as the startup variable name.
             'query_port' => (int) ($variables['TS3_QUERY_PORT'] ?? $variables['QUERY_PORT'] ?? self::DEFAULT_QUERY_PORT),

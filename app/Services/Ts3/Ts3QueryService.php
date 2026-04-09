@@ -405,10 +405,13 @@ class Ts3QueryService
             );
         }
 
+        $configuredHost = trim((string) ($variables['TS3_QUERY_HOST'] ?? $variables['QUERY_HOST'] ?? ''));
         $allocationHost = trim((string) ($server->allocation?->ip ?? ''));
-        $host = in_array($allocationHost, ['', '0.0.0.0', '::', '::0'], true)
+        $host = $configuredHost !== ''
+            ? $configuredHost
+            : (in_array($allocationHost, ['', '0.0.0.0', '::', '::0'], true)
             ? (string) $server->node->fqdn
-            : $allocationHost;
+            : $allocationHost);
 
         return [
             'host' => $host,

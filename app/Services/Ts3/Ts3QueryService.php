@@ -161,20 +161,57 @@ class Ts3QueryService
             $result = $this->sendCommand($socket, 'serversnapshotcreate')[0] ?? [];
             $snapshot = $result['snapshot'] ?? null;
 
-            if (!is_string($snapshot) || $snapshot === '') {
-                throw new Ts3QueryException(
-                    'TS3 Query did not return a snapshot payload.',
-                    Response::HTTP_BAD_GATEWAY
-                );
+            // Legacy TS3 format.
+            if (is_string($snapshot) && $snapshot !== '') {
+                return $snapshot;
             }
 
-            return $snapshot;
+            // Newer formats can return version/data pairs.
+            $data = $result['data'] ?? null;
+            if (is_string($data) && $data !== '') {
+                $version = (string) ($result['version'] ?? '');
+
+                $encoded = json_encode([
+                    'version' => $version,
+                    'data' => $data,
+                ]);
+
+                if (is_string($encoded) && $encoded !== '') {
+                    return $encoded;
+                }
+            }
+
+            throw new Ts3QueryException(
+                'TS3 Query did not return a supported snapshot payload.',
+                Response::HTTP_BAD_GATEWAY
+            );
         });
     }
 
     public function restoreSnapshot(Server $server, string $snapshot): void
     {
-        $this->withQuery($server, fn ($socket) => $this->sendCommand($socket, 'serversnapshotdeploy snapshot=' . $this->escape($snapshot)));
+        $this->withQuery($server, function ($socket) use ($snapshot) {
+            $payload = json_decode($snapshot, true);
+            if (
+                is_array($payload)
+                && isset($payload['data'])
+                && is_string($payload['data'])
+                && $payload['data'] !== ''
+            ) {
+                $command = 'serversnapshotdeploy';
+                if (isset($payload['version']) && is_string($payload['version']) && $payload['version'] !== '') {
+                    $command .= ' version=' . $this->escape($payload['version']);
+                }
+                $command .= ' data=' . $this->escape($payload['data']);
+
+                $this->sendCommand($socket, $command);
+
+                return;
+            }
+
+            // Legacy payload format.
+            $this->sendCommand($socket, 'serversnapshotdeploy snapshot=' . $this->escape($snapshot));
+        });
     }
 
     /**

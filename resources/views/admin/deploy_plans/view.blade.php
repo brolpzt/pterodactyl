@@ -84,17 +84,13 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Allowed Billing Cycles</label>
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" name="enable_hourly" value="1" {{ $plan->enable_hourly ? 'checked' : '' }} />
-                                Enable Hourly
-                            </label>
+                        <div class="checkbox checkbox-primary no-margin-bottom">
+                            <input type="checkbox" id="pEnableHourly" name="enable_hourly" value="1" {{ $plan->enable_hourly ? 'checked' : '' }} />
+                            <label for="pEnableHourly" class="strong">Enable Hourly</label>
                         </div>
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" name="enable_monthly" value="1" {{ $plan->enable_monthly ? 'checked' : '' }} />
-                                Enable Monthly (includes monthly/quarterly/semi-annually/annually)
-                            </label>
+                        <div class="checkbox checkbox-primary no-margin-bottom" style="margin-top:8px;">
+                            <input type="checkbox" id="pEnableMonthly" name="enable_monthly" value="1" {{ $plan->enable_monthly ? 'checked' : '' }} />
+                            <label for="pEnableMonthly" class="strong">Enable Monthly (includes monthly/quarterly/semi-annually/annually)</label>
                         </div>
                     </div>
                 </div>

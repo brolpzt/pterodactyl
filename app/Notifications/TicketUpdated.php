@@ -39,6 +39,7 @@ class TicketUpdated extends Notification implements ShouldQueue
         $eventText = $this->eventLabel();
         $panelBase = rtrim(route('index'), '/');
         $subjectPrefix = $isAdmin ? 'ADMIN: ' : '';
+        $status = strtoupper($this->ticket->status);
         $destination = $isAdmin
             ? route('admin.tickets.view', $this->ticket->id)
             : $panelBase . '/account/support/' . $this->ticket->id;
@@ -46,17 +47,24 @@ class TicketUpdated extends Notification implements ShouldQueue
         $mail = (new MailMessage())
             ->subject(sprintf('%s[Ticket #%d] %s', $subjectPrefix, $this->ticket->id, $eventText))
             ->greeting('Hello ' . $notifiable->username . ',')
-            ->line('There is an update on ticket #' . $this->ticket->id . '.')
-            ->line('Subject: ' . $this->ticket->subject)
-            ->line('Status: ' . $this->ticket->status)
-            ->line('Update type: ' . $eventText);
+            ->line('A support ticket has a new update.')
+            ->line('**Update Summary**')
+            ->line('- Ticket: #' . $this->ticket->id)
+            ->line('- Type: ' . $eventText)
+            ->line('- Status: ' . $status)
+            ->line('- Subject: ' . $this->ticket->subject)
+            ->line('- Department: ' . ($this->ticket->department ?: 'N/A'));
 
         if ($this->actor instanceof User) {
-            $mail->line('Updated by: ' . $this->actor->username . ' (' . $this->actor->email . ')');
+            $mail
+                ->line('**Updated By**')
+                ->line($this->actor->username . ' (' . $this->actor->email . ')');
         }
 
         if ($this->message instanceof TicketMessage) {
-            $mail->line('Message: ' . mb_strimwidth($this->message->message, 0, 240, '...'));
+            $mail
+                ->line('**Message Preview**')
+                ->line(mb_strimwidth(trim($this->message->message), 0, 300, '...'));
         }
 
         return $mail

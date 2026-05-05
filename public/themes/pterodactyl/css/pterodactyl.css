@@ -853,3 +853,47 @@ pre {
 .equal-height .box-body {
     flex: 1;
 }
+
+/* Admin scrollbars: subtle and theme-aligned */
+.fixed .main-sidebar {
+    height: 100vh;
+}
+
+.fixed .main-sidebar .sidebar {
+    height: calc(100vh - 50px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #4d5b69 transparent;
+}
+
+.content-wrapper {
+    max-height: calc(100vh - 50px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #4d5b69 transparent;
+}
+
+.fixed .main-sidebar .sidebar::-webkit-scrollbar,
+.content-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+
+.fixed .main-sidebar .sidebar::-webkit-scrollbar-track,
+.content-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fixed .main-sidebar .sidebar::-webkit-scrollbar-thumb,
+.content-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(154, 165, 177, 0.28);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.fixed .main-sidebar .sidebar::-webkit-scrollbar-thumb:hover,
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(154, 165, 177, 0.42);
+    background-clip: padding-box;
+}

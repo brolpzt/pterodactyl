@@ -89,19 +89,16 @@ export default {
             path: '/support',
             name: 'Support',
             component: SupportContainer,
-            adminOnly: true,
         },
         {
             path: '/support/new',
             name: undefined,
             component: CreateTicketContainer,
-            adminOnly: true,
         },
         {
             path: '/support/:id',
             name: undefined,
             component: ViewTicketContainer,
-            adminOnly: true,
         },
     ],
     server: [

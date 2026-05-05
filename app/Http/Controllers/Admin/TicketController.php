@@ -10,6 +10,8 @@ use Pterodactyl\Models\Ticket;
 use Pterodactyl\Models\TicketMessage;
 use Pterodactyl\Models\TicketAttachment;
 use Pterodactyl\Models\TicketDepartment;
+use Pterodactyl\Models\User;
+use Pterodactyl\Notifications\TicketUpdated;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -113,6 +115,7 @@ class TicketController extends Controller
 
         $ticket->update(['status' => 'open']);
         $ticket->touch();
+        $this->sendTicketNotifications($ticket, 'reply', $message, $request->user());
 
         $this->alert->success('Record created successfully.')->flash();
 
@@ -125,10 +128,11 @@ class TicketController extends Controller
      * @param \Pterodactyl\Models\Ticket $ticket
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function toggleStatus(Ticket $ticket): RedirectResponse
+    public function toggleStatus(Request $request, Ticket $ticket): RedirectResponse
     {
         $status = $ticket->status === 'open' ? 'closed' : 'open';
         $ticket->update(['status' => $status]);
+        $this->sendTicketNotifications($ticket, 'status_changed', null, $request->user());
 
         $this->alert->success('Ticket status updated successfully.')->flash();
 
@@ -163,5 +167,19 @@ class TicketController extends Controller
         $this->alert->success('Ticket deleted successfully.')->flash();
 
         return redirect()->route('admin.tickets');
+    }
+
+    private function sendTicketNotifications(
+        Ticket $ticket,
+        string $eventType,
+        ?TicketMessage $message,
+        User $actor
+    ): void {
+        User::query()
+            ->where('root_admin', true)
+            ->orWhere('id', $ticket->user_id)
+            ->get()
+            ->unique('id')
+            ->each(fn (User $recipient) => $recipient->notify(new TicketUpdated($ticket, $eventType, $message, $actor)));
     }
 }

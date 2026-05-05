@@ -6,6 +6,8 @@ use Pterodactyl\Models\Ticket;
 use Pterodactyl\Models\TicketMessage;
 use Pterodactyl\Models\TicketDepartment;
 use Pterodactyl\Models\TicketAttachment;
+use Pterodactyl\Models\User;
+use Pterodactyl\Notifications\TicketUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Pterodactyl\Http\Controllers\Controller;
@@ -85,6 +87,7 @@ class TicketController extends ClientApiController
         }
 
         $ticket->load(['server', 'ticketDepartment']);
+        $this->sendTicketNotifications($ticket, 'created', $message, $request->user());
 
         return $this->fractal->item($ticket)
             ->transformWith($this->getTransformer(TicketTransformer::class))
@@ -166,6 +169,7 @@ class TicketController extends ClientApiController
 
         $ticket->update(['status' => 'open']);
         $ticket->touch(); // Update the ticket's updated_at timestamp
+        $this->sendTicketNotifications($ticket, 'reply', $message, $request->user());
 
         $message->load('user');
 
@@ -192,6 +196,7 @@ class TicketController extends ClientApiController
             ->firstOrFail();
 
         $ticket->update(['status' => $request->input('status')]);
+        $this->sendTicketNotifications($ticket, 'status_changed', null, $request->user());
 
         return $this->fractal->item($ticket)
             ->transformWith($this->getTransformer(TicketTransformer::class))
@@ -219,5 +224,19 @@ class TicketController extends ClientApiController
             'tickets/' . $message->ticket_id . '/' . $attachment->hash,
             $attachment->filename
         );
+    }
+
+    private function sendTicketNotifications(
+        Ticket $ticket,
+        string $eventType,
+        ?TicketMessage $message,
+        User $actor
+    ): void {
+        User::query()
+            ->where('root_admin', true)
+            ->orWhere('id', $ticket->user_id)
+            ->get()
+            ->unique('id')
+            ->each(fn (User $recipient) => $recipient->notify(new TicketUpdated($ticket, $eventType, $message, $actor)));
     }
 }

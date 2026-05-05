@@ -272,21 +272,20 @@ const Sidebar = () => {
                 </NavItem>
 
                 {rootAdmin && (
-                    <>
-                        <NavItem to={'/account/billing'} collapsed={collapsed} title={collapsed ? t('nav.billing') : undefined}>
-                            <IconContainer className="icon-container">
-                                <FontAwesomeIcon icon={faWallet} />
-                            </IconContainer>
-                            <NavItemLabel collapsed={collapsed}>{t('nav.billing')}</NavItemLabel>
-                        </NavItem>
-                        <NavItem to={'/account/support'} collapsed={collapsed} title={collapsed ? t('nav.support') : undefined}>
-                            <IconContainer className="icon-container">
-                                <FontAwesomeIcon icon={faLifeRing} />
-                            </IconContainer>
-                            <NavItemLabel collapsed={collapsed}>{t('nav.support')}</NavItemLabel>
-                        </NavItem>
-                    </>
+                    <NavItem to={'/account/billing'} collapsed={collapsed} title={collapsed ? t('nav.billing') : undefined}>
+                        <IconContainer className="icon-container">
+                            <FontAwesomeIcon icon={faWallet} />
+                        </IconContainer>
+                        <NavItemLabel collapsed={collapsed}>{t('nav.billing')}</NavItemLabel>
+                    </NavItem>
                 )}
+
+                <NavItem to={'/account/support'} collapsed={collapsed} title={collapsed ? t('nav.support') : undefined}>
+                    <IconContainer className="icon-container">
+                        <FontAwesomeIcon icon={faLifeRing} />
+                    </IconContainer>
+                    <NavItemLabel collapsed={collapsed}>{t('nav.support')}</NavItemLabel>
+                </NavItem>
 
                 {match && (
                     <React.Suspense fallback={<ServerLinksPlaceholder />}>

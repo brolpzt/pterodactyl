@@ -37,7 +37,7 @@ class PaymentReceived extends Notification implements ShouldQueue
         $gateway = strtoupper($this->gateway);
 
         return (new MailMessage())
-            ->subject(sprintf('Payment received: %s %s', $currency, $formattedAmount))
+            ->subject('Payment received')
             ->greeting('Hello ' . $notifiable->username . ',')
             ->line('We have successfully received your payment.')
             ->line(sprintf('Amount: %s %s', $currency, $formattedAmount))

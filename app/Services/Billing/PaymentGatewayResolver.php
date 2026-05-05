@@ -9,6 +9,7 @@ class PaymentGatewayResolver
 {
     public function __construct(
         private StripePaymentGateway $stripeGateway,
+        private SicoobPixGateway $sicoobPixGateway,
     ) {
     }
 
@@ -21,7 +22,7 @@ class PaymentGatewayResolver
     {
         return match (strtolower($method)) {
             'stripe' => $this->stripeGateway,
-            'pix' => throw new InvalidArgumentException('Pix is not yet integrated.'),
+            'pix' => $this->sicoobPixGateway,
             default => throw new InvalidArgumentException("Unknown payment method: {$method}"),
         };
     }
@@ -37,7 +38,9 @@ class PaymentGatewayResolver
             $methods[] = 'stripe';
         }
 
-        // Future: pix
+        if (config('billing.pix_enabled', false)) {
+            $methods[] = 'pix';
+        }
 
         return $methods;
     }

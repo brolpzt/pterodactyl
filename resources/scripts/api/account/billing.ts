@@ -31,6 +31,7 @@ export interface BillingInfo {
     transactions: WalletTransaction[];
     servers: BillingServer[];
     available_methods: string[];
+    user_cpf?: string | null;
     exchange_rates?: ExchangeRates | null;
 }
 
@@ -48,9 +49,21 @@ export interface DepositResult {
     status?: string | null;
     gateway?: string | null;
     checkout_url?: string | null;
+    transaction_id?: string | null;
+    tax_id?: string | null;
+    pix_code?: string | null;
+    qr_code_image?: {
+        image_base64?: string;
+        image_mime_type?: string;
+        image_data_url?: string;
+    } | null;
     servers_restored?: number;
 }
 
-export const createDeposit = (amount: number, method: string): Promise<DepositResult> => {
-    return http.post('/api/client/account/billing/deposit', { amount, method }).then(({ data }) => data);
+export const createDeposit = (amount: number, method: string, payerCpf?: string | null): Promise<DepositResult> => {
+    return http.post('/api/client/account/billing/deposit', {
+        amount,
+        method,
+        payer_cpf: payerCpf ?? undefined,
+    }).then(({ data }) => data);
 };

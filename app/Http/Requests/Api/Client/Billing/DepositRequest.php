@@ -4,6 +4,7 @@ namespace Pterodactyl\Http\Requests\Api\Client\Billing;
 
 use Pterodactyl\Http\Requests\Api\Client\ClientApiRequest;
 use Pterodactyl\Services\Billing\PaymentGatewayResolver;
+use Pterodactyl\Support\Cpf;
 
 class DepositRequest extends ClientApiRequest
 {
@@ -12,6 +13,7 @@ class DepositRequest extends ClientApiRequest
         return [
             'amount' => ['required', 'numeric', 'min:0.01'],
             'method' => ['required', 'string'],
+            'payer_cpf' => ['nullable', 'string', 'max:20'],
         ];
     }
 
@@ -26,6 +28,13 @@ class DepositRequest extends ClientApiRequest
 
             if (!in_array($this->input('method'), $available)) {
                 $validator->errors()->add('method', 'The selected payment method is not available.');
+            }
+
+            if (strtolower((string) $this->input('method')) === 'pix') {
+                $cpfRaw = (string) $this->input('payer_cpf', '');
+                if (!Cpf::isValid($cpfRaw)) {
+                    $validator->errors()->add('payer_cpf', 'CPF invalido. Informe um CPF valido para pagamentos PIX.');
+                }
             }
         });
     }

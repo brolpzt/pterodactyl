@@ -153,6 +153,7 @@ const BillingContainer = () => {
                             onDismissed={() => setPaymentModalVisible(false)}
                             onSuccess={refreshBilling}
                             availableMethods={billing?.available_methods ?? []}
+                            userCpf={billing?.user_cpf ?? null}
                             initialAmount={paymentModalAmount}
                         />
                     </TitledGreyBox>

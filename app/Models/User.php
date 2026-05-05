@@ -30,6 +30,7 @@ use Pterodactyl\Notifications\SendPasswordReset as ResetPasswordNotification;
  * @property string $uuid
  * @property string $username
  * @property string $email
+ * @property string|null $cpf
  * @property string|null $name_first
  * @property string|null $name_last
  * @property string $password
@@ -121,6 +122,7 @@ class User extends Model implements
         'external_id',
         'username',
         'email',
+        'cpf',
         'name_first',
         'name_last',
         'password',
@@ -164,6 +166,7 @@ class User extends Model implements
     public static array $validationRules = [
         'uuid' => 'required|string|size:36|unique:users,uuid',
         'email' => 'required|email|between:1,191|unique:users,email',
+        'cpf' => 'sometimes|nullable|string|max:14',
         'external_id' => 'sometimes|nullable|string|max:191|unique:users,external_id',
         'username' => 'required|between:1,191|unique:users,username',
         'name_first' => 'required|string|between:1,191',

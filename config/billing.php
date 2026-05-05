@@ -8,6 +8,26 @@ return [
     'stripe_success_url' => env('BILLING_STRIPE_SUCCESS_URL', null),
     'stripe_cancel_url' => env('BILLING_STRIPE_CANCEL_URL', null),
     'pix_enabled' => env('BILLING_PIX_ENABLED', false),
+    'pix' => [
+        'mode' => env('BILLING_PIX_MODE', 'sandbox'),
+        'currency_multiplier' => env('BILLING_PIX_CURRENCY_MULTIPLIER', 1),
+        'default_payer_cpf' => env('BILLING_PIX_DEFAULT_PAYER_CPF', null),
+        'sandbox' => [
+            'client_id' => env('SICOOB_PIX_SANDBOX_CLIENT_ID', null),
+            'client_secret' => env('SICOOB_PIX_SANDBOX_CLIENT_SECRET', null),
+            'bearer_token' => env('SICOOB_PIX_SANDBOX_BEARER_TOKEN', null),
+            'pix_key' => env('SICOOB_PIX_SANDBOX_PIX_KEY', null),
+            'certificate_pfx' => env('SICOOB_PIX_SANDBOX_CERTIFICATE_PFX', null),
+            'certificate_passphrase' => env('SICOOB_PIX_SANDBOX_CERTIFICATE_PASSPHRASE', null),
+        ],
+        'production' => [
+            'client_id' => env('SICOOB_PIX_PROD_CLIENT_ID', null),
+            'client_secret' => env('SICOOB_PIX_PROD_CLIENT_SECRET', null),
+            'pix_key' => env('SICOOB_PIX_PROD_PIX_KEY', null),
+            'certificate_pfx' => env('SICOOB_PIX_PROD_CERTIFICATE_PFX', null),
+            'certificate_passphrase' => env('SICOOB_PIX_PROD_CERTIFICATE_PASSPHRASE', null),
+        ],
+    ],
     'currency' => 'USD',
 
     /*

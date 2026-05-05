@@ -8,6 +8,7 @@ use Pterodactyl\Services\Billing\WalletService;
 use Pterodactyl\Services\Billing\ExchangeRateService;
 use Pterodactyl\Services\Billing\PaymentGatewayResolver;
 use Pterodactyl\Http\Requests\Api\Client\Billing\DepositRequest;
+use Pterodactyl\Support\Cpf;
 
 class BillingController extends ClientApiController
 {
@@ -76,6 +77,7 @@ class BillingController extends ClientApiController
             'transactions' => $transactions,
             'servers' => $servers,
             'available_methods' => $this->gatewayResolver->getAvailableMethods(),
+            'user_cpf' => $user->cpf,
             'exchange_rates' => $exchangeRates,
         ];
     }
@@ -100,10 +102,16 @@ class BillingController extends ClientApiController
         $user = $request->user();
         $amount = (float) $request->input('amount');
         $method = $request->input('method');
+        $payerCpf = Cpf::normalize((string) $request->input('payer_cpf', ''));
+
+        if (strtolower((string) $method) === 'pix' && Cpf::isValid($payerCpf) && $payerCpf !== (string) $user->cpf) {
+            $user->forceFill(['cpf' => $payerCpf])->save();
+        }
 
         $gateway = $this->gatewayResolver->resolve($method);
         $result = $gateway->createPayment($user, $amount, [
             'ip' => $request->ip(),
+            'payer_cpf' => Cpf::isValid($payerCpf) ? $payerCpf : null,
         ]);
 
         $wallet = $this->walletService->getOrCreateWallet($user);
@@ -120,6 +128,10 @@ class BillingController extends ClientApiController
             'status' => $result['status'] ?? null,
             'gateway' => $result['gateway'] ?? $method,
             'checkout_url' => $result['checkout_url'] ?? null,
+            'transaction_id' => $result['transaction_id'] ?? null,
+            'tax_id' => $result['tax_id'] ?? null,
+            'pix_code' => $result['pix_code'] ?? null,
+            'qr_code_image' => $result['qr_code_image'] ?? null,
             'servers_restored' => $restoredCount,
         ]);
     }

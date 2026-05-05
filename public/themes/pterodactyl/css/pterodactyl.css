@@ -863,37 +863,40 @@ pre {
     height: calc(100vh - 50px);
     overflow-y: auto;
     overflow-x: hidden;
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
-    scrollbar-color: #4d5b69 transparent;
+    scrollbar-color: #6f8192 #24303c;
 }
 
 .content-wrapper {
     max-height: calc(100vh - 50px);
     overflow-y: auto;
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
-    scrollbar-color: #4d5b69 transparent;
+    scrollbar-color: #6f8192 #24303c;
 }
 
 .fixed .main-sidebar .sidebar::-webkit-scrollbar,
 .content-wrapper::-webkit-scrollbar {
-    width: 8px;
+    width: 10px;
 }
 
 .fixed .main-sidebar .sidebar::-webkit-scrollbar-track,
 .content-wrapper::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(31, 41, 51, 0.65);
+    border-radius: 10px;
 }
 
 .fixed .main-sidebar .sidebar::-webkit-scrollbar-thumb,
 .content-wrapper::-webkit-scrollbar-thumb {
-    background: rgba(154, 165, 177, 0.28);
+    background: rgba(111, 129, 146, 0.8);
     border-radius: 10px;
-    border: 2px solid transparent;
+    border: 2px solid rgba(31, 41, 51, 0.7);
     background-clip: padding-box;
 }
 
 .fixed .main-sidebar .sidebar::-webkit-scrollbar-thumb:hover,
 .content-wrapper::-webkit-scrollbar-thumb:hover {
-    background: rgba(154, 165, 177, 0.42);
+    background: rgba(9, 154, 165, 0.92);
     background-clip: padding-box;
 }

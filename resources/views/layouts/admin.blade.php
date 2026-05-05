@@ -151,6 +151,9 @@
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.tickets') ?: 'active' }}">
                             <a href="{{ route('admin.tickets') }}">
                                 <i class="fa fa-ticket"></i> <span>Tickets</span>
+                                @if(($openTicketsCount ?? 0) > 0)
+                                    <small class="label pull-right bg-red">{{ $openTicketsCount }}</small>
+                                @endif
                             </a>
                         </li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.departments') ?: 'active' }}">

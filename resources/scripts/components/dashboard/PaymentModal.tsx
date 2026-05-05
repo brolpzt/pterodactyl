@@ -135,7 +135,7 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], 
                     ))}
                 </div>
                 {enabledMethods.length === 0 && (
-                    <p css={tw`text-xs text-amber-400 mt-3`}>
+                    <p css={tw`text-xs text-yellow-400 mt-3`}>
                         Nenhum metodo de pagamento disponivel no momento.
                     </p>
                 )}

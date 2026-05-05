@@ -223,7 +223,12 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], 
                         maxLength={14}
                         disabled={!!pixPayload}
                     />
-                    <p css={tw`text-xs mt-2 ${isCpfValid || payerCpf.length === 0 ? 'text-neutral-500' : 'text-red-400'}`}>
+                    <p
+                        css={[
+                            tw`text-xs mt-2`,
+                            isCpfValid || payerCpf.length === 0 ? tw`text-neutral-500` : tw`text-red-400`,
+                        ]}
+                    >
                         {isCpfValid || payerCpf.length === 0
                             ? 'Este CPF sera usado para gerar a cobranca PIX.'
                             : 'Informe um CPF valido com 11 digitos.'}

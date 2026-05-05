@@ -273,30 +273,37 @@ class SicoobPixGateway implements PaymentGatewayInterface
     {
         if ($this->mode === 'sandbox') {
             $token = (string) ($this->sandboxConfig['bearer_token'] ?? '');
-            if ($token === '') {
-                throw new \RuntimeException('SICOOB_PIX_SANDBOX_BEARER_TOKEN is not configured.');
+            if ($token !== '') {
+                return $token;
             }
 
-            return $token;
+            // Sandbox can also authenticate dynamically via OAuth client_credentials.
+            return $this->requestOAuthToken(requireCertificate: false);
         }
 
-        return $this->authenticate();
+        return $this->requestOAuthToken(requireCertificate: true);
     }
 
     private function authenticate(): string
+    {
+        return $this->requestOAuthToken(requireCertificate: true);
+    }
+
+    private function requestOAuthToken(bool $requireCertificate): string
     {
         $clientId = $this->getClientId();
         $clientSecret = $this->getClientSecret();
 
         if ($clientId === '' || $clientSecret === '') {
-            throw new \RuntimeException('Sicoob production client_id/client_secret not configured.');
+            throw new \RuntimeException('Sicoob client_id/client_secret not configured.');
         }
 
         $httpClient = Http::asForm()->withBasicAuth($clientId, $clientSecret);
         $certPath = $this->resolveCertificatePath($this->getCertificatePfx());
+
         if ($certPath) {
             $httpClient = $this->configureClientCertificate($httpClient);
-        } else {
+        } elseif ($requireCertificate) {
             throw new \RuntimeException('Sicoob production certificate is required.');
         }
 

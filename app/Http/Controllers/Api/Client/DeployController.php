@@ -115,6 +115,15 @@ class DeployController extends ClientApiController
             return new JsonResponse(['error' => 'Invalid plan'], 422);
         }
 
+        $billingType = (string) $request->input('billing_type');
+        if ($billingType === 'hourly' && !$plan->enable_hourly) {
+            return new JsonResponse(['error' => 'This plan does not allow hourly billing.'], 422);
+        }
+
+        if (in_array($billingType, ['monthly', 'quarterly', 'semi_annually', 'annually'], true) && !$plan->enable_monthly) {
+            return new JsonResponse(['error' => 'This plan does not allow monthly billing.'], 422);
+        }
+
         $egg = $plan->egg;
         $planOverrides = $plan->variableOverrides
             ->filter(fn ($o) => $o->value !== null && $o->value !== '' && $o->eggVariable)
@@ -215,6 +224,8 @@ class DeployController extends ClientApiController
                     'cpu' => $p->cpu,
                     'hourly_rate' => (float) $p->hourly_rate,
                     'monthly_price' => $p->monthly_rate !== null ? (float) $p->monthly_rate : round($p->hourly_rate * $days * 24, 2),
+                    'enable_hourly' => (bool) $p->enable_hourly,
+                    'enable_monthly' => (bool) $p->enable_monthly,
                 ])->values()->toArray();
 
                 return [

@@ -82,6 +82,21 @@
                         <input type="number" name="monthly_rate" id="monthly_rate" class="form-control" step="0.01" min="0" value="{{ $plan->monthly_rate }}" placeholder="Opcional" />
                         <p class="help-block">Usado para cobrança mensal/trimestral/etc. Se vazio, usa hourly_rate × 720.</p>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Allowed Billing Cycles</label>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="enable_hourly" value="1" {{ $plan->enable_hourly ? 'checked' : '' }} />
+                                Enable Hourly
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="enable_monthly" value="1" {{ $plan->enable_monthly ? 'checked' : '' }} />
+                                Enable Monthly (includes monthly/quarterly/semi-annually/annually)
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="box-footer">
                     <button name="action" value="edit" class="btn btn-sm btn-primary">Save</button>

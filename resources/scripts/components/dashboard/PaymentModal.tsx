@@ -142,28 +142,6 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], 
         <Modal visible={visible} onDismissed={handleDismissed}>
             <h2 css={tw`text-2xl font-black text-neutral-100 mb-6`}>Adicionar créditos</h2>
 
-            {pixPayload && (
-                <div css={tw`mb-6 rounded-lg border border-neutral-600 bg-neutral-800 p-4 space-y-3`}>
-                    <p css={tw`text-sm text-neutral-200`}>
-                        PIX gerado com sucesso. Efetue o pagamento usando o QR Code ou o codigo copia e cola abaixo.
-                    </p>
-                    {pixPayload.qrImageDataUrl && (
-                        <div css={tw`flex justify-center`}>
-                            <img src={pixPayload.qrImageDataUrl} alt={'QR Code PIX'} css={tw`w-56 h-56 rounded bg-white p-2`} />
-                        </div>
-                    )}
-                    {pixPayload.pixCode && (
-                        <>
-                            <Label htmlFor={'pixCode'} css={tw`mb-1 block`}>
-                                Codigo PIX copia e cola
-                            </Label>
-                            <Input id={'pixCode'} type={'text'} value={pixPayload.pixCode} readOnly />
-                        </>
-                    )}
-                    {pixPayload.taxId && <p css={tw`text-xs text-neutral-400`}>TAX_ID: {pixPayload.taxId}</p>}
-                </div>
-            )}
-
             <div css={tw`mb-6`}>
                 <Label htmlFor={'amount'} css={tw`mb-2`}>
                     Valor
@@ -224,7 +202,7 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], 
             </div>
 
             {selectedMethod === 'pix' && (
-                <div css={tw`mb-6`}>
+                <div css={tw`mb-6 space-y-6`}>
                     <Label htmlFor={'payerCpf'} css={tw`mb-2 block`}>
                         CPF do pagador
                     </Label>
@@ -247,6 +225,28 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], 
                             ? 'Este CPF sera usado para gerar a cobranca PIX.'
                             : 'Informe um CPF valido com 11 digitos.'}
                     </p>
+
+                    {pixPayload && (
+                        <div css={tw`rounded-lg border border-neutral-600 bg-neutral-800 p-4 space-y-3`}>
+                            <p css={tw`text-sm text-neutral-200`}>
+                                PIX gerado com sucesso. Efetue o pagamento usando o QR Code ou o codigo copia e cola abaixo.
+                            </p>
+                            {pixPayload.qrImageDataUrl && (
+                                <div css={tw`flex justify-center`}>
+                                    <img src={pixPayload.qrImageDataUrl} alt={'QR Code PIX'} css={tw`w-56 h-56 rounded bg-white p-2`} />
+                                </div>
+                            )}
+                            {pixPayload.pixCode && (
+                                <>
+                                    <Label htmlFor={'pixCode'} css={tw`mb-1 block`}>
+                                        Codigo PIX copia e cola
+                                    </Label>
+                                    <Input id={'pixCode'} type={'text'} value={pixPayload.pixCode} readOnly />
+                                </>
+                            )}
+                            {pixPayload.taxId && <p css={tw`text-xs text-neutral-400`}>TAX_ID: {pixPayload.taxId}</p>}
+                        </div>
+                    )}
                 </div>
             )}
 

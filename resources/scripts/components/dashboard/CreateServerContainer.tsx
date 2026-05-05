@@ -117,6 +117,22 @@ const CreateServerContainer = () => {
     }, [selectedPlan]);
 
     const currentPlan = selectedPlan;
+    const allowedBillingTypes = currentPlan
+        ? BILLING_TYPES.filter((type) =>
+            type.id === 'hourly' ? currentPlan.enable_hourly : currentPlan.enable_monthly)
+        : BILLING_TYPES;
+
+    useEffect(() => {
+        if (!currentPlan) return;
+        const hourlyAllowed = currentPlan.enable_hourly;
+        const monthlyAllowed = currentPlan.enable_monthly;
+
+        if (billingType === 'hourly' && !hourlyAllowed && monthlyAllowed) {
+            setBillingType('monthly');
+        } else if (billingType === 'monthly' && !monthlyAllowed && hourlyAllowed) {
+            setBillingType('hourly');
+        }
+    }, [currentPlan, billingType]);
 
     const searchLower = eggSearch.trim().toLowerCase();
     const filteredEggs = eggs.filter((e) => {
@@ -451,7 +467,7 @@ const CreateServerContainer = () => {
                         }
                     >
                         <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-3`}>
-                            {BILLING_TYPES.map(({ id, name, icon }) => (
+                            {allowedBillingTypes.map(({ id, name, icon }) => (
                                 <SelectableCard
                                     key={id}
                                     type="button"
@@ -476,6 +492,11 @@ const CreateServerContainer = () => {
                                 </SelectableCard>
                             ))}
                         </div>
+                        {currentPlan && allowedBillingTypes.length === 0 && (
+                            <p css={tw`text-red-400 text-xs mt-3`}>
+                                This plan has no billing cycle enabled. Please contact the administrator.
+                            </p>
+                        )}
                     </TitledGreyBox>
                 </div>
 
@@ -555,7 +576,7 @@ const CreateServerContainer = () => {
                             color={'primary'}
                             size={'large'}
                             css={tw`w-full`}
-                            disabled={!canDeploy || hasInsufficientFunds}
+                            disabled={!canDeploy || hasInsufficientFunds || allowedBillingTypes.length === 0}
                             onClick={handleDeploy}
                         >
                             {submitting ? (

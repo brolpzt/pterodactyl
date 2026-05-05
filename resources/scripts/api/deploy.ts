@@ -15,6 +15,8 @@ export interface DeployPlan {
     description?: string;
     hourly_rate: number;
     monthly_price: number;
+    enable_hourly: boolean;
+    enable_monthly: boolean;
     memory: number;
     disk: number;
     cpu: number;

@@ -52,7 +52,7 @@ const formatCpf = (value: string): string => {
 };
 
 const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], userCpf = null, initialAmount }: PaymentModalProps) => {
-    const { formatPrice } = useCurrency();
+    const { formatPrice, currency, exchangeRates } = useCurrency();
     const { addError, clearFlashes } = useFlash();
     const [customAmount, setCustomAmount] = useState('');
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
@@ -71,8 +71,17 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], 
 
     const isCustom = initialAmount === null;
     const parsedCustom = parseFloat(customAmount);
-    const isValidCustom = !isNaN(parsedCustom) && parsedCustom > 0;
-    const displayAmount = isCustom ? (isValidCustom ? parsedCustom : null) : initialAmount;
+    const selectedRate = currency.code === 'USD'
+        ? 1
+        : ((exchangeRates?.[currency.code as keyof typeof exchangeRates] as number | undefined) ?? 0);
+    const customAmountUsd = currency.code === 'USD'
+        ? parsedCustom
+        : (selectedRate > 0 ? parsedCustom / selectedRate : NaN);
+    const isValidCustom = !isNaN(customAmountUsd) && customAmountUsd > 0;
+    const displayAmount = isCustom ? (isValidCustom ? customAmountUsd : null) : initialAmount;
+    const displayCustomInSelectedCurrency = !isNaN(parsedCustom) && parsedCustom > 0
+        ? `${currency.symbol}${parsedCustom.toFixed(2)}`
+        : null;
     const enabledMethods = PAYMENT_METHODS.filter((method) => availableMethods.includes(method.id));
     const cpfDigits = onlyDigits(payerCpf);
     const requiresCpf = selectedMethod === 'pix';
@@ -161,7 +170,7 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], 
                 </Label>
                 {isCustom ? (
                     <div css={tw`flex items-center gap-2`}>
-                        <span css={tw`text-neutral-400 font-semibold`}>$</span>
+                        <span css={tw`text-neutral-400 font-semibold`}>{currency.symbol}</span>
                         <Input
                             id={'amount'}
                             type={'number'}
@@ -174,6 +183,11 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], 
                     </div>
                 ) : (
                     <p css={tw`text-2xl font-mono font-black text-neutral-100 py-2`}>{formatPrice(displayAmount!)}</p>
+                )}
+                {isCustom && displayCustomInSelectedCurrency && (
+                    <p css={tw`text-xs text-neutral-500 mt-2`}>
+                        Valor selecionado: {displayCustomInSelectedCurrency}
+                    </p>
                 )}
             </div>
 
@@ -247,7 +261,7 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], 
                     isLoading={isSubmitting}
                     css={tw`w-full sm:w-auto`}
                 >
-                    {canSubmit ? `Pagar ${formatPrice(displayAmount!)}` : 'Pagar'}
+                    {canSubmit ? `Pagar ${isCustom ? displayCustomInSelectedCurrency : formatPrice(displayAmount!)}` : 'Pagar'}
                 </Button>
             </div>
         </Modal>

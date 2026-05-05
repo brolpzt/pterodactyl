@@ -17,7 +17,9 @@ class SicoobPixGateway implements PaymentGatewayInterface
     private array $sandboxConfig;
     private array $productionConfig;
 
-    public function __construct()
+    public function __construct(
+        private ExchangeRateService $exchangeRateService,
+    )
     {
         $this->gatewayConfig = (array) config('billing.pix', []);
         $this->mode = (string) ($this->gatewayConfig['mode'] ?? 'sandbox');
@@ -354,10 +356,32 @@ class SicoobPixGateway implements PaymentGatewayInterface
 
     private function convertToBRL(float $amount, string $currency): float
     {
+        $currency = strtoupper($currency);
+
         if (strtoupper($currency) === 'BRL') {
             return $amount;
         }
 
+        $rates = $this->exchangeRateService->getRates();
+        if (is_array($rates)) {
+            $usdRate = (float) ($rates['USD'] ?? 1.0);
+            $brlRate = (float) ($rates['BRL'] ?? 0);
+            $sourceRate = (float) ($rates[$currency] ?? 0);
+
+            if ($brlRate > 0) {
+                // Rates are USD-based (1 USD = X currency).
+                if ($currency === 'USD') {
+                    return $amount * $brlRate;
+                }
+
+                if ($sourceRate > 0) {
+                    $amountInUsd = $amount / $sourceRate;
+                    return $amountInUsd * $brlRate;
+                }
+            }
+        }
+
+        // Fallback if dynamic rate is unavailable.
         $multiplier = (float) ($this->gatewayConfig['currency_multiplier'] ?? 1);
         return $amount * $multiplier;
     }

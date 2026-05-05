@@ -1,8 +1,12 @@
 <?php
 
 return [
-    'manual_enabled' => env('BILLING_MANUAL_ENABLED', true),
+    'manual_enabled' => env('BILLING_MANUAL_ENABLED', false),
     'stripe_enabled' => env('BILLING_STRIPE_ENABLED', false),
+    'stripe_secret_key' => env('BILLING_STRIPE_SECRET_KEY', null),
+    'stripe_webhook_secret' => env('BILLING_STRIPE_WEBHOOK_SECRET', null),
+    'stripe_success_url' => env('BILLING_STRIPE_SUCCESS_URL', null),
+    'stripe_cancel_url' => env('BILLING_STRIPE_CANCEL_URL', null),
     'pix_enabled' => env('BILLING_PIX_ENABLED', false),
     'currency' => 'USD',
 

@@ -8,7 +8,7 @@ use InvalidArgumentException;
 class PaymentGatewayResolver
 {
     public function __construct(
-        private ManualPaymentGateway $manualGateway
+        private StripePaymentGateway $stripeGateway,
     ) {
     }
 
@@ -20,8 +20,7 @@ class PaymentGatewayResolver
     public function resolve(string $method): PaymentGatewayInterface
     {
         return match (strtolower($method)) {
-            'manual' => $this->manualGateway,
-            'stripe' => throw new InvalidArgumentException('Stripe is not yet integrated.'),
+            'stripe' => $this->stripeGateway,
             'pix' => throw new InvalidArgumentException('Pix is not yet integrated.'),
             default => throw new InvalidArgumentException("Unknown payment method: {$method}"),
         };
@@ -34,11 +33,11 @@ class PaymentGatewayResolver
     {
         $methods = [];
 
-        if (config('billing.manual_enabled', false)) {
-            $methods[] = 'manual';
+        if (config('billing.stripe_enabled', false)) {
+            $methods[] = 'stripe';
         }
 
-        // Future: stripe, pix
+        // Future: pix
 
         return $methods;
     }

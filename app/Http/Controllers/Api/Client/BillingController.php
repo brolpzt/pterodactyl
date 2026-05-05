@@ -108,13 +108,18 @@ class BillingController extends ClientApiController
 
         $wallet = $this->walletService->getOrCreateWallet($user);
 
-        // Restore servers suspended for billing when user adds funds
-        $restoredCount = $this->billingChargeService->restoreBillingSuspendedServers($user);
+        // Restore servers only when payment completes immediately (e.g. manual gateway).
+        $restoredCount = ($result['status'] ?? null) === 'completed'
+            ? $this->billingChargeService->restoreBillingSuspendedServers($user)
+            : 0;
 
         return new JsonResponse([
             'success' => true,
             'balance' => (float) $wallet->fresh()->balance,
             'intent_id' => $result['intent_id'] ?? null,
+            'status' => $result['status'] ?? null,
+            'gateway' => $result['gateway'] ?? $method,
+            'checkout_url' => $result['checkout_url'] ?? null,
             'servers_restored' => $restoredCount,
         ]);
     }

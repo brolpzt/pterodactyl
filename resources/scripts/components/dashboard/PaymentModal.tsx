@@ -5,13 +5,13 @@ import Input from '@/components/elements/Input';
 import Label from '@/components/elements/Label';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCreditCard, faWallet, faHandHoldingUsd } from '@fortawesome/free-solid-svg-icons';
+import { faCreditCard, faWallet } from '@fortawesome/free-solid-svg-icons';
 import { createDeposit } from '@/api/account/billing';
 import { useCurrency } from '@/context/CurrencyContext';
 import { httpErrorToHuman } from '@/api/http';
 import useFlash from '@/plugins/useFlash';
 
-export type PaymentMethod = 'manual' | 'stripe' | 'pix';
+export type PaymentMethod = 'stripe' | 'pix';
 
 interface PaymentMethodOption {
     id: PaymentMethod;
@@ -20,7 +20,6 @@ interface PaymentMethodOption {
 }
 
 const PAYMENT_METHODS: PaymentMethodOption[] = [
-    { id: 'manual', label: 'Manual (Teste)', icon: 'manual' },
     { id: 'stripe', label: 'Stripe', icon: 'stripe' },
     { id: 'pix', label: 'Pix', icon: 'pix' },
 ];
@@ -29,11 +28,12 @@ interface PaymentModalProps {
     visible: boolean;
     onDismissed: () => void;
     onSuccess?: () => void;
+    availableMethods?: string[];
     /** Pre-defined amount in dollars. null = custom amount (user enters in modal) */
     initialAmount: number | null;
 }
 
-const PaymentModal = ({ visible, onDismissed, onSuccess, initialAmount }: PaymentModalProps) => {
+const PaymentModal = ({ visible, onDismissed, onSuccess, availableMethods = [], initialAmount }: PaymentModalProps) => {
     const { formatPrice } = useCurrency();
     const { addError, clearFlashes } = useFlash();
     const [customAmount, setCustomAmount] = useState('');
@@ -51,14 +51,20 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, initialAmount }: Paymen
     const parsedCustom = parseFloat(customAmount);
     const isValidCustom = !isNaN(parsedCustom) && parsedCustom > 0;
     const displayAmount = isCustom ? (isValidCustom ? parsedCustom : null) : initialAmount;
-    const canSubmit = displayAmount != null && displayAmount > 0 && selectedMethod != null && !isSubmitting;
+    const enabledMethods = PAYMENT_METHODS.filter((method) => availableMethods.includes(method.id));
+    const canSubmit = enabledMethods.length > 0 && displayAmount != null && displayAmount > 0 && selectedMethod != null && !isSubmitting;
 
     const handleSubmit = () => {
         if (!canSubmit || !selectedMethod) return;
         clearFlashes('billing');
         setIsSubmitting(true);
         createDeposit(displayAmount!, selectedMethod)
-            .then(() => {
+            .then((result) => {
+                if (result.checkout_url) {
+                    window.location.assign(result.checkout_url);
+                    return;
+                }
+
                 onSuccess?.();
                 onDismissed();
             })
@@ -75,7 +81,6 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, initialAmount }: Paymen
     };
 
     const getIcon = (icon: string) => {
-        if (icon === 'manual') return faHandHoldingUsd;
         if (icon === 'stripe') return faCreditCard;
         return faWallet;
     };
@@ -109,7 +114,7 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, initialAmount }: Paymen
             <div css={tw`mb-6`}>
                 <Label css={tw`mb-3 block`}>Forma de pagamento</Label>
                 <div css={tw`grid grid-cols-1 sm:grid-cols-3 gap-3`}>
-                    {PAYMENT_METHODS.map((method) => (
+                    {enabledMethods.map((method) => (
                         <button
                             key={method.id}
                             type="button"
@@ -129,6 +134,11 @@ const PaymentModal = ({ visible, onDismissed, onSuccess, initialAmount }: Paymen
                         </button>
                     ))}
                 </div>
+                {enabledMethods.length === 0 && (
+                    <p css={tw`text-xs text-amber-400 mt-3`}>
+                        Nenhum metodo de pagamento disponivel no momento.
+                    </p>
+                )}
             </div>
 
             <div css={tw`flex flex-wrap justify-end gap-3 pt-4 border-t border-neutral-600`}>

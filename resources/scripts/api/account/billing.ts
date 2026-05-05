@@ -42,6 +42,15 @@ export const getExchangeRates = (): Promise<{ exchange_rates: ExchangeRates | nu
     return http.get('/api/client/account/exchange-rates').then(({ data }) => data);
 };
 
-export const createDeposit = (amount: number, method: string): Promise<{ balance: number }> => {
+export interface DepositResult {
+    balance: number;
+    intent_id?: number | null;
+    status?: string | null;
+    gateway?: string | null;
+    checkout_url?: string | null;
+    servers_restored?: number;
+}
+
+export const createDeposit = (amount: number, method: string): Promise<DepositResult> => {
     return http.post('/api/client/account/billing/deposit', { amount, method }).then(({ data }) => data);
 };

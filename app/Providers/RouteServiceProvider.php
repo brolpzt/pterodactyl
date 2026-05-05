@@ -36,6 +36,10 @@ class RouteServiceProvider extends ServiceProvider
         Route::model('database', Database::class);
 
         $this->routes(function () {
+            Route::middleware('api')
+                ->prefix('/api/billing')
+                ->group(base_path('routes/api-billing.php'));
+
             Route::middleware('web')->group(function () {
                 Route::middleware(['auth.session', RequireTwoFactorAuthentication::class])
                     ->group(base_path('routes/base.php'));

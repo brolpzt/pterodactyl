@@ -34,6 +34,7 @@ export default () => {
     const { data: tickets, error } = useTickets();
     const { t } = useTranslation('strings');
     const translateStatus = (status: string) => (status === 'open' ? t('support.status_open') : t('support.status_closed'));
+    const formatTicketId = (id: number) => `#${String(id).padStart(4, '0')}`;
 
     return (
         <PageContentBlock title={t('support.center_title')} showFlashKey={'support'}>
@@ -76,7 +77,7 @@ export default () => {
                                     <div css={tw`flex-1 min-w-0`}>
                                         <h3 css={tw`text-base font-bold text-neutral-100 mb-1 truncate`}>{ticket.subject}</h3>
                                         <p css={tw`text-[11px] text-neutral-500 font-bold uppercase tracking-widest`}>
-                                            ID #{ticket.id} &bull; <span css={tw`text-neutral-400`}>{ticket.department}</span> {ticket.serverName ? <>&bull; <span css={tw`text-neutral-500`}>{ticket.serverName}</span></> : ''}
+                                            ID {formatTicketId(ticket.id)} &bull; <span css={tw`text-neutral-400`}>{ticket.department}</span> {ticket.serverName ? <>&bull; <span css={tw`text-neutral-500`}>{ticket.serverName}</span></> : ''}
                                         </p>
                                     </div>
                                     <div css={tw`flex items-center gap-6 ml-4`}>

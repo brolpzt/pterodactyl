@@ -38,6 +38,7 @@ export default () => {
     const [files, setFiles] = useState<FileList | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const translateStatus = (status: string) => (status === 'open' ? t('support.status_open') : t('support.status_closed'));
+    const formatTicketId = (value: number) => `#${String(value).padStart(4, '0')}`;
 
     const handleSubmitReply = (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,7 +88,7 @@ export default () => {
     if (!ticket) return <PageContentBlock title={t('support.loading')}><Spinner size={'large'} centered /></PageContentBlock>;
 
     return (
-        <PageContentBlock title={`${ticket.subject} (Ticket #${ticket.id})`} showFlashKey={'support'}>
+        <PageContentBlock title={`${ticket.subject} (Ticket ${formatTicketId(ticket.id)})`} showFlashKey={'support'}>
             <div css={tw`flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4`}>
                 <div css={tw`flex items-center`}>
                     <Link to={'/account/support'}>
@@ -98,7 +99,7 @@ export default () => {
                     <div>
                         <h1 css={tw`text-2xl font-black text-neutral-100 leading-none`}>{ticket.subject}</h1>
                         <div css={tw`flex items-center mt-2`}>
-                            <span css={tw`text-[10px] text-neutral-400 uppercase tracking-widest font-bold`}>ID # {ticket.id}</span>
+                            <span css={tw`text-[10px] text-neutral-400 uppercase tracking-widest font-bold`}>ID {formatTicketId(ticket.id)}</span>
                             <span css={tw`mx-2 text-neutral-600 font-bold`}>&bull;</span>
                             <span css={tw`text-[10px] text-neutral-500 uppercase tracking-widest font-bold`}>{translateStatus(ticket.status)}</span>
                         </div>

@@ -37,6 +37,7 @@ class TicketUpdated extends Notification implements ShouldQueue
     {
         $isAdmin = (bool) $notifiable->root_admin;
         $eventText = $this->eventLabel();
+        $ticketNumber = '#' . str_pad((string) $this->ticket->id, 4, '0', STR_PAD_LEFT);
         $panelBase = rtrim(route('index'), '/');
         $subjectPrefix = $isAdmin ? 'ADMIN: ' : '';
         $status = strtoupper($this->ticket->status);
@@ -45,11 +46,11 @@ class TicketUpdated extends Notification implements ShouldQueue
             : $panelBase . '/account/support/' . $this->ticket->id;
 
         $mail = (new MailMessage())
-            ->subject(sprintf('%s[Ticket #%d] %s', $subjectPrefix, $this->ticket->id, $eventText))
+            ->subject(sprintf('%s[Ticket %s] %s', $subjectPrefix, $ticketNumber, $eventText))
             ->greeting('Hello ' . $notifiable->username . ',')
             ->line('A support ticket has a new update.')
             ->line('**Update Summary**')
-            ->line('- Ticket: #' . $this->ticket->id)
+            ->line('- Ticket: ' . $ticketNumber)
             ->line('- Type: ' . $eventText)
             ->line('- Status: ' . $status)
             ->line('- Subject: ' . $this->ticket->subject)

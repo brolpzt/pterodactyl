@@ -12,6 +12,7 @@ use Pterodactyl\Services\Telemetry\TelemetryCollectionService;
 use Pterodactyl\Console\Commands\Billing\FetchExchangeRatesCommand;
 use Pterodactyl\Console\Commands\Billing\ProcessHourlyChargesCommand;
 use Pterodactyl\Console\Commands\Billing\ProcessPeriodRenewalsCommand;
+use Pterodactyl\Console\Commands\Support\AutoCloseInactiveTicketsCommand;
 use Pterodactyl\Console\Commands\Schedule\ProcessRunnableCommand;
 use Pterodactyl\Console\Commands\Maintenance\PruneOrphanedBackupsCommand;
 use Pterodactyl\Console\Commands\Maintenance\CleanServiceBackupFilesCommand;
@@ -45,6 +46,9 @@ class Kernel extends ConsoleKernel
 
         // Billing: fetch exchange rates (USD/EUR/BRL) for frontend display
         $schedule->command(FetchExchangeRatesCommand::class)->daily();
+
+        // Support: auto-close tickets waiting on client reply for over 24 hours.
+        $schedule->command(AutoCloseInactiveTicketsCommand::class)->hourly()->withoutOverlapping();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

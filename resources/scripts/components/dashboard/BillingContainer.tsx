@@ -10,6 +10,7 @@ import Spinner from '@/components/elements/Spinner';
 import { getBillingInfo, BillingInfo, WalletTransaction, BillingServer } from '@/api/account/billing';
 import { useCurrency } from '@/context/CurrencyContext';
 import styled from 'styled-components';
+import useFlash from '@/plugins/useFlash';
 
 const QUICK_AMOUNTS = [5, 10, 20] as const;
 
@@ -34,6 +35,7 @@ const formatTransactionDescription = (t: WalletTransaction) => {
 
 const BillingContainer = () => {
     const { formatPrice } = useCurrency();
+    const { addFlash, clearFlashes } = useFlash();
     const [paymentModalVisible, setPaymentModalVisible] = useState(false);
     const [paymentModalAmount, setPaymentModalAmount] = useState<number | null>(null);
     const [billing, setBilling] = useState<BillingInfo | null>(null);
@@ -49,6 +51,35 @@ const BillingContainer = () => {
     useEffect(() => {
         refreshBilling();
     }, []);
+
+    useEffect(() => {
+        const query = new URLSearchParams(window.location.search);
+        const paymentStatus = query.get('payment');
+        if (!paymentStatus) return;
+
+        clearFlashes('billing');
+
+        if (paymentStatus === 'success') {
+            addFlash({
+                key: 'billing',
+                type: 'success',
+                title: 'Payment Confirmed',
+                message: 'Your payment was received successfully. Your wallet balance has been updated.',
+            });
+        } else if (paymentStatus === 'cancelled') {
+            addFlash({
+                key: 'billing',
+                type: 'error',
+                title: 'Payment Cancelled',
+                message: 'The payment was cancelled before completion.',
+            });
+        }
+
+        query.delete('payment');
+        const nextSearch = query.toString();
+        const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`;
+        window.history.replaceState({}, document.title, nextUrl);
+    }, [addFlash, clearFlashes]);
 
     const openPaymentModal = (amount: number | null) => {
         setPaymentModalAmount(amount);

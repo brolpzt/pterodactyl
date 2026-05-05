@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Models\PaymentIntent;
+use Pterodactyl\Notifications\PaymentReceived;
 use Pterodactyl\Services\Billing\BillingChargeService;
 use Pterodactyl\Services\Billing\WalletService;
 use Stripe\Exception\SignatureVerificationException;
@@ -87,6 +88,11 @@ class StripeWebhookController extends Controller
                 ]);
 
                 $this->billingChargeService->restoreBillingSuspendedServers($user);
+                $user->notify(new PaymentReceived(
+                    amount: $amount,
+                    currency: (string) config('billing.currency', 'USD'),
+                    gateway: 'stripe',
+                ));
             });
         }
 

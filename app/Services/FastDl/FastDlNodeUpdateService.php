@@ -25,18 +25,37 @@ class FastDlNodeUpdateService
      */
     public function handle(FastDlNode $node, array $data): FastDlNode
     {
-        if (!empty($data['password'])) {
-            $data['password'] = $this->encrypter->encrypt($data['password']);
-        } else {
-            unset($data['password']);
-        }
-
-        if (!empty($data['private_key'])) {
-            $data['private_key'] = $this->encrypter->encrypt($data['private_key']);
-        } else {
-            unset($data['private_key']);
-        }
+        $data = $this->normalizeStorageFields($data);
+        $data = $this->encryptSecrets($data);
 
         return $this->repository->update($node->id, $data, true, true);
+    }
+
+    private function normalizeStorageFields(array $data): array
+    {
+        if (array_key_exists('use_path_style_endpoint', $data)) {
+            $data['use_path_style_endpoint'] = (bool) $data['use_path_style_endpoint'];
+        }
+
+        if (($data['storage_type'] ?? null) === FastDlNode::STORAGE_S3) {
+            $data['username'] = null;
+            $data['password'] = null;
+            $data['private_key'] = null;
+        }
+
+        return $data;
+    }
+
+    private function encryptSecrets(array $data): array
+    {
+        foreach (['password', 'private_key', 'access_key', 'secret_key'] as $field) {
+            if (!empty($data[$field])) {
+                $data[$field] = $this->encrypter->encrypt($data[$field]);
+            } else {
+                unset($data[$field]);
+            }
+        }
+
+        return $data;
     }
 }

@@ -29,7 +29,8 @@
                             <th>ID</th>
                             <th>Name</th>
                             <th>Location</th>
-                            <th>FQDN</th>
+                            <th>Storage</th>
+                            <th>Target</th>
                             <th>Status</th>
                             <th class="text-right">Created</th>
                         </tr>
@@ -38,7 +39,20 @@
                                 <td><code>{{ $node->id }}</code></td>
                                 <td><a href="{{ route('admin.fastdl.view', $node->id) }}">{{ $node->name }}</a></td>
                                 <td>{{ $node->location->short }}</td>
-                                <td><code>{{ $node->fqdn }}:{{ $node->port }}</code></td>
+                                <td>
+                                    @if($node->storage_type === 's3')
+                                        <span class="label label-info">S3 / R2</span>
+                                    @else
+                                        <span class="label label-default">SSH</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($node->storage_type === 's3')
+                                        <code>{{ $node->bucket }}</code>
+                                    @else
+                                        <code>{{ $node->fqdn }}:{{ $node->port }}</code>
+                                    @endif
+                                </td>
                                 <td>
                                     @if($node->is_active)
                                         <span class="label label-success">Active</span>

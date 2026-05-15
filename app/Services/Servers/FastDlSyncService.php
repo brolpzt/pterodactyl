@@ -27,7 +27,6 @@ class FastDlSyncService
      */
     public function handle(Server $server): void
     {
-        // Check if FastDL is enabled for the server and egg
         if (!$server->fastdl_enabled) {
             throw new DisplayException('FastDL is not enabled for this server.');
         }
@@ -36,7 +35,6 @@ class FastDlSyncService
             throw new DisplayException('The Egg assigned to this server does not support FastDL (missing "fastdl" feature).');
         }
 
-        // Find a FastDL node in the server's location
         $node = FastDlNode::where('location_id', $server->node->location_id)
             ->where('is_active', true)
             ->first();
@@ -45,19 +43,38 @@ class FastDlSyncService
             throw new DisplayException('No active FastDL node is configured for this server\'s location.');
         }
 
-        // Prepare credentials
-        $password = $node->password ? $this->encrypter->decrypt($node->password) : null;
-        $privateKey = $node->private_key ? $this->encrypter->decrypt($node->private_key) : null;
-
-        // Send request to Wings
-        $this->daemonServerRepository->setServer($server)->syncFastDl([
-            'host' => $node->fqdn,
-            'port' => $node->port,
-            'user' => $node->username,
-            'password' => $password,
-            'private_key' => $privateKey,
+        $payload = [
+            'storage_type' => $node->storage_type,
             'remote_path' => $node->remote_path,
             'sync_patterns' => $node->sync_patterns,
-        ]);
+        ];
+
+        if ($node->isS3()) {
+            $payload = array_merge($payload, [
+                'bucket' => $node->bucket,
+                'endpoint' => $node->endpoint,
+                'region' => $node->region ?? 'auto',
+                'access_key' => $this->encrypter->decrypt($node->access_key),
+                'secret_key' => $this->encrypter->decrypt($node->secret_key),
+                'use_path_style_endpoint' => $node->use_path_style_endpoint,
+            ]);
+        } else {
+            $password = $node->password ? $this->encrypter->decrypt($node->password) : null;
+            $privateKey = $node->private_key ? $this->encrypter->decrypt($node->private_key) : null;
+
+            if (!$password && !$privateKey) {
+                throw new DisplayException('The FastDL node has no SSH credentials configured.');
+            }
+
+            $payload = array_merge($payload, [
+                'host' => $node->fqdn,
+                'port' => $node->port,
+                'user' => $node->username,
+                'password' => $password,
+                'private_key' => $privateKey,
+            ]);
+        }
+
+        $this->daemonServerRepository->setServer($server)->syncFastDl($payload);
     }
 }

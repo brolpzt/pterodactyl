@@ -107,7 +107,9 @@ class ServerTransformer extends BaseClientTransformer
             return null;
         }
 
-        return 'http://' . $node->fqdn . '/' . $server->uuidShort . '/';
+        $base = rtrim($node->public_url ?: ('http://' . $node->fqdn), '/');
+
+        return $base . '/' . $server->uuidShort . '/';
 
     }
 

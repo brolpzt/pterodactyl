@@ -129,9 +129,10 @@
                     <div class="checkbox">
                         <label>
                             <input type="hidden" name="use_path_style_endpoint" value="0" />
-                            <input type="checkbox" name="use_path_style_endpoint" value="1" {{ old('use_path_style_endpoint', $node->use_path_style_endpoint) ? 'checked' : '' }} />
+                            <input type="checkbox" name="use_path_style_endpoint" id="pUsePathStyle" value="1" {{ old('use_path_style_endpoint', $node->use_path_style_endpoint ?? true) ? 'checked' : '' }} />
                             Use path-style endpoint
                         </label>
+                        <p class="text-muted small">Recomendado para R2. O Wings também ativa automaticamente em endpoints <code>r2.cloudflarestorage.com</code>.</p>
                     </div>
                 </div>
             </div>

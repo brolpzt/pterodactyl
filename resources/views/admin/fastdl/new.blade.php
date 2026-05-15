@@ -122,10 +122,10 @@
                     <div class="checkbox">
                         <label>
                             <input type="hidden" name="use_path_style_endpoint" value="0" />
-                            <input type="checkbox" name="use_path_style_endpoint" value="1" {{ old('use_path_style_endpoint') ? 'checked' : '' }} />
+                            <input type="checkbox" name="use_path_style_endpoint" id="pUsePathStyle" value="1" {{ old('use_path_style_endpoint', true) ? 'checked' : '' }} />
                             Use path-style endpoint
                         </label>
-                        <p class="text-muted small">Enable for most S3-compatible providers including Cloudflare R2.</p>
+                        <p class="text-muted small">Recomendado para Cloudflare R2. Se não conseguir marcar, tudo bem — o Wings ativa automaticamente em endpoints R2.</p>
                     </div>
                 </div>
             </div>
@@ -152,6 +152,7 @@
             var remotePath = document.getElementById('pRemotePath');
             var remotePathLabel = document.getElementById('remote-path-label');
             var remotePathHelp = document.getElementById('remote-path-help');
+            var usePathStyle = document.getElementById('pUsePathStyle');
 
             function toggleStorageType() {
                 var isS3 = storageType.value === 's3';
@@ -172,6 +173,16 @@
                 if (isS3 && remotePath.value === '/var/www/fastdl') {
                     remotePath.value = 'fastdl';
                 }
+
+                if (usePathStyle && isS3 && !usePathStyle.dataset.userTouched) {
+                    usePathStyle.checked = true;
+                }
+            }
+
+            if (usePathStyle) {
+                usePathStyle.addEventListener('change', function () {
+                    usePathStyle.dataset.userTouched = '1';
+                });
             }
 
             storageType.addEventListener('change', toggleStorageType);

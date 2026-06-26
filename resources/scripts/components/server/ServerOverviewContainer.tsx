@@ -59,7 +59,8 @@ const ServerOverviewContainer = () => {
     const passwordVariable = server?.variables?.find(
         (v) =>
             v.serverValue &&
-            /(password|pass|rcon|server_password)/i.test(v.envVariable)
+            /(password|pass|server_password)/i.test(v.envVariable) &&
+            !/rcon/i.test(v.envVariable)
     );
     const rconVariable = server?.variables?.find(
         (v) => v.serverValue && /rcon/i.test(v.envVariable)

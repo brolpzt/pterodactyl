@@ -83,22 +83,6 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="box box-info">
-                <div class="box-header with-border">
-                    <h3 class="box-title">Wallet</h3>
-                    <div class="box-tools">
-                        <a href="{{ route('admin.billing.view_user', $user->id) }}" class="btn btn-xs btn-primary">Manage Wallet</a>
-                    </div>
-                </div>
-                <div class="box-body">
-                    <p class="no-margin">
-                        <strong>Balance:</strong> ${{ number_format((float) ($user->wallet?->balance ?? 0), 2) }}
-                    </p>
-                    <p class="text-muted small no-margin">Add or deduct credits from the wallet management page.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
             <div class="box">
                 <div class="box-header with-border">
                     <h3 class="box-title">Permissions</h3>

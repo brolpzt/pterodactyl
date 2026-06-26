@@ -27,7 +27,6 @@ import routes from '@/routers/routes';
 import Sidebar from '@/components/Sidebar';
 import tw from 'twin.macro';
 import useFlash from '@/plugins/useFlash';
-import { useCurrency } from '@/context/CurrencyContext';
 import PowerButtons from '@/components/server/console/PowerButtons';
 import ContentContainer from '@/components/elements/ContentContainer';
 import Fade from '@/components/elements/Fade';
@@ -49,14 +48,10 @@ export default () => {
     const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
     const allocation = ServerContext.useStoreState((state) => state.server.data?.allocations.find((a) => a.isDefault));
     const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
-    const billingCostSoFar = ServerContext.useStoreState((state) => state.server.data?.billingCostSoFar);
-    const billingType = ServerContext.useStoreState((state) => state.server.data?.billingType);
     const createdAt = ServerContext.useStoreState((state) => state.server.data?.createdAt);
-    const nextDueDate = ServerContext.useStoreState((state) => state.server.data?.nextDueDate);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
     const clearServerState = ServerContext.useStoreActions((actions) => actions.clearServerState);
     const { addFlash, clearFlashes } = useFlash();
-    const { formatPrice } = useCurrency();
 
     const onCopyText = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
@@ -158,34 +153,12 @@ export default () => {
                                                     <span>{locationName || 'n/a'}</span>
                                                 </span>
                                             </div>
-                                            {/* Custo atual — lg+ (custo cobrado até o momento) */}
                                             <div tw="hidden lg:flex flex-col flex-shrink-0">
-                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Custo atual</span>
-                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap font-mono">
-                                                    {billingCostSoFar != null ? formatPrice(billingCostSoFar) : '—'}
-                                                </span>
-                                                {createdAt && (
-                                                    <span tw="text-[11px] text-neutral-500 mt-0.5 whitespace-nowrap">
-                                                        {Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60)))}h ativo
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {/* Data de ativação — xl+ */}
-                                            <div tw="hidden xl:flex flex-col flex-shrink-0">
                                                 <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Data de ativação</span>
                                                 <span tw="text-[13px] text-neutral-200 whitespace-nowrap">
                                                     {createdAt ? format(new Date(createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—'}
                                                 </span>
                                             </div>
-                                            {/* Próximo vencimento — xl+ (apenas para planos não cobrados por hora) */}
-                                            {billingType && billingType !== 'hourly' && (
-                                                <div tw="hidden xl:flex flex-col flex-shrink-0">
-                                                    <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Próximo vencimento</span>
-                                                    <span tw="text-[13px] text-neutral-200 whitespace-nowrap">
-                                                        {nextDueDate ? format(new Date(nextDueDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—'}
-                                                    </span>
-                                                </div>
-                                            )}
                                         </div>
 
                                         {/* PowerButtons — always visible, pushed to the right */}

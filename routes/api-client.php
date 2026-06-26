@@ -23,12 +23,6 @@ use Pterodactyl\Http\Middleware\Api\Client\Server\AuthenticateServerAccess;
 Route::get('/', [Client\ClientController::class, 'index'])->name('api:client.index');
 Route::get('/permissions', [Client\ClientController::class, 'permissions']);
 
-Route::prefix('/deploy')->middleware(AccountSubject::class)->group(function () {
-    Route::get('/', [Client\DeployController::class, 'index']);
-    Route::get('/variables/{plan_id}', [Client\DeployController::class, 'variables']);
-    Route::post('/', [Client\DeployController::class, 'store']);
-});
-
 Route::prefix('/account')->middleware(AccountSubject::class)->group(function () {
     Route::prefix('/')->withoutMiddleware(RequireTwoFactorAuthentication::class)->group(function () {
         Route::get('/', [Client\AccountController::class, 'index'])->name('api:client.account');
@@ -52,21 +46,6 @@ Route::prefix('/account')->middleware(AccountSubject::class)->group(function () 
         Route::post('/remove', [Client\SSHKeyController::class, 'delete']);
     });
 
-    Route::prefix('/billing')->group(function () {
-        Route::get('/', [Client\BillingController::class, 'index']);
-        Route::post('/deposit', [Client\BillingController::class, 'deposit']);
-    });
-    Route::get('/exchange-rates', [Client\BillingController::class, 'exchangeRates']);
-
-    Route::prefix('/tickets')->group(function () {
-        Route::get('/', [Client\TicketController::class, 'index']);
-        Route::get('/departments', [Client\TicketController::class, 'departments']);
-        Route::get('/attachments/{hash}', [Client\TicketController::class, 'attachment'])->name('api.client.account.tickets.attachment');
-        Route::post('/', [Client\TicketController::class, 'store']);
-        Route::get('/{ticket}', [Client\TicketController::class, 'view']);
-        Route::post('/{ticket}', [Client\TicketController::class, 'reply']);
-        Route::post('/{ticket}/status', [Client\TicketController::class, 'status']);
-    });
 });
 
 /*

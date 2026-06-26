@@ -1,0 +1,34 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Frontend: Build (Docker)",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/docker-frontend-build.sh",
+            "args": ["production"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Frontend: Build Dev (Docker)",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/docker-frontend-build.sh",
+            "args": ["development"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

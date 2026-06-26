@@ -67,9 +67,6 @@ class StoreServerRequest extends ApplicationApiRequest
             'mounts.*' => 'numeric|exists:mounts,id',
             'addons' => 'sometimes|nullable|array',
             'addons.*' => 'numeric|exists:addons,id',
-            'billing' => 'sometimes|nullable|array',
-            'billing.type' => 'sometimes|nullable|string|in:hourly,monthly,quarterly,semi_annually,annually',
-            'billing.hourly_rate' => 'sometimes|nullable|numeric|min:0',
         ];
     }
 
@@ -106,8 +103,6 @@ class StoreServerRequest extends ApplicationApiRequest
             'oom_disabled' => array_get($data, 'oom_disabled'),
             'mounts' => array_get($data, 'mounts'),
             'addons' => array_get($data, 'addons'),
-            'billing_type' => array_get($data, 'billing.type'),
-            'hourly_rate' => array_get($data, 'billing.hourly_rate'),
         ];
     }
 

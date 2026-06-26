@@ -21,8 +21,6 @@ import {
     faMicrochip,
     faAngleDoubleLeft,
     faAngleDoubleRight,
-    faWallet,
-    faLifeRing,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
@@ -257,7 +255,6 @@ const Sidebar = () => {
     const match = useRouteMatch<{ id: string }>('/server/:id');
     const collapsed = useStoreState((state) => state.sidebarCollapsed);
     const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
-    const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
     const { t } = useTranslation('strings');
 
     return (
@@ -269,22 +266,6 @@ const Sidebar = () => {
                         <FontAwesomeIcon icon={faLayerGroup} />
                     </IconContainer>
                     <NavItemLabel collapsed={collapsed}>{t('nav.dashboard')}</NavItemLabel>
-                </NavItem>
-
-                {rootAdmin && (
-                    <NavItem to={'/account/billing'} collapsed={collapsed} title={collapsed ? t('nav.billing') : undefined}>
-                        <IconContainer className="icon-container">
-                            <FontAwesomeIcon icon={faWallet} />
-                        </IconContainer>
-                        <NavItemLabel collapsed={collapsed}>{t('nav.billing')}</NavItemLabel>
-                    </NavItem>
-                )}
-
-                <NavItem to={'/account/support'} collapsed={collapsed} title={collapsed ? t('nav.support') : undefined}>
-                    <IconContainer className="icon-container">
-                        <FontAwesomeIcon icon={faLifeRing} />
-                    </IconContainer>
-                    <NavItemLabel collapsed={collapsed}>{t('nav.support')}</NavItemLabel>
                 </NavItem>
 
                 {match && (

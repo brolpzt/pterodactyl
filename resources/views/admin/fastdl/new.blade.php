@@ -67,7 +67,7 @@
                     <div class="form-group">
                         <label for="pSyncPatterns" class="control-label">Sync Patterns</label>
                         <textarea name="sync_patterns" id="pSyncPatterns" class="form-control" rows="3">{{ old('sync_patterns', "*.bsp, *.nav, *.wad, *.tga, *.vmt, *.vtf, *.mdl, *.ani, *.vtx, *.vvd, *.phy, *.pcf, *.spr, *.wav, *.mp3, *.ogg") }}</textarea>
-                        <p class="text-muted small">Comma-separated list of file extensions or glob patterns to synchronize. Example: <code>*.bsp, maps/*.nav, sound/*</code></p>
+                        <p class="text-muted small">Separadores: vírgula, <code>;</code> ou quebra de linha. Sem <code>/</code> no padrão = nome do arquivo só. Com <code>/</code> = caminho relativo. Pasta: <code>sound/</code> ou <code>maps/**</code>. Qualquer profundidade: <code>**/*.bsp</code>. <strong>Excluir:</strong> prefixo <code>!</code> (ex.: <code>!pak*.pk3</code> ignora pak0.pk3, pak1.pk3 e similares).</p>
                     </div>
                 </div>
             </div>

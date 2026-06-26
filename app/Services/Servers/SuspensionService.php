@@ -43,11 +43,7 @@ class SuspensionService
         }
 
         // Update the server's suspension status.
-        $update = ['status' => $isSuspending ? Server::STATUS_SUSPENDED : null];
-        if (!$isSuspending) {
-            $update['suspended_for_billing_at'] = null;
-        }
-        $server->update($update);
+        $server->update(['status' => $isSuspending ? Server::STATUS_SUSPENDED : null]);
 
         try {
             // Tell wings to re-sync the server state.

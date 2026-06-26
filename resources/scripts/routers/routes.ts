@@ -13,10 +13,6 @@ import AccountOverviewContainer from '@/components/dashboard/AccountOverviewCont
 import AccountApiContainer from '@/components/dashboard/AccountApiContainer';
 import AccountSSHContainer from '@/components/dashboard/ssh/AccountSSHContainer';
 import ActivityLogContainer from '@/components/dashboard/activity/ActivityLogContainer';
-import BillingContainer from '@/components/dashboard/BillingContainer';
-import SupportContainer from '@/components/dashboard/SupportContainer';
-import CreateTicketContainer from '@/components/dashboard/CreateTicketContainer';
-import ViewTicketContainer from '@/components/dashboard/ViewTicketContainer';
 import ServerActivityLogContainer from '@/components/server/ServerActivityLogContainer';
 
 // Each of the router files is already code split out appropriately — so
@@ -78,27 +74,6 @@ export default {
             path: '/activity',
             name: 'Activity',
             component: ActivityLogContainer,
-        },
-        {
-            path: '/billing',
-            name: 'Billing',
-            component: BillingContainer,
-            adminOnly: true,
-        },
-        {
-            path: '/support',
-            name: 'Support',
-            component: SupportContainer,
-        },
-        {
-            path: '/support/new',
-            name: undefined,
-            component: CreateTicketContainer,
-        },
-        {
-            path: '/support/:id',
-            name: undefined,
-            component: ViewTicketContainer,
         },
     ],
     server: [

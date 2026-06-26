@@ -172,11 +172,6 @@ class Server extends Model
         'allocation_limit' => 'sometimes|nullable|integer|min:0',
         'backup_limit' => 'present|nullable|integer|min:0',
         'fastdl_enabled' => 'sometimes|boolean',
-        'billing_type' => 'sometimes|nullable|string|in:hourly,monthly,quarterly,semi_annually,annually',
-        'hourly_rate' => 'sometimes|nullable|numeric|min:0',
-        'monthly_rate' => 'sometimes|nullable|numeric|min:0',
-        'billing_cost_so_far' => 'sometimes|nullable|numeric|min:0',
-        'next_due_date' => 'sometimes|nullable|date',
     ];
 
     /**
@@ -203,10 +198,6 @@ class Server extends Model
         'deleted_at' => 'datetime',
         'installed_at' => 'datetime',
         'fastdl_enabled' => 'boolean',
-        'next_due_date' => 'datetime',
-        'hourly_rate' => 'decimal:4',
-        'monthly_rate' => 'decimal:2',
-        'billing_cost_so_far' => 'decimal:4',
     ];
 
     /**

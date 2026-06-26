@@ -330,14 +330,4 @@ class Egg extends Model
     {
         return $this->belongsTo(self::class, 'config_from');
     }
-
-    /**
-     * Get deploy plans associated with this egg.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Pterodactyl\Models\DeployPlan, $this>
-     */
-    public function deployPlans(): HasMany
-    {
-        return $this->hasMany(DeployPlan::class, 'egg_id');
-    }
 }

@@ -49,11 +49,7 @@ class ServerTransformer extends BaseClientTransformer
             'egg' => $server->egg->name,
             'location' => $server->node->location?->short ?? '—',
             'location_long' => $server->node->location?->long ?? null,
-            'billing_type' => $server->billing_type,
-            'hourly_rate' => $server->hourly_rate ? (float) $server->hourly_rate : null,
-            'billing_cost_so_far' => $server->billing_cost_so_far !== null ? (float) $server->billing_cost_so_far : null,
             'created_at' => $server->created_at?->toIso8601String(),
-            'next_due_date' => $server->next_due_date?->toIso8601String(),
             'is_node_under_maintenance' => $server->node->isUnderMaintenance(),
             'sftp_details' => [
                 'ip' => $server->node->fqdn,

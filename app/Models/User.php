@@ -13,7 +13,6 @@ use Pterodactyl\Models\Traits\HasAccessTokens;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Pterodactyl\Traits\Helpers\AvailableLanguages;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -265,15 +264,6 @@ class User extends Model implements
     {
         return $this->hasMany(UserSSHKey::class);
     }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne<\Pterodactyl\Models\Wallet, $this>
-     */
-    public function wallet(): HasOne
-    {
-        return $this->hasOne(Wallet::class);
-    }
-
     /**
      * Returns all the activity logs where this user is the subject — not to
      * be confused by activity logs where this user is the _actor_.

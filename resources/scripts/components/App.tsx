@@ -4,7 +4,6 @@ import { Route, Router, Switch } from 'react-router-dom';
 import { StoreProvider } from 'easy-peasy';
 import { store } from '@/state';
 import { SiteSettings } from '@/state/settings';
-import { CurrencyProvider } from '@/context/CurrencyContext';
 import ProgressBar from '@/components/elements/ProgressBar';
 import { NotFound } from '@/components/elements/ScreenBlock';
 import tw from 'twin.macro';
@@ -63,7 +62,6 @@ const App = () => {
         <>
             <GlobalStylesheet />
             <StoreProvider store={store}>
-                <CurrencyProvider>
                 <ProgressBar />
                 <div css={tw`mx-auto w-auto`}>
                     <Router history={history}>
@@ -105,7 +103,6 @@ const App = () => {
                         }} />
                     </Router>
                 </div>
-                </CurrencyProvider>
             </StoreProvider>
         </>
     );

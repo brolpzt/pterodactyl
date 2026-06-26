@@ -116,16 +116,6 @@
                                 <i class="fa fa-users"></i> <span>Users</span>
                             </a>
                         </li>
-                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.billing') ?: 'active' }}">
-                            <a href="{{ route('admin.billing') }}">
-                                <i class="fa fa-credit-card"></i> <span>Billing</span>
-                            </a>
-                        </li>
-                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.deploy_plans') ?: 'active' }}">
-                            <a href="{{ route('admin.deploy_plans') }}">
-                                <i class="fa fa-list-alt"></i> <span>Deploy Plans</span>
-                            </a>
-                        </li>
                         <li class="header">SERVICE MANAGEMENT</li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.mounts') ?: 'active' }}">
                             <a href="{{ route('admin.mounts') }}">
@@ -145,20 +135,6 @@
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.addon-categories') ?: 'active' }}">
                             <a href="{{ route('admin.addon-categories') }}">
                                 <i class="fa fa-tags"></i> <span>Addon Categories</span>
-                            </a>
-                        </li>
-                        <li class="header">SUPPORT</li>
-                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.tickets') ?: 'active' }}">
-                            <a href="{{ route('admin.tickets') }}">
-                                <i class="fa fa-ticket"></i> <span>Tickets</span>
-                                @if(($openTicketsCount ?? 0) > 0)
-                                    <small class="label pull-right bg-red">{{ $openTicketsCount }}</small>
-                                @endif
-                            </a>
-                        </li>
-                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.departments') ?: 'active' }}">
-                            <a href="{{ route('admin.departments') }}">
-                                <i class="fa fa-sitemap"></i> <span>Departments</span>
                             </a>
                         </li>
                     </ul>

@@ -78,40 +78,6 @@ Route::group(['prefix' => 'settings'], function () {
 
 /*
 |--------------------------------------------------------------------------
-| Billing Controller Routes
-|--------------------------------------------------------------------------
-|
-| Endpoint: /admin/deploy-plans
-|
-*/
-Route::group(['prefix' => 'deploy-plans'], function () {
-    Route::get('/', [Admin\DeployPlanController::class, 'index'])->name('admin.deploy_plans');
-    Route::get('/new', [Admin\DeployPlanController::class, 'create'])->name('admin.deploy_plans.new');
-    Route::get('/view/{plan:id}', [Admin\DeployPlanController::class, 'view'])->name('admin.deploy_plans.view');
-    Route::get('/view/{plan:id}/clone', [Admin\DeployPlanController::class, 'clone'])->name('admin.deploy_plans.clone');
-
-    Route::post('/', [Admin\DeployPlanController::class, 'store']);
-    Route::patch('/view/{plan:id}', [Admin\DeployPlanController::class, 'update']);
-    Route::delete('/view/{plan:id}', [Admin\DeployPlanController::class, 'destroy'])->name('admin.deploy_plans.destroy');
-});
-
-/*
-|--------------------------------------------------------------------------
-| Billing Controller Routes
-|--------------------------------------------------------------------------
-|
-| Endpoint: /admin/billing
-|
-*/
-Route::group(['prefix' => 'billing'], function () {
-    Route::get('/', [Admin\BillingController::class, 'index'])->name('admin.billing');
-    Route::get('/user/{user:id}', [Admin\BillingController::class, 'viewUser'])->name('admin.billing.view_user');
-    Route::post('/user/{user:id}/add-credit', [Admin\BillingController::class, 'addCredit'])->name('admin.billing.add_credit');
-    Route::post('/user/{user:id}/deduct-credit', [Admin\BillingController::class, 'deductCredit'])->name('admin.billing.deduct_credit');
-});
-
-/*
-|--------------------------------------------------------------------------
 | User Controller Routes
 |--------------------------------------------------------------------------
 |
@@ -317,27 +283,3 @@ Route::group(['prefix' => 'addon-categories'], function () {
     Route::patch('/view/{category:id}', [Admin\AddonCategoriesController::class, 'update']);
     Route::delete('/view/{category:id}/delete', [Admin\AddonCategoriesController::class, 'delete'])->name('admin.addon-categories.delete');
 });
-
-/*
-|--------------------------------------------------------------------------
-| Tickets Controller Routes
-|--------------------------------------------------------------------------
-|
-| Endpoint: /admin/tickets
-|
-*/
-Route::group(['prefix' => 'tickets'], function () {
-    Route::get('/', [Admin\TicketController::class, 'index'])->name('admin.tickets');
-    Route::get('/view/{ticket:id}', [Admin\TicketController::class, 'view'])->name('admin.tickets.view');
-    Route::post('/view/{ticket:id}', [Admin\TicketController::class, 'reply']);
-    Route::post('/view/{ticket:id}/status', [Admin\TicketController::class, 'toggleStatus'])->name('admin.tickets.status');
-    Route::delete('/view/{ticket:id}/delete', [Admin\TicketController::class, 'delete'])->name('admin.tickets.delete');
-    Route::get('/attachments/{hash}', [Admin\TicketController::class, 'attachment'])->name('admin.tickets.attachment');
-});
-
-Route::group(['prefix' => 'departments'], function () {
-    Route::get('/', [Admin\TicketDepartmentController::class, 'index'])->name('admin.departments');
-    Route::post('/', [Admin\TicketDepartmentController::class, 'store']);
-    Route::delete('/{department}', [Admin\TicketDepartmentController::class, 'delete'])->name('admin.departments.delete');
-});
-

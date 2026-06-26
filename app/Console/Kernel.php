@@ -9,11 +9,6 @@ use Illuminate\Database\Console\PruneCommand;
 use Pterodactyl\Repositories\Eloquent\SettingsRepository;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Pterodactyl\Services\Telemetry\TelemetryCollectionService;
-use Pterodactyl\Console\Commands\Billing\FetchExchangeRatesCommand;
-use Pterodactyl\Console\Commands\Billing\NotifyLowBalanceCommand;
-use Pterodactyl\Console\Commands\Billing\ProcessHourlyChargesCommand;
-use Pterodactyl\Console\Commands\Billing\ProcessPeriodRenewalsCommand;
-use Pterodactyl\Console\Commands\Support\AutoCloseInactiveTicketsCommand;
 use Pterodactyl\Console\Commands\Schedule\ProcessRunnableCommand;
 use Pterodactyl\Console\Commands\Maintenance\PruneOrphanedBackupsCommand;
 use Pterodactyl\Console\Commands\Maintenance\CleanServiceBackupFilesCommand;
@@ -38,21 +33,6 @@ class Kernel extends ConsoleKernel
 
         // Execute scheduled commands for servers every minute, as if there was a normal cron running.
         $schedule->command(ProcessRunnableCommand::class)->everyMinute()->withoutOverlapping();
-
-        // Billing: hourly charges for servers with billing_type=hourly
-        $schedule->command(ProcessHourlyChargesCommand::class)->hourly()->withoutOverlapping();
-
-        // Billing: period renewals (monthly, quarterly, semi_annually, annually)
-        $schedule->command(ProcessPeriodRenewalsCommand::class)->daily()->withoutOverlapping();
-
-        // Billing: fetch exchange rates (USD/EUR/BRL) for frontend display
-        $schedule->command(FetchExchangeRatesCommand::class)->daily();
-
-        // Billing: notify users when balance is below minimum required for active services.
-        $schedule->command(NotifyLowBalanceCommand::class)->hourly()->withoutOverlapping();
-
-        // Support: auto-close tickets waiting on client reply for over 24 hours.
-        $schedule->command(AutoCloseInactiveTicketsCommand::class)->hourly()->withoutOverlapping();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

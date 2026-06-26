@@ -83,6 +83,10 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(10);
         });
 
+        RateLimiter::for('sso', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
         // Configure the throttles for both the application and client APIs below.
         // This is configurable per-instance in "config/http.php". By default this
         // limiter will be tied to the specific request user, and falls back to the

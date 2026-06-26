@@ -27,6 +27,7 @@ class AssetComposer
                 'enabled' => config('recaptcha.enabled', false),
                 'siteKey' => config('recaptcha.website_key') ?? '',
             ],
+            'externalSiteUrl' => config('pterodactyl.external_site_url', 'https://hostgamer.net'),
         ]);
     }
 }

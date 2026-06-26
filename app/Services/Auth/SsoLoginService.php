@@ -25,9 +25,9 @@ class SsoLoginService
     /**
      * Generate an HMAC signature for an SSO link payload.
      */
-    public static function sign(string $user, string $server, int $expires, string $nonce, string $secret): string
+    public static function sign(string $user, string $server, int|string $expires, string $nonce, string $secret): string
     {
-        return hash_hmac('sha256', self::buildPayload($user, $server, $expires, $nonce), $secret);
+        return hash_hmac('sha256', self::buildPayload($user, $server, (int) $expires, $nonce), $secret);
     }
 
     /**
@@ -70,7 +70,8 @@ class SsoLoginService
         }
 
         $maxTtl = max(1, (int) config('sso.token_ttl', 60));
-        if ($expires > $now + $maxTtl) {
+        $clockSkew = max(0, (int) config('sso.clock_skew', 30));
+        if ($expires > $now + $maxTtl + $clockSkew) {
             throw new SsoAuthenticationException('SSO link expiration is too far in the future.');
         }
 
@@ -78,7 +79,8 @@ class SsoLoginService
             throw new SsoAuthenticationException('Invalid nonce format.');
         }
 
-        $expected = self::sign($userRef, $serverRef, $expires, $nonce, $secret);
+        // Sign with the raw query values (before int cast side-effects) to match external panels.
+        $expected = self::sign($userRef, $serverRef, (string) $expires, $nonce, $secret);
         if (!hash_equals($expected, $signature)) {
             throw new SsoAuthenticationException('Invalid SSO signature.');
         }

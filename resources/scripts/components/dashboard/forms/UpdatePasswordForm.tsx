@@ -8,6 +8,7 @@ import updateAccountPassword from '@/api/account/updateAccountPassword';
 import { httpErrorToHuman } from '@/api/http';
 import { ApplicationStore } from '@/state';
 import tw from 'twin.macro';
+import { redirectToExternalSite } from '@/lib/externalSite';
 import { Button } from '@/components/elements/button/index';
 
 interface Values {
@@ -30,6 +31,7 @@ const schema = Yup.object().shape({
 
 export default () => {
     const user = useStoreState((state: State<ApplicationStore>) => state.user.data);
+    const settings = useStoreState((state: State<ApplicationStore>) => state.settings.data);
     const { clearFlashes, addFlash } = useStoreActions((actions: Actions<ApplicationStore>) => actions.flashes);
 
     if (!user) {
@@ -40,8 +42,7 @@ export default () => {
         clearFlashes('account:password');
         updateAccountPassword({ ...values })
             .then(() => {
-                // @ts-expect-error this is valid
-                window.location = '/auth/login';
+                redirectToExternalSite(settings);
             })
             .catch((error) =>
                 addFlash({

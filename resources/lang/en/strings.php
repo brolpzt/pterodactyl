@@ -98,6 +98,8 @@ return [
         'dashboard' => 'Dashboard',
         'billing' => 'Billing',
         'support' => 'Support',
+        'invoices' => 'Invoices',
+        'back_to_client_area' => 'Back to client area',
         'server_menu' => 'Server Menu',
         'admin_view' => 'Admin View',
     ],

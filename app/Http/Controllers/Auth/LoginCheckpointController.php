@@ -43,55 +43,7 @@ class LoginCheckpointController extends AbstractLoginController
      */
     public function __invoke(LoginCheckpointRequest $request): JsonResponse
     {
-        if ($this->hasTooManyLoginAttempts($request)) {
-            $this->sendLockoutResponse($request);
-        }
-
-        $details = $request->session()->get('auth_confirmation_token');
-        if (!$this->hasValidSessionData($details)) {
-            $this->sendFailedLoginResponse($request, null, self::TOKEN_EXPIRED_MESSAGE);
-        }
-
-        if (!hash_equals($request->input('confirmation_token') ?? '', $details['token_value'])) {
-            $this->sendFailedLoginResponse($request);
-        }
-
-        try {
-            $user = User::query()->findOrFail($details['user_id']);
-        } catch (ModelNotFoundException) {
-            $this->sendFailedLoginResponse($request, null, self::TOKEN_EXPIRED_MESSAGE);
-        }
-
-        // Recovery tokens go through a slightly different pathway for usage.
-        if (!is_null($recoveryToken = $request->input('recovery_token'))) {
-            if ($this->isValidRecoveryToken($user, $recoveryToken)) {
-                Event::dispatch(new ProvidedAuthenticationToken($user, true));
-
-                return $this->sendLoginResponse($user, $request);
-            }
-        } else {
-            $decrypted = $this->encrypter->decrypt($user->totp_secret);
-            $oldTimestamp = $user->totp_authenticated_at
-                ? (int) floor($user->totp_authenticated_at->unix() / $this->google2FA->getKeyRegeneration())
-                : null;
-
-            $verified = $this->google2FA->verifyKeyNewer(
-                $decrypted,
-                $request->input('authentication_code') ?? '',
-                $oldTimestamp,
-                config('pterodactyl.auth.2fa.window') ?? 1,
-            );
-
-            if ($verified !== false) {
-                $user->update(['totp_authenticated_at' => Carbon::now()]);
-
-                Event::dispatch(new ProvidedAuthenticationToken($user));
-
-                return $this->sendLoginResponse($user, $request);
-            }
-        }
-
-        $this->sendFailedLoginResponse($request, $user, !empty($recoveryToken) ? 'The recovery token provided is not valid.' : null);
+        abort(403, 'Direct login is disabled.');
     }
 
     /**

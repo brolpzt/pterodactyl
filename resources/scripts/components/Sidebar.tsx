@@ -21,6 +21,9 @@ import {
     faMicrochip,
     faAngleDoubleLeft,
     faAngleDoubleRight,
+    faLifeRing,
+    faReceipt,
+    faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
@@ -30,6 +33,9 @@ import styled from 'styled-components/macro';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 import { useTranslation } from 'react-i18next';
+
+const CLIENT_AREA_URL = 'https://clientarea.hostgamer.net';
+const CLIENT_SERVICES_URL = 'https://hostgamer.net/account/services';
 
 const serverLinksFade = `
     @keyframes fadeInItems {
@@ -97,6 +103,13 @@ const NavItem = styled(NavLink) <{ collapsed?: boolean }>`
             ${tw`text-neutral-100`};
         }
     }
+`;
+
+const ExternalNavItem = styled.a<{ collapsed?: boolean }>`
+    ${tw`flex items-center py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    justify-content: ${props => props.collapsed ? 'center' : 'flex-start'};
 `;
 
 const IconContainer = styled.div<{ collapsed?: boolean }>`
@@ -247,6 +260,19 @@ const ServerLinks = () => {
                     <NavItemLabel collapsed={collapsed}>{t('nav.admin_view')}</NavItemLabel>
                 </a>
             )}
+
+            <Divider />
+
+            <ExternalNavItem
+                href={CLIENT_SERVICES_URL}
+                collapsed={collapsed}
+                title={collapsed ? t('nav.back_to_client_area') : undefined}
+            >
+                <IconContainer className="icon-container">
+                    <FontAwesomeIcon icon={faArrowLeft} />
+                </IconContainer>
+                <NavItemLabel collapsed={collapsed}>{t('nav.back_to_client_area')}</NavItemLabel>
+            </ExternalNavItem>
         </>
     );
 };
@@ -267,6 +293,28 @@ const Sidebar = () => {
                     </IconContainer>
                     <NavItemLabel collapsed={collapsed}>{t('nav.dashboard')}</NavItemLabel>
                 </NavItem>
+
+                <ExternalNavItem
+                    href={`${CLIENT_AREA_URL}/support`}
+                    collapsed={collapsed}
+                    title={collapsed ? t('nav.support') : undefined}
+                >
+                    <IconContainer className="icon-container">
+                        <FontAwesomeIcon icon={faLifeRing} />
+                    </IconContainer>
+                    <NavItemLabel collapsed={collapsed}>{t('nav.support')}</NavItemLabel>
+                </ExternalNavItem>
+
+                <ExternalNavItem
+                    href={`${CLIENT_AREA_URL}/faturas`}
+                    collapsed={collapsed}
+                    title={collapsed ? t('nav.invoices') : undefined}
+                >
+                    <IconContainer className="icon-container">
+                        <FontAwesomeIcon icon={faReceipt} />
+                    </IconContainer>
+                    <NavItemLabel collapsed={collapsed}>{t('nav.invoices')}</NavItemLabel>
+                </ExternalNavItem>
 
                 {match && (
                     <React.Suspense fallback={<ServerLinksPlaceholder />}>

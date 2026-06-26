@@ -17,8 +17,6 @@ import InstallListener from '@/components/server/InstallListener';
 import ErrorBoundary from '@/components/elements/ErrorBoundary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExternalLinkAlt, faCopy } from '@fortawesome/free-solid-svg-icons';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useLocation } from 'react-router';
 import ConflictStateRenderer from '@/components/server/ConflictStateRenderer';
 import PermissionRoute from '@/components/elements/PermissionRoute';
@@ -48,7 +46,6 @@ export default () => {
     const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
     const allocation = ServerContext.useStoreState((state) => state.server.data?.allocations.find((a) => a.isDefault));
     const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
-    const createdAt = ServerContext.useStoreState((state) => state.server.data?.createdAt);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
     const clearServerState = ServerContext.useStoreActions((actions) => actions.clearServerState);
     const { addFlash, clearFlashes } = useFlash();
@@ -151,12 +148,6 @@ export default () => {
                                                 <span tw="text-[13px] text-neutral-200 flex items-center whitespace-nowrap">
                                                     <span tw="mr-1 text-sm">{locationName ? getFlagEmoji(locationName.split(' ')[0]) : '🌐'}</span>
                                                     <span>{locationName || 'n/a'}</span>
-                                                </span>
-                                            </div>
-                                            <div tw="hidden lg:flex flex-col flex-shrink-0">
-                                                <span tw="text-[10px] uppercase font-bold text-neutral-500 tracking-wider whitespace-nowrap">Data de ativação</span>
-                                                <span tw="text-[13px] text-neutral-200 whitespace-nowrap">
-                                                    {createdAt ? format(new Date(createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—'}
                                                 </span>
                                             </div>
                                         </div>

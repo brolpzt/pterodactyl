@@ -14,7 +14,11 @@ class AdminAuthenticate
      */
     public function handle(Request $request, \Closure $next): mixed
     {
-        if (!$request->user() || !$request->user()->root_admin) {
+        if (!$request->user()) {
+            return redirect()->guest(route('admin.login'));
+        }
+
+        if (!$request->user()->root_admin) {
             throw new AccessDeniedHttpException();
         }
 

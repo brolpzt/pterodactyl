@@ -98,6 +98,8 @@ return [
         'dashboard' => 'Panel',
         'billing' => 'Facturación',
         'support' => 'Soporte',
+        'invoices' => 'Facturas',
+        'back_to_client_area' => 'Volver al área del cliente',
         'server_menu' => 'Menú del servidor',
         'admin_view' => 'Ver Admin',
     ],

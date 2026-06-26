@@ -25,6 +25,12 @@ return [
     'token_ttl' => (int) env('SSO_TOKEN_TTL', 60),
 
     /*
+    | Grace period (seconds) when validating the "expires" timestamp against this
+    | server's clock. Helps when the external panel clock is slightly ahead.
+    */
+    'clock_skew' => (int) env('SSO_CLOCK_SKEW', 30),
+
+    /*
     | How the "user" query parameter is resolved:
     | - external_id: matches users.external_id (recommended)
     | - id: matches users.id (numeric only)

@@ -13,6 +13,11 @@ class ForgotPasswordController extends Controller
 {
     use SendsPasswordResetEmails;
 
+    public function sendResetLinkEmail(Request $request): JsonResponse
+    {
+        abort(403, 'Direct login is disabled.');
+    }
+
     /**
      * Get the response for a failed password reset link.
      */

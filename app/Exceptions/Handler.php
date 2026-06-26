@@ -249,7 +249,11 @@ class Handler extends ExceptionHandler
             return new JsonResponse($this->convertExceptionToArray($exception), JsonResponse::HTTP_UNAUTHORIZED);
         }
 
-        return redirect()->guest('/auth/login');
+        if ($request->is('admin') || $request->is('admin/*')) {
+            return redirect()->guest(route('admin.login'));
+        }
+
+        return redirect()->guest(config('pterodactyl.external_site_url', 'https://hostgamer.net'));
     }
 
     /**

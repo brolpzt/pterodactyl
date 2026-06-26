@@ -14,6 +14,7 @@ import DropdownMenu from '@/components/elements/DropdownMenu';
 import Avatar from '@/components/Avatar';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
+import { getExternalSiteUrl } from '@/lib/externalSite';
 
 const STORAGE_LNG = 'pterodactyl_lng';
 const UI_TO_LNG: Record<string, string> = { US: 'en', BR: 'pt', ES: 'es' };
@@ -70,6 +71,7 @@ const RightNavigation = styled.div`
 
 export default () => {
     const name = useStoreState((state: any) => state.settings.data!.name);
+    const settings = useStoreState((state: any) => state.settings.data);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
     const { t } = useTranslation('strings');
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -98,7 +100,7 @@ export default () => {
         setIsLoggingOut(true);
         http.post('/auth/logout').finally(() => {
             // @ts-expect-error this is valid
-            window.location = '/';
+            window.location = getExternalSiteUrl(settings);
         });
     };
 

@@ -15,6 +15,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | External Site URL
+    |--------------------------------------------------------------------------
+    |
+    | Users authenticate via the external client area (SSO). Direct panel login
+    | is disabled; unauthenticated visitors are redirected to this URL.
+    |
+    */
+
+    'external_site_url' => env('EXTERNAL_SITE_URL', 'https://hostgamer.net'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Service Author
     |--------------------------------------------------------------------------
     |

@@ -20,6 +20,12 @@ class RedirectIfAuthenticated
     public function handle(Request $request, \Closure $next, ?string $guard = null): mixed
     {
         if ($this->authManager->guard($guard)->check()) {
+            $user = $this->authManager->guard($guard)->user();
+
+            if ($request->is('admin/login*') && $user->root_admin) {
+                return redirect()->route('admin.index');
+            }
+
             return redirect()->route('index');
         }
 

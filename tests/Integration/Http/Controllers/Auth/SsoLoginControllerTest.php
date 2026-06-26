@@ -41,6 +41,19 @@ class SsoLoginControllerTest extends HttpTestCase
         Event::assertDispatched(DirectLogin::class);
     }
 
+    public function testUserCanSignInViaValidSsoLinkWithNumericUserId(): void
+    {
+        config(['sso.user_identifier' => 'id']);
+
+        $user = User::factory()->create();
+        $server = $this->createServerModel(['owner_id' => $user->id]);
+
+        $response = $this->get($this->signedUrl((string) $user->id, $server->uuidShort));
+
+        $response->assertRedirect('/server/' . $server->uuidShort);
+        $this->assertAuthenticatedAs($user);
+    }
+
     public function testInvalidSignatureIsRejected(): void
     {
         $user = User::factory()->create(['external_id' => 'client-42']);

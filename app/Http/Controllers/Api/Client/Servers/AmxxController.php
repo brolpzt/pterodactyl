@@ -35,9 +35,14 @@ class AmxxController extends ClientApiController
         $this->assertCs16($server);
         $this->assertCanReadFiles($request, $server);
 
+        $page = $this->amxxService->adminsPage($server);
+
         return [
-            'object' => 'list',
-            'data' => $this->amxxService->listAdmins($server),
+            'object' => 'amxx_admins_page',
+            'attributes' => [
+                'overview' => $page['overview'],
+            ],
+            'data' => $page['admins'],
         ];
     }
 

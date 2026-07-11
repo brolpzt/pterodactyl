@@ -14,7 +14,6 @@ import { httpErrorToHuman } from '@/api/http';
 import { ServerError } from '@/components/elements/ScreenBlock';
 import useFlash from '@/plugins/useFlash';
 import { ServerContext } from '@/state/server';
-import getOverview from '@/api/server/amxx/getOverview';
 import getAdmins from '@/api/server/amxx/getAdmins';
 import createAdmin from '@/api/server/amxx/createAdmin';
 import updateAdmin from '@/api/server/amxx/updateAdmin';
@@ -81,25 +80,25 @@ export default () => {
         setAdmins([]);
 
         try {
-            const overviewData = await getOverview(uuid);
-            setOverview(overviewData);
+            const page = await getAdmins(uuid);
+            setOverview(page.overview);
 
-            if (!overviewData.wings_reachable) {
+            if (!page.overview?.wings_reachable) {
                 setLoadError(
                     'Não foi possível comunicar com o node Wings deste servidor. Verifique se o gestor de ficheiros abre normalmente.'
                 );
                 return;
             }
 
-            if (!overviewData.amxx_installed) {
+            if (!page.overview.amxx_installed) {
                 return;
             }
 
-            if (!overviewData.users_ini_exists) {
+            if (!page.overview.users_ini_exists) {
                 return;
             }
 
-            setAdmins(await getAdmins(uuid));
+            setAdmins(page.admins);
         } catch (err) {
             setLoadError(httpErrorToHuman(err));
             clearAndAddHttpError({ key: 'amxx:admins', error: err });

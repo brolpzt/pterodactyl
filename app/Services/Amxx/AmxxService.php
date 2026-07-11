@@ -50,18 +50,59 @@ class AmxxService
     ) {
     }
 
+    /** @var array<int, bool|null> */
+    private array $wingsReachableCache = [];
+
+    /** @var array<int, array<string, array|null>> */
+    private array $directoryListingCache = [];
+
+    /** @var array<int, array<string, mixed>> */
+    private array $resolvedPathsCache = [];
+
+    /** @var array<int, string> */
+    private array $gameDirectoryCache = [];
+
+    /** @var array<int, string> */
+    private array $configuredGameDirectoryCache = [];
+
+    public function adminsPage(Server $server): array
+    {
+        $overview = $this->overview($server);
+        $admins = [];
+
+        if ($overview['wings_reachable'] && $overview['amxx_installed'] && $overview['users_ini_exists']) {
+            $content = $this->readFile($server, $overview['paths']['users_ini']);
+            $admins = $this->parseUsersIni($content)['admins'];
+        }
+
+        return [
+            'overview' => $overview,
+            'admins' => $admins,
+        ];
+    }
+
     public function overview(Server $server): array
     {
         $paths = $this->resolvePaths($server);
         $wingsReachable = $this->wingsReachable($server);
+        $gameListing = $wingsReachable ? $this->getDirectoryListing($server, $paths['game_dir']) : null;
+        $configsListing = $wingsReachable
+            ? $this->getDirectoryListing($server, $paths['game_dir'] . '/addons/amxmodx/configs')
+            : null;
 
         return [
             'game_directory' => $paths['game_dir'],
             'wings_reachable' => $wingsReachable,
             'amxx_installed' => $wingsReachable && $this->directoryExists($server, $paths['game_dir'] . '/addons/amxmodx'),
-            'users_ini_exists' => $wingsReachable && $this->fileExists($server, $paths['users_ini']),
-            'banned_cfg_exists' => $wingsReachable && $this->fileExists($server, $paths['banned_cfg']),
-            'listip_cfg_exists' => $wingsReachable && $this->fileExists($server, $paths['listip_cfg']),
+            'users_ini_exists' => $wingsReachable
+                && $configsListing !== null
+                && $this->fileExistsInDirectoryListing($configsListing, 'users.ini'),
+            'banned_cfg_exists' => $wingsReachable
+                && $gameListing !== null
+                && $this->fileExistsInDirectoryListing($gameListing, 'banned.cfg'),
+            'listip_cfg_exists' => $wingsReachable
+                && $gameListing !== null
+                && $this->fileExistsInDirectoryListing($gameListing, 'listip.cfg'),
             'paths' => $paths,
             'presets' => array_keys(self::PRESET_FLAGS),
             'access_flags' => self::ACCESS_FLAG_LABELS,
@@ -70,27 +111,7 @@ class AmxxService
 
     public function listAdmins(Server $server): array
     {
-        $paths = $this->resolvePaths($server);
-
-        if (!$this->wingsReachable($server)) {
-            throw new AmxxException(
-                'Não foi possível comunicar com o node Wings deste servidor. Verifique se o node está online e se o gestor de ficheiros abre normalmente.',
-                Response::HTTP_BAD_GATEWAY
-            );
-        }
-
-        if (!$this->directoryExists($server, $paths['game_dir'] . '/addons/amxmodx')) {
-            return [];
-        }
-
-        if (!$this->fileExists($server, $paths['users_ini'])) {
-            return [];
-        }
-
-        $content = $this->readFile($server, $paths['users_ini']);
-        $parsed = $this->parseUsersIni($content);
-
-        return $parsed['admins'];
+        return $this->adminsPage($server)['admins'];
     }
 
     public function createAdmin(
@@ -242,15 +263,16 @@ class AmxxService
     {
         $paths = $this->resolvePaths($server);
         $bans = [];
+        $gameListing = $this->getDirectoryListing($server, $paths['game_dir']);
 
-        if ($this->fileExists($server, $paths['banned_cfg'])) {
+        if ($gameListing !== null && $this->fileExistsInDirectoryListing($gameListing, 'banned.cfg')) {
             $content = $this->readFile($server, $paths['banned_cfg']);
             foreach ($this->parseBannedCfg($content) as $ban) {
                 $bans[] = $ban;
             }
         }
 
-        if ($this->fileExists($server, $paths['listip_cfg'])) {
+        if ($gameListing !== null && $this->fileExistsInDirectoryListing($gameListing, 'listip.cfg')) {
             $content = $this->readFile($server, $paths['listip_cfg']);
             foreach ($this->parseListIpCfg($content) as $ban) {
                 $bans[] = $ban;
@@ -359,9 +381,13 @@ class AmxxService
 
     private function resolvePaths(Server $server): array
     {
+        if (isset($this->resolvedPathsCache[$server->id])) {
+            return $this->resolvedPathsCache[$server->id];
+        }
+
         $gameDir = $this->detectGameDirectory($server);
 
-        return [
+        return $this->resolvedPathsCache[$server->id] = [
             'game_dir' => $gameDir,
             'users_ini' => $gameDir . '/addons/amxmodx/configs/users.ini',
             'banned_cfg' => $gameDir . '/banned.cfg',
@@ -371,26 +397,34 @@ class AmxxService
 
     private function detectGameDirectory(Server $server): string
     {
+        if (isset($this->gameDirectoryCache[$server->id])) {
+            return $this->gameDirectoryCache[$server->id];
+        }
+
         $configured = $this->resolveGameDirectoryFromVariables($server);
         $candidates = array_values(array_unique(array_filter([$configured, 'cstrike', 'valve', 'czero'])));
 
         foreach ($candidates as $candidate) {
-            if ($this->fileExists($server, $candidate . '/addons/amxmodx/configs/users.ini')) {
-                return $candidate;
+            $configsListing = $this->getDirectoryListing($server, $candidate . '/addons/amxmodx/configs');
+            if ($configsListing !== null && $this->fileExistsInDirectoryListing($configsListing, 'users.ini')) {
+                return $this->gameDirectoryCache[$server->id] = $candidate;
             }
         }
 
         foreach ($candidates as $candidate) {
             if ($this->directoryExists($server, $candidate . '/addons/amxmodx')) {
-                return $candidate;
+                return $this->gameDirectoryCache[$server->id] = $candidate;
             }
         }
 
-        return $configured;
+        return $this->gameDirectoryCache[$server->id] = $configured;
     }
 
     private function resolveGameDirectoryFromVariables(Server $server): string
     {
+        if (isset($this->configuredGameDirectoryCache[$server->id])) {
+            return $this->configuredGameDirectoryCache[$server->id];
+        }
         $eggVariables = EggVariable::query()
             ->where('egg_id', $server->egg_id)
             ->get(['id', 'env_variable', 'default_value']);
@@ -415,7 +449,7 @@ class AmxxService
             $game = 'cstrike';
         }
 
-        return $game;
+        return $this->configuredGameDirectoryCache[$server->id] = $game;
     }
 
     private function readFile(Server $server, string $path): string
@@ -451,24 +485,72 @@ class AmxxService
 
     private function wingsReachable(Server $server): bool
     {
+        if (array_key_exists($server->id, $this->wingsReachableCache)) {
+            return $this->wingsReachableCache[$server->id];
+        }
+
         try {
             $this->fileRepository->setServer($server)->getDirectory('/');
 
-            return true;
+            return $this->wingsReachableCache[$server->id] = true;
         } catch (DaemonConnectionException) {
-            return false;
+            return $this->wingsReachableCache[$server->id] = false;
         }
+    }
+
+    /**
+     * @return array|null Null when the directory does not exist.
+     */
+    private function getDirectoryListing(Server $server, string $path): ?array
+    {
+        $path = ltrim($path, '/');
+
+        if (array_key_exists($path, $this->directoryListingCache[$server->id] ?? [])) {
+            return $this->directoryListingCache[$server->id][$path];
+        }
+
+        try {
+            $listing = $this->fileRepository->setServer($server)->getDirectory($path);
+        } catch (DaemonConnectionException) {
+            $this->directoryListingCache[$server->id][$path] = null;
+
+            return null;
+        }
+
+        $this->directoryListingCache[$server->id][$path] = $listing;
+
+        return $listing;
     }
 
     private function directoryExists(Server $server, string $path): bool
     {
-        try {
-            $this->fileRepository->setServer($server)->getDirectory($path);
+        return $this->getDirectoryListing($server, $path) !== null;
+    }
 
-            return true;
-        } catch (DaemonConnectionException) {
+    private function fileExists(Server $server, string $path): bool
+    {
+        $path = ltrim($path, '/');
+        $directory = dirname($path);
+        $fileName = basename($path);
+
+        if ($fileName === '' || $directory === '.') {
             return false;
         }
+
+        $listing = $this->getDirectoryListing($server, $directory);
+
+        return $listing !== null && $this->fileExistsInDirectoryListing($listing, $fileName);
+    }
+
+    private function fileExistsInDirectoryListing(array $listing, string $fileName): bool
+    {
+        foreach ($listing as $item) {
+            if (($item['name'] ?? null) === $fileName && ($item['file'] ?? true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function writeFile(Server $server, string $path, string $content): void
@@ -492,30 +574,6 @@ class AmxxService
         }
     }
 
-    private function fileExists(Server $server, string $path): bool
-    {
-        $path = ltrim($path, '/');
-        $directory = dirname($path);
-        $fileName = basename($path);
-
-        if ($fileName === '' || $directory === '.') {
-            return false;
-        }
-
-        try {
-            $listing = $this->fileRepository->setServer($server)->getDirectory($directory);
-
-            foreach ($listing as $item) {
-                if (($item['name'] ?? null) === $fileName && ($item['file'] ?? true)) {
-                    return true;
-                }
-            }
-
-            return false;
-        } catch (DaemonConnectionException) {
-            return false;
-        }
-    }
 
     private function trySendCommand(Server $server, string $command): bool
     {

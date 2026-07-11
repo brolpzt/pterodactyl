@@ -38,7 +38,6 @@ export const stringsEn = {
         addons: 'Addons',
         firewall: 'Firewall',
         amxx: {
-            panel: 'AMXX Web Admin',
             admins: 'AMXX Admins',
             bans: 'AMXX Bans',
         },
@@ -152,9 +151,8 @@ export const stringsPt = {
         addons: 'Addons',
         firewall: 'Firewall',
         amxx: {
-            panel: 'AMXX Web Admin',
-            admins: 'Admins AMXX',
-            bans: 'Bans AMXX',
+            admins: 'AMXX Admins',
+            bans: 'AMXX Bans',
         },
         ts3: {
             snapshots: 'Snapshots',
@@ -266,9 +264,8 @@ export const stringsEs = {
         addons: 'Complementos',
         firewall: 'Firewall',
         amxx: {
-            panel: 'AMXX Web Admin',
-            admins: 'Admins AMXX',
-            bans: 'Bans AMXX',
+            admins: 'AMXX Admins',
+            bans: 'AMXX Bans',
         },
         ts3: {
             snapshots: 'Instantáneas',

@@ -58,6 +58,7 @@ class AmxxService
         return [
             'game_directory' => $paths['game_dir'],
             'wings_reachable' => $wingsReachable,
+            'amxx_installed' => $wingsReachable && $this->directoryExists($server, $paths['game_dir'] . '/addons/amxmodx'),
             'users_ini_exists' => $wingsReachable && $this->fileExists($server, $paths['users_ini']),
             'banned_cfg_exists' => $wingsReachable && $this->fileExists($server, $paths['banned_cfg']),
             'listip_cfg_exists' => $wingsReachable && $this->fileExists($server, $paths['listip_cfg']),
@@ -69,7 +70,24 @@ class AmxxService
 
     public function listAdmins(Server $server): array
     {
-        $content = $this->readFile($server, $this->resolvePaths($server)['users_ini']);
+        $paths = $this->resolvePaths($server);
+
+        if (!$this->wingsReachable($server)) {
+            throw new AmxxException(
+                'Não foi possível comunicar com o node Wings deste servidor. Verifique se o node está online e se o gestor de ficheiros abre normalmente.',
+                Response::HTTP_BAD_GATEWAY
+            );
+        }
+
+        if (!$this->directoryExists($server, $paths['game_dir'] . '/addons/amxmodx')) {
+            return [];
+        }
+
+        if (!$this->fileExists($server, $paths['users_ini'])) {
+            return [];
+        }
+
+        $content = $this->readFile($server, $paths['users_ini']);
         $parsed = $this->parseUsersIni($content);
 
         return $parsed['admins'];

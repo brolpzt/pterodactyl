@@ -29,7 +29,6 @@ const Ts3TokensContainer = lazy(() => import('@/components/server/ts3/Ts3TokensC
 const Ts3LogsContainer = lazy(() => import('@/components/server/ts3/Ts3LogsContainer'));
 const Ts3HtmlViewerContainer = lazy(() => import('@/components/server/ts3/Ts3HtmlViewerContainer'));
 const Ts3QueryTerminalContainer = lazy(() => import('@/components/server/ts3/Ts3QueryTerminalContainer'));
-const AmxxOverviewContainer = lazy(() => import('@/components/server/amxx/AmxxOverviewContainer'));
 const AmxxAdminsContainer = lazy(() => import('@/components/server/amxx/AmxxAdminsContainer'));
 const AmxxBansContainer = lazy(() => import('@/components/server/amxx/AmxxBansContainer'));
 
@@ -233,14 +232,6 @@ export default {
             name: 'Query Terminal',
             nameKey: 'server.ts3.query',
             component: Ts3QueryTerminalContainer,
-        },
-        {
-            path: '/amxx',
-            permission: 'file.read-content',
-            name: 'AMXX Web Admin',
-            nameKey: 'server.amxx.panel',
-            component: AmxxOverviewContainer,
-            exact: true,
         },
         {
             path: '/amxx/admins',

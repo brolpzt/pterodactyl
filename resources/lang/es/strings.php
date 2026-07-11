@@ -129,9 +129,8 @@ return [
         'firewall' => 'Firewall',
         'startup' => 'Inicio',
         'amxx' => [
-            'panel' => 'AMXX Web Admin',
-            'admins' => 'Admins AMXX',
-            'bans' => 'Bans AMXX',
+            'admins' => 'AMXX Admins',
+            'bans' => 'AMXX Bans',
         ],
         'ts3' => [
             'snapshots' => 'Instantáneas',

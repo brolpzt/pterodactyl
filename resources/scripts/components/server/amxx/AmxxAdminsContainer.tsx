@@ -9,10 +9,12 @@ import Label from '@/components/elements/Label';
 import Input from '@/components/elements/Input';
 import Select from '@/components/elements/Select';
 import { Button } from '@/components/elements/button/index';
+import { Alert } from '@/components/elements/alert';
 import { httpErrorToHuman } from '@/api/http';
 import { ServerError } from '@/components/elements/ScreenBlock';
 import useFlash from '@/plugins/useFlash';
 import { ServerContext } from '@/state/server';
+import getOverview from '@/api/server/amxx/getOverview';
 import getAdmins from '@/api/server/amxx/getAdmins';
 import createAdmin from '@/api/server/amxx/createAdmin';
 import updateAdmin from '@/api/server/amxx/updateAdmin';
@@ -22,6 +24,7 @@ import {
     AMXX_PRESET_FLAGS,
     AmxxAdmin,
     AmxxAuthType,
+    AmxxOverview,
     AmxxPreset,
 } from '@/api/server/amxx/types';
 
@@ -45,6 +48,7 @@ const flagsFromPreset = (preset: AmxxPreset, customFlags: string): string => {
 
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
+    const [overview, setOverview] = useState<AmxxOverview | null>(null);
     const [admins, setAdmins] = useState<AmxxAdmin[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -68,10 +72,33 @@ export default () => {
         return Array.from(selectedFlags).sort().join('');
     }, [preset, customFlags, selectedFlags]);
 
+    const canManageAdmins = !!overview?.wings_reachable && !!overview?.amxx_installed;
+
     const load = async () => {
         setLoading(true);
         setLoadError(null);
+        setOverview(null);
+        setAdmins([]);
+
         try {
+            const overviewData = await getOverview(uuid);
+            setOverview(overviewData);
+
+            if (!overviewData.wings_reachable) {
+                setLoadError(
+                    'Não foi possível comunicar com o node Wings deste servidor. Verifique se o gestor de ficheiros abre normalmente.'
+                );
+                return;
+            }
+
+            if (!overviewData.amxx_installed) {
+                return;
+            }
+
+            if (!overviewData.users_ini_exists) {
+                return;
+            }
+
             setAdmins(await getAdmins(uuid));
         } catch (err) {
             setLoadError(httpErrorToHuman(err));
@@ -219,6 +246,27 @@ export default () => {
         <ServerContentBlock title={'AMXX Admins'}>
             <FlashMessageRender byKey={'amxx:admins'} css={tw`mb-4`} />
 
+            {!loading && overview && !overview.wings_reachable && (
+                <Alert type={'danger'} className={'mb-4'}>
+                    O painel não conseguiu comunicar com o node Wings deste servidor. Abra o gestor de ficheiros para
+                    confirmar a ligação antes de gerir admins AMXX.
+                </Alert>
+            )}
+
+            {!loading && overview?.wings_reachable && !overview.amxx_installed && (
+                <Alert type={'danger'} className={'mb-4'}>
+                    O AMX Mod X não está instalado neste servidor. Instale pelo menu <strong>Addons</strong> antes de
+                    gerir administradores.
+                </Alert>
+            )}
+
+            {!loading && overview?.wings_reachable && overview.amxx_installed && !overview.users_ini_exists && (
+                <Alert type={'danger'} className={'mb-4'}>
+                    O ficheiro <code>users.ini</code> ainda não existe. Crie o primeiro admin abaixo ou instale o AMXX
+                    pelo menu Addons.
+                </Alert>
+            )}
+
             <TitledGreyBox title={editingId !== null ? 'Editar admin' : 'Adicionar admin'} css={tw`mb-6`}>
                 <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-4`}>
                     <div>
@@ -295,7 +343,7 @@ export default () => {
                 </div>
 
                 <div css={tw`flex gap-2 mt-4`}>
-                    <Button onClick={onSubmit} disabled={busyId !== null || !auth.trim()}>
+                    <Button onClick={onSubmit} disabled={busyId !== null || !auth.trim() || !canManageAdmins}>
                         {busyId === 'create' || (typeof busyId === 'number' && busyId === editingId) ? (
                             <Spinner size={Spinner.Size.SMALL} />
                         ) : editingId !== null ? (
@@ -317,6 +365,10 @@ export default () => {
                     <Spinner size={Spinner.Size.LARGE} centered />
                 ) : loadError ? (
                     <ServerError title={'Erro ao carregar admins'} message={loadError} />
+                ) : overview && !overview.amxx_installed ? (
+                    <p css={[emptyStateText, tw`py-4`]}>
+                        Instale o AMX Mod X para visualizar e gerir a lista de administradores.
+                    </p>
                 ) : admins.length === 0 ? (
                     <p css={[emptyStateText, tw`py-4`]}>Nenhum admin cadastrado.</p>
                 ) : (

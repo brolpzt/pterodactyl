@@ -24,7 +24,6 @@ import {
     faLifeRing,
     faReceipt,
     faArrowLeft,
-    faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
@@ -130,10 +129,16 @@ const BrandLogo = styled.img<{ collapsed: boolean }>`
     object-position: left center;
 `;
 
-const NavItemLabel = styled.span.attrs({ className: 'nav-item-label' })<{ collapsed: boolean }>`
+const NavItemLabel = styled.span.attrs({ className: 'nav-item-label' })<{ collapsed: boolean; $amxx?: boolean }>`
     ${navItemText};
     ${tw`transition-all duration-150 whitespace-nowrap overflow-hidden`};
     ${props => props.collapsed ? 'max-width: 0; opacity: 0; margin: 0;' : 'max-width: 200px; opacity: 1; margin-left: 0.5rem;'};
+    ${(props) =>
+        props.$amxx &&
+        css`
+            color: #f87171;
+            text-shadow: 0 0 10px rgba(248, 113, 113, 0.45);
+        `}
 `;
 
 const NavSectionTitle = styled.div<{ collapsed: boolean }>`
@@ -147,7 +152,7 @@ const SidebarFooter = styled.div<{ collapsed: boolean }>`
     ${(props) => props.collapsed && tw`text-center px-0`};
 `;
 
-const NavItem = styled(NavLink)<{ collapsed?: boolean }>`
+const NavItem = styled(NavLink)<{ collapsed?: boolean; $amxx?: boolean }>`
     ${navItemText};
     ${tw`relative z-10 flex items-center py-2.5 text-sm font-header font-semibold uppercase no-underline transition-all duration-150 hover:bg-white/5`};
     padding-left: 1.25rem;
@@ -170,6 +175,32 @@ const NavItem = styled(NavLink)<{ collapsed?: boolean }>`
             ${tw`text-white`};
         }
     }
+
+    ${(props) =>
+        props.$amxx &&
+        css`
+            &:hover .nav-item-label,
+            &:hover .icon-container {
+                color: #fca5a5;
+                text-shadow: 0 0 14px rgba(248, 113, 113, 0.55);
+            }
+
+            & .icon-container {
+                color: #f87171;
+                text-shadow: 0 0 10px rgba(248, 113, 113, 0.45);
+            }
+
+            &.active {
+                background: rgba(239, 68, 68, 0.18);
+                border-right-color: #ef4444;
+
+                & .nav-item-label,
+                & .icon-container {
+                    color: #fecaca;
+                    text-shadow: 0 0 14px rgba(239, 68, 68, 0.65);
+                }
+            }
+        `}
 `;
 
 const ExternalNavItem = styled.a<{ collapsed?: boolean }>`
@@ -247,6 +278,7 @@ const ServerLinks = () => {
             case 'Backups': return faCloudUploadAlt;
             case 'server.network':
             case 'Network': return faNetworkWired;
+            case 'server.startup':
             case 'Startup': return faPlayCircle;
             case 'server.settings':
             case 'Settings': return faCogs;
@@ -256,10 +288,6 @@ const ServerLinks = () => {
             case 'Addons': return faPuzzlePiece;
             case 'server.firewall':
             case 'Firewall': return faShieldAlt;
-            case 'server.startup':
-            case 'Startup': return faPlayCircle;
-            case 'server.amxx.panel':
-            case 'AMXX Web Admin': return faUserShield;
             case 'server.amxx.admins':
             case 'AMXX Admins': return faUsers;
             case 'server.amxx.bans':
@@ -296,11 +324,10 @@ const ServerLinks = () => {
     ];
     const cs16RouteOrder = [
         '/',
-        '/console',
-        '/files',
-        '/amxx',
         '/amxx/admins',
         '/amxx/bans',
+        '/console',
+        '/files',
         '/addons',
         '/firewall',
         '/schedules',
@@ -311,6 +338,8 @@ const ServerLinks = () => {
         '/activity',
         '/settings',
     ];
+
+    const isAmxxRoute = (path: string) => path.startsWith('/amxx');
 
     return (
         <>
@@ -349,19 +378,36 @@ const ServerLinks = () => {
                 .map((route) => (
                     route.permission ? (
                         <Can key={route.path} action={route.permission as any} matchAny>
-                            <NavItem to={to(route.path)} exact={route.exact} collapsed={collapsed} title={route.nameKey ? t(route.nameKey) : route.name!}>
+                            <NavItem
+                                to={to(route.path)}
+                                exact={route.exact}
+                                collapsed={collapsed}
+                                $amxx={isCs16 && isAmxxRoute(route.path)}
+                                title={route.nameKey ? t(route.nameKey) : route.name!}
+                            >
                                 <IconContainer className="icon-container">
                                     <FontAwesomeIcon icon={getIcon((route as any).nameKey, route.name!)} />
                                 </IconContainer>
-                                <NavItemLabel collapsed={collapsed}>{route.nameKey ? t(route.nameKey) : route.name!}</NavItemLabel>
+                                <NavItemLabel collapsed={collapsed} $amxx={isCs16 && isAmxxRoute(route.path)}>
+                                    {route.nameKey ? t(route.nameKey) : route.name!}
+                                </NavItemLabel>
                             </NavItem>
                         </Can>
                     ) : (
-                        <NavItem key={route.path} to={to(route.path)} exact={route.exact} collapsed={collapsed} title={route.nameKey ? t(route.nameKey) : route.name!}>
+                        <NavItem
+                            key={route.path}
+                            to={to(route.path)}
+                            exact={route.exact}
+                            collapsed={collapsed}
+                            $amxx={isCs16 && isAmxxRoute(route.path)}
+                            title={route.nameKey ? t(route.nameKey) : route.name!}
+                        >
                             <IconContainer className="icon-container">
                                 <FontAwesomeIcon icon={getIcon((route as any).nameKey, route.name!)} />
                             </IconContainer>
-                            <NavItemLabel collapsed={collapsed}>{route.nameKey ? t(route.nameKey) : route.name!}</NavItemLabel>
+                            <NavItemLabel collapsed={collapsed} $amxx={isCs16 && isAmxxRoute(route.path)}>
+                                {route.nameKey ? t(route.nameKey) : route.name!}
+                            </NavItemLabel>
                         </NavItem>
                     )
                 ))}

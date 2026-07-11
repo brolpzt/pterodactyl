@@ -42,7 +42,7 @@ class FirewallController extends ClientApiController
     public function store(StoreFirewallRuleRequest $request, Server $server): array
     {
         $ip = $request->input('ip');
-        $reason = $request->input('reason', '');
+        $reason = $request->input('reason') ?? '';
 
         // Check for duplicate ban
         if (FirewallRule::where('server_id', $server->id)->where('ip', $ip)->exists()) {
@@ -68,12 +68,17 @@ class FirewallController extends ClientApiController
      *
      * @throws \Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException
      */
-    public function delete(DeleteFirewallRuleRequest $request, Server $server, FirewallRule $rule): JsonResponse
+    public function delete(DeleteFirewallRuleRequest $request, Server $server, int $ruleId): JsonResponse
     {
-        // Remove from Wings iptables first
-        $this->daemonFirewallRepository->setServer($server)->removeRule($rule->ip);
+        $firewallRule = FirewallRule::query()
+            ->where('server_id', $server->id)
+            ->where('id', $ruleId)
+            ->firstOrFail();
 
-        $rule->delete();
+        // Remove from Wings iptables first
+        $this->daemonFirewallRepository->setServer($server)->removeRule($firewallRule->ip);
+
+        $firewallRule->delete();
 
         return new JsonResponse([], JsonResponse::HTTP_NO_CONTENT);
     }

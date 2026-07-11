@@ -139,7 +139,7 @@ Route::group(['prefix' => 'servers'], function () {
 
     Route::delete('/view/{server:id}/mounts/{mount:id}', [Admin\ServersController::class, 'deleteMount'])
         ->name('admin.servers.view.mounts.delete');
-    Route::delete('/view/{server:id}/firewall/{rule:id}', [Admin\ServersController::class, 'deleteFirewallRule'])->name('admin.servers.view.firewall.delete');
+    Route::delete('/view/{server:id}/firewall/{ruleId}', [Admin\ServersController::class, 'deleteFirewallRule'])->name('admin.servers.view.firewall.delete')->whereNumber('ruleId');
 });
 
 /*

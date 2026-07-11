@@ -169,7 +169,7 @@ Route::group([
     Route::group(['prefix' => '/firewall'], function () {
         Route::get('/', [Client\Servers\FirewallController::class, 'index']);
         Route::post('/', [Client\Servers\FirewallController::class, 'store']);
-        Route::delete('/{rule}', [Client\Servers\FirewallController::class, 'delete']);
+        Route::delete('/{ruleId}', [Client\Servers\FirewallController::class, 'delete'])->whereNumber('ruleId');
     });
 
     Route::group(['prefix' => '/dns'], function () {

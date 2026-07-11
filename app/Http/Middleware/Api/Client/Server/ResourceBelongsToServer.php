@@ -12,6 +12,7 @@ use Pterodactyl\Models\Database;
 use Pterodactyl\Models\Schedule;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\CloudflareDnsRecord;
+use Pterodactyl\Models\FirewallRule;
 use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -51,6 +52,7 @@ class ResourceBelongsToServer
                 case Backup::class:
                 case CloudflareDnsRecord::class:
                 case Database::class:
+                case FirewallRule::class:
                 case Schedule::class:
                 case Subuser::class:
                     if ($model->server_id !== $server->id) {

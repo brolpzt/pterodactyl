@@ -301,8 +301,13 @@ class ServersController extends Controller
      *
      * @throws \Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException
      */
-    public function deleteFirewallRule(Request $request, Server $server, FirewallRule $rule): RedirectResponse
+    public function deleteFirewallRule(Request $request, Server $server, int $ruleId): RedirectResponse
     {
+        $rule = FirewallRule::query()
+            ->where('server_id', $server->id)
+            ->where('id', $ruleId)
+            ->firstOrFail();
+
         $this->daemonFirewallRepository->setServer($server)->removeRule($rule->ip);
         $rule->delete();
 
@@ -324,7 +329,7 @@ class ServersController extends Controller
         ]);
 
         $ip = $request->input('ip');
-        $reason = $request->input('reason', '');
+        $reason = $request->input('reason') ?? '';
 
         if (FirewallRule::where('server_id', $server->id)->where('ip', $ip)->exists()) {
             $this->alert->danger('IP address is already banned on this server.')->flash();

@@ -23,6 +23,7 @@ import {
     faLifeRing,
     faReceipt,
     faArrowLeft,
+    faGamepad,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
@@ -285,6 +286,8 @@ const ServerLinks = () => {
             case 'Addons': return faPuzzlePiece;
             case 'server.firewall':
             case 'Firewall': return faShieldAlt;
+            case 'server.amxx.web':
+            case 'AMXX Web': return faGamepad;
             case 'server.amxx.admins':
             case 'AMXX Admins': return faUsers;
             case 'server.amxx.bans':
@@ -321,6 +324,7 @@ const ServerLinks = () => {
     ];
     const cs16RouteOrder = [
         '/',
+        '/amxx',
         '/amxx/admins',
         '/amxx/bans',
         '/console',

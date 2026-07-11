@@ -37,6 +37,26 @@ export interface AmxxBan {
     permanent: boolean;
 }
 
+export interface AmxxConsolePlayer {
+    userid: number;
+    slot: number;
+    name: string;
+    steamid: string;
+    score: number;
+    ping: number;
+    loss: number;
+    state: string;
+    address?: string;
+}
+
+export interface AmxxPlayersResult {
+    players: AmxxConsolePlayer[];
+    map?: string | null;
+    hostname?: string | null;
+    queried_at: string;
+    source: string;
+}
+
 export type AmxxAuthType = 'steamid' | 'ip' | 'nickname';
 export type AmxxPreset = 'owner' | 'admin' | 'mod' | 'custom';
 

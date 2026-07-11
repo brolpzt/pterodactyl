@@ -190,6 +190,8 @@ Route::group([
 
     Route::group(['prefix' => '/amxx'], function () {
         Route::get('/overview', [Client\Servers\AmxxController::class, 'overview']);
+        Route::get('/players', [Client\Servers\AmxxController::class, 'listPlayers']);
+        Route::post('/kick', [Client\Servers\AmxxController::class, 'kickPlayer']);
         Route::get('/admins', [Client\Servers\AmxxController::class, 'listAdmins']);
         Route::post('/admins', [Client\Servers\AmxxController::class, 'createAdmin']);
         Route::put('/admins/{adminId}', [Client\Servers\AmxxController::class, 'updateAdmin']);

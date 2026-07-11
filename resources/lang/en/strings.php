@@ -129,6 +129,7 @@ return [
         'firewall' => 'Firewall',
         'startup' => 'Startup',
         'amxx' => [
+            'web' => 'AMXX Web',
             'admins' => 'AMXX Admins',
             'bans' => 'AMXX Bans',
         ],

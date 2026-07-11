@@ -162,6 +162,46 @@ class AmxxController extends ClientApiController
         ];
     }
 
+    public function listPlayers(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanUseConsole($request, $server);
+
+        return [
+            'object' => 'amxx_players',
+            'attributes' => $this->amxxService->listPlayers($server),
+        ];
+    }
+
+    public function kickPlayer(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanUseConsole($request, $server);
+
+        $data = $request->validate([
+            'userid' => ['required', 'integer', 'min:1'],
+            'reason' => ['sometimes', 'nullable', 'string', 'max:255'],
+        ]);
+
+        $result = $this->amxxService->kickPlayer(
+            $server,
+            (int) $data['userid'],
+            $data['reason'] ?? null,
+        );
+
+        Activity::event('server:amxx.player.kick')
+            ->property([
+                'userid' => $data['userid'],
+                'reason' => $data['reason'] ?? null,
+            ])
+            ->log();
+
+        return [
+            'object' => 'amxx_kick',
+            'attributes' => $result,
+        ];
+    }
+
     public function createBan(Request $request, Server $server): array
     {
         $this->assertCs16($server);
@@ -252,6 +292,13 @@ class AmxxController extends ClientApiController
     {
         if (!$request->user()->can(Permission::ACTION_FIREWALL_DELETE, $server)) {
             throw new AccessDeniedHttpException('Não tem permissão para remover bans.');
+        }
+    }
+
+    private function assertCanUseConsole(Request $request, Server $server): void
+    {
+        if (!$request->user()->can(Permission::ACTION_CONTROL_CONSOLE, $server)) {
+            throw new AccessDeniedHttpException('Não tem permissão para usar a consola do servidor.');
         }
     }
 }

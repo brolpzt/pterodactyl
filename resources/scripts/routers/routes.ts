@@ -30,6 +30,7 @@ const Ts3HtmlViewerContainer = lazy(() => import('@/components/server/ts3/Ts3Htm
 const Ts3QueryTerminalContainer = lazy(() => import('@/components/server/ts3/Ts3QueryTerminalContainer'));
 const AmxxAdminsContainer = lazy(() => import('@/components/server/amxx/AmxxAdminsContainer'));
 const AmxxBansContainer = lazy(() => import('@/components/server/amxx/AmxxBansContainer'));
+const AmxxWebContainer = lazy(() => import('@/components/server/amxx/AmxxWebContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -224,6 +225,13 @@ export default {
             name: 'Query Terminal',
             nameKey: 'server.ts3.query',
             component: Ts3QueryTerminalContainer,
+        },
+        {
+            path: '/amxx',
+            permission: 'control.console',
+            name: 'AMXX Web',
+            nameKey: 'server.amxx.web',
+            component: AmxxWebContainer,
         },
         {
             path: '/amxx/admins',

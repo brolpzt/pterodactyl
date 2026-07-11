@@ -9,6 +9,7 @@ use Pterodactyl\Models\ServerVariable;
 use Pterodactyl\Exceptions\Service\Amxx\AmxxException;
 use Pterodactyl\Repositories\Wings\DaemonCommandRepository;
 use Pterodactyl\Repositories\Wings\DaemonFileRepository;
+use Pterodactyl\Repositories\Wings\DaemonServerPlayersRepository;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 use GuzzleHttp\Exception\ClientException;
 
@@ -47,6 +48,7 @@ class AmxxService
     public function __construct(
         private DaemonFileRepository $fileRepository,
         private DaemonCommandRepository $commandRepository,
+        private DaemonServerPlayersRepository $playersRepository,
     ) {
     }
 
@@ -112,6 +114,60 @@ class AmxxService
     public function listAdmins(Server $server): array
     {
         return $this->adminsPage($server)['admins'];
+    }
+
+    public function listPlayers(Server $server): array
+    {
+        try {
+            return $this->playersRepository->setServer($server)->list();
+        } catch (DaemonConnectionException $exception) {
+            if (!$this->wingsReachable($server)) {
+                throw new AmxxException(
+                    'Não foi possível comunicar com o node Wings deste servidor.',
+                    Response::HTTP_BAD_GATEWAY,
+                    $exception
+                );
+            }
+
+            $previous = $exception->getPrevious();
+            if ($previous instanceof ClientException && $previous->getResponse()->getStatusCode() === Response::HTTP_BAD_GATEWAY) {
+                throw new AmxxException(
+                    'O servidor precisa estar online para listar jogadores.',
+                    Response::HTTP_BAD_GATEWAY,
+                    $exception
+                );
+            }
+
+            throw new AmxxException(
+                'Não foi possível obter a lista de jogadores via consola.',
+                Response::HTTP_BAD_GATEWAY,
+                $exception
+            );
+        }
+    }
+
+    public function kickPlayer(Server $server, int $userid, ?string $reason = null): array
+    {
+        if ($userid < 1) {
+            throw new AmxxException('O userid do jogador é inválido.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $command = 'amx_kick #' . $userid;
+        if ($reason !== null && trim($reason) !== '') {
+            $command .= ' "' . $this->sanitizeComment($reason) . '"';
+        }
+
+        if (!$this->trySendCommand($server, $command)) {
+            throw new AmxxException(
+                'Não foi possível enviar o comando de kick. Verifique se o servidor está online.',
+                Response::HTTP_BAD_GATEWAY
+            );
+        }
+
+        return [
+            'userid' => $userid,
+            'command_sent' => true,
+        ];
     }
 
     public function createAdmin(

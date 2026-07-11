@@ -56,7 +56,7 @@ class CloudflareApiService
     /**
      * Creates a DNS record in Cloudflare.
      *
-     * @return array{id: string, name: string, type: string, content: string, ttl: int, proxied: bool}
+     * @return array<string, mixed>
      *
      * @throws DisplayException
      */
@@ -67,18 +67,10 @@ class CloudflareApiService
         string $name,
         string $content,
         int $ttl = 1,
-        bool $proxied = false
+        bool $proxied = false,
+        ?array $srvData = null
     ): array {
-        $payload = [
-            'type' => $type,
-            'name' => $name,
-            'content' => $content,
-            'ttl' => $ttl,
-        ];
-
-        if (in_array($type, ['A', 'AAAA', 'CNAME'], true)) {
-            $payload['proxied'] = $proxied;
-        }
+        $payload = $this->buildPayload($type, $name, $content, $ttl, $proxied, $srvData);
 
         $response = Http::withToken($apiToken)
             ->acceptJson()
@@ -86,6 +78,37 @@ class CloudflareApiService
 
         if (!$response->successful() || !($response->json('success') ?? false)) {
             throw new DisplayException('Não foi possível criar o registro DNS na Cloudflare: ' . $this->extractError($response->json()));
+        }
+
+        return $response->json('result');
+    }
+
+    /**
+     * Updates an existing DNS record in Cloudflare.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws DisplayException
+     */
+    public function updateDnsRecord(
+        string $apiToken,
+        string $zoneId,
+        string $recordId,
+        string $type,
+        string $name,
+        string $content,
+        int $ttl = 1,
+        bool $proxied = false,
+        ?array $srvData = null
+    ): array {
+        $payload = $this->buildPayload($type, $name, $content, $ttl, $proxied, $srvData);
+
+        $response = Http::withToken($apiToken)
+            ->acceptJson()
+            ->patch(self::BASE_URL . "/zones/{$zoneId}/dns_records/{$recordId}", $payload);
+
+        if (!$response->successful() || !($response->json('success') ?? false)) {
+            throw new DisplayException('Não foi possível atualizar o registro DNS na Cloudflare: ' . $this->extractError($response->json()));
         }
 
         return $response->json('result');
@@ -105,6 +128,48 @@ class CloudflareApiService
         if (!$response->successful() || !($response->json('success') ?? false)) {
             throw new DisplayException('Não foi possível remover o registro DNS na Cloudflare: ' . $this->extractError($response->json()));
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildPayload(
+        string $type,
+        string $name,
+        string $content,
+        int $ttl,
+        bool $proxied,
+        ?array $srvData
+    ): array {
+        if ($type === 'SRV' && $srvData) {
+            return [
+                'type' => 'SRV',
+                'name' => $name,
+                'ttl' => $ttl,
+                'data' => [
+                    'service' => $srvData['service'],
+                    'proto' => $srvData['proto'],
+                    'name' => $srvData['name'],
+                    'priority' => (int) $srvData['priority'],
+                    'weight' => (int) $srvData['weight'],
+                    'port' => (int) $srvData['port'],
+                    'target' => $srvData['target'],
+                ],
+            ];
+        }
+
+        $payload = [
+            'type' => $type,
+            'name' => $name,
+            'content' => $content,
+            'ttl' => $ttl,
+        ];
+
+        if (in_array($type, ['A', 'AAAA', 'CNAME'], true)) {
+            $payload['proxied'] = $proxied;
+        }
+
+        return $payload;
     }
 
     private function extractError(?array $body): string

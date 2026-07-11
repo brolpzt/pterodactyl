@@ -19,6 +19,9 @@ class EggDnsProfileService
             $defaultType = $allowedTypes[0];
         }
 
+        $srvService = $this->normalizeSrvLabel($data['srv_service'] ?? '_minecraft');
+        $srvProtocol = $this->normalizeSrvLabel($data['srv_protocol'] ?? '_tcp');
+
         return EggDnsProfile::updateOrCreate(
             ['egg_id' => $egg->id],
             [
@@ -26,7 +29,18 @@ class EggDnsProfileService
                 'allowed_types' => $allowedTypes,
                 'default_type' => $defaultType,
                 'max_records_per_server' => (int) ($data['max_records_per_server'] ?? 3),
+                'srv_service' => $srvService,
+                'srv_protocol' => $srvProtocol,
+                'srv_priority' => (int) ($data['srv_priority'] ?? 0),
+                'srv_weight' => (int) ($data['srv_weight'] ?? 5),
             ]
         );
+    }
+
+    private function normalizeSrvLabel(string $value): string
+    {
+        $value = trim($value);
+
+        return str_starts_with($value, '_') ? $value : "_{$value}";
     }
 }

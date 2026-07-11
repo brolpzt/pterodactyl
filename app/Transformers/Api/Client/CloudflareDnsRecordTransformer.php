@@ -23,6 +23,11 @@ class CloudflareDnsRecordTransformer extends BaseClientTransformer
             'content' => $record->content,
             'ttl' => $record->ttl,
             'proxied' => $record->proxied,
+            'srv_port' => $record->srv_port,
+            'srv_priority' => $record->srv_priority,
+            'srv_weight' => $record->srv_weight,
+            'srv_service' => $record->srv_service,
+            'srv_protocol' => $record->srv_protocol,
             'created_at' => $record->created_at->toIso8601String(),
             'updated_at' => $record->updated_at->toIso8601String(),
         ];

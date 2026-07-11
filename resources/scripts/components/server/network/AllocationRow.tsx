@@ -1,8 +1,9 @@
 import React, { memo, useCallback, useState } from 'react';
+import { Link, useRouteMatch } from 'react-router-dom';
 import isEqual from 'react-fast-compare';
 import tw from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
+import { faNetworkWired, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import InputSpinner from '@/components/elements/InputSpinner';
 import { Textarea } from '@/components/elements/Input';
 import Can from '@/components/elements/Can';
@@ -35,7 +36,10 @@ const AllocationRow = ({ allocation }: Props) => {
     const [loading, setLoading] = useState(false);
     const { clearFlashes, clearAndAddHttpError } = useFlashKey('server:network');
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
+    const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures);
     const { mutate } = getServerAllocations();
+    const match = useRouteMatch<{ id: string }>('/server/:id');
+    const hasDnsFeature = eggFeatures.includes('dns');
 
     const onNotesChanged = useCallback((id: number, notes: string) => {
         mutate((data) => data?.map((a) => (a.id === id ? { ...a, notes } : a)), false);
@@ -98,9 +102,21 @@ const AllocationRow = ({ allocation }: Props) => {
             </div>
             <div className={'flex justify-end space-x-4 mt-4 w-full md:mt-0 md:w-48'}>
                 {allocation.isDefault ? (
-                    <Button size={Button.Sizes.Small} className={'!text-gray-50 !bg-primary-500'} disabled>
-                        Primary
-                    </Button>
+                    <>
+                        {hasDnsFeature && match && (
+                            <Can action={'dns.create'}>
+                                <Link to={`/server/${match.params.id}/dns`}>
+                                    <Button.Text size={Button.Sizes.Small}>
+                                        <FontAwesomeIcon icon={faGlobe} css={tw`mr-1`} />
+                                        DNS
+                                    </Button.Text>
+                                </Link>
+                            </Can>
+                        )}
+                        <Button size={Button.Sizes.Small} className={'!text-gray-50 !bg-primary-500'} disabled>
+                            Primary
+                        </Button>
+                    </>
                 ) : (
                     <>
                         <Can action={'allocation.delete'}>

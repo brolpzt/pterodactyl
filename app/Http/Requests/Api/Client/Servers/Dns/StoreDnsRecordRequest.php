@@ -16,7 +16,7 @@ class StoreDnsRecordRequest extends ClientApiRequest
         return [
             'zone_id' => 'required|integer|exists:cloudflare_zones,id',
             'subdomain' => 'required|string|max:63',
-            'type' => 'required|string|in:A,CNAME',
+            'type' => 'required|string|in:A,CNAME,SRV',
             'content' => 'nullable|string|max:512',
             'proxied' => 'sometimes|boolean',
         ];

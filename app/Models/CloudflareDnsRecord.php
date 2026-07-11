@@ -15,6 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $content
  * @property int $ttl
  * @property bool $proxied
+ * @property string|null $srv_service
+ * @property string|null $srv_protocol
+ * @property int|null $srv_port
+ * @property int|null $srv_priority
+ * @property int|null $srv_weight
  * @property int|null $created_by
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
@@ -34,6 +39,9 @@ class CloudflareDnsRecord extends Model
         'zone_id' => 'integer',
         'ttl' => 'integer',
         'proxied' => 'boolean',
+        'srv_port' => 'integer',
+        'srv_priority' => 'integer',
+        'srv_weight' => 'integer',
         'created_by' => 'integer',
     ];
 
@@ -41,12 +49,17 @@ class CloudflareDnsRecord extends Model
         'server_id' => 'required|integer|exists:servers,id',
         'zone_id' => 'required|integer|exists:cloudflare_zones,id',
         'cloudflare_record_id' => 'required|string|max:64',
-        'type' => 'required|string|in:A,CNAME',
+        'type' => 'required|string|in:A,CNAME,SRV',
         'subdomain' => 'required|string|max:191',
         'name' => 'required|string|max:255',
         'content' => 'required|string|max:512',
         'ttl' => 'integer|min:1',
         'proxied' => 'boolean',
+        'srv_service' => 'nullable|string|max:32',
+        'srv_protocol' => 'nullable|string|max:16',
+        'srv_port' => 'nullable|integer|min:1|max:65535',
+        'srv_priority' => 'nullable|integer|min:0|max:65535',
+        'srv_weight' => 'nullable|integer|min:0|max:65535',
         'created_by' => 'nullable|integer|exists:users,id',
     ];
 

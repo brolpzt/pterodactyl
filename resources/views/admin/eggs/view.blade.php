@@ -227,10 +227,34 @@
                             <div class="form-group">
                                 <label for="pDnsAllowedTypes" class="control-label">Tipos permitidos</label>
                                 <select class="form-control" name="allowed_types[]" id="pDnsAllowedTypes" multiple>
-                                    @foreach(['A', 'CNAME'] as $type)
+                                    @foreach(['A', 'CNAME', 'SRV'] as $type)
                                         <option value="{{ $type }}" @if(in_array($type, $dnsProfile?->allowed_types ?? ['A'])) selected @endif>{{ $type }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="form-group" id="srv-config-fields">
+                                <label class="control-label">Configuração SRV</label>
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <input type="text" name="srv_service" class="form-control" placeholder="Serviço (_minecraft)" value="{{ old('srv_service', $dnsProfile?->srv_service ?? '_minecraft') }}" />
+                                        <p class="text-muted small">Ex.: <code>_minecraft</code>, <code>_ts3</code></p>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <input type="text" name="srv_protocol" class="form-control" placeholder="Protocolo (_tcp)" value="{{ old('srv_protocol', $dnsProfile?->srv_protocol ?? '_tcp') }}" />
+                                        <p class="text-muted small">Ex.: <code>_tcp</code> ou <code>_udp</code></p>
+                                    </div>
+                                </div>
+                                <div class="row" style="margin-top: 10px;">
+                                    <div class="col-sm-6">
+                                        <label for="pSrvPriority" class="control-label">Prioridade</label>
+                                        <input type="number" name="srv_priority" id="pSrvPriority" class="form-control" min="0" max="65535" value="{{ old('srv_priority', $dnsProfile?->srv_priority ?? 0) }}" />
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="pSrvWeight" class="control-label">Peso</label>
+                                        <input type="number" name="srv_weight" id="pSrvWeight" class="form-control" min="0" max="65535" value="{{ old('srv_weight', $dnsProfile?->srv_weight ?? 5) }}" />
+                                    </div>
+                                </div>
+                                <p class="text-muted small" style="margin-top: 8px;">Porta e destino SRV são obtidos automaticamente da alocação primária do servidor.</p>
                             </div>
                         </div>
                         <div class="col-sm-6">
@@ -239,6 +263,7 @@
                                 <select name="default_type" id="pDnsDefaultType" class="form-control">
                                     <option value="A" @if(($dnsProfile?->default_type ?? 'A') === 'A') selected @endif>A</option>
                                     <option value="CNAME" @if(($dnsProfile?->default_type ?? 'A') === 'CNAME') selected @endif>CNAME</option>
+                                    <option value="SRV" @if(($dnsProfile?->default_type ?? 'A') === 'SRV') selected @endif>SRV</option>
                                 </select>
                             </div>
                             <div class="form-group">

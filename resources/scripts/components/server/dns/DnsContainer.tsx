@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ServerContext } from '@/state/server';
-import getServerDnsRecords, { DnsRecord } from '@/api/swr/getServerDnsRecords';
+import getServerDnsRecords, { DnsRecord, DnsSrvTemplate } from '@/api/swr/getServerDnsRecords';
 import createDnsRecord from '@/api/server/createDnsRecord';
 import deleteDnsRecord from '@/api/server/deleteDnsRecord';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
@@ -50,7 +51,7 @@ const DnsRecordRow = ({ record, onDelete }: { record: DnsRecord; onDelete: (reco
                     <span css={tw`font-mono text-xs text-neutral-300`}>{record.content}</span>
                 </td>
                 <td css={tw`px-3 py-3 text-xs text-neutral-500`}>
-                    {record.proxied ? 'Proxied' : 'DNS only'}
+                    {record.type === 'CNAME' ? (record.proxied ? 'Proxied' : 'DNS only') : '—'}
                 </td>
                 <td css={tw`px-3 py-3 text-xs text-neutral-500`}>
                     {new Date(record.createdAt).toLocaleString('pt-BR')}
@@ -72,17 +73,25 @@ const CreateDnsForm = ({
     defaultType,
     zones,
     primaryIp,
+    primaryPort,
+    primaryAlias,
+    srv,
     canCreate,
+    initialSubdomain,
 }: {
     onCreate: (data: { zoneId: number; subdomain: string; type: string; content?: string; proxied?: boolean }) => Promise<void>;
     allowedTypes: string[];
     defaultType: string;
     zones: { id: number; domain: string }[];
     primaryIp: string | null;
+    primaryPort: number | null;
+    primaryAlias: string | null;
+    srv: DnsSrvTemplate;
     canCreate: boolean;
+    initialSubdomain?: string;
 }) => {
     const [zoneId, setZoneId] = useState(zones[0]?.id?.toString() || '');
-    const [subdomain, setSubdomain] = useState('');
+    const [subdomain, setSubdomain] = useState(initialSubdomain || '');
     const [type, setType] = useState(defaultType);
     const [content, setContent] = useState('');
     const [proxied, setProxied] = useState(false);
@@ -98,8 +107,20 @@ const CreateDnsForm = ({
         setType(defaultType);
     }, [defaultType]);
 
+    useEffect(() => {
+        if (initialSubdomain) {
+            setSubdomain(initialSubdomain);
+        }
+    }, [initialSubdomain]);
+
     const selectedZone = zones.find((zone) => zone.id.toString() === zoneId);
-    const previewName = subdomain && selectedZone ? `${subdomain}.${selectedZone.domain}` : '';
+    const srvTarget = primaryAlias || primaryIp || '—';
+    const previewName =
+        subdomain && selectedZone
+            ? type === 'SRV'
+                ? `${srv.service}.${srv.protocol}.${subdomain}.${selectedZone.domain}`
+                : `${subdomain}.${selectedZone.domain}`
+            : '';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -196,6 +217,16 @@ const CreateDnsForm = ({
                             css={tw`font-mono text-sm`}
                         />
                     </div>
+                ) : type === 'SRV' ? (
+                    <div>
+                        <Label css={tw`text-xs mb-1`}>Alocação primária</Label>
+                        <Input
+                            type={'text'}
+                            value={primaryPort ? `${srvTarget}:${primaryPort}` : srvTarget}
+                            readOnly
+                            css={tw`font-mono text-sm opacity-75`}
+                        />
+                    </div>
                 ) : (
                     <div>
                         <Label css={tw`text-xs mb-1`}>IP (alocação primária)</Label>
@@ -211,6 +242,14 @@ const CreateDnsForm = ({
                 </label>
             )}
 
+            {type === 'SRV' && (
+                <p css={tw`text-xs text-neutral-500`}>
+                    Serviço: <span css={tw`font-mono text-neutral-300`}>{srv.service}.{srv.protocol}</span>
+                    {' · '}
+                    Prioridade: {srv.priority} · Peso: {srv.weight}
+                </p>
+            )}
+
             {previewName && (
                 <p css={tw`text-xs text-neutral-400`}>
                     Preview: <span css={tw`font-mono text-neutral-200`}>{previewName}</span>
@@ -219,6 +258,12 @@ const CreateDnsForm = ({
                     ) : null}
                     {type === 'CNAME' && content ? (
                         <span> → <span css={tw`font-mono`}>{content}</span></span>
+                    ) : null}
+                    {type === 'SRV' && primaryPort ? (
+                        <span>
+                            {' '}
+                            → <span css={tw`font-mono`}>{srv.priority} {srv.weight} {primaryPort} {srvTarget}</span>
+                        </span>
                     ) : null}
                 </p>
             )}
@@ -238,10 +283,14 @@ const CreateDnsForm = ({
 };
 
 export default () => {
+    const location = useLocation();
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures);
     const { data, error, isValidating, mutate } = getServerDnsRecords(uuid);
     const { clearFlashes, addFlash, clearAndAddHttpError } = useFlash();
+
+    const query = new URLSearchParams(location.search);
+    const initialSubdomain = query.get('subdomain') || undefined;
 
     const hasDnsFeature = eggFeatures.includes('dns');
 
@@ -315,7 +364,11 @@ export default () => {
                     defaultType={data.meta.defaultType}
                     zones={data.meta.zones}
                     primaryIp={data.meta.primaryIp}
+                    primaryPort={data.meta.primaryPort}
+                    primaryAlias={data.meta.primaryAlias}
+                    srv={data.meta.srv}
                     canCreate={data.meta.canCreate}
+                    initialSubdomain={initialSubdomain}
                 />
             </TitledGreyBox>
 

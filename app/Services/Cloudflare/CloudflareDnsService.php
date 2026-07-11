@@ -39,6 +39,8 @@ class CloudflareDnsService
             ->orderByDesc('created_at')
             ->get();
 
+        $allocation = $server->allocation;
+
         return [
             'records' => $records,
             'meta' => [
@@ -51,7 +53,15 @@ class CloudflareDnsService
                     'domain' => $zone->domain,
                 ])->values()->all(),
                 'can_create' => $zones->isNotEmpty() && $records->count() < $profile->max_records_per_server,
-                'primary_ip' => $server->allocation?->ip,
+                'primary_ip' => $allocation?->ip,
+                'primary_port' => $allocation?->port,
+                'primary_alias' => $allocation?->ip_alias,
+                'srv' => [
+                    'service' => $profile->srvService(),
+                    'protocol' => $profile->srvProtocol(),
+                    'priority' => $profile->srv_priority,
+                    'weight' => $profile->srv_weight,
+                ],
             ],
         ];
     }
@@ -71,9 +81,21 @@ class CloudflareDnsService
 
         $this->assertCanCreate($server, $profile, $type, $subdomain, $zone);
 
-        $content = $this->resolveContent($server, $type, $data['content'] ?? null);
-        $proxied = $type === EggDnsProfile::TYPE_CNAME ? (bool) ($data['proxied'] ?? $zone->default_proxied) : false;
+        $proxied = false;
+        $srvPayload = null;
         $recordName = $this->buildRecordName($subdomain, $zone->domain);
+        $content = '';
+
+        if ($type === EggDnsProfile::TYPE_SRV) {
+            $srvPayload = $this->buildSrvPayload($server, $profile, $subdomain, $zone->domain);
+            $recordName = $srvPayload['name'];
+            $content = $srvPayload['content'];
+        } else {
+            $content = $this->resolveContent($server, $type, $data['content'] ?? null);
+            $proxied = $type === EggDnsProfile::TYPE_CNAME
+                ? (bool) ($data['proxied'] ?? $zone->default_proxied)
+                : false;
+        }
 
         $remote = $this->apiService->createDnsRecord(
             $apiToken,
@@ -82,21 +104,34 @@ class CloudflareDnsService
             $recordName,
             $content,
             1,
-            $proxied
+            $proxied,
+            $srvPayload['data'] ?? null
         );
 
-        return CloudflareDnsRecord::create([
+        $attributes = [
             'server_id' => $server->id,
             'zone_id' => $zone->id,
             'cloudflare_record_id' => $remote['id'],
             'type' => $type,
             'subdomain' => $subdomain,
-            'name' => $remote['name'] ?? $recordName,
+            'name' => $remote['name'] ?? ($srvPayload['full_name'] ?? $recordName),
             'content' => $content,
             'ttl' => (int) ($remote['ttl'] ?? 1),
             'proxied' => (bool) ($remote['proxied'] ?? $proxied),
             'created_by' => $user->id,
-        ]);
+        ];
+
+        if ($type === EggDnsProfile::TYPE_SRV && $srvPayload) {
+            $attributes = array_merge($attributes, [
+                'srv_service' => $srvPayload['data']['service'],
+                'srv_protocol' => $srvPayload['data']['proto'],
+                'srv_port' => $srvPayload['data']['port'],
+                'srv_priority' => $srvPayload['data']['priority'],
+                'srv_weight' => $srvPayload['data']['weight'],
+            ]);
+        }
+
+        return CloudflareDnsRecord::create($attributes);
     }
 
     /**
@@ -132,6 +167,92 @@ class CloudflareDnsService
         }
 
         return $profile;
+    }
+
+    /**
+     * @return array{name: string, full_name: string, content: string, data: array<string, mixed>}
+     *
+     * @throws DisplayException
+     */
+    public function buildSrvPayload(
+        Server $server,
+        EggDnsProfile $profile,
+        string $subdomain,
+        string $domain
+    ): array {
+        $service = $profile->srvService();
+        $protocol = $profile->srvProtocol();
+        $priority = $profile->srv_priority;
+        $weight = $profile->srv_weight;
+        $port = $this->resolveAllocationPort($server);
+        $target = $this->resolveSrvTarget($server);
+
+        $recordName = "{$service}.{$protocol}.{$subdomain}";
+        $fullName = "{$recordName}.{$domain}";
+        $content = "{$priority} {$weight} {$port} {$target}";
+
+        return [
+            'name' => $recordName,
+            'full_name' => $fullName,
+            'content' => $content,
+            'data' => [
+                'service' => $service,
+                'proto' => $protocol,
+                'name' => $subdomain,
+                'priority' => $priority,
+                'weight' => $weight,
+                'port' => $port,
+                'target' => $target,
+            ],
+        ];
+    }
+
+    /**
+     * @throws DisplayException
+     */
+    public function resolveAllocationIp(Server $server): string
+    {
+        $ip = $server->allocation?->ip;
+        if (!$ip) {
+            throw new DisplayException('Não foi possível determinar o IP da alocação primária deste servidor.');
+        }
+
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            throw new DisplayException('A alocação primária deste servidor não possui um endereço IPv4 válido para registros do tipo A.');
+        }
+
+        return $ip;
+    }
+
+    /**
+     * @throws DisplayException
+     */
+    public function resolveAllocationPort(Server $server): int
+    {
+        $port = $server->allocation?->port;
+        if (!$port) {
+            throw new DisplayException('Não foi possível determinar a porta da alocação primária deste servidor.');
+        }
+
+        return (int) $port;
+    }
+
+    /**
+     * @throws DisplayException
+     */
+    public function resolveSrvTarget(Server $server): string
+    {
+        $allocation = $server->allocation;
+        if (!$allocation) {
+            throw new DisplayException('Não foi possível determinar a alocação primária deste servidor.');
+        }
+
+        $alias = trim((string) $allocation->ip_alias);
+        if ($alias !== '' && preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i', $alias)) {
+            return rtrim($alias, '.');
+        }
+
+        return $this->resolveAllocationIp($server);
     }
 
     private function resolveAccount(): CloudflareAccount
@@ -221,16 +342,7 @@ class CloudflareDnsService
     private function resolveContent(Server $server, string $type, ?string $content): string
     {
         if ($type === EggDnsProfile::TYPE_A) {
-            $ip = $server->allocation?->ip;
-            if (!$ip) {
-                throw new DisplayException('Não foi possível determinar o IP da alocação primária deste servidor.');
-            }
-
-            if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                throw new DisplayException('A alocação primária deste servidor não possui um endereço IPv4 válido para registros do tipo A.');
-            }
-
-            return $ip;
+            return $this->resolveAllocationIp($server);
         }
 
         $content = trim((string) $content);

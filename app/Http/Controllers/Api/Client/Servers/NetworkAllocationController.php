@@ -27,6 +27,7 @@ class NetworkAllocationController extends ClientApiController
         protected readonly ConnectionInterface $connection,
         private FindAssignableAllocationService $assignableAllocationService,
         private ServerRepository $serverRepository,
+        private \Pterodactyl\Services\Cloudflare\CloudflareDnsSyncService $dnsSyncService,
     ) {
         parent::__construct();
     }
@@ -75,6 +76,9 @@ class NetworkAllocationController extends ClientApiController
     public function setPrimary(SetPrimaryAllocationRequest $request, Server $server, Allocation $allocation): array
     {
         $this->serverRepository->update($server->id, ['allocation_id' => $allocation->id]);
+
+        $server->refresh()->load('allocation');
+        $this->dnsSyncService->syncForServer($server);
 
         Activity::event('server:allocation.primary')
             ->subject($allocation)

@@ -48,7 +48,7 @@ const Wrapper = styled.div<{ $viewport?: boolean; $fallback?: boolean }>`
 const BackgroundLayer = styled.div<{ $imageUrl: string; $ready: boolean }>`
     position: absolute;
     inset: 0;
-    background-image: linear-gradient(to bottom, rgba(9, 9, 17, 0.55), rgba(9, 9, 17, 0.72)),
+    background-image: linear-gradient(to bottom, rgba(9, 9, 17, 0.62), rgba(9, 9, 17, 0.8)),
         url('${(props) => props.$imageUrl}');
     background-size: cover;
     background-position: center;

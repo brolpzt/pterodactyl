@@ -32,8 +32,8 @@ const barInnerStyles = (scrolled: boolean) => css`
     ${glassHeaderInner};
     overflow: visible;
     transition: padding 300ms ease;
-    padding-top: ${scrolled ? '0.5rem' : '0.75rem'};
-    padding-bottom: ${scrolled ? '0.5rem' : '0.75rem'};
+    padding-top: ${scrolled ? '0.5rem' : '0.625rem'};
+    padding-bottom: ${scrolled ? '0.5rem' : '0.625rem'};
 
     @media (min-width: 640px) {
         padding-top: ${scrolled ? '0.625rem' : '1rem'};
@@ -42,7 +42,7 @@ const barInnerStyles = (scrolled: boolean) => css`
 `;
 
 const titleStyles = (scrolled: boolean) => css`
-    ${tw`text-white font-header font-semibold uppercase whitespace-nowrap truncate m-0 transition-all duration-300 max-w-[140px] sm:max-w-[280px]`};
+    ${tw`text-white font-header font-semibold uppercase whitespace-nowrap truncate m-0 transition-all duration-300 max-w-[200px] lg:max-w-[280px]`};
     font-size: ${scrolled ? '1rem' : '1.125rem'};
 
     @media (min-width: 640px) {
@@ -52,9 +52,24 @@ const titleStyles = (scrolled: boolean) => css`
 
 const metaStyles = (scrolled: boolean) => css`
     ${navText};
-    ${tw`flex items-center whitespace-nowrap m-0 transition-all duration-300`};
+    ${tw`flex flex-wrap items-center gap-x-2 gap-y-1 m-0 transition-all duration-300`};
     font-size: ${scrolled ? '12px' : '13px'};
-    margin-top: ${scrolled ? '0.125rem' : '0.125rem'};
+`;
+
+const mobilePowerButtons = css`
+    & .button {
+        min-height: 2.25rem;
+        padding: 0 0.65rem;
+        font-size: 0.75rem;
+    }
+
+    @media (min-width: 640px) {
+        & .button {
+            min-height: var(--btn-min-height);
+            padding: var(--btn-padding);
+            font-size: var(--font-size-btn);
+        }
+    }
 `;
 
 const ServerStatusBar = ({
@@ -81,25 +96,25 @@ const ServerStatusBar = ({
             <Fade timeout={150} in appear>
                 <div css={barInnerStyles(scrolled)}>
                     <ContentContainer css={tw`w-full`}>
-                        <div tw="flex w-full flex-nowrap items-center justify-start overflow-visible">
-                            <div tw="flex items-center flex-shrink-0 mr-4 sm:mr-6 pr-4 sm:pr-6 border-r border-neutral-700/40 min-w-0">
+                        <div tw="flex w-full flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start overflow-visible">
+                            <div tw="hidden sm:flex items-center flex-shrink-0 sm:mr-4 md:mr-6 sm:pr-4 md:pr-6 border-r border-neutral-700/40 min-w-0">
                                 <div tw="min-w-0">
-                                    <h1 css={titleStyles(scrolled)}>
+                                    <h1 css={[titleStyles(scrolled), tw`hidden md:block`]}>
                                         {name}
                                     </h1>
                                     <p css={metaStyles(scrolled)}>
                                         <span
-                                            css={tw`font-mono bg-[var(--hg-primary)] text-white px-1.5 py-0.5 rounded mr-2 text-[12px] flex-shrink-0 font-semibold`}
+                                            css={tw`font-mono bg-[var(--hg-primary)] text-white px-1.5 py-0.5 rounded text-[11px] sm:text-[12px] flex-shrink-0 font-semibold`}
                                         >
                                             {id}
                                         </span>
                                         <span
-                                            css={[navText, tw`cursor-pointer hover:text-white transition-colors duration-150 flex items-center flex-shrink-0`]}
+                                            css={[navText, tw`cursor-pointer hover:text-white transition-colors duration-150 flex items-center min-w-0 truncate max-w-[10rem] md:max-w-none`]}
                                             onClick={() => onCopyText(address, 'IP')}
                                             title="Clique para copiar"
                                         >
                                             {address}
-                                            <FontAwesomeIcon icon={faCopy} css={[navText, tw`ml-1.5 text-[10px] opacity-60`]} />
+                                            <FontAwesomeIcon icon={faCopy} css={[navText, tw`ml-1.5 text-[10px] opacity-60 flex-shrink-0`]} />
                                         </span>
                                     </p>
                                 </div>
@@ -122,8 +137,8 @@ const ServerStatusBar = ({
                                 </div>
                             </div>
 
-                            <div tw="flex items-center ml-auto flex-shrink-0 pl-4 overflow-visible py-1">
-                                <PowerButtons />
+                            <div tw="flex items-center w-full sm:w-auto sm:ml-auto flex-shrink-0 sm:pl-4 overflow-visible py-0.5 sm:py-1">
+                                <PowerButtons css={[tw`w-full sm:w-auto`, mobilePowerButtons]} />
                             </div>
                         </div>
                     </ContentContainer>

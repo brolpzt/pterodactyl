@@ -13,6 +13,7 @@ interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
 
 const Root = styled.div<{ $axis: ScrollAxis }>`
     position: relative;
+    min-height: 0;
     ${(p) => p.$axis === 'y' && tw`overflow-x-hidden`}
     ${(p) => p.$axis === 'x' && tw`overflow-y-hidden overflow-x-auto`}
     ${(p) => p.$axis === 'both' && tw`overflow-auto`}
@@ -39,7 +40,9 @@ const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
         return (
             <Root ref={setRefs} $axis={axis} {...props}>
                 {children}
-                {(axis === 'y' || axis === 'both') && <OverlayScrollbar target={element} variant={variant} />}
+                {(axis === 'y' || axis === 'both') && (
+                    <OverlayScrollbar target={element} variant={variant} anchored />
+                )}
             </Root>
         );
     }

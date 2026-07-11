@@ -5,8 +5,8 @@ export const pageFallbackBackground = css`
     background-color: var(--hg-bg-fallback);
     background-image: linear-gradient(
         165deg,
-        color-mix(in srgb, var(--hg-bg-fallback) 80%, #ffffff 20%) 0%,
+        color-mix(in srgb, var(--hg-bg-fallback) 86%, #ffffff 14%) 0%,
         var(--hg-bg-fallback) 45%,
-        color-mix(in srgb, var(--hg-bg-fallback) 90%, #000000 10%) 100%
+        color-mix(in srgb, var(--hg-bg-fallback) 92%, #000000 8%) 100%
     );
 `;

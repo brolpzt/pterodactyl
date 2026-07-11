@@ -1,6 +1,17 @@
 import { css } from 'styled-components/macro';
 
 export const HEADER_HEIGHT = '3.5rem';
+export const HEADER_HEIGHT_FALLBACK_PX = 56;
+
+/** Altura em px do header fixo (`.hg-glass-header`). */
+export const getFixedHeaderHeight = (): number => {
+    if (typeof document === 'undefined') {
+        return HEADER_HEIGHT_FALLBACK_PX;
+    }
+
+    const header = document.querySelector('.hg-glass-header');
+    return header ? header.getBoundingClientRect().height : HEADER_HEIGHT_FALLBACK_PX;
+};
 export const SIDEBAR_WIDTH_EXPANDED = 240;
 export const SIDEBAR_WIDTH_COLLAPSED = 70;
 

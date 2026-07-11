@@ -10,6 +10,7 @@ import GreyRowBox from '@/components/elements/GreyRowBox';
 import Spinner from '@/components/elements/Spinner';
 import styled from 'styled-components/macro';
 import isEqual from 'react-fast-compare';
+import { hostgamerColors } from '@/lib/hostgamerTheme';
 
 // Determines if the current value is in an alarm threshold so we can show it in red rather
 // than the more faded default style.
@@ -27,29 +28,29 @@ const IconDescription = styled.p<{ $alarm: boolean }>`
     ${(props) => (props.$alarm ? tw`text-white` : tw`text-neutral-400`)};
 `;
 
-const statusBarGlow = ($status: ServerPowerState | undefined) => {
+const statusColor = ($status: ServerPowerState | undefined) => {
     if (!$status || $status === 'offline') {
-        return css`
-            background-color: #ef4444;
-            box-shadow: 0 0 20px -4px rgba(239, 68, 68, 0.9);
-        `;
+        return hostgamerColors.statusOffline;
     }
 
     if ($status === 'running') {
-        return css`
-            background-color: #22c55e;
-            box-shadow: 0 0 20px -4px rgba(34, 197, 94, 0.9);
-        `;
+        return hostgamerColors.statusOnline;
     }
 
+    return hostgamerColors.statusStarting;
+};
+
+const statusBarStyles = ($status: ServerPowerState | undefined) => {
+    const color = statusColor($status);
+
     return css`
-        background-color: #facc15;
-        box-shadow: 0 0 20px -4px rgba(250, 204, 21, 0.9);
+        background-color: ${color};
+        box-shadow: ${hostgamerColors.statusGlow} ${color}d9;
     `;
 };
 
 const StatusIndicatorBox = styled(GreyRowBox).attrs({ $hoverable: false })<{ $status: ServerPowerState | undefined }>`
-    ${tw`grid grid-cols-12 gap-4 relative text-sm`};
+    ${tw`grid grid-cols-12 gap-4 relative text-sm overflow-visible`};
 
     & .icon {
         ${tw`w-12 p-2.5 text-sm`};
@@ -60,7 +61,7 @@ const StatusIndicatorBox = styled(GreyRowBox).attrs({ $hoverable: false })<{ $st
         height: calc(100% - 0.5rem);
         opacity: 1;
 
-        ${({ $status }) => statusBarGlow($status)};
+        ${({ $status }) => statusBarStyles($status)};
     }
 `;
 

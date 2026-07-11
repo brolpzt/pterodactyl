@@ -6,12 +6,17 @@ import {
     scrollbarTrackWidth,
     ScrollbarVariant,
 } from '@/assets/css/scrollTheme';
+import { getFixedHeaderHeight } from '@/lib/sidebarLayout';
 import useOverlayScrollbar, { OverlayScrollTarget } from '@/plugins/useOverlayScrollbar';
 
 interface Props {
     target: OverlayScrollTarget;
     variant?: ScrollbarVariant;
     fixed?: boolean;
+    /** Fixa o trilho na borda visível do alvo (sidebar, terminal, etc.). */
+    anchored?: boolean;
+    /** Inicia o trilho abaixo do header fixo (scroll da página). */
+    belowHeader?: boolean;
     className?: string;
 }
 
@@ -46,10 +51,76 @@ const Thumb = styled.div<{ $hovered: boolean }>`
     }
 `;
 
-const OverlayScrollbar = ({ target, variant = 'default', fixed = false, className }: Props) => {
+const OverlayScrollbar = ({
+    target,
+    variant = 'default',
+    fixed = false,
+    anchored = false,
+    belowHeader = false,
+    className,
+}: Props) => {
     const [hovered, setHovered] = useState(false);
-    const { metrics, onThumbMouseDown, onTrackMouseDown } = useOverlayScrollbar(target);
+    const [anchor, setAnchor] = useState({ top: 0, right: 0, height: 0 });
+    const [headerOffset, setHeaderOffset] = useState(() => (belowHeader ? getFixedHeaderHeight() : 0));
+    const { metrics, onThumbMouseDown, onTrackMouseDown } = useOverlayScrollbar(target, {
+        viewportTop: belowHeader ? headerOffset : 0,
+    });
     const trackWidth = scrollbarTrackWidth(variant);
+    const useAnchoredTrack = anchored && target && target !== 'document';
+
+    useEffect(() => {
+        if (!belowHeader) {
+            return;
+        }
+
+        const updateHeaderOffset = () => setHeaderOffset(getFixedHeaderHeight());
+
+        updateHeaderOffset();
+        window.addEventListener('resize', updateHeaderOffset);
+
+        const header = document.querySelector('.hg-glass-header');
+        const observer = typeof ResizeObserver !== 'undefined' && header
+            ? new ResizeObserver(updateHeaderOffset)
+            : undefined;
+        if (header) {
+            observer?.observe(header);
+        }
+
+        return () => {
+            window.removeEventListener('resize', updateHeaderOffset);
+            observer?.disconnect();
+        };
+    }, [belowHeader]);
+
+    useEffect(() => {
+        if (!useAnchoredTrack || !target || target === 'document') {
+            return;
+        }
+
+        const updateAnchor = () => {
+            const rect = target.getBoundingClientRect();
+            setAnchor({
+                top: rect.top,
+                right: window.innerWidth - rect.right,
+                height: rect.height,
+            });
+        };
+
+        updateAnchor();
+        target.addEventListener('scroll', updateAnchor, { passive: true });
+        window.addEventListener('scroll', updateAnchor, { passive: true });
+        window.addEventListener('resize', updateAnchor);
+
+        const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateAnchor) : undefined;
+        observer?.observe(target);
+
+        return () => {
+            target.removeEventListener('scroll', updateAnchor);
+            window.removeEventListener('scroll', updateAnchor);
+            window.removeEventListener('resize', updateAnchor);
+            observer?.disconnect();
+        };
+    }, [target, useAnchoredTrack]);
 
     useEffect(() => {
         if (!hovered) {
@@ -66,12 +137,27 @@ const OverlayScrollbar = ({ target, variant = 'default', fixed = false, classNam
         return null;
     }
 
+    const trackStyle = useAnchoredTrack
+        ? {
+              top: anchor.top,
+              right: anchor.right,
+              height: anchor.height,
+          }
+        : belowHeader && fixed
+            ? {
+                  top: headerOffset,
+                  height: `calc(100vh - ${headerOffset}px)`,
+              }
+            : fixed
+                ? undefined
+                : { height: metrics.trackHeight };
+
     return (
         <Track
             className={className}
             $width={trackWidth}
-            $fixed={fixed}
-            style={fixed ? undefined : { height: metrics.trackHeight }}
+            $fixed={fixed || useAnchoredTrack}
+            style={trackStyle}
             onMouseDown={(event) => onTrackMouseDown(event, metrics.trackHeight)}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
@@ -91,6 +177,8 @@ const OverlayScrollbar = ({ target, variant = 'default', fixed = false, classNam
     );
 };
 
-export const DocumentOverlayScrollbar = () => <OverlayScrollbar target={'document'} fixed variant={'default'} />;
+export const DocumentOverlayScrollbar = () => (
+    <OverlayScrollbar target={'document'} fixed belowHeader variant={'default'} />
+);
 
 export default OverlayScrollbar;

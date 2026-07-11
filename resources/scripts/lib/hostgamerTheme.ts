@@ -2,7 +2,7 @@
 export const hostgamerColors = {
     bg: '#090911',
     /** Fundo das páginas de servidor sem imagem de background. */
-    serverBgFallback: '#252d45',
+    serverBgFallback: '#1f2435',
     surface: '#111420',
     text: '#7d7d8e',
     textMuted: '#7d7d8e',
@@ -27,6 +27,11 @@ export const hostgamerColors = {
     btnGlow: '0 0 26px -8px #2258ffd9',
     btnDangerGlow: '0 0 26px -8px #dc2626d9',
     danger: '#dc2626',
+    /** Indicador de status na lista de servidores. */
+    statusOnline: '#22c55e',
+    statusOffline: '#ef4444',
+    statusStarting: '#facc15',
+    statusGlow: '0 0 26px -8px',
     button: {
         fontSize: '0.875rem',
         lineHeight: '1',

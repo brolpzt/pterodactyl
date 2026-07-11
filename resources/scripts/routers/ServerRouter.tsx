@@ -19,6 +19,7 @@ import { useLocation } from 'react-router';
 import ConflictStateRenderer from '@/components/server/ConflictStateRenderer';
 import PermissionRoute from '@/components/elements/PermissionRoute';
 import routes from '@/routers/routes';
+import { isCs16Server } from '@/lib/isCs16Server';
 
 import Sidebar from '@/components/Sidebar';
 import { MainContent } from '@/components/layout/MainContent';
@@ -91,9 +92,11 @@ export default () => {
 
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
     const isTs3 = eggId === 12;
+    const isCs16 = isCs16Server(gamedig, eggName);
     const isBlockedRouteForTs3 = (path: string) =>
         path === '/backups' || ((!rootAdmin) && (path === '/console' || path === '/files' || path === '/files/:action(edit|new)'));
     const isTs3OnlyRoute = (path: string) => path.startsWith('/ts3');
+    const isAmxxOnlyRoute = (path: string) => path.startsWith('/amxx');
     const isRootAdminOnlyTs3Route = (path: string) => path === '/ts3/query';
 
     return (
@@ -160,6 +163,7 @@ export default () => {
                                                 {routes.server.map(({ path, permission, component: Component }) => (
                                                     (isTs3 && isBlockedRouteForTs3(path)) ||
                                                     (!isTs3 && isTs3OnlyRoute(path)) ||
+                                                    (!isCs16 && isAmxxOnlyRoute(path)) ||
                                                     (isTs3 && isRootAdminOnlyTs3Route(path) && !rootAdmin) ? (
                                                         <Route key={path} path={to(path)} exact>
                                                             <Redirect to={to('/')} />

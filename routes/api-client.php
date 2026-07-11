@@ -186,4 +186,15 @@ Route::group([
         Route::post('/snapshots/{snapshotUuid}/restore', [Client\Servers\Ts3QueryController::class, 'restoreSnapshot']);
         Route::delete('/snapshots/{snapshotUuid}', [Client\Servers\Ts3QueryController::class, 'deleteSnapshot']);
     });
+
+    Route::group(['prefix' => '/amxx'], function () {
+        Route::get('/overview', [Client\Servers\AmxxController::class, 'overview']);
+        Route::get('/admins', [Client\Servers\AmxxController::class, 'listAdmins']);
+        Route::post('/admins', [Client\Servers\AmxxController::class, 'createAdmin']);
+        Route::put('/admins/{adminId}', [Client\Servers\AmxxController::class, 'updateAdmin']);
+        Route::delete('/admins/{adminId}', [Client\Servers\AmxxController::class, 'deleteAdmin']);
+        Route::get('/bans', [Client\Servers\AmxxController::class, 'listBans']);
+        Route::post('/bans', [Client\Servers\AmxxController::class, 'createBan']);
+        Route::delete('/bans/{banId}', [Client\Servers\AmxxController::class, 'deleteBan'])->where('banId', '.+');
+    });
 });

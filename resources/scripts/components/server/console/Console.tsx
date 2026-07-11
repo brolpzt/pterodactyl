@@ -240,7 +240,7 @@ export default () => {
                         })}
                     >
                         <div className={styles.xtermHost} ref={ref} />
-                        <OverlayScrollbar target={xtermViewport} variant={'console'} />
+                        <OverlayScrollbar target={xtermViewport} variant={'console'} anchored />
                     </div>
                     {canSendCommands && (
                         <div className={classNames('relative', styles.overflows_container)}>

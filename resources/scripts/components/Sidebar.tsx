@@ -24,6 +24,7 @@ import {
     faLifeRing,
     faReceipt,
     faArrowLeft,
+    faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
@@ -35,6 +36,7 @@ import routes from '@/routers/routes';
 import { useTranslation } from 'react-i18next';
 import { glassContentLayer, glassSidebarShell } from '@/assets/css/glassPanel';
 import ScrollArea from '@/components/elements/ScrollArea';
+import { isCs16Server } from '@/lib/isCs16Server';
 import { HOSTGAMER_LOGO_SRC } from '@/lib/branding';
 import { HEADER_HEIGHT, sidebarWidthRule } from '@/lib/sidebarLayout';
 
@@ -210,9 +212,12 @@ const SidebarScroll = ({ children, ...props }: React.HTMLAttributes<HTMLDivEleme
 const ServerLinks = () => {
     const internalId = ServerContext.useStoreState((state) => state.server.data?.internalId);
     const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
+    const gamedig = ServerContext.useStoreState((state) => state.server.data?.gamedig);
+    const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
     const { t } = useTranslation('strings');
     const isTs3 = eggId === 12;
+    const isCs16 = isCs16Server(gamedig, eggName);
 
     const match = useRouteMatch<{ id: string }>('/server/:id');
 
@@ -257,6 +262,12 @@ const ServerLinks = () => {
             case 'Logs': return faListUl;
             case 'TS3 Viewer': return faExternalLinkAlt;
             case 'Query Terminal': return faTerminal;
+            case 'server.amxx':
+            case 'AMXX Web Admin': return faUserShield;
+            case 'server.amxx.admins':
+            case 'AMXX Admins': return faUsers;
+            case 'server.amxx.bans':
+            case 'AMXX Bans': return faShieldAlt;
             default: return faLayerGroup;
         }
     };
@@ -275,6 +286,23 @@ const ServerLinks = () => {
         '/ts3/html-viewer',
         '/settings',
     ];
+    const cs16RouteOrder = [
+        '/',
+        '/console',
+        '/files',
+        '/amxx',
+        '/amxx/admins',
+        '/amxx/bans',
+        '/addons',
+        '/firewall',
+        '/schedules',
+        '/backups',
+        '/users',
+        '/startup',
+        '/network',
+        '/activity',
+        '/settings',
+    ];
 
     return (
         <>
@@ -282,19 +310,32 @@ const ServerLinks = () => {
             {routes.server
                 .filter((route) => (isTs3
                     ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/activity' || route.path === '/settings' || route.path === '/console' || route.path === '/files'
-                    : !route.path.startsWith('/ts3')))
+                    : isCs16
+                    ? !route.path.startsWith('/ts3')
+                    : !route.path.startsWith('/ts3') && !route.path.startsWith('/amxx')))
                 .filter((route) => !(isTs3 && route.path === '/backups'))
                 .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
                 .filter((route) => route.path !== '/ts3/query' || rootAdmin)
                 .sort((a, b) => {
-                    if (!isTs3) return 0;
+                    if (isTs3) {
+                        const aIndex = ts3RouteOrder.indexOf(a.path);
+                        const bIndex = ts3RouteOrder.indexOf(b.path);
+                        const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+                        const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
 
-                    const aIndex = ts3RouteOrder.indexOf(a.path);
-                    const bIndex = ts3RouteOrder.indexOf(b.path);
-                    const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-                    const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+                        return safeA - safeB;
+                    }
 
-                    return safeA - safeB;
+                    if (isCs16) {
+                        const aIndex = cs16RouteOrder.indexOf(a.path);
+                        const bIndex = cs16RouteOrder.indexOf(b.path);
+                        const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+                        const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+
+                        return safeA - safeB;
+                    }
+
+                    return 0;
                 })
                 .filter((route) => !!route.name)
                 .map((route) => (

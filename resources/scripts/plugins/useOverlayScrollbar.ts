@@ -33,7 +33,15 @@ const setScrollTop = (target: OverlayScrollTarget, value: number) => {
     }
 };
 
-const measure = (target: OverlayScrollTarget): OverlayScrollbarMetrics => {
+export interface UseOverlayScrollbarOptions {
+    /** Deslocamento superior da área visível do trilho (ex.: altura do header fixo). */
+    viewportTop?: number;
+}
+
+const measure = (
+    target: OverlayScrollTarget,
+    viewportTop = 0
+): OverlayScrollbarMetrics => {
     const el = getScrollElement(target);
 
     if (!el || !target) {
@@ -41,7 +49,8 @@ const measure = (target: OverlayScrollTarget): OverlayScrollbarMetrics => {
     }
 
     const scrollHeight = el.scrollHeight;
-    const trackHeight = target === 'document' ? window.innerHeight : el.clientHeight;
+    const trackHeight =
+        target === 'document' ? window.innerHeight - viewportTop : el.clientHeight;
     const scrollTop = getScrollTop(target);
 
     if (scrollHeight <= trackHeight + 1) {
@@ -56,14 +65,15 @@ const measure = (target: OverlayScrollTarget): OverlayScrollbarMetrics => {
     return { visible: true, thumbHeight, thumbTop, trackHeight };
 };
 
-export default (target: OverlayScrollTarget) => {
-    const [metrics, setMetrics] = useState<OverlayScrollbarMetrics>(() => measure(target));
+export default (target: OverlayScrollTarget, options: UseOverlayScrollbarOptions = {}) => {
+    const viewportTop = options.viewportTop ?? 0;
+    const [metrics, setMetrics] = useState<OverlayScrollbarMetrics>(() => measure(target, viewportTop));
     const dragging = useRef(false);
     const dragState = useRef({ startY: 0, startScrollTop: 0 });
 
     const update = useCallback(() => {
-        setMetrics(measure(target));
-    }, [target]);
+        setMetrics(measure(target, viewportTop));
+    }, [target, viewportTop]);
 
     useEffect(() => {
         update();
@@ -92,7 +102,7 @@ export default (target: OverlayScrollTarget) => {
             window.removeEventListener('resize', update);
             observer?.disconnect();
         };
-    }, [target, update]);
+    }, [target, viewportTop, update]);
 
     const scrollToThumbPosition = useCallback(
         (thumbTop: number) => {

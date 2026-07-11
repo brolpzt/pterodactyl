@@ -10,6 +10,7 @@ export interface GameQueryResult {
     type: string;
     address: string;
     port: number;
+    query_port?: number;
     hostname: string | null;
     map: string | null;
     game: string | null;

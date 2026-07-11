@@ -11,7 +11,7 @@ use Pterodactyl\Exceptions\Service\GameQuery\GameQueryException;
 
 class GameQueryService
 {
-    private const QUERY_TIMEOUT_SECONDS = 3;
+    private const QUERY_TIMEOUT_SECONDS = 5;
 
     public function query(Server $server): array
     {
@@ -22,7 +22,7 @@ class GameQueryService
             );
         }
 
-        $server->loadMissing(['egg', 'allocation']);
+        $server->loadMissing(['egg', 'allocation', 'node', 'variables']);
 
         $gameType = GameDigTypeResolver::resolve(
             $server->egg->gamedig ?? null,
@@ -44,24 +44,77 @@ class GameQueryService
             );
         }
 
-        $host = $allocation->ip;
-        $port = (int) $allocation->port;
+        $target = $this->resolveQueryTarget($server, $allocation);
 
         $gameQ = new GameQ();
         $gameQ->setOption('timeout', self::QUERY_TIMEOUT_SECONDS);
 
-        $gameQ->addServer([
+        $serverConfig = [
             'type' => $gameType,
-            'host' => sprintf('%s:%d', $host, $port),
-        ]);
+            'host' => sprintf('%s:%d', $target['host'], $target['port']),
+        ];
+
+        if ($target['query_port'] !== $target['port']) {
+            $serverConfig['options'] = [
+                'query_port' => $target['query_port'],
+            ];
+        }
+
+        $gameQ->addServer($serverConfig);
 
         $results = $gameQ->process();
         $result = reset($results) ?: [];
 
-        return $this->formatResponse($gameType, $host, $port, $result);
+        return $this->formatResponse($gameType, $target, $result);
     }
 
-    private function formatResponse(string $gameType, string $host, int $port, array $result): array
+    /**
+     * @return array{host: string, port: int, query_port: int}
+     */
+    private function resolveQueryTarget(Server $server, $allocation): array
+    {
+        $port = (int) $allocation->port;
+        $host = $allocation->alias;
+
+        if (!$this->isPublicIp($allocation->ip) && !empty($server->node?->fqdn)) {
+            $host = $server->node->fqdn;
+        }
+
+        $queryPort = $this->resolveQueryPort($server, $port);
+
+        return [
+            'host' => $host,
+            'port' => $port,
+            'query_port' => $queryPort,
+        ];
+    }
+
+    private function resolveQueryPort(Server $server, int $defaultPort): int
+    {
+        foreach ($server->variables as $variable) {
+            if (!in_array($variable->env_variable, ['QUERY_PORT', 'SERVER_QUERY_PORT'], true)) {
+                continue;
+            }
+
+            $value = trim((string) ($variable->server_value ?? ''));
+            if ($value !== '' && ctype_digit($value)) {
+                return (int) $value;
+            }
+        }
+
+        return $defaultPort;
+    }
+
+    private function isPublicIp(string $ip): bool
+    {
+        return filter_var(
+            $ip,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) !== false;
+    }
+
+    private function formatResponse(string $gameType, array $target, array $result): array
     {
         $online = (bool) ($result['gq_online'] ?? false);
         $players = [];
@@ -82,8 +135,9 @@ class GameQueryService
         return [
             'online' => $online,
             'type' => $gameType,
-            'address' => $host,
-            'port' => $port,
+            'address' => $target['host'],
+            'port' => $target['port'],
+            'query_port' => $target['query_port'],
             'hostname' => $result['gq_hostname'] ?? $result['hostname'] ?? null,
             'map' => $result['gq_mapname'] ?? $result['map'] ?? null,
             'game' => $result['gq_gametype'] ?? $result['game'] ?? null,
@@ -92,6 +146,7 @@ class GameQueryService
             'password_protected' => (bool) ($result['gq_password'] ?? $result['password'] ?? false),
             'version' => $result['gq_version'] ?? $result['version'] ?? null,
             'player_list' => $players,
+            'queried_at' => now()->toAtomString(),
         ];
     }
 }

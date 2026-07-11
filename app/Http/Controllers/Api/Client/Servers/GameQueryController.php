@@ -29,6 +29,10 @@ class GameQueryController extends ClientApiController
             return $this->gameQueryService->query($server);
         });
 
+        if (!($attributes['online'] ?? false)) {
+            $this->cache->put($key, $attributes, Carbon::now()->addSeconds(15));
+        }
+
         return [
             'object' => 'game_query',
             'attributes' => $attributes,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import tw from 'twin.macro';
 import { emptyStateText } from '@/assets/css/cardTheme';
@@ -11,10 +11,10 @@ import Input from '@/components/elements/Input';
 import Select from '@/components/elements/Select';
 import { Button } from '@/components/elements/button/index';
 import Can from '@/components/elements/Can';
-import MessageBox from '@/components/MessageBox';
 import { httpErrorToHuman } from '@/api/http';
 import useFlash from '@/plugins/useFlash';
 import { ServerContext } from '@/state/server';
+import { ServerStatus } from '@/state/server';
 import useGameQuery from '@/api/swr/getGameQuery';
 import useAmxxPlayers from '@/api/swr/getAmxxPlayers';
 import getOverview from '@/api/server/amxx/getOverview';
@@ -31,28 +31,66 @@ const DURATION_OPTIONS = [
     { value: '10080', label: '7 dias' },
 ];
 
+const serverStateMessage = (status: ServerStatus): string => {
+    switch (status) {
+        case 'starting':
+            return 'Servidor a iniciar. Aguarde para atualizar os dados em tempo real.';
+        case 'stopping':
+            return 'Servidor a parar.';
+        case 'offline':
+            return 'Servidor offline. Inicie o servidor para atualizar os dados em tempo real.';
+        default:
+            return 'Servidor offline. Inicie o servidor para atualizar os dados em tempo real.';
+    }
+};
+
+const isPlayersUnavailableError = (error: unknown): boolean => {
+    if (!error || typeof error !== 'object' || !('response' in error)) {
+        return false;
+    }
+
+    const response = (error as { response?: { status?: number } }).response;
+    const message = httpErrorToHuman(error).toLowerCase();
+
+    return response?.status === 502
+        || message.includes('online')
+        || message.includes('offline')
+        || message.includes('consola');
+};
+
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const gamedig = ServerContext.useStoreState((state) => state.server.data!.gamedig);
     const eggId = ServerContext.useStoreState((state) => state.server.data!.eggId);
+    const status = ServerContext.useStoreState((state) => state.status.value);
     const queryEnabled = supportsGameQuery(gamedig, eggId);
+    const isServerRunning = status === 'running';
 
-    const { data: query, isLoading: queryLoading } = useGameQuery(queryEnabled);
-    const { data: playersData, error: playersError, isLoading: playersLoading, mutate: refreshPlayers } = useAmxxPlayers();
+    const { data: query, isLoading: queryLoading, error: queryError } = useGameQuery(queryEnabled && isServerRunning);
+    const {
+        data: playersData,
+        error: playersError,
+        isLoading: playersLoading,
+        mutate: refreshPlayers,
+    } = useAmxxPlayers(isServerRunning);
 
     const [overview, setOverview] = useState<AmxxOverview | null>(null);
     const [overviewLoading, setOverviewLoading] = useState(true);
+    const [overviewError, setOverviewError] = useState<string | null>(null);
     const [busyUserId, setBusyUserId] = useState<number | null>(null);
     const [banTarget, setBanTarget] = useState<AmxxConsolePlayer | null>(null);
     const [banMinutes, setBanMinutes] = useState('0');
     const [banReason, setBanReason] = useState('');
     const { clearAndAddHttpError, clearFlashes, addFlash } = useFlash();
 
+    const runtimeStateMessage = useMemo(() => serverStateMessage(status), [status]);
+
     useEffect(() => {
         let cancelled = false;
 
         const loadOverview = async () => {
             setOverviewLoading(true);
+            setOverviewError(null);
             try {
                 const data = await getOverview(uuid);
                 if (!cancelled) {
@@ -60,7 +98,8 @@ export default () => {
                 }
             } catch (err) {
                 if (!cancelled) {
-                    clearAndAddHttpError({ key: 'amxx:web', error: err });
+                    setOverview(null);
+                    setOverviewError(httpErrorToHuman(err));
                 }
             } finally {
                 if (!cancelled) {
@@ -75,6 +114,12 @@ export default () => {
             cancelled = true;
         };
     }, [uuid]);
+
+    useEffect(() => {
+        if (!isServerRunning) {
+            setBanTarget(null);
+        }
+    }, [isServerRunning]);
 
     const onKick = async (player: AmxxConsolePlayer) => {
         clearFlashes('amxx:web');
@@ -131,7 +176,14 @@ export default () => {
     };
 
     const players = playersData?.players ?? [];
-    const statusLoading = queryLoading || playersLoading;
+    const playersOffline = !isServerRunning;
+    const playersRuntimeError = isServerRunning && playersError && isPlayersUnavailableError(playersError);
+    const playersLoadError = playersError && !isPlayersUnavailableError(playersError)
+        ? httpErrorToHuman(playersError)
+        : null;
+    const playersUnavailableMessage = playersOffline
+        ? runtimeStateMessage
+        : 'Não foi possível obter jogadores via consola. Verifique se o processo está ativo.';
 
     return (
         <ServerContentBlock title={'AMXX Web'} showFlashKey={'amxx:web'}>
@@ -139,8 +191,12 @@ export default () => {
 
             <div css={tw`grid gap-4 mb-4 md:grid-cols-2 xl:grid-cols-3`}>
                 <TitledGreyBox title={'Estado do servidor'}>
-                    {statusLoading && !query ? (
+                    {!isServerRunning ? (
+                        <p css={emptyStateText}>{runtimeStateMessage}</p>
+                    ) : queryLoading && !query ? (
                         <Spinner size={'small'} centered />
+                    ) : queryError ? (
+                        <p css={emptyStateText}>Servidor sem resposta à query.</p>
                     ) : query?.online ? (
                         <div css={tw`space-y-2 text-sm text-neutral-200`}>
                             <div><span css={tw`text-neutral-400`}>Hostname:</span> {query.hostname || '—'}</div>
@@ -152,15 +208,20 @@ export default () => {
                             </div>
                         </div>
                     ) : (
-                        <p css={emptyStateText}>Servidor offline ou sem resposta à query.</p>
+                        <p css={emptyStateText}>Servidor sem resposta à query.</p>
                     )}
                 </TitledGreyBox>
 
                 <TitledGreyBox title={'AMXX'}>
                     {overviewLoading ? (
                         <Spinner size={'small'} centered />
+                    ) : overviewError ? (
+                        <p css={emptyStateText}>{overviewError}</p>
                     ) : overview ? (
                         <div css={tw`space-y-2 text-sm text-neutral-200`}>
+                            {!isServerRunning && (
+                                <p css={[emptyStateText, tw`mb-2`]}>{runtimeStateMessage}</p>
+                            )}
                             <div>
                                 <span css={tw`text-neutral-400`}>Instalado:</span>{' '}
                                 {overview.amxx_installed ? 'Sim' : 'Não'}
@@ -187,10 +248,14 @@ export default () => {
                 </TitledGreyBox>
 
                 <TitledGreyBox title={'Consola (status)'}>
-                    {playersLoading && !playersData ? (
+                    {playersOffline ? (
+                        <p css={emptyStateText}>{runtimeStateMessage}</p>
+                    ) : playersLoading && !playersData ? (
                         <Spinner size={'small'} centered />
-                    ) : playersError ? (
-                        <MessageBox type={'warning'}>{httpErrorToHuman(playersError)}</MessageBox>
+                    ) : playersRuntimeError ? (
+                        <p css={emptyStateText}>{playersUnavailableMessage}</p>
+                    ) : playersLoadError ? (
+                        <p css={emptyStateText}>{playersLoadError}</p>
                     ) : (
                         <div css={tw`space-y-2 text-sm text-neutral-200`}>
                             <div>
@@ -217,10 +282,14 @@ export default () => {
             </div>
 
             <TitledGreyBox title={'Jogadores online'}>
-                {playersLoading && players.length === 0 ? (
+                {playersOffline ? (
+                    <p css={emptyStateText}>{runtimeStateMessage}</p>
+                ) : playersLoading && players.length === 0 && !playersRuntimeError ? (
                     <Spinner size={'large'} centered />
-                ) : playersError ? (
-                    <MessageBox type={'warning'}>{httpErrorToHuman(playersError)}</MessageBox>
+                ) : playersRuntimeError ? (
+                    <p css={emptyStateText}>{playersUnavailableMessage}</p>
+                ) : playersLoadError ? (
+                    <p css={emptyStateText}>{playersLoadError}</p>
                 ) : players.length === 0 ? (
                     <p css={emptyStateText}>Nenhum jogador encontrado via consola.</p>
                 ) : (

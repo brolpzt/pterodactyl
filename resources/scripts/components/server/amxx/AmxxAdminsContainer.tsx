@@ -9,7 +9,7 @@ import Label from '@/components/elements/Label';
 import Input from '@/components/elements/Input';
 import Select from '@/components/elements/Select';
 import { Button } from '@/components/elements/button/index';
-import { Alert } from '@/components/elements/alert';
+import MessageBox from '@/components/MessageBox';
 import { httpErrorToHuman } from '@/api/http';
 import { ServerError } from '@/components/elements/ScreenBlock';
 import useFlash from '@/plugins/useFlash';
@@ -247,24 +247,27 @@ export default () => {
             <FlashMessageRender byKey={'amxx:admins'} css={tw`mb-4`} />
 
             {!loading && overview && !overview.wings_reachable && (
-                <Alert type={'danger'} className={'mb-4'}>
-                    O painel não conseguiu comunicar com o node Wings deste servidor. Abra o gestor de ficheiros para
-                    confirmar a ligação antes de gerir admins AMXX.
-                </Alert>
+                <div css={tw`mb-4`}>
+                    <MessageBox type={'error'} title={'Erro'}>
+                        O painel não conseguiu comunicar com o node Wings deste servidor. Abra o gestor de ficheiros para confirmar a ligação antes de gerir admins AMXX.
+                    </MessageBox>
+                </div>
             )}
 
             {!loading && overview?.wings_reachable && !overview.amxx_installed && (
-                <Alert type={'danger'} className={'mb-4'}>
-                    O AMX Mod X não está instalado neste servidor. Instale pelo menu <strong>Addons</strong> antes de
-                    gerir administradores.
-                </Alert>
+                <div css={tw`mb-4`}>
+                    <MessageBox type={'warning'} title={'Aviso'}>
+                        O AMX Mod X não está instalado neste servidor. Instale pelo menu Addons antes de gerir administradores.
+                    </MessageBox>
+                </div>
             )}
 
             {!loading && overview?.wings_reachable && overview.amxx_installed && !overview.users_ini_exists && (
-                <Alert type={'danger'} className={'mb-4'}>
-                    O ficheiro <code>users.ini</code> ainda não existe. Crie o primeiro admin abaixo ou instale o AMXX
-                    pelo menu Addons.
-                </Alert>
+                <div css={tw`mb-4`}>
+                    <MessageBox type={'warning'} title={'Aviso'}>
+                        O ficheiro users.ini ainda não existe. Crie o primeiro admin abaixo ou instale o AMXX pelo menu Addons.
+                    </MessageBox>
+                </div>
             )}
 
             <TitledGreyBox title={editingId !== null ? 'Editar admin' : 'Adicionar admin'} css={tw`mb-6`}>
@@ -365,10 +368,10 @@ export default () => {
                     <Spinner size={Spinner.Size.LARGE} centered />
                 ) : loadError ? (
                     <ServerError title={'Erro ao carregar admins'} message={loadError} />
+                ) : overview && !overview.wings_reachable ? (
+                    <p css={[emptyStateText, tw`py-4`]}>Aguarde a ligação com o node Wings para visualizar a lista de administradores.</p>
                 ) : overview && !overview.amxx_installed ? (
-                    <p css={[emptyStateText, tw`py-4`]}>
-                        Instale o AMX Mod X para visualizar e gerir a lista de administradores.
-                    </p>
+                    <p css={[emptyStateText, tw`py-4`]}>Instale o AMX Mod X para visualizar e gerir a lista de administradores.</p>
                 ) : admins.length === 0 ? (
                     <p css={[emptyStateText, tw`py-4`]}>Nenhum admin cadastrado.</p>
                 ) : (

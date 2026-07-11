@@ -193,6 +193,25 @@ Route::group(['prefix' => 'fastdl'], function () {
 
 /*
 |--------------------------------------------------------------------------
+| Cloudflare Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/cloudflare
+|
+*/
+Route::group(['prefix' => 'cloudflare'], function () {
+    Route::get('/', [Admin\CloudflareController::class, 'index'])->name('admin.cloudflare');
+    Route::patch('/', [Admin\CloudflareController::class, 'updateAccount'])->name('admin.cloudflare.account');
+
+    Route::get('/zones/new', [Admin\CloudflareController::class, 'createZone'])->name('admin.cloudflare.zones.new');
+    Route::post('/zones/new', [Admin\CloudflareController::class, 'storeZone']);
+    Route::get('/zones/view/{zone:id}', [Admin\CloudflareController::class, 'viewZone'])->name('admin.cloudflare.zones.view');
+    Route::patch('/zones/view/{zone:id}', [Admin\CloudflareController::class, 'updateZone']);
+    Route::delete('/zones/view/{zone:id}', [Admin\CloudflareController::class, 'deleteZone'])->name('admin.cloudflare.zones.delete');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Mount Controller Routes
 |--------------------------------------------------------------------------
 |
@@ -240,6 +259,7 @@ Route::group(['prefix' => 'nests'], function () {
 
     Route::patch('/view/{nest:id}', [Admin\Nests\NestController::class, 'update']);
     Route::patch('/egg/{egg:id}', [Admin\Nests\EggController::class, 'update']);
+    Route::patch('/egg/{egg:id}/dns', [Admin\Nests\EggDnsProfileController::class, 'update'])->name('admin.nests.egg.dns');
     Route::patch('/egg/{egg:id}/scripts', [Admin\Nests\EggScriptController::class, 'update']);
     Route::patch('/egg/{egg:id}/variables/{variable:id}', [Admin\Nests\EggVariableController::class, 'update'])->name('admin.nests.egg.variables.edit');
 

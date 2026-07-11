@@ -164,6 +164,12 @@ Route::group([
         Route::delete('/{rule}', [Client\Servers\FirewallController::class, 'delete']);
     });
 
+    Route::group(['prefix' => '/dns'], function () {
+        Route::get('/', [Client\Servers\DnsController::class, 'index']);
+        Route::post('/', [Client\Servers\DnsController::class, 'store']);
+        Route::delete('/{dnsRecord}', [Client\Servers\DnsController::class, 'delete']);
+    });
+
     Route::post('/fastdl/sync', [Client\Servers\FastDlController::class, 'sync']);
 
     Route::group(['prefix' => '/ts3'], function () {

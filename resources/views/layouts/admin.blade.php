@@ -106,6 +106,11 @@
                                 <i class="fa fa-download"></i> <span>FastDL Nodes</span>
                             </a>
                         </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.cloudflare') ?: 'active' }}">
+                            <a href="{{ route('admin.cloudflare') }}">
+                                <i class="fa fa-cloud"></i> <span>Cloudflare DNS</span>
+                            </a>
+                        </li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.servers') ?: 'active' }}">
                             <a href="{{ route('admin.servers') }}">
                                 <i class="fa fa-server"></i> <span>Servers</span>

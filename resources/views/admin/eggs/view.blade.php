@@ -132,6 +132,9 @@
                                         @if(!in_array('fastdl', $egg->features ?? []))
                                             <option value="fastdl">fastdl</option>
                                         @endif
+                                        @if(!in_array('dns', $egg->features ?? []))
+                                            <option value="dns">dns</option>
+                                        @endif
                                     </select>
                                     <p class="text-muted small">Additional features belonging to the egg. Useful for configuring additional panel modifications.</p>
                                 </div>
@@ -197,6 +200,58 @@
                     <button id="deleteButton" type="submit" name="_method" value="DELETE" class="btn btn-danger btn-sm muted muted-hover">
                         <i class="fa fa-trash-o"></i>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@php($dnsProfile = $egg->dnsProfile)
+<form action="{{ route('admin.nests.egg.dns', $egg->id) }}" method="POST">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Configuração DNS (Cloudflare)</h3>
+                </div>
+                <div class="box-body">
+                    <p class="text-muted">Configure quais tipos de registro DNS os usuários podem criar para servidores deste egg. Adicione a feature <code>dns</code> acima para exibir o menu DNS no painel do cliente.</p>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="checkbox checkbox-primary">
+                                    <input id="pDnsEnabled" name="enabled" type="checkbox" value="1" @if($dnsProfile?->enabled) checked @endif />
+                                    <label for="pDnsEnabled">Habilitar DNS para este egg</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="pDnsAllowedTypes" class="control-label">Tipos permitidos</label>
+                                <select class="form-control" name="allowed_types[]" id="pDnsAllowedTypes" multiple>
+                                    @foreach(['A', 'CNAME'] as $type)
+                                        <option value="{{ $type }}" @if(in_array($type, $dnsProfile?->allowed_types ?? ['A'])) selected @endif>{{ $type }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="pDnsDefaultType" class="control-label">Tipo padrão</label>
+                                <select name="default_type" id="pDnsDefaultType" class="form-control">
+                                    <option value="A" @if(($dnsProfile?->default_type ?? 'A') === 'A') selected @endif>A</option>
+                                    <option value="CNAME" @if(($dnsProfile?->default_type ?? 'A') === 'CNAME') selected @endif>CNAME</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="pDnsMaxRecords" class="control-label">Máximo de registros por servidor</label>
+                                <input type="number" name="max_records_per_server" id="pDnsMaxRecords" class="form-control" min="1" max="50" value="{{ old('max_records_per_server', $dnsProfile?->max_records_per_server ?? 3) }}" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-footer">
+                    {!! csrf_field() !!}
+                    <input type="hidden" name="_method" value="PATCH" />
+                    <button type="submit" class="btn btn-primary btn-sm pull-right">Salvar DNS</button>
                 </div>
             </div>
         </div>

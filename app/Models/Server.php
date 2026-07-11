@@ -387,6 +387,14 @@ class Server extends Model
     }
 
     /**
+     * Returns all Cloudflare DNS records associated with this server.
+     */
+    public function dnsRecords(): HasMany
+    {
+        return $this->hasMany(CloudflareDnsRecord::class);
+    }
+
+    /**
      * Returns all of the activity log entries where the server is the subject.
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany<\Pterodactyl\Models\ActivityLog, $this>

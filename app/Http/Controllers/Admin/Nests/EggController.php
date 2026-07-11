@@ -67,7 +67,7 @@ class EggController extends Controller
     public function view(Egg $egg): View
     {
         return view('admin.eggs.view', [
-            'egg' => $egg,
+            'egg' => $egg->load('dnsProfile'),
             'images' => array_map(
                 fn ($key, $value) => $key === $value ? $value : "$key|$value",
                 array_keys($egg->docker_images),

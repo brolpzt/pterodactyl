@@ -14,6 +14,7 @@ import {
     faListUl,
     faPuzzlePiece,
     faShieldAlt,
+    faGlobe,
     faExternalLinkAlt,
     faUserPlus,
     faPlug,
@@ -207,6 +208,7 @@ const SidebarScroll = ({ children, ...props }: React.HTMLAttributes<HTMLDivEleme
 const ServerLinks = () => {
     const internalId = ServerContext.useStoreState((state) => state.server.data?.internalId);
     const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
+    const eggFeatures = ServerContext.useStoreState((state) => state.server.data?.eggFeatures ?? []);
     const gamedig = ServerContext.useStoreState((state) => state.server.data?.gamedig);
     const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
@@ -250,6 +252,8 @@ const ServerLinks = () => {
             case 'Addons': return faPuzzlePiece;
             case 'server.firewall':
             case 'Firewall': return faShieldAlt;
+            case 'server.dns':
+            case 'DNS': return faGlobe;
             case 'server.amxx.web':
             case 'AMXX Web': return faGamepad;
             case 'server.amxx.admins':
@@ -359,7 +363,8 @@ const ServerLinks = () => {
         .filter((route) => !(isTs3 && route.path === '/backups'))
         .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
         .filter((route) => route.path !== '/ts3/query' || rootAdmin)
-        .filter((route) => !(isCs16 && isAmxxRoute(route.path)));
+        .filter((route) => !(isCs16 && isAmxxRoute(route.path)))
+        .filter((route) => route.path !== '/dns' || eggFeatures.includes('dns'));
 
     const sortedRoutes = isTs3
         ? sortRoutes(filteredRoutes, ts3RouteOrder)

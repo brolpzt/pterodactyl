@@ -164,6 +164,13 @@ export default {
             component: lazy(() => import('@/components/server/firewall/FirewallContainer')),
         },
         {
+            path: '/dns',
+            permission: 'dns.*',
+            name: 'DNS',
+            nameKey: 'server.dns',
+            component: lazy(() => import('@/components/server/dns/DnsContainer')),
+        },
+        {
             path: '/activity',
             permission: 'activity.*',
             name: 'Activity',

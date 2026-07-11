@@ -69,6 +69,10 @@ class Permission extends Model
     public const ACTION_FIREWALL_CREATE = 'firewall.create';
     public const ACTION_FIREWALL_DELETE = 'firewall.delete';
 
+    public const ACTION_DNS_READ = 'dns.read';
+    public const ACTION_DNS_CREATE = 'dns.create';
+    public const ACTION_DNS_DELETE = 'dns.delete';
+
     public const ACTION_AMXX_READ = 'amxx.read';
     public const ACTION_AMXX_KICK = 'amxx.kick';
     public const ACTION_AMXX_BAN = 'amxx.ban';
@@ -225,6 +229,15 @@ class Permission extends Model
                 'read'   => 'Allows a user to view all banned IPs for this server.',
                 'create' => 'Allows a user to ban an IP address from connecting to this server.',
                 'delete' => 'Allows a user to remove an IP ban from this server.',
+            ],
+        ],
+
+        'dns' => [
+            'description' => 'Permissions that control a user\'s ability to manage Cloudflare DNS records for this server.',
+            'keys' => [
+                'read'   => 'Allows a user to view DNS records for this server.',
+                'create' => 'Allows a user to create DNS records for this server.',
+                'delete' => 'Allows a user to remove DNS records from this server.',
             ],
         ],
 

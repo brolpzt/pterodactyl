@@ -4,6 +4,7 @@ namespace Pterodactyl\Models;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
@@ -77,6 +78,7 @@ class Egg extends Model
      */
     public const FEATURE_EULA_POPUP = 'eula';
     public const FEATURE_FASTDL = 'fastdl';
+    public const FEATURE_DNS = 'dns';
 
     /**
      * The table associated with the model.
@@ -293,6 +295,14 @@ class Egg extends Model
     public function variables(): HasMany
     {
         return $this->hasMany(EggVariable::class, 'egg_id');
+    }
+
+    /**
+     * Gets the DNS profile configuration for this egg.
+     */
+    public function dnsProfile(): HasOne
+    {
+        return $this->hasOne(EggDnsProfile::class, 'egg_id');
     }
 
     /**

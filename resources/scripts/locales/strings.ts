@@ -124,7 +124,7 @@ export const stringsEn = {
         votes: '{{count}} votes',
         install_success: 'Workshop item added. Restart the server to apply changes.',
         remove_success: 'Workshop item removed. Restart the server to apply changes.',
-        restart_hint: 'Changes are written to workshop.lua. Restart the server to download new content.',
+        restart_hint: 'Changes are written to garrysmod/lua/autorun/server/workshop.lua. Restart the server to download content. Configure Steam Account Token (GSLT) in Startup if mods do not mount.',
     },
     server_network: {
         dns_cloudflare_title: 'Cloudflare DNS',
@@ -405,7 +405,7 @@ export const stringsPt = {
         votes: '{{count}} votos',
         install_success: 'Item Workshop adicionado. Reinicie o servidor para aplicar.',
         remove_success: 'Item Workshop removido. Reinicie o servidor para aplicar.',
-        restart_hint: 'As alterações são gravadas em workshop.lua. Reinicie o servidor para baixar o conteúdo.',
+        restart_hint: 'As alterações são gravadas em garrysmod/lua/autorun/server/workshop.lua. Reinicie o servidor para baixar o conteúdo. Configure o Steam Account Token (GSLT) em Startup se os mods não montarem.',
     },
     server_network: {
         dns_cloudflare_title: 'DNS Cloudflare',
@@ -686,7 +686,7 @@ export const stringsEs = {
         votes: '{{count}} votos',
         install_success: 'Item Workshop añadido. Reinicia el servidor para aplicar.',
         remove_success: 'Item Workshop eliminado. Reinicia el servidor para aplicar.',
-        restart_hint: 'Los cambios se escriben en workshop.lua. Reinicia el servidor para descargar el contenido.',
+        restart_hint: 'Los cambios se escriben en garrysmod/lua/autorun/server/workshop.lua. Reinicia el servidor para descargar el contenido. Configura el Steam Account Token (GSLT) en Startup si los mods no se montan.',
     },
     server_network: {
         dns_cloudflare_title: 'DNS Cloudflare',

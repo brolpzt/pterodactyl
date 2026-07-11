@@ -214,7 +214,7 @@ return [
         'votes' => ':count votos',
         'install_success' => 'Item Workshop adicionado. Reinicie o servidor para aplicar.',
         'remove_success' => 'Item Workshop removido. Reinicie o servidor para aplicar.',
-        'restart_hint' => 'As alterações são gravadas em workshop.lua. Reinicie o servidor para baixar o conteúdo.',
+        'restart_hint' => 'As alterações são gravadas em garrysmod/lua/autorun/server/workshop.lua. Reinicie o servidor para baixar o conteúdo. Configure o Steam Account Token (GSLT) em Startup se os mods não montarem.',
     ],
     'server_network' => [
         'dns_cloudflare_title' => 'DNS Cloudflare',

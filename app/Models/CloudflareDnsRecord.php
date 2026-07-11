@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $content
  * @property int $ttl
  * @property bool $proxied
+ * @property bool $is_companion
  * @property string|null $srv_service
  * @property string|null $srv_protocol
  * @property int|null $srv_port
@@ -39,6 +40,7 @@ class CloudflareDnsRecord extends Model
         'zone_id' => 'integer',
         'ttl' => 'integer',
         'proxied' => 'boolean',
+        'is_companion' => 'boolean',
         'srv_port' => 'integer',
         'srv_priority' => 'integer',
         'srv_weight' => 'integer',
@@ -55,6 +57,7 @@ class CloudflareDnsRecord extends Model
         'content' => 'required|string|max:512',
         'ttl' => 'integer|min:1',
         'proxied' => 'boolean',
+        'is_companion' => 'boolean',
         'srv_service' => 'nullable|string|max:32',
         'srv_protocol' => 'nullable|string|max:16',
         'srv_port' => 'nullable|integer|min:1|max:65535',

@@ -35,11 +35,13 @@ class CloudflareDnsService
         $zones = $this->availableZones();
         $records = CloudflareDnsRecord::query()
             ->where('server_id', $server->id)
+            ->where('is_companion', false)
             ->with('zone')
             ->orderByDesc('created_at')
             ->get();
 
         $allocation = $server->allocation;
+        $visibleCount = $records->count();
 
         return [
             'records' => $records,
@@ -52,7 +54,7 @@ class CloudflareDnsService
                     'id' => $zone->id,
                     'domain' => $zone->domain,
                 ])->values()->all(),
-                'can_create' => $zones->isNotEmpty() && $records->count() < $profile->max_records_per_server,
+                'can_create' => $zones->isNotEmpty() && $visibleCount < $profile->max_records_per_server,
                 'primary_ip' => $allocation?->ip,
                 'primary_port' => $allocation?->port,
                 'primary_alias' => $allocation?->ip_alias,
@@ -87,6 +89,7 @@ class CloudflareDnsService
         $content = '';
 
         if ($type === EggDnsProfile::TYPE_SRV) {
+            $this->ensureCompanionARecord($server, $user, $zone, $subdomain, $apiToken);
             $srvPayload = $this->buildSrvPayload($server, $profile, $subdomain, $zone->domain);
             $recordName = $srvPayload['name'];
             $content = $srvPayload['content'];
@@ -118,6 +121,7 @@ class CloudflareDnsService
             'content' => $content,
             'ttl' => (int) ($remote['ttl'] ?? 1),
             'proxied' => (bool) ($remote['proxied'] ?? $proxied),
+            'is_companion' => false,
             'created_by' => $user->id,
         ];
 
@@ -143,9 +147,17 @@ class CloudflareDnsService
             throw new DisplayException('Este registro DNS não pertence a este servidor.');
         }
 
+        if ($record->is_companion) {
+            throw new DisplayException('Este registro DNS auxiliar não pode ser removido diretamente.');
+        }
+
         $account = $this->resolveAccount();
         $apiToken = $this->decryptToken($account);
         $zone = $record->zone;
+
+        if ($record->type === EggDnsProfile::TYPE_SRV) {
+            $this->deleteCompanionARecord($server, $zone, $record->subdomain, $apiToken);
+        }
 
         $this->apiService->deleteDnsRecord($apiToken, $zone->zone_id, $record->cloudflare_record_id);
         $record->delete();
@@ -185,7 +197,7 @@ class CloudflareDnsService
         $priority = $profile->srv_priority;
         $weight = $profile->srv_weight;
         $port = $this->resolveAllocationPort($server);
-        $target = $this->resolveSrvTarget($server);
+        $target = $this->resolveSrvTarget($subdomain, $domain);
 
         $recordName = "{$service}.{$protocol}.{$subdomain}";
         $fullName = "{$recordName}.{$domain}";
@@ -238,21 +250,100 @@ class CloudflareDnsService
     }
 
     /**
+     * Cloudflare exige hostname como target SRV — usamos o próprio subdomínio no domínio da zona.
+     */
+    public function resolveSrvTarget(string $subdomain, string $domain): string
+    {
+        return $this->buildRecordName($subdomain, $domain);
+    }
+
+    /**
      * @throws DisplayException
      */
-    public function resolveSrvTarget(Server $server): string
-    {
-        $allocation = $server->allocation;
-        if (!$allocation) {
-            throw new DisplayException('Não foi possível determinar a alocação primária deste servidor.');
+    private function ensureCompanionARecord(
+        Server $server,
+        User $user,
+        CloudflareZone $zone,
+        string $subdomain,
+        string $apiToken
+    ): CloudflareDnsRecord {
+        $existing = CloudflareDnsRecord::query()
+            ->where('server_id', $server->id)
+            ->where('zone_id', $zone->id)
+            ->where('subdomain', $subdomain)
+            ->where('type', EggDnsProfile::TYPE_A)
+            ->first();
+
+        $ip = $this->resolveAllocationIp($server);
+        $recordName = $this->buildRecordName($subdomain, $zone->domain);
+
+        if ($existing) {
+            if ($existing->content !== $ip) {
+                $remote = $this->apiService->updateDnsRecord(
+                    $apiToken,
+                    $zone->zone_id,
+                    $existing->cloudflare_record_id,
+                    EggDnsProfile::TYPE_A,
+                    $existing->name,
+                    $ip,
+                    $existing->ttl,
+                    false
+                );
+
+                $existing->update([
+                    'content' => $ip,
+                    'name' => $remote['name'] ?? $existing->name,
+                ]);
+            }
+
+            return $existing;
         }
 
-        $alias = trim((string) $allocation->ip_alias);
-        if ($alias !== '' && preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i', $alias)) {
-            return rtrim($alias, '.');
+        $remote = $this->apiService->createDnsRecord(
+            $apiToken,
+            $zone->zone_id,
+            EggDnsProfile::TYPE_A,
+            $recordName,
+            $ip,
+            1,
+            false
+        );
+
+        return CloudflareDnsRecord::create([
+            'server_id' => $server->id,
+            'zone_id' => $zone->id,
+            'cloudflare_record_id' => $remote['id'],
+            'type' => EggDnsProfile::TYPE_A,
+            'subdomain' => $subdomain,
+            'name' => $remote['name'] ?? $recordName,
+            'content' => $ip,
+            'ttl' => (int) ($remote['ttl'] ?? 1),
+            'proxied' => false,
+            'is_companion' => true,
+            'created_by' => $user->id,
+        ]);
+    }
+
+    private function deleteCompanionARecord(
+        Server $server,
+        CloudflareZone $zone,
+        string $subdomain,
+        string $apiToken
+    ): void {
+        $companion = CloudflareDnsRecord::query()
+            ->where('server_id', $server->id)
+            ->where('zone_id', $zone->id)
+            ->where('subdomain', $subdomain)
+            ->where('type', EggDnsProfile::TYPE_A)
+            ->where('is_companion', true)
+            ->first();
+
+        if (!$companion) {
+            return;
         }
 
-        return $this->resolveAllocationIp($server);
+        $this->apiService->deleteDnsRecord($apiToken, $zone->zone_id, $companion->cloudflare_record_id);
+        $companion->delete();
     }
 
     private function resolveAccount(): CloudflareAccount
@@ -326,11 +417,21 @@ class CloudflareDnsService
             throw new DisplayException('Este subdomínio está reservado e não pode ser utilizado.');
         }
 
-        if (CloudflareDnsRecord::query()->where('zone_id', $zone->id)->where('subdomain', $subdomain)->exists()) {
-            throw new DisplayException('Este subdomínio já está em uso neste domínio.');
+        if (CloudflareDnsRecord::query()
+            ->where('zone_id', $zone->id)
+            ->where('subdomain', $subdomain)
+            ->where('type', $type)
+            ->where('is_companion', false)
+            ->exists()
+        ) {
+            throw new DisplayException('Este subdomínio já está em uso neste domínio para o tipo selecionado.');
         }
 
-        $count = CloudflareDnsRecord::query()->where('server_id', $server->id)->count();
+        $count = CloudflareDnsRecord::query()
+            ->where('server_id', $server->id)
+            ->where('is_companion', false)
+            ->count();
+
         if ($count >= $profile->max_records_per_server) {
             throw new DisplayException('Este servidor já atingiu o limite máximo de registros DNS.');
         }

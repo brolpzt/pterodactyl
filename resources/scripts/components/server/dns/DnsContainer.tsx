@@ -114,7 +114,8 @@ const CreateDnsForm = ({
     }, [initialSubdomain]);
 
     const selectedZone = zones.find((zone) => zone.id.toString() === zoneId);
-    const srvTarget = primaryAlias || primaryIp || '—';
+    const srvTarget =
+        subdomain && selectedZone ? `${subdomain}.${selectedZone.domain}` : primaryAlias || primaryIp || '—';
     const previewName =
         subdomain && selectedZone
             ? type === 'SRV'
@@ -219,13 +220,16 @@ const CreateDnsForm = ({
                     </div>
                 ) : type === 'SRV' ? (
                     <div>
-                        <Label css={tw`text-xs mb-1`}>Alocação primária</Label>
+                        <Label css={tw`text-xs mb-1`}>Target SRV (hostname)</Label>
                         <Input
                             type={'text'}
-                            value={primaryPort ? `${srvTarget}:${primaryPort}` : srvTarget}
+                            value={subdomain && selectedZone ? `${subdomain}.${selectedZone.domain}` : '—'}
                             readOnly
                             css={tw`font-mono text-sm opacity-75`}
                         />
+                        <p css={tw`text-xs text-neutral-500 mt-1`}>
+                            Um registro A para este hostname será criado automaticamente com o IP da alocação primária.
+                        </p>
                     </div>
                 ) : (
                     <div>
@@ -259,7 +263,7 @@ const CreateDnsForm = ({
                     {type === 'CNAME' && content ? (
                         <span> → <span css={tw`font-mono`}>{content}</span></span>
                     ) : null}
-                    {type === 'SRV' && primaryPort ? (
+                    {type === 'SRV' && primaryPort && subdomain && selectedZone ? (
                         <span>
                             {' '}
                             → <span css={tw`font-mono`}>{srv.priority} {srv.weight} {primaryPort} {srvTarget}</span>

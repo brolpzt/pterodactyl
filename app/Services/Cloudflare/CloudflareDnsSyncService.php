@@ -109,6 +109,8 @@ class CloudflareDnsSyncService
         }
 
         if ($record->type === EggDnsProfile::TYPE_SRV && $profile) {
+            $this->syncCompanionARecord($server, $record, $apiToken);
+
             $srv = $this->dnsService->buildSrvPayload($server, $profile, $record->subdomain, $zone->domain);
             if ($record->content === $srv['content']) {
                 return;
@@ -136,5 +138,49 @@ class CloudflareDnsSyncService
                 'srv_weight' => $srv['data']['weight'],
             ]);
         }
+    }
+
+    /**
+     * @throws DisplayException
+     */
+    private function syncCompanionARecord(Server $server, CloudflareDnsRecord $srvRecord, string $apiToken): void
+    {
+        $zone = $srvRecord->zone;
+        if (!$zone) {
+            return;
+        }
+
+        $companion = CloudflareDnsRecord::query()
+            ->where('server_id', $server->id)
+            ->where('zone_id', $zone->id)
+            ->where('subdomain', $srvRecord->subdomain)
+            ->where('type', EggDnsProfile::TYPE_A)
+            ->where('is_companion', true)
+            ->first();
+
+        if (!$companion) {
+            return;
+        }
+
+        $newContent = $this->dnsService->resolveAllocationIp($server);
+        if ($companion->content === $newContent) {
+            return;
+        }
+
+        $remote = $this->apiService->updateDnsRecord(
+            $apiToken,
+            $zone->zone_id,
+            $companion->cloudflare_record_id,
+            EggDnsProfile::TYPE_A,
+            $companion->name,
+            $newContent,
+            $companion->ttl,
+            false
+        );
+
+        $companion->update([
+            'content' => $newContent,
+            'name' => $remote['name'] ?? $companion->name,
+        ]);
     }
 }

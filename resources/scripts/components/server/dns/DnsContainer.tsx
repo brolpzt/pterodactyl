@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ServerContext } from '@/state/server';
-import getServerDnsRecords, { DnsRecord, DnsSrvTemplate } from '@/api/swr/getServerDnsRecords';
+import getServerDnsRecords, { DnsRecord } from '@/api/swr/getServerDnsRecords';
 import createDnsRecord from '@/api/server/createDnsRecord';
 import deleteDnsRecord from '@/api/server/deleteDnsRecord';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
@@ -71,18 +71,12 @@ const CreateDnsForm = ({
     onCreate,
     recordType,
     zones,
-    primaryIp,
-    primaryPort,
-    srv,
     canCreate,
     initialSubdomain,
 }: {
     onCreate: (data: { zoneId: number; subdomain: string; content?: string; proxied?: boolean }) => Promise<void>;
     recordType: string;
     zones: { id: number; label: string; domain: string }[];
-    primaryIp: string | null;
-    primaryPort: number | null;
-    srv: DnsSrvTemplate;
     canCreate: boolean;
     initialSubdomain?: string;
 }) => {
@@ -103,16 +97,6 @@ const CreateDnsForm = ({
             setSubdomain(initialSubdomain);
         }
     }, [initialSubdomain]);
-
-    const selectedZone = zones.find((zone) => zone.id.toString() === zoneId);
-    const srvTarget =
-        subdomain && selectedZone ? `${subdomain}.${selectedZone.domain}` : '—';
-    const previewName =
-        subdomain && selectedZone
-            ? recordType === 'SRV'
-                ? `${srv.service}.${srv.protocol}.${subdomain}.${selectedZone.domain}`
-                : `${subdomain}.${selectedZone.domain}`
-            : '';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -204,47 +188,11 @@ const CreateDnsForm = ({
                 </div>
             )}
 
-            {recordType === 'SRV' && (
-                <p css={tw`text-xs text-neutral-500`}>
-                    Registro <span css={tw`font-mono text-neutral-300`}>{recordType}</span>
-                    {' · '}
-                    Serviço: <span css={tw`font-mono text-neutral-300`}>{srv.service}.{srv.protocol}</span>
-                    {' · '}
-                    Prioridade: {srv.priority} · Peso: {srv.weight}
-                    {primaryPort ? (
-                        <>
-                            {' · '}
-                            Porta: <span css={tw`font-mono text-neutral-300`}>{primaryPort}</span>
-                        </>
-                    ) : null}
-                    <br />
-                    Um registro A para o hostname será criado automaticamente com o IP da alocação primária.
-                </p>
-            )}
-
             {recordType === 'CNAME' && (
                 <label css={tw`flex items-center gap-2 text-sm text-neutral-300`}>
                     <input type={'checkbox'} checked={proxied} onChange={(e) => setProxied(e.target.checked)} />
                     Ativar proxy Cloudflare (orange cloud)
                 </label>
-            )}
-
-            {previewName && (
-                <p css={tw`text-xs text-neutral-400`}>
-                    Preview: <span css={tw`font-mono text-neutral-200`}>{previewName}</span>
-                    {recordType === 'A' && primaryIp ? (
-                        <span> → <span css={tw`font-mono`}>{primaryIp}</span></span>
-                    ) : null}
-                    {recordType === 'CNAME' && content ? (
-                        <span> → <span css={tw`font-mono`}>{content}</span></span>
-                    ) : null}
-                    {recordType === 'SRV' && primaryPort && subdomain && selectedZone ? (
-                        <span>
-                            {' '}
-                            → <span css={tw`font-mono`}>{srv.priority} {srv.weight} {primaryPort} {srvTarget}</span>
-                        </span>
-                    ) : null}
-                </p>
             )}
 
             <Button className={'w-full md:w-auto'} type={'submit'} disabled={loading || !subdomain.trim()}>
@@ -341,9 +289,6 @@ export default () => {
                     onCreate={handleCreate}
                     recordType={data.meta.defaultType}
                     zones={data.meta.zones}
-                    primaryIp={data.meta.primaryIp}
-                    primaryPort={data.meta.primaryPort}
-                    srv={data.meta.srv}
                     canCreate={data.meta.canCreate}
                     initialSubdomain={initialSubdomain}
                 />

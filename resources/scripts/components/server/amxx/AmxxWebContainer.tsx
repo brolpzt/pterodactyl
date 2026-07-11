@@ -53,9 +53,11 @@ const isPlayersUnavailableError = (error: unknown): boolean => {
     const message = httpErrorToHuman(error).toLowerCase();
 
     return response?.status === 502
+        || response?.status === 504
         || message.includes('online')
         || message.includes('offline')
-        || message.includes('consola');
+        || message.includes('consola')
+        || message.includes('expirou');
 };
 
 export default () => {

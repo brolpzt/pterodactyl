@@ -12,6 +12,7 @@ use Pterodactyl\Repositories\Wings\DaemonFileRepository;
 use Pterodactyl\Repositories\Wings\DaemonServerPlayersRepository;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
 
 class AmxxService
 {
@@ -121,7 +122,9 @@ class AmxxService
         try {
             return $this->playersRepository->setServer($server)->list();
         } catch (DaemonConnectionException $exception) {
-            if (!$this->wingsReachable($server)) {
+            $previous = $exception->getPrevious();
+
+            if ($previous instanceof ConnectException) {
                 throw new AmxxException(
                     'Não foi possível comunicar com o node Wings deste servidor.',
                     Response::HTTP_BAD_GATEWAY,
@@ -129,13 +132,24 @@ class AmxxService
                 );
             }
 
-            $previous = $exception->getPrevious();
-            if ($previous instanceof ClientException && $previous->getResponse()->getStatusCode() === Response::HTTP_BAD_GATEWAY) {
-                throw new AmxxException(
-                    'O servidor precisa estar online para listar jogadores.',
-                    Response::HTTP_BAD_GATEWAY,
-                    $exception
-                );
+            if ($previous instanceof ClientException) {
+                $statusCode = $previous->getResponse()->getStatusCode();
+
+                if ($statusCode === Response::HTTP_BAD_GATEWAY) {
+                    throw new AmxxException(
+                        'O servidor precisa estar online para listar jogadores.',
+                        Response::HTTP_BAD_GATEWAY,
+                        $exception
+                    );
+                }
+
+                if ($statusCode === Response::HTTP_REQUEST_TIMEOUT || $statusCode === Response::HTTP_GATEWAY_TIMEOUT) {
+                    throw new AmxxException(
+                        'A consulta de jogadores expirou. Tente novamente em instantes.',
+                        Response::HTTP_GATEWAY_TIMEOUT,
+                        $exception
+                    );
+                }
             }
 
             throw new AmxxException(

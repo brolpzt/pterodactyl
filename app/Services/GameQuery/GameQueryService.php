@@ -105,7 +105,7 @@ class GameQueryService
             'hostname' => $result['hostname'] ?? null,
             'map' => $result['map'] ?? null,
             'game' => $result['game'] ?? null,
-            'players' => (int) ($result['players'] ?? count($players)),
+            'players' => max((int) ($result['players'] ?? 0), count($players)),
             'max_players' => (int) ($result['max_players'] ?? 0),
             'password_protected' => (bool) ($result['password_protected'] ?? false),
             'version' => $result['version'] ?? null,

@@ -19,6 +19,7 @@ import styled from 'styled-components/macro';
 import tw from 'twin.macro';
 import { glassCardShell } from '@/assets/css/glassPanel';
 import OverlayScrollbar from '@/components/elements/OverlayScrollbar';
+import { hostgamerColors } from '@/lib/hostgamerTheme';
 
 import 'xterm/css/xterm.css';
 import styles from './style.module.css';
@@ -44,7 +45,7 @@ const theme = {
     red: '#E54B4B',
     green: '#9ECE58',
     yellow: '#FAED70',
-    blue: '#396FE2',
+    blue: hostgamerColors.primary,
     magenta: '#BB80B3',
     cyan: '#2DDAFD',
     white: '#d0d0d0',
@@ -59,6 +60,15 @@ const theme = {
     selection: '#FAF089',
 };
 
+const CONSOLE_BLUE = '\u001b[1m\u001b[34m';
+const CONSOLE_RESET = '\u001b[0m';
+const TERMINAL_PRELUDE = `${CONSOLE_BLUE}container@hostgamer~ ${CONSOLE_RESET}`;
+const DAEMON_LABEL = '[Pterodactyl Daemon]:';
+const DAEMON_LABEL_STYLED = `${CONSOLE_BLUE}[Hostgamer Daemon]:${CONSOLE_RESET}`;
+
+const formatConsoleLine = (line: string) =>
+    line.replace(/(?:\r\n|\r|\n)$/im, '').replace(DAEMON_LABEL, DAEMON_LABEL_STYLED);
+
 const terminalProps: ITerminalOptions = {
     disableStdin: true,
     cursorStyle: 'underline',
@@ -70,7 +80,6 @@ const terminalProps: ITerminalOptions = {
 };
 
 export default () => {
-    const TERMINAL_PRELUDE = '\u001b[1m\u001b[33mcontainer@pterodactyl~ \u001b[0m';
     const ref = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const terminal = useMemo(() => new Terminal({ ...terminalProps }), []);
@@ -93,24 +102,22 @@ export default () => {
     }`;
 
     const handleConsoleOutput = (line: string, prelude = false) =>
-        terminal.writeln((prelude ? TERMINAL_PRELUDE : '') + line.replace(/(?:\r\n|\r|\n)$/im, '') + '\u001b[0m');
+        terminal.writeln((prelude ? TERMINAL_PRELUDE : '') + formatConsoleLine(line) + CONSOLE_RESET);
 
     const handleTransferStatus = (status: string) => {
         switch (status) {
             // Sent by either the source or target node if a failure occurs.
             case 'failure':
-                terminal.writeln(TERMINAL_PRELUDE + 'Transfer has failed.\u001b[0m');
+                terminal.writeln(TERMINAL_PRELUDE + 'Transfer has failed.' + CONSOLE_RESET);
                 return;
         }
     };
 
     const handleDaemonErrorOutput = (line: string) =>
-        terminal.writeln(
-            TERMINAL_PRELUDE + '\u001b[1m\u001b[41m' + line.replace(/(?:\r\n|\r|\n)$/im, '') + '\u001b[0m'
-        );
+        terminal.writeln(TERMINAL_PRELUDE + '\u001b[1m\u001b[41m' + formatConsoleLine(line) + CONSOLE_RESET);
 
     const handlePowerChangeEvent = (state: string) =>
-        terminal.writeln(TERMINAL_PRELUDE + 'Server marked as ' + state + '...\u001b[0m');
+        terminal.writeln(TERMINAL_PRELUDE + 'Server marked as ' + state + '...' + CONSOLE_RESET);
 
     const handleCommandKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'ArrowUp') {

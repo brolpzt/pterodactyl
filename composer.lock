@@ -4,8 +4,104 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9453d32c5702359383f1837e38fe3a3c",
+    "content-hash": "9586e61df777823c608f71eae036791b",
     "packages": [
+        {
+            "name": "austinb/gameq",
+            "version": "v3.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Austinb/GameQ.git",
+                "reference": "44e7906661ae90c68d77005f42cbbf151caea478"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Austinb/GameQ/zipball/44e7906661ae90c68d77005f42cbbf151caea478",
+                "reference": "44e7906661ae90c68d77005f42cbbf151caea478",
+                "shasum": ""
+            },
+            "require": {
+                "ext-bz2": "*",
+                "ext-xml": "*",
+                "php": ">=5.6.40"
+            },
+            "require-dev": {
+                "corneltek/getoptionkit": "~2",
+                "ext-curl": "*",
+                "phpmd/phpmd": "@stable",
+                "phpunit/php-invoker": "*",
+                "phpunit/phpunit": "^5.7 | ^6.0 | ^7.0 | ^8.0 | ^9.0",
+                "squizlabs/php_codesniffer": "3.*@stable"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "GameQ\\": "src/GameQ/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0+"
+            ],
+            "authors": [
+                {
+                    "name": "Austin Bischoff",
+                    "email": "austin.bischoff@gmail.com",
+                    "homepage": "https://github.com/Austinb",
+                    "role": "Packagist/Composer Maintainer, Developer"
+                },
+                {
+                    "name": "Christoph Kretzschmar",
+                    "email": "blackskyliner@googlemail.com",
+                    "homepage": "https://github.com/Blackskyliner",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Marcel Bößendörfer",
+                    "email": "m.boessendoerfer@marbis.net",
+                    "homepage": "https://github.com/nitrado",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Alexander Hambalgo",
+                    "homepage": "http://balgo.users.sourceforge.net/",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Holger",
+                    "homepage": "http://icet33.users.sourceforge.net/",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Sebastian Weidenbach",
+                    "homepage": "http://sebastianwe.users.sourceforge.net/",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Patrick Henninger",
+                    "email": "privat@skyraptor.eu",
+                    "homepage": "https://skyraptor.eu",
+                    "role": "Developer"
+                }
+            ],
+            "description": "GameQ Gameserver Library",
+            "keywords": [
+                "gameq",
+                "serverstatus"
+            ],
+            "support": {
+                "issues": "https://github.com/Austinb/GameQ/issues",
+                "source": "https://github.com/Austinb/GameQ/v3",
+                "wiki": "https://github.com/Austinb/GameQ/wiki"
+            },
+            "funding": [
+                {
+                    "url": "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VAU2KADATP5PU",
+                    "type": "custom"
+                }
+            ],
+            "time": "2022-08-28T16:06:34+00:00"
+        },
         {
             "name": "aws/aws-crt-php",
             "version": "v1.2.7",
@@ -4976,68 +5072,6 @@
                 }
             ],
             "time": "2025-02-20T19:20:43+00:00"
-        },
-        {
-            "name": "stripe/stripe-php",
-            "version": "v20.1.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "6d0ec5ffa0678a408d63163ace1453b35a85fb24"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/6d0ec5ffa0678a408d63163ace1453b35a85fb24",
-                "reference": "6d0ec5ffa0678a408d63163ace1453b35a85fb24",
-                "shasum": ""
-            },
-            "require": {
-                "ext-curl": "*",
-                "ext-json": "*",
-                "ext-mbstring": "*",
-                "php": ">=7.2.0"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "3.94.0",
-                "phpstan/phpstan": "^1.2",
-                "phpunit/phpunit": "^5.7 || ^9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.0-dev"
-                }
-            },
-            "autoload": {
-                "files": [
-                    "lib/version_check.php"
-                ],
-                "psr-4": {
-                    "Stripe\\": "lib/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Stripe and contributors",
-                    "homepage": "https://github.com/stripe/stripe-php/contributors"
-                }
-            ],
-            "description": "Stripe PHP Library",
-            "homepage": "https://stripe.com/",
-            "keywords": [
-                "api",
-                "payment processing",
-                "stripe"
-            ],
-            "support": {
-                "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v20.1.0"
-            },
-            "time": "2026-04-24T00:12:56+00:00"
         },
         {
             "name": "symfony/clock",

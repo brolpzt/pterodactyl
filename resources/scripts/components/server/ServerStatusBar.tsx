@@ -8,6 +8,9 @@ import Fade from '@/components/elements/Fade';
 import FlagIcon from '@/components/elements/FlagIcon';
 import { glassHeaderInner, glassStickyBarShell } from '@/assets/css/glassPanel';
 import { cardLabelText, navText } from '@/assets/css/cardTheme';
+import { ServerContext } from '@/state/server';
+import useGameQuery from '@/api/swr/getGameQuery';
+import { supportsGameQuery } from '@/lib/supportsGameQuery';
 
 interface Props {
     name?: string;
@@ -72,6 +75,25 @@ const mobilePowerButtons = css`
     }
 `;
 
+const queryStatLabel = css`
+    ${cardLabelText};
+    ${tw`text-[10px] uppercase font-bold tracking-wider whitespace-nowrap`};
+`;
+
+const queryStatValue = css`
+    ${navText};
+    ${tw`text-[13px] whitespace-nowrap truncate max-w-[9rem] lg:max-w-[12rem]`};
+`;
+
+const QueryStat = ({ label, value, title }: { label: string; value: string; title?: string }) => (
+    <div tw="flex flex-col flex-shrink-0 min-w-0">
+        <span css={queryStatLabel}>{label}</span>
+        <span css={queryStatValue} title={title || value}>
+            {value}
+        </span>
+    </div>
+);
+
 const ServerStatusBar = ({
     name,
     id,
@@ -81,6 +103,10 @@ const ServerStatusBar = ({
     formatIp,
 }: Props) => {
     const [scrolled, setScrolled] = useState(false);
+    const gamedig = ServerContext.useStoreState((state) => state.server.data?.gamedig);
+    const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
+    const queryEnabled = supportsGameQuery(gamedig, eggId);
+    const { data: query } = useGameQuery(queryEnabled);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 12);
@@ -90,6 +116,10 @@ const ServerStatusBar = ({
     }, []);
 
     const address = allocation ? `${allocation.alias || formatIp(allocation.ip)}:${allocation.port}` : 'n/a';
+    const queryHostname = query?.online ? query.hostname || '—' : query ? 'Offline' : '—';
+    const queryMap = query?.online ? query.map || '—' : '—';
+    const queryPlayers =
+        query && query.online ? `${query.players}/${query.max_players || '?'}` : query ? '0/0' : '—';
 
     return (
         <div className="hg-glass-server-bar" css={stickyShellStyles(scrolled)}>
@@ -135,6 +165,14 @@ const ServerStatusBar = ({
                                         <span>{locationName || 'n/a'}</span>
                                     </span>
                                 </div>
+
+                                {queryEnabled && (
+                                    <>
+                                        <QueryStat label="Hostname" value={queryHostname} title={query?.hostname || undefined} />
+                                        <QueryStat label="Mapa" value={queryMap} title={query?.map || undefined} />
+                                        <QueryStat label="Jogadores" value={queryPlayers} />
+                                    </>
+                                )}
                             </div>
 
                             <div tw="flex items-center w-full sm:w-auto sm:ml-auto flex-shrink-0 sm:pl-4 overflow-visible py-0.5 sm:py-1">

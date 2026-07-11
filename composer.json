@@ -24,6 +24,7 @@
         "ext-pdo_mysql": "*",
         "ext-posix": "*",
         "ext-zip": "*",
+        "austinb/gameq": "~3.1",
         "aws/aws-sdk-php": "^3.366.2",
         "guzzlehttp/guzzle": "^7.9.2",
         "hashids/hashids": "^5.0.2",

@@ -11,7 +11,6 @@ import {
     faUsers,
     faCloudUploadAlt,
     faNetworkWired,
-    faPlayCircle,
     faListUl,
     faPuzzlePiece,
     faShieldAlt,
@@ -278,8 +277,6 @@ const ServerLinks = () => {
             case 'Backups': return faCloudUploadAlt;
             case 'server.network':
             case 'Network': return faNetworkWired;
-            case 'server.startup':
-            case 'Startup': return faPlayCircle;
             case 'server.settings':
             case 'Settings': return faCogs;
             case 'server.activity':
@@ -333,7 +330,6 @@ const ServerLinks = () => {
         '/schedules',
         '/backups',
         '/users',
-        '/startup',
         '/network',
         '/activity',
         '/settings',

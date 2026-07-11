@@ -6,7 +6,6 @@ import ScheduleContainer from '@/components/server/schedules/ScheduleContainer';
 import UsersContainer from '@/components/server/users/UsersContainer';
 import BackupContainer from '@/components/server/backups/BackupContainer';
 import NetworkContainer from '@/components/server/network/NetworkContainer';
-import StartupContainer from '@/components/server/startup/StartupContainer';
 import FileManagerContainer from '@/components/server/files/FileManagerContainer';
 import SettingsContainer from '@/components/server/settings/SettingsContainer';
 import AccountOverviewContainer from '@/components/dashboard/AccountOverviewContainer';
@@ -148,13 +147,6 @@ export default {
             name: 'Network',
             nameKey: 'server.network',
             component: NetworkContainer,
-        },
-        {
-            path: '/startup',
-            permission: 'startup.*',
-            name: 'Startup',
-            nameKey: 'server.startup',
-            component: StartupContainer,
         },
         {
             path: '/addons',

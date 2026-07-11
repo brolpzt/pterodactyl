@@ -15,14 +15,19 @@ import { Button } from '@/components/elements/button/index';
 import { Dialog } from '@/components/elements/dialog';
 import tw from 'twin.macro';
 import { emptyStateText } from '@/assets/css/cardTheme';
+import { fieldControl } from '@/assets/css/formTheme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import Input from '@/components/elements/Input';
 import Label from '@/components/elements/Label';
 import Select from '@/components/elements/Select';
 
+const displayDnsName = (record: DnsRecord): string =>
+    record.domain ? `${record.subdomain}.${record.domain}` : record.name;
+
 const DnsRecordRow = ({ record, onDelete }: { record: DnsRecord; onDelete: (record: DnsRecord) => void }) => {
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const dnsName = displayDnsName(record);
 
     return (
         <React.Fragment>
@@ -36,22 +41,13 @@ const DnsRecordRow = ({ record, onDelete }: { record: DnsRecord; onDelete: (reco
                     onDelete(record);
                 }}
             >
-                Tem certeza que deseja remover o registro <strong>{record.name}</strong>? O registro será
+                Tem certeza que deseja remover o registro <strong>{dnsName}</strong>? O registro será
                 excluído da Cloudflare imediatamente.
             </Dialog.Confirm>
 
             <tr css={tw`border-b border-neutral-600 last:border-b-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
                 <td css={tw`px-3 py-3`}>
-                    <span css={tw`font-mono text-sm text-neutral-100`}>{record.name}</span>
-                </td>
-                <td css={tw`px-3 py-3`}>
-                    <span css={tw`text-xs uppercase text-neutral-400`}>{record.type}</span>
-                </td>
-                <td css={tw`px-3 py-3`}>
-                    <span css={tw`font-mono text-xs text-neutral-300`}>{record.content}</span>
-                </td>
-                <td css={tw`px-3 py-3 text-xs text-neutral-500`}>
-                    {record.type === 'CNAME' ? (record.proxied ? 'Proxied' : 'DNS only') : '—'}
+                    <span css={tw`font-mono text-sm text-neutral-100`}>{dnsName}</span>
                 </td>
                 <td css={tw`px-3 py-3 text-xs text-neutral-500`}>
                     {new Date(record.createdAt).toLocaleString('pt-BR')}
@@ -98,6 +94,9 @@ const CreateDnsForm = ({
         }
     }, [initialSubdomain]);
 
+    const selectedZone = zones.find((zone) => zone.id.toString() === zoneId);
+    const domainSuffix = selectedZone ? `.${selectedZone.domain}` : '';
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!zoneId || !subdomain.trim() || !canCreate) return;
@@ -143,7 +142,7 @@ const CreateDnsForm = ({
                     <Select id={'dns-zone'} value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
                         {zones.map((zone) => (
                             <option key={zone.id} value={zone.id}>
-                                {zone.label} ({zone.domain})
+                                {zone.label}
                             </option>
                         ))}
                     </Select>
@@ -152,15 +151,26 @@ const CreateDnsForm = ({
                     <Label htmlFor={'dns-subdomain'} css={tw`text-xs mb-1`}>
                         Subdomínio
                     </Label>
-                    <Input
-                        id={'dns-subdomain'}
-                        type={'text'}
-                        placeholder={'meuserver'}
-                        value={subdomain}
-                        onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
-                        required
-                        css={tw`font-mono text-sm`}
-                    />
+                    <div css={[fieldControl, tw`relative p-0 overflow-hidden`]}>
+                        <div
+                            aria-hidden
+                            css={tw`pointer-events-none absolute inset-y-0 left-0 flex max-w-full items-center overflow-hidden whitespace-nowrap px-3 font-mono text-sm`}
+                        >
+                            <span css={tw`text-transparent select-none`}>{subdomain || '\u00a0'}</span>
+                            {subdomain && domainSuffix ? (
+                                <span css={tw`text-neutral-500`}>{domainSuffix}</span>
+                            ) : null}
+                        </div>
+                        <Input
+                            id={'dns-subdomain'}
+                            type={'text'}
+                            placeholder={'meuserver'}
+                            value={subdomain}
+                            onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
+                            required
+                            css={tw`relative w-full !border-0 !bg-transparent font-mono text-sm !shadow-none hover:!shadow-none focus:!shadow-none`}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -258,7 +268,7 @@ export default () => {
             addFlash({
                 key: 'server:dns',
                 type: 'success',
-                message: `Registro ${record.name} removido com sucesso.`,
+                message: `Registro ${displayDnsName(record)} removido com sucesso.`,
             });
         } catch (err) {
             clearAndAddHttpError({ key: 'server:dns', error: err });
@@ -305,10 +315,7 @@ export default () => {
                     <table css={tw`w-full text-left`}>
                         <thead>
                             <tr css={tw`text-xs text-neutral-400 uppercase border-b border-neutral-600`}>
-                                <th css={tw`px-3 pb-2 font-semibold`}>Nome</th>
-                                <th css={tw`px-3 pb-2 font-semibold`}>Tipo</th>
-                                <th css={tw`px-3 pb-2 font-semibold`}>Conteúdo</th>
-                                <th css={tw`px-3 pb-2 font-semibold`}>Proxy</th>
+                                <th css={tw`px-3 pb-2 font-semibold`}>Registro DNS</th>
                                 <th css={tw`px-3 pb-2 font-semibold`}>Criado em</th>
                                 <th css={tw`px-3 pb-2 font-semibold text-right`}>Ações</th>
                             </tr>

@@ -175,6 +175,19 @@ Route::group(['prefix' => 'nodes'], function () {
 
 /*
 |--------------------------------------------------------------------------
+| Workshop Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/workshop
+|
+*/
+Route::group(['prefix' => 'workshop'], function () {
+    Route::get('/', [Admin\WorkshopController::class, 'index'])->name('admin.workshop');
+    Route::patch('/', [Admin\WorkshopController::class, 'update']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | FastDL Controller Routes
 |--------------------------------------------------------------------------
 |

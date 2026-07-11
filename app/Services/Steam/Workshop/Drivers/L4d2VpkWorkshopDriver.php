@@ -8,6 +8,7 @@ use Pterodactyl\Models\ServerWorkshopItem;
 use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Services\Servers\EnvironmentService;
 use Pterodactyl\Services\Steam\SteamWorkshopService;
+use Pterodactyl\Services\Steam\SteamWorkshopCredentialsService;
 use Pterodactyl\Services\Steam\Workshop\WorkshopSyncDriver;
 use Pterodactyl\Services\Steam\Workshop\WorkshopAddonScriptRunner;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
@@ -19,6 +20,7 @@ class L4d2VpkWorkshopDriver implements WorkshopSyncDriver
 
     public function __construct(
         private SteamWorkshopService $steamWorkshopService,
+        private SteamWorkshopCredentialsService $credentialsService,
         private EnvironmentService $environmentService,
         private WorkshopAddonScriptRunner $scriptRunner,
         private DaemonFileRepository $fileRepository,
@@ -37,25 +39,23 @@ class L4d2VpkWorkshopDriver implements WorkshopSyncDriver
 
     public function description(): string
     {
-        return 'Descarrega mods via SteamCMD e copia ficheiros .vpk para left4dead2/addons/. Requer STEAM_USER/STEAM_PASS em Startup com uma conta subscrita aos mods. Reinicie o servidor após a sync.';
+        return 'Descarrega mods via SteamCMD e copia ficheiros .vpk para left4dead2/addons/. Usa a conta definida em Admin → Steam Workshop (ou STEAM_USER no Startup). Reinicie o servidor após a sync.';
     }
 
     public function sync(Server $server, int $workshopAppId): void
     {
-        $server->loadMissing('variables');
-
-        $environment = $this->environmentService->handle($server);
-        $steamUser = trim((string) ($environment['STEAM_USER'] ?? ''));
-        $steamPass = (string) ($environment['STEAM_PASS'] ?? '');
-        $steamAuth = (string) ($environment['STEAM_AUTH'] ?? '');
+        $credentials = $this->credentialsService->forServer($server);
+        $steamUser = $credentials['user'];
+        $steamPass = $credentials['pass'];
+        $steamAuth = $credentials['auth'];
 
         if ($steamUser === '') {
             throw new DisplayException(
-                'Configure Steam Username (STEAM_USER) em Startup com uma conta Steam que tenha subscrito os mods Workshop. O L4D2 não consegue descarregar mods com login anónimo.'
+                'Configure a conta Steam em Admin → Steam Workshop ou defina STEAM_USER no Startup do servidor. A conta deve estar subscrita aos mods Workshop.'
             );
         }
 
-        $gameDir = $this->resolveGameDirectory($environment);
+        $gameDir = $this->resolveGameDirectory($server);
         $this->assertGameDirectoryExists($server, $gameDir);
 
         $itemIds = $this->resolveInstalledItemIds($server, $workshopAppId);
@@ -103,12 +103,10 @@ class L4d2VpkWorkshopDriver implements WorkshopSyncDriver
         return $ids;
     }
 
-    /**
-     * @param  array<string, mixed>  $environment
-     */
-    private function resolveGameDirectory(array $environment): string
+    private function resolveGameDirectory(Server $server): string
     {
-        $configured = strtolower(trim((string) ($environment['SRCDS_GAME'] ?? 'left4dead2')));
+        $server->loadMissing('variables');
+        $configured = strtolower(trim((string) ($this->environmentService->handle($server)['SRCDS_GAME'] ?? 'left4dead2')));
         $sanitized = preg_replace('/[^a-z0-9_\\-]/', '', $configured) ?? '';
 
         return $sanitized !== '' ? $sanitized : 'left4dead2';

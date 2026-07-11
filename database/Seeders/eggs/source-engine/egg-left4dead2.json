@@ -70,12 +70,12 @@
         },
         {
             "name": "Steam Username",
-            "description": "Steam account used by SteamCMD to download Workshop mods. Must be subscribed to the mods you install.",
+            "description": "Fallback Steam account for Workshop downloads if Admin → Steam Workshop credentials are not set.",
             "env_variable": "STEAM_USER",
             "default_value": "",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string|max:191"
+            "rules": "nullable|string|max:191"
         },
         {
             "name": "Steam Password",

@@ -213,5 +213,8 @@ return [
 
     'steam' => [
         'api_key' => env('STEAM_API_KEY', ''),
+        'workshop_user' => env('STEAM_WORKSHOP_USER', ''),
+        'workshop_pass' => env('STEAM_WORKSHOP_PASS', ''),
+        'workshop_auth' => env('STEAM_WORKSHOP_AUTH', ''),
     ],
 ];

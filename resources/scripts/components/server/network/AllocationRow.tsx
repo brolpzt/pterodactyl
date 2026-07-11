@@ -20,6 +20,7 @@ import DeleteAllocationButton from '@/components/server/network/DeleteAllocation
 import setPrimaryServerAllocation from '@/api/server/network/setPrimaryServerAllocation';
 import getServerAllocations from '@/api/swr/getServerAllocations';
 import { ip } from '@/lib/formatters';
+import { useTranslation } from 'react-i18next';
 import Code from '@/components/elements/Code';
 import { fieldLabel } from '@/assets/css/formTheme';
 
@@ -33,6 +34,7 @@ interface Props {
 }
 
 const AllocationRow = ({ allocation }: Props) => {
+    const { t } = useTranslation('strings');
     const [loading, setLoading] = useState(false);
     const { clearFlashes, clearAndAddHttpError } = useFlashKey('server:network');
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
@@ -109,7 +111,7 @@ const AllocationRow = ({ allocation }: Props) => {
                                 <Link to={`/server/${match.params.id}/dns`}>
                                     <Button.Text size={Button.Sizes.Small}>
                                         <FontAwesomeIcon icon={faGlobe} css={tw`mr-1`} />
-                                        DNS
+                                        {t('server_network.dns_link')}
                                     </Button.Text>
                                 </Link>
                             </Can>

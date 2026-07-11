@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ServerContext } from '@/state/server';
 import getServerDnsRecords, { DnsRecord } from '@/api/swr/getServerDnsRecords';
 import createDnsRecord from '@/api/server/createDnsRecord';
@@ -22,27 +23,34 @@ import Input from '@/components/elements/Input';
 import Label from '@/components/elements/Label';
 import Select from '@/components/elements/Select';
 
+const DATE_LOCALES: Record<string, string> = {
+    en: 'en-US',
+    pt: 'pt-BR',
+    es: 'es-AR',
+};
+
 const displayDnsName = (record: DnsRecord): string =>
     record.domain ? `${record.subdomain}.${record.domain}` : record.name;
 
 const DnsRecordRow = ({ record, onDelete }: { record: DnsRecord; onDelete: (record: DnsRecord) => void }) => {
+    const { t, i18n } = useTranslation('strings');
     const [confirmOpen, setConfirmOpen] = useState(false);
     const dnsName = displayDnsName(record);
+    const dateLocale = DATE_LOCALES[i18n.language?.split('-')[0] || 'en'] || 'en-US';
 
     return (
         <React.Fragment>
             <Dialog.Confirm
                 open={confirmOpen}
-                title={'Remover DNS'}
-                confirm={'Sim, remover'}
+                title={t('server_dns.delete_title')}
+                confirm={t('server_dns.delete_confirm')}
                 onClose={() => setConfirmOpen(false)}
                 onConfirmed={() => {
                     setConfirmOpen(false);
                     onDelete(record);
                 }}
             >
-                Tem certeza que deseja remover o registro <strong>{dnsName}</strong>? O registro será
-                excluído da Cloudflare imediatamente.
+                {t('server_dns.delete_message', { name: dnsName })}
             </Dialog.Confirm>
 
             <tr css={tw`border-b border-neutral-600 last:border-b-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
@@ -50,12 +58,12 @@ const DnsRecordRow = ({ record, onDelete }: { record: DnsRecord; onDelete: (reco
                     <span css={tw`font-mono text-sm text-neutral-100`}>{dnsName}</span>
                 </td>
                 <td css={tw`px-3 py-3 text-xs text-neutral-500`}>
-                    {new Date(record.createdAt).toLocaleString('pt-BR')}
+                    {new Date(record.createdAt).toLocaleString(dateLocale)}
                 </td>
                 <td css={tw`px-3 py-3 text-right`}>
                     <Button.Danger onClick={() => setConfirmOpen(true)}>
                         <FontAwesomeIcon icon={faTrash} css={tw`mr-1`} />
-                        Remover
+                        {t('server_dns.remove')}
                     </Button.Danger>
                 </td>
             </tr>
@@ -76,6 +84,7 @@ const CreateDnsForm = ({
     canCreate: boolean;
     initialSubdomain?: string;
 }) => {
+    const { t } = useTranslation('strings');
     const [zoneId, setZoneId] = useState(zones[0]?.id?.toString() || '');
     const [subdomain, setSubdomain] = useState(initialSubdomain || '');
     const [content, setContent] = useState('');
@@ -117,19 +126,11 @@ const CreateDnsForm = ({
     };
 
     if (!canCreate) {
-        return (
-            <p css={[emptyStateText, tw`py-2`]}>
-                Este servidor atingiu o limite de registros DNS ou não há domínios disponíveis.
-            </p>
-        );
+        return <p css={[emptyStateText, tw`py-2`]}>{t('server_dns.limit_reached')}</p>;
     }
 
     if (zones.length === 0) {
-        return (
-            <p css={[emptyStateText, tw`py-2`]}>
-                Nenhum domínio está disponível para criação de DNS. Contacte o administrador.
-            </p>
-        );
+        return <p css={[emptyStateText, tw`py-2`]}>{t('server_dns.no_domains')}</p>;
     }
 
     return (
@@ -137,7 +138,7 @@ const CreateDnsForm = ({
             <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-4`}>
                 <div>
                     <Label htmlFor={'dns-zone'} css={tw`text-xs mb-1`}>
-                        Domínio
+                        {t('server_dns.domain')}
                     </Label>
                     <Select id={'dns-zone'} value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
                         {zones.map((zone) => (
@@ -149,7 +150,7 @@ const CreateDnsForm = ({
                 </div>
                 <div>
                     <Label htmlFor={'dns-subdomain'} css={tw`text-xs mb-1`}>
-                        Subdomínio
+                        {t('server_dns.subdomain')}
                     </Label>
                     <div css={[fieldControl, tw`relative p-0 overflow-hidden`]}>
                         <div
@@ -164,7 +165,7 @@ const CreateDnsForm = ({
                         <Input
                             id={'dns-subdomain'}
                             type={'text'}
-                            placeholder={'meuserver'}
+                            placeholder={t('server_dns.subdomain_placeholder')}
                             value={subdomain}
                             onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
                             required
@@ -177,12 +178,12 @@ const CreateDnsForm = ({
             {recordType === 'CNAME' && (
                 <div>
                     <Label htmlFor={'dns-content'} css={tw`text-xs mb-1`}>
-                        Destino (hostname)
+                        {t('server_dns.target_hostname')}
                     </Label>
                     <Input
                         id={'dns-content'}
                         type={'text'}
-                        placeholder={'destino.exemplo.com'}
+                        placeholder={t('server_dns.target_placeholder')}
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         required
@@ -194,7 +195,7 @@ const CreateDnsForm = ({
             {recordType === 'CNAME' && (
                 <label css={tw`flex items-center gap-2 text-sm text-neutral-300`}>
                     <input type={'checkbox'} checked={proxied} onChange={(e) => setProxied(e.target.checked)} />
-                    Ativar proxy Cloudflare (orange cloud)
+                    {t('server_dns.enable_proxy')}
                 </label>
             )}
 
@@ -204,7 +205,7 @@ const CreateDnsForm = ({
                 ) : (
                     <>
                         <FontAwesomeIcon icon={faPlus} css={tw`mr-2`} />
-                        Criar registro DNS
+                        {t('server_dns.create_button')}
                     </>
                 )}
             </Button>
@@ -213,6 +214,7 @@ const CreateDnsForm = ({
 };
 
 export default () => {
+    const { t } = useTranslation('strings');
     const location = useLocation();
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures);
@@ -227,8 +229,8 @@ export default () => {
 
     if (!hasDnsFeature) {
         return (
-            <ServerContentBlock title={'DNS'}>
-                <p css={emptyStateText}>DNS não está disponível para este tipo de servidor.</p>
+            <ServerContentBlock title={t('server_dns.title')}>
+                <p css={emptyStateText}>{t('server_dns.unavailable')}</p>
             </ServerContentBlock>
         );
     }
@@ -253,7 +255,7 @@ export default () => {
             addFlash({
                 key: 'server:dns',
                 type: 'success',
-                message: 'Registro DNS criado com sucesso na Cloudflare.',
+                message: t('server_dns.create_success'),
             });
         } catch (err) {
             clearAndAddHttpError({ key: 'server:dns', error: err });
@@ -268,7 +270,7 @@ export default () => {
             addFlash({
                 key: 'server:dns',
                 type: 'success',
-                message: `Registro ${displayDnsName(record)} removido com sucesso.`,
+                message: t('server_dns.delete_success', { name: displayDnsName(record) }),
             });
         } catch (err) {
             clearAndAddHttpError({ key: 'server:dns', error: err });
@@ -276,14 +278,14 @@ export default () => {
     };
 
     return (
-        <ServerContentBlock title={'DNS'}>
+        <ServerContentBlock title={t('server_dns.title')}>
             <FlashMessageRender byKey={'server:dns'} css={tw`mb-4`} />
 
             <TitledGreyBox
                 title={
                     <div css={tw`flex items-center`}>
                         <FontAwesomeIcon icon={faGlobe} css={tw`mr-2`} />
-                        <span css={tw`text-sm uppercase`}>Criar registro DNS</span>
+                        <span css={tw`text-sm uppercase`}>{t('server_dns.create_title')}</span>
                     </div>
                 }
                 css={tw`mb-6`}
@@ -300,7 +302,7 @@ export default () => {
             <TitledGreyBox
                 title={
                     <div css={tw`flex items-center justify-between w-full`}>
-                        <span css={tw`text-sm uppercase`}>Registros DNS</span>
+                        <span css={tw`text-sm uppercase`}>{t('server_dns.list_title')}</span>
                         <span css={tw`text-xs bg-neutral-900 px-2 py-0.5 rounded-full text-neutral-400`}>
                             {data.records.length} / {data.meta.maxRecords}
                         </span>
@@ -308,16 +310,14 @@ export default () => {
                 }
             >
                 {data.records.length === 0 ? (
-                    <p css={[emptyStateText, tw`py-6`]}>
-                        Nenhum registro DNS criado para este servidor.
-                    </p>
+                    <p css={[emptyStateText, tw`py-6`]}>{t('server_dns.empty_list')}</p>
                 ) : (
                     <table css={tw`w-full text-left`}>
                         <thead>
                             <tr css={tw`text-xs text-neutral-400 uppercase border-b border-neutral-600`}>
-                                <th css={tw`px-3 pb-2 font-semibold`}>Registro DNS</th>
-                                <th css={tw`px-3 pb-2 font-semibold`}>Criado em</th>
-                                <th css={tw`px-3 pb-2 font-semibold text-right`}>Ações</th>
+                                <th css={tw`px-3 pb-2 font-semibold`}>{t('server_dns.col_record')}</th>
+                                <th css={tw`px-3 pb-2 font-semibold`}>{t('server_dns.col_created')}</th>
+                                <th css={tw`px-3 pb-2 font-semibold text-right`}>{t('server_dns.col_actions')}</th>
                             </tr>
                         </thead>
                         <tbody>

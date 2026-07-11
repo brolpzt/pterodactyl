@@ -18,8 +18,10 @@ import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { ip } from '@/lib/formatters';
+import { useTranslation } from 'react-i18next';
 
 const NetworkContainer = () => {
+    const { t } = useTranslation('strings');
     const [loading, setLoading] = useState(false);
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures);
@@ -73,23 +75,21 @@ const NetworkContainer = () => {
                                 title={
                                     <div css={tw`flex items-center`}>
                                         <FontAwesomeIcon icon={faGlobe} css={tw`mr-2`} />
-                                        <span css={tw`text-sm uppercase`}>DNS Cloudflare</span>
+                                        <span css={tw`text-sm uppercase`}>{t('server_network.dns_cloudflare_title')}</span>
                                     </div>
                                 }
                                 css={tw`mb-4`}
                             >
                                 <p css={[navText, tw`text-sm mb-3`]}>
-                                    A alocação primária atual é{' '}
-                                    <span css={tw`font-mono text-neutral-200`}>
-                                        {primaryAllocation.alias || ip(primaryAllocation.ip)}:{primaryAllocation.port}
-                                    </span>
-                                    . Registros DNS do tipo A ou SRV usam estes dados automaticamente.
+                                    {t('server_network.dns_primary_allocation', {
+                                        address: `${primaryAllocation.alias || ip(primaryAllocation.ip)}:${primaryAllocation.port}`,
+                                    })}
                                 </p>
                                 {match && (
                                     <Link to={`/server/${match.params.id}/dns`}>
                                         <Button>
                                             <FontAwesomeIcon icon={faGlobe} css={tw`mr-2`} />
-                                            Criar registro DNS
+                                            {t('server_network.dns_create_button')}
                                         </Button>
                                     </Link>
                                 )}

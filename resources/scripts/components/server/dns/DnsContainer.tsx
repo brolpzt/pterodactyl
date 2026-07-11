@@ -69,30 +69,25 @@ const DnsRecordRow = ({ record, onDelete }: { record: DnsRecord; onDelete: (reco
 
 const CreateDnsForm = ({
     onCreate,
-    allowedTypes,
-    defaultType,
+    recordType,
     zones,
     primaryIp,
     primaryPort,
-    primaryAlias,
     srv,
     canCreate,
     initialSubdomain,
 }: {
-    onCreate: (data: { zoneId: number; subdomain: string; type: string; content?: string; proxied?: boolean }) => Promise<void>;
-    allowedTypes: string[];
-    defaultType: string;
+    onCreate: (data: { zoneId: number; subdomain: string; content?: string; proxied?: boolean }) => Promise<void>;
+    recordType: string;
     zones: { id: number; label: string; domain: string }[];
     primaryIp: string | null;
     primaryPort: number | null;
-    primaryAlias: string | null;
     srv: DnsSrvTemplate;
     canCreate: boolean;
     initialSubdomain?: string;
 }) => {
     const [zoneId, setZoneId] = useState(zones[0]?.id?.toString() || '');
     const [subdomain, setSubdomain] = useState(initialSubdomain || '');
-    const [type, setType] = useState(defaultType);
     const [content, setContent] = useState('');
     const [proxied, setProxied] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -104,10 +99,6 @@ const CreateDnsForm = ({
     }, [zones, zoneId]);
 
     useEffect(() => {
-        setType(defaultType);
-    }, [defaultType]);
-
-    useEffect(() => {
         if (initialSubdomain) {
             setSubdomain(initialSubdomain);
         }
@@ -115,10 +106,10 @@ const CreateDnsForm = ({
 
     const selectedZone = zones.find((zone) => zone.id.toString() === zoneId);
     const srvTarget =
-        subdomain && selectedZone ? `${subdomain}.${selectedZone.domain}` : primaryAlias || primaryIp || '—';
+        subdomain && selectedZone ? `${subdomain}.${selectedZone.domain}` : '—';
     const previewName =
         subdomain && selectedZone
-            ? type === 'SRV'
+            ? recordType === 'SRV'
                 ? `${srv.service}.${srv.protocol}.${subdomain}.${selectedZone.domain}`
                 : `${subdomain}.${selectedZone.domain}`
             : '';
@@ -131,9 +122,8 @@ const CreateDnsForm = ({
             await onCreate({
                 zoneId: parseInt(zoneId, 10),
                 subdomain: subdomain.trim().toLowerCase(),
-                type,
-                content: type === 'CNAME' ? content.trim() : undefined,
-                proxied: type === 'CNAME' ? proxied : false,
+                content: recordType === 'CNAME' ? content.trim() : undefined,
+                proxied: recordType === 'CNAME' ? proxied : false,
             });
             setSubdomain('');
             setContent('');
@@ -190,80 +180,65 @@ const CreateDnsForm = ({
                 </div>
             </div>
 
-            <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-4`}>
+            {recordType === 'CNAME' && (
                 <div>
-                    <Label htmlFor={'dns-type'} css={tw`text-xs mb-1`}>
-                        Tipo
+                    <Label htmlFor={'dns-content'} css={tw`text-xs mb-1`}>
+                        Destino (hostname)
                     </Label>
-                    <Select id={'dns-type'} value={type} onChange={(e) => setType(e.target.value)}>
-                        {allowedTypes.map((recordType) => (
-                            <option key={recordType} value={recordType}>
-                                {recordType}
-                            </option>
-                        ))}
-                    </Select>
+                    <Input
+                        id={'dns-content'}
+                        type={'text'}
+                        placeholder={'destino.exemplo.com'}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        required
+                        css={tw`font-mono text-sm`}
+                    />
                 </div>
-                {type === 'CNAME' ? (
-                    <div>
-                        <Label htmlFor={'dns-content'} css={tw`text-xs mb-1`}>
-                            Destino (hostname)
-                        </Label>
-                        <Input
-                            id={'dns-content'}
-                            type={'text'}
-                            placeholder={'destino.exemplo.com'}
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            required
-                            css={tw`font-mono text-sm`}
-                        />
-                    </div>
-                ) : type === 'SRV' ? (
-                    <div>
-                        <Label css={tw`text-xs mb-1`}>Target SRV (hostname)</Label>
-                        <Input
-                            type={'text'}
-                            value={subdomain && selectedZone ? `${subdomain}.${selectedZone.domain}` : '—'}
-                            readOnly
-                            css={tw`font-mono text-sm opacity-75`}
-                        />
-                        <p css={tw`text-xs text-neutral-500 mt-1`}>
-                            Um registro A para este hostname será criado automaticamente com o IP da alocação primária.
-                        </p>
-                    </div>
-                ) : (
-                    <div>
-                        <Label css={tw`text-xs mb-1`}>IP (alocação primária)</Label>
-                        <Input type={'text'} value={primaryIp || '—'} readOnly css={tw`font-mono text-sm opacity-75`} />
-                    </div>
-                )}
-            </div>
+            )}
 
-            {type === 'CNAME' && (
+            {recordType === 'A' && (
+                <div>
+                    <Label css={tw`text-xs mb-1`}>IP (alocação primária)</Label>
+                    <Input type={'text'} value={primaryIp || '—'} readOnly css={tw`font-mono text-sm opacity-75`} />
+                </div>
+            )}
+
+            {recordType === 'SRV' && (
+                <p css={tw`text-xs text-neutral-500`}>
+                    Registro <span css={tw`font-mono text-neutral-300`}>{recordType}</span>
+                    {' · '}
+                    Serviço: <span css={tw`font-mono text-neutral-300`}>{srv.service}.{srv.protocol}</span>
+                    {' · '}
+                    Prioridade: {srv.priority} · Peso: {srv.weight}
+                    {primaryPort ? (
+                        <>
+                            {' · '}
+                            Porta: <span css={tw`font-mono text-neutral-300`}>{primaryPort}</span>
+                        </>
+                    ) : null}
+                    <br />
+                    Um registro A para o hostname será criado automaticamente com o IP da alocação primária.
+                </p>
+            )}
+
+            {recordType === 'CNAME' && (
                 <label css={tw`flex items-center gap-2 text-sm text-neutral-300`}>
                     <input type={'checkbox'} checked={proxied} onChange={(e) => setProxied(e.target.checked)} />
                     Ativar proxy Cloudflare (orange cloud)
                 </label>
             )}
 
-            {type === 'SRV' && (
-                <p css={tw`text-xs text-neutral-500`}>
-                    Serviço: <span css={tw`font-mono text-neutral-300`}>{srv.service}.{srv.protocol}</span>
-                    {' · '}
-                    Prioridade: {srv.priority} · Peso: {srv.weight}
-                </p>
-            )}
-
             {previewName && (
                 <p css={tw`text-xs text-neutral-400`}>
                     Preview: <span css={tw`font-mono text-neutral-200`}>{previewName}</span>
-                    {type === 'A' && primaryIp ? (
+                    {recordType === 'A' && primaryIp ? (
                         <span> → <span css={tw`font-mono`}>{primaryIp}</span></span>
                     ) : null}
-                    {type === 'CNAME' && content ? (
+                    {recordType === 'CNAME' && content ? (
                         <span> → <span css={tw`font-mono`}>{content}</span></span>
                     ) : null}
-                    {type === 'SRV' && primaryPort && subdomain && selectedZone ? (
+                    {recordType === 'SRV' && primaryPort && subdomain && selectedZone ? (
                         <span>
                             {' '}
                             → <span css={tw`font-mono`}>{srv.priority} {srv.weight} {primaryPort} {srvTarget}</span>
@@ -317,7 +292,6 @@ export default () => {
     const handleCreate = async (formData: {
         zoneId: number;
         subdomain: string;
-        type: string;
         content?: string;
         proxied?: boolean;
     }) => {
@@ -365,12 +339,10 @@ export default () => {
             >
                 <CreateDnsForm
                     onCreate={handleCreate}
-                    allowedTypes={data.meta.allowedTypes}
-                    defaultType={data.meta.defaultType}
+                    recordType={data.meta.defaultType}
                     zones={data.meta.zones}
                     primaryIp={data.meta.primaryIp}
                     primaryPort={data.meta.primaryPort}
-                    primaryAlias={data.meta.primaryAlias}
                     srv={data.meta.srv}
                     canCreate={data.meta.canCreate}
                     initialSubdomain={initialSubdomain}

@@ -5,7 +5,6 @@ export default (
     data: {
         zoneId: number;
         subdomain: string;
-        type: string;
         content?: string;
         proxied?: boolean;
     }
@@ -14,7 +13,6 @@ export default (
         .post(`/api/client/servers/${uuid}/dns`, {
             zone_id: data.zoneId,
             subdomain: data.subdomain,
-            type: data.type,
             content: data.content || null,
             proxied: data.proxied ?? false,
         })

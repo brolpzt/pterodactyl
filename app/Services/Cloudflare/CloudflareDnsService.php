@@ -79,7 +79,12 @@ class CloudflareDnsService
         $account = $this->resolveAccount();
         $apiToken = $this->decryptToken($account);
 
-        $type = strtoupper($data['type']);
+        $type = strtoupper($profile->default_type);
+        if (!$profile->allowsType($type)) {
+            $allowed = $profile->allowed_types ?? [EggDnsProfile::TYPE_A];
+            $type = strtoupper($allowed[0]);
+        }
+
         $subdomain = strtolower(trim($data['subdomain']));
         $zone = $this->resolveZone((int) $data['zone_id']);
 

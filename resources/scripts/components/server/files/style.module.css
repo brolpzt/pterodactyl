@@ -15,10 +15,14 @@
 }
 
 .details {
-    @apply flex flex-1 items-center no-underline px-4 overflow-hidden truncate;
+    @apply flex flex-1 items-center no-underline px-4 overflow-hidden truncate min-w-0;
     color: inherit;
 
     &:not(a) {
         @apply cursor-default;
     }
+}
+
+a.details {
+    @apply cursor-pointer;
 }

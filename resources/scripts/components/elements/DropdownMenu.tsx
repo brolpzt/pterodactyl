@@ -2,6 +2,12 @@ import React, { createRef } from 'react';
 import styled from 'styled-components/macro';
 import tw from 'twin.macro';
 import Fade from '@/components/elements/Fade';
+import Portal from '@/components/elements/Portal';
+import {
+    dropdownMenuButtonRowStyles,
+    dropdownMenuRowStyles,
+    dropdownMenuShell,
+} from '@/assets/css/cardTheme';
 
 interface Props {
     children: React.ReactNode;
@@ -9,25 +15,31 @@ interface Props {
 }
 
 export const DropdownButtonRow = styled.button<{ danger?: boolean }>`
-    ${tw`p-2 flex items-center rounded w-full text-neutral-500`};
-    transition: 150ms all ease;
-
-    &:hover {
-        ${(props) => (props.danger ? tw`text-red-700 bg-red-100` : tw`text-neutral-700 bg-neutral-100`)};
-    }
+    ${(props) => dropdownMenuButtonRowStyles(props.danger)};
 `;
 
+export const DropdownMenuRow = styled.div<{ $danger?: boolean; $active?: boolean }>`
+    ${(props) => dropdownMenuRowStyles(props.$danger, props.$active)};
+`;
+
+const MENU_WIDTH = 176;
+
+interface MenuPosition {
+    top: number;
+    left: number;
+}
+
 interface State {
-    posX: number;
     visible: boolean;
+    position: MenuPosition;
 }
 
 class DropdownMenu extends React.PureComponent<Props, State> {
     menu = createRef<HTMLDivElement>();
 
     state: State = {
-        posX: 0,
         visible: false,
+        position: { top: 0, left: 0 },
     };
 
     componentWillUnmount() {
@@ -40,6 +52,7 @@ class DropdownMenu extends React.PureComponent<Props, State> {
         if (this.state.visible && !prevState.visible && menu) {
             document.addEventListener('click', this.windowListener);
             document.addEventListener('contextmenu', this.contextMenuListener);
+            document.addEventListener('scroll', this.scrollListener, true);
         }
 
         if (!this.state.visible && prevState.visible) {
@@ -50,14 +63,38 @@ class DropdownMenu extends React.PureComponent<Props, State> {
     removeListeners = () => {
         document.removeEventListener('click', this.windowListener);
         document.removeEventListener('contextmenu', this.contextMenuListener);
+        document.removeEventListener('scroll', this.scrollListener, true);
     };
+
+    positionBelow = (rect: DOMRect): MenuPosition => ({
+        top: rect.bottom + 4,
+        left: Math.max(8, Math.min(rect.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8)),
+    });
+
+    positionAtCursor = (x: number, y: number): MenuPosition => ({
+        top: y,
+        left: Math.max(8, Math.min(x, window.innerWidth - MENU_WIDTH - 8)),
+    });
 
     onClickHandler = (e: React.MouseEvent<any, MouseEvent>) => {
         e.preventDefault();
-        this.triggerMenu(e.clientX);
+        e.stopPropagation();
+
+        if (this.state.visible) {
+            this.setState({ visible: false });
+            return;
+        }
+
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        this.setState({
+            visible: true,
+            position: this.positionBelow(rect),
+        });
     };
 
     contextMenuListener = () => this.setState({ visible: false });
+
+    scrollListener = () => this.setState({ visible: false });
 
     windowListener = (e: MouseEvent) => {
         const menu = this.menu.current;
@@ -70,34 +107,51 @@ class DropdownMenu extends React.PureComponent<Props, State> {
             return;
         }
 
-        if (e.target !== menu && !menu.contains(e.target as Node)) {
-            this.setState({ visible: false });
-        }
+        this.setState({ visible: false });
     };
 
-    triggerMenu = (posX: number) =>
-        this.setState((s) => ({
-            posX: !s.visible ? posX : s.posX,
-            visible: !s.visible,
-        }));
+    triggerMenu = (detail: number | { x: number; y: number }) => {
+        if (typeof detail === 'object' && detail !== null && 'x' in detail) {
+            this.setState({
+                visible: true,
+                position: this.positionAtCursor(detail.x, detail.y),
+            });
+            return;
+        }
+
+        this.setState({
+            visible: true,
+            position: this.positionAtCursor(detail, 0),
+        });
+    };
 
     render() {
+        const { visible, position } = this.state;
+
         return (
             <div style={{ position: 'relative' }}>
                 {this.props.renderToggle(this.onClickHandler)}
-                <Fade timeout={150} in={this.state.visible} unmountOnExit>
-                    <div
-                        ref={this.menu}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            this.setState({ visible: false });
-                        }}
-                        style={{ width: '12rem', top: '100%', left: 0, marginTop: 4 }}
-                        css={tw`absolute bg-white p-2 rounded border border-neutral-700 shadow-lg text-neutral-500 z-[9999]`}
-                    >
-                        {this.props.children}
-                    </div>
-                </Fade>
+                <Portal>
+                    <Fade timeout={150} in={visible} unmountOnExit>
+                        <div
+                            ref={this.menu}
+                            className={'hg-dropdown-menu'}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                this.setState({ visible: false });
+                            }}
+                            style={{
+                                position: 'fixed',
+                                width: `${MENU_WIDTH}px`,
+                                top: position.top,
+                                left: position.left,
+                            }}
+                            css={[dropdownMenuShell, tw`z-[9999]`]}
+                        >
+                            {this.props.children}
+                        </div>
+                    </Fade>
+                </Portal>
             </div>
         );
     }

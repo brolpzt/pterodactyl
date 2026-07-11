@@ -3,6 +3,7 @@ import Fade from '@/components/elements/Fade';
 import Portal from '@/components/elements/Portal';
 import copy from 'copy-to-clipboard';
 import classNames from 'classnames';
+import tw from 'twin.macro';
 
 interface CopyOnClickProps {
     text: string | number | null | undefined;
@@ -48,13 +49,13 @@ const CopyOnClick = ({ text, showInNotification = true, children }: CopyOnClickP
             {copied && (
                 <Portal>
                     <Fade in appear timeout={250} key={copied ? 'visible' : 'invisible'}>
-                        <div className={'fixed z-50 bottom-0 right-0 m-4'}>
-                            <div className={'rounded-md py-3 px-4 text-gray-200 bg-neutral-600/95 shadow'}>
-                                <p>
+                        <div css={tw`fixed z-50 bottom-0 right-0 m-4`}>
+                            <div css={tw`rounded-md py-2 px-3 text-sm font-semibold text-white bg-primary-500`}>
+                                <span css={tw`block text-white`}>
                                     {showInNotification
                                         ? `Copied "${String(text)}" to clipboard.`
                                         : 'Copied text to clipboard.'}
-                                </p>
+                                </span>
                             </div>
                         </div>
                     </Fade>

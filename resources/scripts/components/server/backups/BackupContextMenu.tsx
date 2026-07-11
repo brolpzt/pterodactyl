@@ -9,6 +9,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import DropdownMenu, { DropdownButtonRow } from '@/components/elements/DropdownMenu';
+import { dropdownMenuIcon } from '@/assets/css/cardTheme';
 import getBackupDownloadUrl from '@/api/server/backups/getBackupDownloadUrl';
 import useFlash from '@/plugins/useFlash';
 import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
@@ -173,38 +174,32 @@ export default ({ backup }: Props) => {
                         </button>
                     )}
                 >
-                    <div css={tw`text-sm`}>
-                        <Can action={'backup.download'}>
-                            <DropdownButtonRow onClick={doDownload}>
-                                <FontAwesomeIcon fixedWidth icon={faCloudDownloadAlt} css={tw`text-xs`} />
-                                <span css={tw`ml-2`}>Download</span>
+                    <Can action={'backup.download'}>
+                        <DropdownButtonRow onClick={doDownload}>
+                            <FontAwesomeIcon fixedWidth icon={faCloudDownloadAlt} css={dropdownMenuIcon} />
+                            <span css={tw`ml-2 truncate`}>Download</span>
+                        </DropdownButtonRow>
+                    </Can>
+                    <Can action={'backup.restore'}>
+                        <DropdownButtonRow onClick={() => setModal('restore')}>
+                            <FontAwesomeIcon fixedWidth icon={faBoxOpen} css={dropdownMenuIcon} />
+                            <span css={tw`ml-2 truncate`}>Restore</span>
+                        </DropdownButtonRow>
+                    </Can>
+                    <Can action={'backup.delete'}>
+                        <>
+                            <DropdownButtonRow onClick={onLockToggle}>
+                                <FontAwesomeIcon fixedWidth icon={backup.isLocked ? faUnlock : faLock} css={dropdownMenuIcon} />
+                                <span css={tw`ml-2 truncate`}>{backup.isLocked ? 'Unlock' : 'Lock'}</span>
                             </DropdownButtonRow>
-                        </Can>
-                        <Can action={'backup.restore'}>
-                            <DropdownButtonRow onClick={() => setModal('restore')}>
-                                <FontAwesomeIcon fixedWidth icon={faBoxOpen} css={tw`text-xs`} />
-                                <span css={tw`ml-2`}>Restore</span>
-                            </DropdownButtonRow>
-                        </Can>
-                        <Can action={'backup.delete'}>
-                            <>
-                                <DropdownButtonRow onClick={onLockToggle}>
-                                    <FontAwesomeIcon
-                                        fixedWidth
-                                        icon={backup.isLocked ? faUnlock : faLock}
-                                        css={tw`text-xs mr-2`}
-                                    />
-                                    {backup.isLocked ? 'Unlock' : 'Lock'}
+                            {!backup.isLocked && (
+                                <DropdownButtonRow danger onClick={() => setModal('delete')}>
+                                    <FontAwesomeIcon fixedWidth icon={faTrashAlt} css={dropdownMenuIcon} />
+                                    <span css={tw`ml-2 truncate`}>Delete</span>
                                 </DropdownButtonRow>
-                                {!backup.isLocked && (
-                                    <DropdownButtonRow danger onClick={() => setModal('delete')}>
-                                        <FontAwesomeIcon fixedWidth icon={faTrashAlt} css={tw`text-xs`} />
-                                        <span css={tw`ml-2`}>Delete</span>
-                                    </DropdownButtonRow>
-                                )}
-                            </>
-                        </Can>
-                    </div>
+                            )}
+                        </>
+                    </Can>
                 </DropdownMenu>
             ) : (
                 <button

@@ -6,7 +6,7 @@ import React, { memo } from 'react';
 import { FileObject } from '@/api/server/files/loadDirectory';
 import FileDropdownMenu from '@/components/server/files/FileDropdownMenu';
 import { ServerContext } from '@/state/server';
-import { NavLink, useRouteMatch } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import tw from 'twin.macro';
 import isEqual from 'react-fast-compare';
 import SelectFileCheckbox from '@/components/server/files/SelectFileCheckbox';
@@ -20,29 +20,32 @@ const Clickable: React.FC<{ file: FileObject }> = memo(({ file, children }) => {
     const [canRead] = usePermissions(['file.read']);
     const [canReadContents] = usePermissions(['file.read-content']);
     const directory = ServerContext.useStoreState((state) => state.files.directory);
+    const id = ServerContext.useStoreState((state) => state.server.data!.id);
 
-    const match = useRouteMatch();
+    const pathname = `/server/${id}/files${file.isFile ? '/edit' : ''}`;
+    const hash = `#${encodePathSegments(join(directory, file.name))}`;
+    const to = { pathname, hash };
 
     return (file.isFile && (!file.isEditable() || !canReadContents)) || (!file.isFile && !canRead) ? (
         <div className={styles.details}>{children}</div>
     ) : (
-        <NavLink
-            className={styles.details}
-            to={`${match.url}${file.isFile ? '/edit' : ''}#${encodePathSegments(join(directory, file.name))}`}
-        >
+        <Link className={styles.details} to={to}>
             {children}
-        </NavLink>
+        </Link>
     );
 }, isEqual);
 
 const FileObjectRow = ({ file }: { file: FileObject }) => (
     <GreyRowBox
         $compact
+        $allowMenuOverflow
         css={tw`mb-px`}
         key={file.name}
         onContextMenu={(e) => {
             e.preventDefault();
-            window.dispatchEvent(new CustomEvent(`pterodactyl:files:ctx:${file.key}`, { detail: e.clientX }));
+            window.dispatchEvent(
+                new CustomEvent(`pterodactyl:files:ctx:${file.key}`, { detail: { x: e.clientX, y: e.clientY } })
+            );
         }}
     >
         <SelectFileCheckbox name={file.name} />

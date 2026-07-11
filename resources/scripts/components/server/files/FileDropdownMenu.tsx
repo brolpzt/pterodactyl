@@ -24,22 +24,16 @@ import useFlash from '@/plugins/useFlash';
 import tw from 'twin.macro';
 import { FileObject } from '@/api/server/files/loadDirectory';
 import useFileManagerSwr from '@/plugins/useFileManagerSwr';
-import DropdownMenu from '@/components/elements/DropdownMenu';
-import styled from 'styled-components/macro';
+import DropdownMenu, { DropdownMenuRow } from '@/components/elements/DropdownMenu';
 import useEventListener from '@/plugins/useEventListener';
 import compressFiles from '@/api/server/files/compressFiles';
 import decompressFiles from '@/api/server/files/decompressFiles';
 import isEqual from 'react-fast-compare';
 import ChmodFileModal from '@/components/server/files/ChmodFileModal';
 import { Dialog } from '@/components/elements/dialog';
+import { dropdownMenuIcon } from '@/assets/css/cardTheme';
 
 type ModalType = 'rename' | 'move' | 'chmod';
-
-const StyledRow = styled.div<{ $danger?: boolean }>`
-    ${tw`p-2 flex items-center rounded`};
-    ${(props) =>
-        props.$danger ? tw`hover:bg-red-100 hover:text-red-700` : tw`hover:bg-neutral-100 hover:text-neutral-700`};
-`;
 
 interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
     icon: IconDefinition;
@@ -47,11 +41,11 @@ interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
     $danger?: boolean;
 }
 
-const Row = ({ icon, title, ...props }: RowProps) => (
-    <StyledRow {...props}>
-        <FontAwesomeIcon icon={icon} css={tw`text-xs`} fixedWidth />
-        <span css={tw`ml-2`}>{title}</span>
-    </StyledRow>
+const Row = ({ icon, title, $danger, ...props }: RowProps) => (
+    <DropdownMenuRow {...props} $danger={$danger}>
+        <FontAwesomeIcon icon={icon} css={dropdownMenuIcon} fixedWidth />
+        <span css={tw`ml-2 truncate`}>{title}</span>
+    </DropdownMenuRow>
 );
 
 const FileDropdownMenu = ({ file }: { file: FileObject }) => {
@@ -65,7 +59,7 @@ const FileDropdownMenu = ({ file }: { file: FileObject }) => {
     const { clearAndAddHttpError, clearFlashes } = useFlash();
     const directory = ServerContext.useStoreState((state) => state.files.directory);
 
-    useEventListener(`pterodactyl:files:ctx:${file.key}`, (e: CustomEvent) => {
+    useEventListener(`pterodactyl:files:ctx:${file.key}`, (e: CustomEvent<{ x: number; y: number }>) => {
         if (onClickRef.current) {
             onClickRef.current.triggerMenu(e.detail);
         }

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCogs, faLayerGroup, faSignOutAlt, faBars, faChevronDown, faLifeRing, faReceipt } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
@@ -9,7 +8,7 @@ import styled, { css } from 'styled-components/macro';
 import http from '@/api/http';
 import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
-import DropdownMenu from '@/components/elements/DropdownMenu';
+import DropdownMenu, { DropdownMenuRow } from '@/components/elements/DropdownMenu';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { getExternalSiteUrl } from '@/lib/externalSite';
@@ -18,6 +17,7 @@ import FlagIcon from '@/components/elements/FlagIcon';
 import { HEADER_HEIGHT, sidebarLayoutOffset } from '@/lib/sidebarLayout';
 
 const CLIENT_ACCOUNT_URL = 'https://hostgamer.net/account';
+const CLIENT_SERVICES_URL = `${CLIENT_ACCOUNT_URL}/services`;
 const CLIENT_SUPPORT_URL = `${CLIENT_ACCOUNT_URL}/support`;
 const CLIENT_INVOICES_URL = `${CLIENT_ACCOUNT_URL}/invoices`;
 
@@ -33,11 +33,7 @@ const LNG_TO_UI: Record<string, { code: string; name: string }> = {
     es: { code: 'ES', name: 'Español (AR)' },
 };
 
-const StyledRow = styled.div<{ $active?: boolean }>`
-    ${tw`p-2 flex items-center rounded cursor-pointer text-sm`};
-    ${(props) =>
-        props.$active ? tw`bg-neutral-100 text-neutral-700 font-bold` : tw`hover:bg-neutral-100 hover:text-neutral-700 text-neutral-500`};
-`;
+const StyledRow = styled(DropdownMenuRow)<{ $active?: boolean }>``;
 
 interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
     icon?: React.ReactNode;
@@ -45,10 +41,10 @@ interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
     $active?: boolean;
 }
 
-const Row = ({ icon, title, ...props }: RowProps) => (
-    <StyledRow {...props}>
-        {icon && <span css={tw`text-base w-5 flex items-center justify-center`}>{icon}</span>}
-        <span css={tw`ml-2`}>{title}</span>
+const Row = ({ icon, title, $active, ...props }: RowProps) => (
+    <StyledRow {...props} $active={$active}>
+        {icon && <span css={tw`w-4 flex flex-shrink-0 items-center justify-center`}>{icon}</span>}
+        <span css={tw`ml-2 truncate`}>{title}</span>
     </StyledRow>
 );
 
@@ -159,9 +155,9 @@ export default () => {
                 <div css={tw`flex-1 min-w-0`} />
                 <RightNavigation>
                     <Tooltip placement={'bottom'} content={t('nav.dashboard')}>
-                        <NavLink to={'/'} exact>
+                        <a href={CLIENT_SERVICES_URL} rel={'noreferrer'}>
                             <FontAwesomeIcon icon={faLayerGroup} />
-                        </NavLink>
+                        </a>
                     </Tooltip>
                     <Tooltip placement={'bottom'} content={t('nav.support')}>
                         <a href={CLIENT_SUPPORT_URL} rel={'noreferrer'}>

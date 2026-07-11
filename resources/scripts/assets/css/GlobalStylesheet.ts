@@ -118,7 +118,7 @@ export default createGlobalStyle`
             background-color var(--transition-base);
         padding: 0.58rem 0.75rem;
         font-family: inherit;
-        font-size: 0.92rem;
+        font-size: 0.875rem;
         font-weight: 600;
         line-height: 1.35;
         box-shadow: none;
@@ -212,7 +212,8 @@ export default createGlobalStyle`
     .hg-glass-header::before,
     .hg-glass-sidebar::before,
     .hg-glass-card::before,
-    .hg-glass-server-bar::before {
+    .hg-glass-server-bar::before,
+    .hg-dropdown-menu {
         transform: translateZ(0);
     }
 
@@ -232,6 +233,12 @@ export default createGlobalStyle`
 
         .hg-glass-card::before {
             background: var(--hg-card-glass-bg);
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+        }
+
+        .hg-dropdown-menu {
+            background: var(--hg-surface);
             -webkit-backdrop-filter: none;
             backdrop-filter: none;
         }
@@ -264,7 +271,6 @@ export default createGlobalStyle`
         object-fit: cover;
         width: 1rem;
         height: 1rem;
-        box-shadow: 0 0 0 1px var(--color-divider);
         border-radius: 0.2rem;
         flex-shrink: 0;
         display: inline-block;
@@ -273,7 +279,6 @@ export default createGlobalStyle`
     .flag-icon--header {
         width: 0.95rem;
         height: 0.95rem;
-        box-shadow: none;
     }
 
     @font-face {

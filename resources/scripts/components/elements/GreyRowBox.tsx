@@ -6,15 +6,17 @@ import { rowListText, rowListTextFiles } from '@/assets/css/cardTheme';
 export default styled.div.attrs({ className: 'hg-glass-sidebar' })<{
     $hoverable?: boolean;
     $compact?: boolean;
+    $allowMenuOverflow?: boolean;
 }>`
     ${glassSidebarShell};
-    ${tw`relative flex rounded no-underline items-center overflow-hidden transition-all duration-150`};
+    ${tw`relative flex rounded no-underline items-center transition-all duration-150`};
+    ${(props) => props.$allowMenuOverflow && tw`overflow-visible`};
     ${rowListText};
     color: var(--hg-nav-text);
     box-shadow: inset 0 0 0 1px rgba(45, 45, 58, 0.28);
 
     /* Conteúdo acima do ::before (vidro); senão nomes ficam borrados atrás do blur. */
-    & > * {
+    & > *:not([data-file-row-control]) {
         position: relative;
         z-index: 1;
     }

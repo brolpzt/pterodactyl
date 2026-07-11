@@ -38,7 +38,7 @@ export const fieldControlBase = css`
     background-color: var(--field-bg);
     color: var(--color-white);
     font-family: inherit;
-    font-size: 0.92rem;
+    font-size: 0.875rem;
     font-weight: 600;
     line-height: 1.35;
     padding: 0.58rem 0.75rem;

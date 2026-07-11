@@ -25,13 +25,9 @@ const backgroundReveal = keyframes`
     }
 `;
 
-const Wrapper = styled.div<{ $viewport?: boolean; $fallback?: boolean }>`
+const Wrapper = styled.div<{ $viewport?: boolean }>`
     ${tw`relative min-h-full`};
-    background-color: ${(props) => (props.$fallback ? 'var(--hg-bg-fallback)' : 'var(--color-bg)')};
-
-    ${(props) =>
-        props.$fallback &&
-        pageFallbackBackground}
+    background-color: transparent;
 
     ${(props) =>
         props.$viewport &&
@@ -45,6 +41,12 @@ const Wrapper = styled.div<{ $viewport?: boolean; $fallback?: boolean }>`
         `}
 `;
 
+const FallbackLayer = styled.div`
+    position: absolute;
+    inset: 0;
+    ${pageFallbackBackground}
+`;
+
 const BackgroundLayer = styled.div<{ $imageUrl: string; $ready: boolean }>`
     position: absolute;
     inset: 0;
@@ -53,7 +55,6 @@ const BackgroundLayer = styled.div<{ $imageUrl: string; $ready: boolean }>`
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-attachment: fixed;
     opacity: 0;
     transform: scale(1.05);
     will-change: opacity, transform;
@@ -94,20 +95,23 @@ const ServerBackground = ({ gamedig, eggName, children, viewport = false, classN
     }, [backgroundUrl]);
 
     const showImage = Boolean(backgroundUrl) && !imageError;
-    const useFallbackBackground = !showImage;
-
-    const layers = showImage ? <BackgroundLayer $imageUrl={backgroundUrl!} $ready={imageReady} /> : null;
+    const layers = (
+        <>
+            <FallbackLayer />
+            {showImage ? <BackgroundLayer $imageUrl={backgroundUrl!} $ready={imageReady} /> : null}
+        </>
+    );
 
     if (viewport && !children) {
         return (
-            <Wrapper className={className} style={style} $viewport $fallback={useFallbackBackground}>
+            <Wrapper className={className} style={style} $viewport>
                 {layers}
             </Wrapper>
         );
     }
 
     return (
-        <Wrapper className={className} style={style} $viewport={viewport} $fallback={useFallbackBackground}>
+        <Wrapper className={className} style={style} $viewport={viewport}>
             {layers}
             {children ? <ContentLayer>{children}</ContentLayer> : null}
         </Wrapper>

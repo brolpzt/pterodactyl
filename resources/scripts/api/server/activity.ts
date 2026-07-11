@@ -9,12 +9,17 @@ import { ServerContext } from '@/state/server';
 
 export type ActivityLogFilters = QueryBuilderParams<'ip' | 'event', 'timestamp'>;
 
+type ActivityLogConfig = ConfigInterface<PaginatedResult<ActivityLog>, AxiosError> & {
+    perPage?: number;
+};
+
 const useActivityLogs = (
     filters?: ActivityLogFilters,
-    config?: ConfigInterface<PaginatedResult<ActivityLog>, AxiosError>
+    config?: ActivityLogConfig
 ): responseInterface<PaginatedResult<ActivityLog>, AxiosError> => {
     const uuid = ServerContext.useStoreState((state) => state.server.data?.uuid);
-    const key = useServerSWRKey(['activity', useFilteredObject(filters || {})]);
+    const key = useServerSWRKey(['activity', useFilteredObject(filters || {}), config?.perPage ?? null]);
+    const { perPage, ...swrConfig } = config || {};
 
     return useSWR<PaginatedResult<ActivityLog>>(
         key,
@@ -23,12 +28,13 @@ const useActivityLogs = (
                 params: {
                     ...withQueryBuilderParams(filters),
                     include: ['actor'],
+                    ...(perPage ? { per_page: perPage } : {}),
                 },
             });
 
             return toPaginatedSet(data, Transformers.toActivityLog);
         },
-        { revalidateOnMount: false, ...(config || {}) }
+        { revalidateOnMount: false, ...swrConfig }
     );
 };
 

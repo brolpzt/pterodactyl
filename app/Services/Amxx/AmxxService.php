@@ -225,6 +225,7 @@ class AmxxService
                 $maps[] = [
                     'name' => $mapName,
                     'file' => $name,
+                    'has_preview' => $this->resolveMapPreviewPath($server, $mapName) !== null,
                 ];
             }
         }
@@ -232,6 +233,58 @@ class AmxxService
         usort($maps, fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
 
         return $maps;
+    }
+
+    public function resolveMapPreviewPath(Server $server, string $map): ?string
+    {
+        $map = strtolower(trim($map));
+        $map = preg_replace('/[^a-z0-9_-]/', '', $map) ?? '';
+
+        if ($map === '') {
+            return null;
+        }
+
+        $paths = $this->resolvePaths($server);
+        $candidates = [
+            $paths['game_dir'] . '/overviews/' . $map . '.bmp',
+            $paths['game_dir'] . '/overviews/' . $map . '.jpg',
+            $paths['game_dir'] . '/overviews/' . $map . '.jpeg',
+            $paths['game_dir'] . '/overviews/' . $map . '.png',
+            $paths['game_dir'] . '/maps/' . $map . '.jpg',
+            $paths['game_dir'] . '/maps/' . $map . '.png',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if ($this->fileExists($server, $candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{content: string, mime: string}
+     */
+    public function getMapPreviewContent(Server $server, string $map): array
+    {
+        $path = $this->resolveMapPreviewPath($server, $map);
+        if ($path === null) {
+            throw new AmxxException('Imagem do mapa não encontrada no servidor.', Response::HTTP_NOT_FOUND);
+        }
+
+        $content = $this->fileRepository->setServer($server)->getContent($path, 5 * 1024 * 1024);
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        return [
+            'content' => $content,
+            'mime' => match ($extension) {
+                'bmp' => 'image/bmp',
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                default => 'application/octet-stream',
+            },
+        ];
     }
 
     public function changeMap(Server $server, string $map): array

@@ -24,9 +24,9 @@ const GAME_BACKGROUNDS: Record<string, string[]> = {
     cod4: ['/bg/cod4/backlot1.webp', '/bg/cod4/broadcast1.webp', '/bg/cod4/crash2.webp', '/bg/cod4/wetwork3.webp'],
     coduo: ['/bg/coduo/cassino1.webp', '/bg/coduo/foy1.webp', '/bg/coduo/stanjel9.webp'],
     cs16: [
-        '/bg/cs16/113464063-6926e680-9400-11eb-977a-12d774fb89ca.jpg',
-        '/bg/cs16/cs-74-fy_pool_day.jpg',
-        '/bg/cs16/nuke.jpeg',
+        '/bg/counterstrike16/113464063-6926e680-9400-11eb-977a-12d774fb89ca.jpg',
+        '/bg/counterstrike16/cs-74-fy_pool_day.jpg',
+        '/bg/counterstrike16/nuke.jpeg',
     ],
     cz: ['/bg/cz/64e49a098273c.jpg'],
     gtasa: ['/bg/gtasa/thumb-1920-1077297.png'],

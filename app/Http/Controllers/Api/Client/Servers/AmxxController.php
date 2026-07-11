@@ -4,6 +4,7 @@ namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Permission;
 use Pterodactyl\Facades\Activity;
@@ -264,6 +265,19 @@ class AmxxController extends ClientApiController
             'object' => 'list',
             'data' => $this->amxxService->listMaps($server),
         ];
+    }
+
+    public function mapPreview(Request $request, Server $server, string $map): Response
+    {
+        $this->assertCs16($server);
+        $this->assertCanReadAmxx($request, $server);
+
+        $preview = $this->amxxService->getMapPreviewContent($server, $map);
+
+        return new Response($preview['content'], Response::HTTP_OK, [
+            'Content-Type' => $preview['mime'],
+            'Cache-Control' => 'private, max-age=300',
+        ]);
     }
 
     public function changeMap(Request $request, Server $server): array

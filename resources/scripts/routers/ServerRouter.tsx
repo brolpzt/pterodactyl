@@ -111,7 +111,7 @@ export default () => {
             <div css={tw`relative z-10 flex min-h-screen pt-[3.5rem]`}>
                 <MainContent $collapsed={sidebarCollapsed}>
                     {!uuid || !id ? (
-                        <div css={tw`min-h-full bg-neutral-900`}>
+                        <div css={tw`min-h-full`}>
                             {error ? (
                                 <ServerError message={error} />
                             ) : (

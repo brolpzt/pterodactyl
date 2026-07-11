@@ -342,7 +342,7 @@ export default createGlobalStyle`
 
     #app,
     #root {
-        background: var(--color-bg);
+        background: transparent;
         min-height: 100%;
     }
 

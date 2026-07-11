@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import tw from 'twin.macro';
 import { emptyStateText } from '@/assets/css/cardTheme';
@@ -15,36 +14,21 @@ import Can from '@/components/elements/Can';
 import { httpErrorToHuman } from '@/api/http';
 import useFlash from '@/plugins/useFlash';
 import { ServerContext } from '@/state/server';
-import { ServerStatus } from '@/state/server';
-import useGameQuery from '@/api/swr/getGameQuery';
 import useAmxxPlayers from '@/api/swr/getAmxxPlayers';
-import getOverview from '@/api/server/amxx/getOverview';
 import kickPlayer from '@/api/server/amxx/kickPlayer';
 import slapPlayer from '@/api/server/amxx/slapPlayer';
 import slayPlayer from '@/api/server/amxx/slayPlayer';
 import createBan from '@/api/server/amxx/createBan';
+import createAdmin from '@/api/server/amxx/createAdmin';
+import AmxxWebToolbar from '@/components/server/amxx/AmxxWebToolbar';
 import AmxxWebLivePanel from '@/components/server/amxx/AmxxWebLivePanel';
-import { AmxxConsolePlayer, AmxxOverview } from '@/api/server/amxx/types';
-import { supportsGameQuery } from '@/lib/supportsGameQuery';
+import { AMXX_PRESET_FLAGS, AmxxConsolePlayer, AmxxPreset } from '@/api/server/amxx/types';
 
-type DisplayPlayer = AmxxConsolePlayer & { source: 'console' | 'query' };
+type DisplayPlayer = AmxxConsolePlayer;
 type BanType = 'steamid' | 'ip';
+type QuickAdminPreset = Extract<AmxxPreset, 'mod' | 'admin'>;
 
-const formatQueryTime = (seconds?: number): string | undefined => {
-    if (seconds == null || seconds < 0) {
-        return undefined;
-    }
-
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-
-    if (hours > 0) {
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    }
-
-    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-};
+const QUICK_ADMIN_PRESETS: QuickAdminPreset[] = ['mod', 'admin'];
 
 const parsePlayerIp = (address?: string): string | null => {
     if (!address) {
@@ -91,18 +75,9 @@ const isPlayersUnavailableError = (error: unknown): boolean => {
 export default () => {
     const { t } = useTranslation('strings');
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
-    const gamedig = ServerContext.useStoreState((state) => state.server.data!.gamedig);
-    const eggId = ServerContext.useStoreState((state) => state.server.data!.eggId);
     const status = ServerContext.useStoreState((state) => state.status.value);
-    const queryEnabled = supportsGameQuery(gamedig, eggId);
     const isServerRunning = status === 'running';
 
-    const {
-        data: query,
-        isLoading: queryLoading,
-        error: queryError,
-        mutate: refreshQuery,
-    } = useGameQuery(queryEnabled && isServerRunning);
     const {
         data: playersData,
         error: playersError,
@@ -110,12 +85,11 @@ export default () => {
         mutate: refreshPlayers,
     } = useAmxxPlayers(isServerRunning);
 
-    const [overview, setOverview] = useState<AmxxOverview | null>(null);
-    const [overviewLoading, setOverviewLoading] = useState(true);
-    const [overviewError, setOverviewError] = useState<string | null>(null);
     const [busyUserId, setBusyUserId] = useState<number | null>(null);
     const [refreshing, setRefreshing] = useState(false);
     const [banTarget, setBanTarget] = useState<AmxxConsolePlayer | null>(null);
+    const [adminTarget, setAdminTarget] = useState<DisplayPlayer | null>(null);
+    const [adminPreset, setAdminPreset] = useState<QuickAdminPreset>('mod');
     const [banType, setBanType] = useState<BanType>('steamid');
     const [banMinutes, setBanMinutes] = useState('0');
     const [banReason, setBanReason] = useState('');
@@ -145,67 +119,14 @@ export default () => {
     }, [status, t]);
 
     useEffect(() => {
-        let cancelled = false;
-
-        const loadOverview = async () => {
-            setOverviewLoading(true);
-            setOverviewError(null);
-            try {
-                const data = await getOverview(uuid);
-                if (!cancelled) {
-                    setOverview(data);
-                }
-            } catch (err) {
-                if (!cancelled) {
-                    setOverview(null);
-                    setOverviewError(httpErrorToHuman(err));
-                }
-            } finally {
-                if (!cancelled) {
-                    setOverviewLoading(false);
-                }
-            }
-        };
-
-        loadOverview();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [uuid]);
-
-    useEffect(() => {
         if (!isServerRunning) {
             setBanTarget(null);
+            setAdminTarget(null);
         }
     }, [isServerRunning]);
 
     const consolePlayers = playersData?.players ?? [];
-
-    const displayPlayers = useMemo((): DisplayPlayer[] => {
-        if (consolePlayers.length > 0) {
-            return consolePlayers.map((player) => ({ ...player, source: 'console' as const }));
-        }
-
-        if (isServerRunning && query?.online && query.player_list?.length) {
-            return query.player_list.map((player, index) => ({
-                userid: 0,
-                slot: index + 1,
-                name: player.name || '—',
-                steamid: '—',
-                score: player.score ?? 0,
-                ping: player.ping ?? 0,
-                loss: 0,
-                state: 'query',
-                connected: formatQueryTime(player.time),
-                source: 'query' as const,
-            }));
-        }
-
-        return [];
-    }, [consolePlayers, isServerRunning, query]);
-
-    const usingQueryFallback = consolePlayers.length === 0 && displayPlayers.length > 0;
+    const displayPlayers = consolePlayers;
 
     const onRefresh = async () => {
         if (!isServerRunning) {
@@ -214,10 +135,7 @@ export default () => {
 
         setRefreshing(true);
         try {
-            await Promise.all([
-                refreshPlayers(),
-                queryEnabled ? refreshQuery() : Promise.resolve(),
-            ]);
+            await refreshPlayers();
         } finally {
             setRefreshing(false);
         }
@@ -355,6 +273,40 @@ export default () => {
         setBanMinutes('0');
     };
 
+    const openAdminModal = (player: DisplayPlayer) => {
+        setAdminTarget(player);
+        setAdminPreset('mod');
+    };
+
+    const onMakeAdmin = async () => {
+        if (!adminTarget || !isValidSteamId(adminTarget.steamid)) {
+            return;
+        }
+
+        clearFlashes('amxx:web');
+        setBusyUserId(adminTarget.userid);
+        try {
+            await createAdmin(uuid, {
+                auth_type: 'steamid',
+                auth: adminTarget.steamid,
+                preset: adminPreset,
+                access_flags: AMXX_PRESET_FLAGS[adminPreset],
+                nickname: adminTarget.name,
+                reload: true,
+            });
+            addFlash({
+                key: 'amxx:web',
+                type: 'success',
+                message: t('server_amxx_web.make_admin_success', { name: adminTarget.name }),
+            });
+            setAdminTarget(null);
+        } catch (err) {
+            clearAndAddHttpError({ key: 'amxx:web', error: err });
+        } finally {
+            setBusyUserId(null);
+        }
+    };
+
     const playersOffline = !isServerRunning;
     const playersRuntimeError = isServerRunning && playersError && isPlayersUnavailableError(playersError);
     const playersLoadError = playersError && !isPlayersUnavailableError(playersError)
@@ -367,11 +319,13 @@ export default () => {
     const banTargetIp = banTarget ? parsePlayerIp(banTarget.address) : null;
     const banTargetHasSteam = banTarget ? isValidSteamId(banTarget.steamid) : false;
     const banTargetHasIp = Boolean(banTargetIp);
-    const canActionPlayer = (player: DisplayPlayer) => player.source === 'console' && player.userid > 0;
+    const canActionPlayer = (player: DisplayPlayer) => player.userid > 0;
     const canKickPlayer = (player: DisplayPlayer) => canActionPlayer(player);
     const canBanPlayer = (player: DisplayPlayer) =>
-        player.source === 'console' && (isValidSteamId(player.steamid) || Boolean(parsePlayerIp(player.address)));
-    const currentMap = query?.map || playersData?.map || null;
+        isValidSteamId(player.steamid) || Boolean(parsePlayerIp(player.address));
+    const canMakeAdminPlayer = (player: DisplayPlayer) =>
+        canActionPlayer(player) && isValidSteamId(player.steamid);
+    const currentMap = playersData?.map || null;
 
     return (
         <ServerContentBlock title={t('server_amxx_web.title')}>
@@ -387,118 +341,17 @@ export default () => {
                 </Button>
             </div>
 
-            <div css={tw`grid gap-4 mb-4 md:grid-cols-2 xl:grid-cols-3`}>
-                <TitledGreyBox title={t('server_amxx_web.server_status')}>
-                    {!isServerRunning ? (
-                        <p css={emptyStateText}>{runtimeStateMessage}</p>
-                    ) : queryLoading && !query ? (
-                        <Spinner size={'small'} centered />
-                    ) : queryError ? (
-                        <p css={emptyStateText}>{t('server_amxx_web.query_no_response')}</p>
-                    ) : query?.online ? (
-                        <div css={tw`space-y-2 text-sm text-neutral-200`}>
-                            <div>
-                                <span css={tw`text-neutral-400`}>{t('server_amxx_web.hostname')}:</span>{' '}
-                                {query.hostname || '—'}
-                            </div>
-                            <div>
-                                <span css={tw`text-neutral-400`}>{t('server_amxx_web.map')}:</span>{' '}
-                                {query.map || '—'}
-                            </div>
-                            <div>
-                                <span css={tw`text-neutral-400`}>{t('server_amxx_web.version')}:</span>{' '}
-                                {query.version || '—'}
-                            </div>
-                            <div>
-                                <span css={tw`text-neutral-400`}>{t('server_amxx_web.players')}:</span>{' '}
-                                {query.players}/{query.max_players || '?'}
-                            </div>
-                        </div>
-                    ) : (
-                        <p css={emptyStateText}>{t('server_amxx_web.query_no_response')}</p>
-                    )}
-                </TitledGreyBox>
-
-                <TitledGreyBox title={t('server_amxx_web.amxx')}>
-                    {overviewLoading ? (
-                        <Spinner size={'small'} centered />
-                    ) : overviewError ? (
-                        <p css={emptyStateText}>{overviewError}</p>
-                    ) : overview ? (
-                        <div css={tw`space-y-2 text-sm text-neutral-200`}>
-                            {!isServerRunning && (
-                                <p css={[emptyStateText, tw`mb-2`]}>{runtimeStateMessage}</p>
-                            )}
-                            <div>
-                                <span css={tw`text-neutral-400`}>{t('server_amxx_web.installed')}:</span>{' '}
-                                {overview.amxx_installed ? t('server_amxx_web.yes') : t('server_amxx_web.no')}
-                            </div>
-                            <div>
-                                <span css={tw`text-neutral-400`}>{t('server_amxx_web.users_ini')}:</span>{' '}
-                                {overview.users_ini_exists
-                                    ? t('server_amxx_web.found')
-                                    : t('server_amxx_web.missing')}
-                            </div>
-                            <div>
-                                <span css={tw`text-neutral-400`}>{t('server_amxx_web.directory')}:</span>{' '}
-                                {overview.game_directory}
-                            </div>
-                            <div css={tw`flex flex-wrap gap-2 pt-2`}>
-                                <Link to={`/server/${uuid}/amxx/admins`}>
-                                    <Button size={Button.Sizes.Small}>{t('server_amxx_web.admins')}</Button>
-                                </Link>
-                                <Link to={`/server/${uuid}/amxx/bans`}>
-                                    <Button size={Button.Sizes.Small}>{t('server_amxx_web.bans')}</Button>
-                                </Link>
-                            </div>
-                        </div>
-                    ) : (
-                        <p css={emptyStateText}>{t('server_amxx_web.overview_load_failed')}</p>
-                    )}
-                </TitledGreyBox>
-
-                <TitledGreyBox title={t('server_amxx_web.console_status')}>
-                    {playersOffline ? (
-                        <p css={emptyStateText}>{runtimeStateMessage}</p>
-                    ) : playersLoading && !playersData ? (
-                        <Spinner size={'small'} centered />
-                    ) : playersRuntimeError ? (
-                        <p css={emptyStateText}>{playersUnavailableMessage}</p>
-                    ) : playersLoadError ? (
-                        <p css={emptyStateText}>{playersLoadError}</p>
-                    ) : (
-                        <div css={tw`space-y-2 text-sm text-neutral-200`}>
-                            <div>
-                                <span css={tw`text-neutral-400`}>{t('server_amxx_web.console_players')}:</span>{' '}
-                                {consolePlayers.length}
-                            </div>
-                            {playersData?.hostname && (
-                                <div>
-                                    <span css={tw`text-neutral-400`}>{t('server_amxx_web.hostname')}:</span>{' '}
-                                    {playersData.hostname}
-                                </div>
-                            )}
-                            {playersData?.map && (
-                                <div>
-                                    <span css={tw`text-neutral-400`}>{t('server_amxx_web.map')}:</span>{' '}
-                                    {playersData.map}
-                                </div>
-                            )}
-                            {playersData?.queried_at && (
-                                <div css={tw`text-xs text-neutral-500`}>
-                                    {t('server_amxx_web.updated_at')}:{' '}
-                                    {new Date(playersData.queried_at).toLocaleString()}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </TitledGreyBox>
-            </div>
+            <AmxxWebToolbar
+                uuid={uuid}
+                isServerRunning={isServerRunning}
+                currentMap={currentMap}
+                consolePlayers={displayPlayers}
+            />
 
             <TitledGreyBox title={t('server_amxx_web.players_online')}>
                 {playersOffline ? (
                     <p css={emptyStateText}>{runtimeStateMessage}</p>
-                ) : playersLoading && displayPlayers.length === 0 && !playersRuntimeError && !usingQueryFallback ? (
+                ) : playersLoading && displayPlayers.length === 0 && !playersRuntimeError ? (
                     <Spinner size={'large'} centered />
                 ) : playersRuntimeError && displayPlayers.length === 0 ? (
                     <p css={emptyStateText}>{playersUnavailableMessage}</p>
@@ -507,13 +360,7 @@ export default () => {
                 ) : displayPlayers.length === 0 ? (
                     <p css={emptyStateText}>{t('server_amxx_web.no_players')}</p>
                 ) : (
-                    <>
-                        {usingQueryFallback && (
-                            <p css={[emptyStateText, tw`mb-3 text-yellow-200/80`]}>
-                                {t('server_amxx_web.query_fallback_note')}
-                            </p>
-                        )}
-                        <div css={tw`overflow-x-auto`}>
+                    <div css={tw`overflow-x-auto`}>
                             <table css={tw`w-full text-sm text-left text-neutral-200`}>
                                 <thead>
                                     <tr css={tw`border-b border-neutral-700 text-neutral-400 uppercase text-xs`}>
@@ -529,7 +376,7 @@ export default () => {
                                 <tbody>
                                     {displayPlayers.map((player) => (
                                         <tr
-                                            key={`${player.source}-${player.userid}-${player.slot}-${player.name}`}
+                                            key={`${player.userid}-${player.slot}-${player.name}`}
                                             css={tw`border-b border-neutral-800`}
                                         >
                                             <td css={tw`py-2 pr-4 font-mono`}>
@@ -576,6 +423,17 @@ export default () => {
                                                             {t('server_amxx_web.ban')}
                                                         </Button>
                                                     </Can>
+                                                    <Can action={'file.update'}>
+                                                        <Button
+                                                            size={Button.Sizes.Small}
+                                                            disabled={
+                                                                !canMakeAdminPlayer(player) || busyUserId === player.userid
+                                                            }
+                                                            onClick={() => openAdminModal(player)}
+                                                        >
+                                                            {t('server_amxx_web.make_admin')}
+                                                        </Button>
+                                                    </Can>
                                                 </div>
                                             </td>
                                         </tr>
@@ -583,9 +441,40 @@ export default () => {
                                 </tbody>
                             </table>
                         </div>
-                    </>
                 )}
             </TitledGreyBox>
+
+            {adminTarget && (
+                <TitledGreyBox title={t('server_amxx_web.make_admin_title', { name: adminTarget.name })} css={tw`mt-4`}>
+                    <div css={tw`grid gap-4 md:grid-cols-2`}>
+                        <div>
+                            <Label>{t('server_amxx_web.steamid')}</Label>
+                            <Input value={adminTarget.steamid} readOnly />
+                        </div>
+                        <div>
+                            <Label>{t('server_amxx_web.make_admin_preset')}</Label>
+                            <Select
+                                value={adminPreset}
+                                onChange={(e) => setAdminPreset(e.target.value as QuickAdminPreset)}
+                            >
+                                {QUICK_ADMIN_PRESETS.map((preset) => (
+                                    <option key={preset} value={preset}>
+                                        {t(`server_amxx_web.make_admin_preset_${preset}`)}
+                                    </option>
+                                ))}
+                            </Select>
+                        </div>
+                    </div>
+                    <div css={tw`flex gap-2 mt-4`}>
+                        <Button disabled={busyUserId === adminTarget.userid} onClick={onMakeAdmin}>
+                            {t('server_amxx_web.make_admin_confirm')}
+                        </Button>
+                        <Button.Text onClick={() => setAdminTarget(null)}>
+                            {t('server_amxx_web.cancel')}
+                        </Button.Text>
+                    </div>
+                </TitledGreyBox>
+            )}
 
             {banTarget && (
                 <TitledGreyBox title={t('server_amxx_web.ban_title', { name: banTarget.name })} css={tw`mt-4`}>
@@ -637,12 +526,7 @@ export default () => {
                 </TitledGreyBox>
             )}
 
-            <AmxxWebLivePanel
-                uuid={uuid}
-                isServerRunning={isServerRunning}
-                currentMap={currentMap}
-                consolePlayers={displayPlayers}
-            />
+            <AmxxWebLivePanel uuid={uuid} isServerRunning={isServerRunning} />
         </ServerContentBlock>
     );
 };

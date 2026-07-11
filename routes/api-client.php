@@ -200,6 +200,8 @@ Route::group([
         Route::post('/bans', [Client\Servers\AmxxController::class, 'createBan']);
         Route::delete('/bans/{banId}', [Client\Servers\AmxxController::class, 'deleteBan'])->where('banId', '.+');
         Route::get('/maps', [Client\Servers\AmxxController::class, 'listMaps']);
+        Route::get('/maps/{map}/preview', [Client\Servers\AmxxController::class, 'mapPreview'])
+            ->where('map', '[a-zA-Z0-9_-]+');
         Route::post('/maps', [Client\Servers\AmxxController::class, 'changeMap']);
         Route::post('/slap', [Client\Servers\AmxxController::class, 'slapPlayer']);
         Route::post('/slay', [Client\Servers\AmxxController::class, 'slayPlayer']);

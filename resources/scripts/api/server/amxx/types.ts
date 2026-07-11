@@ -61,6 +61,7 @@ export interface AmxxPlayersResult {
 export interface AmxxMap {
     name: string;
     file: string;
+    has_preview?: boolean;
 }
 
 export interface AmxxCvar {

@@ -24,9 +24,19 @@
                 <div class="box-body">
                     {!! csrf_field() !!}
                     <div class="form-group">
-                        <label for="pDomain" class="control-label">Domínio</label>
-                        <input type="text" name="domain" id="pDomain" class="form-control" value="{{ old('domain') }}" placeholder="jogos.exemplo.com" required />
-                        <p class="text-muted small">O domínio deve existir na conta Cloudflare configurada. O painel irá buscar o Zone ID automaticamente.</p>
+                        <label for="pLabel" class="control-label">Label</label>
+                        <input type="text" name="label" id="pLabel" class="form-control" value="{{ old('label') }}" placeholder="TeamSpeak 3" required />
+                        <p class="text-muted small">Nome exibido ao usuário no painel ao escolher o domínio.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="pZoneDomain" class="control-label">Zona Cloudflare</label>
+                        <input type="text" name="domain" id="pZoneDomain" class="form-control" value="{{ old('domain') }}" placeholder="hostgamer.net" required />
+                        <p class="text-muted small">Domínio raiz da zona na Cloudflare. O painel busca o Zone ID automaticamente.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="pPublicDomain" class="control-label">Domínio público</label>
+                        <input type="text" name="public_domain" id="pPublicDomain" class="form-control" value="{{ old('public_domain') }}" placeholder="ts3.hostgamer.net" required />
+                        <p class="text-muted small">Domínio que o usuário poderá usar. Deve ser a zona raiz ou um subdomínio dela (ex: <code>ts3.hostgamer.net</code> dentro de <code>hostgamer.net</code>).</p>
                     </div>
                     <div class="form-group">
                         <div class="checkbox checkbox-primary">

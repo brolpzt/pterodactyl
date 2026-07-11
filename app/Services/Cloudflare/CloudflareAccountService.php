@@ -41,14 +41,17 @@ class CloudflareAccountService
      */
     public function createZone(CloudflareAccount $account, array $data): CloudflareZone
     {
-        $domain = strtolower(trim($data['domain']));
+        $zoneDomain = strtolower(trim($data['domain']));
+        $publicDomain = strtolower(trim($data['public_domain'] ?? $zoneDomain));
         $apiToken = $this->decryptToken($account);
-        $zoneId = $this->apiService->resolveZoneId($apiToken, $domain);
+        $zoneId = $this->apiService->resolveZoneId($apiToken, $zoneDomain);
 
         return CloudflareZone::create([
             'cloudflare_account_id' => $account->id,
             'zone_id' => $zoneId,
-            'domain' => $domain,
+            'domain' => $zoneDomain,
+            'label' => trim($data['label']),
+            'public_domain' => $publicDomain,
             'is_active' => (bool) ($data['is_active'] ?? true),
             'allow_user_create' => (bool) ($data['allow_user_create'] ?? true),
             'default_proxied' => (bool) ($data['default_proxied'] ?? false),
@@ -60,13 +63,16 @@ class CloudflareAccountService
      */
     public function updateZone(CloudflareZone $zone, array $data): CloudflareZone
     {
-        if (!empty($data['domain']) && strtolower(trim($data['domain'])) !== $zone->domain) {
+        $zoneDomain = strtolower(trim($data['domain']));
+        if ($zoneDomain !== $zone->domain) {
             $apiToken = $this->decryptToken($zone->account);
-            $zone->domain = strtolower(trim($data['domain']));
+            $zone->domain = $zoneDomain;
             $zone->zone_id = $this->apiService->resolveZoneId($apiToken, $zone->domain);
         }
 
         $zone->fill([
+            'label' => trim($data['label']),
+            'public_domain' => strtolower(trim($data['public_domain'])),
             'is_active' => (bool) ($data['is_active'] ?? $zone->is_active),
             'allow_user_create' => (bool) ($data['allow_user_create'] ?? $zone->allow_user_create),
             'default_proxied' => (bool) ($data['default_proxied'] ?? $zone->default_proxied),

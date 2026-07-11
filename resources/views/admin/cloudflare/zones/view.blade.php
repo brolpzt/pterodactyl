@@ -1,15 +1,15 @@
 @extends('layouts.admin')
 
 @section('title')
-    Domínio: {{ $zone->domain }}
+    Domínio: {{ $zone->label }}
 @endsection
 
 @section('content-header')
-    <h1>{{ $zone->domain }}<small>Configurações do domínio Cloudflare.</small></h1>
+    <h1>{{ $zone->label }}<small>{{ $zone->publicDomain() }}</small></h1>
     <ol class="breadcrumb">
         <li><a href="{{ route('admin.index') }}">Admin</a></li>
         <li><a href="{{ route('admin.cloudflare') }}">Cloudflare DNS</a></li>
-        <li class="active">{{ $zone->domain }}</li>
+        <li class="active">{{ $zone->label }}</li>
     </ol>
 @endsection
 
@@ -29,8 +29,16 @@
                         <input type="text" readonly class="form-control" value="{{ $zone->zone_id }}" />
                     </div>
                     <div class="form-group">
-                        <label for="pDomain" class="control-label">Domínio</label>
-                        <input type="text" name="domain" id="pDomain" class="form-control" value="{{ old('domain', $zone->domain) }}" />
+                        <label for="pLabel" class="control-label">Label</label>
+                        <input type="text" name="label" id="pLabel" class="form-control" value="{{ old('label', $zone->label) }}" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="pZoneDomain" class="control-label">Zona Cloudflare</label>
+                        <input type="text" name="domain" id="pZoneDomain" class="form-control" value="{{ old('domain', $zone->domain) }}" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="pPublicDomain" class="control-label">Domínio público</label>
+                        <input type="text" name="public_domain" id="pPublicDomain" class="form-control" value="{{ old('public_domain', $zone->public_domain) }}" required />
                     </div>
                     <div class="form-group">
                         <div class="checkbox checkbox-primary">
@@ -63,7 +71,7 @@
                 <h3 class="box-title">Remover Domínio</h3>
             </div>
             <div class="box-body">
-                <p>Remove este domínio do painel. Só é possível se não houver registros DNS associados.</p>
+                <p>Remove esta entrada do painel. Só é possível se não houver registros DNS associados.</p>
             </div>
             <div class="box-footer">
                 <form action="{{ route('admin.cloudflare.zones.delete', $zone->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover este domínio?');">

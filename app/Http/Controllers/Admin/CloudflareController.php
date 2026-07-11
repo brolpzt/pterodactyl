@@ -24,7 +24,7 @@ class CloudflareController extends Controller
     public function index(): View
     {
         $account = \Pterodactyl\Models\CloudflareAccount::query()->first();
-        $zones = CloudflareZone::query()->withCount('dnsRecords')->orderBy('domain')->get();
+        $zones = CloudflareZone::query()->withCount('dnsRecords')->orderBy('label')->get();
         $records = CloudflareDnsRecord::query()
             ->with(['server', 'zone'])
             ->orderByDesc('created_at')

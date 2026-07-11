@@ -52,7 +52,9 @@ class CloudflareDnsService
                 'max_records' => $profile->max_records_per_server,
                 'zones' => $zones->map(fn (CloudflareZone $zone) => [
                     'id' => $zone->id,
-                    'domain' => $zone->domain,
+                    'label' => $zone->label,
+                    'domain' => $zone->publicDomain(),
+                    'zone_domain' => $zone->domain,
                 ])->values()->all(),
                 'can_create' => $zones->isNotEmpty() && $visibleCount < $profile->max_records_per_server,
                 'primary_ip' => $allocation?->ip,
@@ -85,12 +87,12 @@ class CloudflareDnsService
 
         $proxied = false;
         $srvPayload = null;
-        $recordName = $this->buildRecordName($subdomain, $zone->domain);
+        $recordName = $zone->cloudflareRecordName($subdomain);
         $content = '';
 
         if ($type === EggDnsProfile::TYPE_SRV) {
             $this->ensureCompanionARecord($server, $user, $zone, $subdomain, $apiToken);
-            $srvPayload = $this->buildSrvPayload($server, $profile, $subdomain, $zone->domain);
+            $srvPayload = $this->buildSrvPayload($server, $profile, $subdomain, $zone);
             $recordName = $srvPayload['name'];
             $content = $srvPayload['content'];
         } else {
@@ -98,6 +100,7 @@ class CloudflareDnsService
             $proxied = $type === EggDnsProfile::TYPE_CNAME
                 ? (bool) ($data['proxied'] ?? $zone->default_proxied)
                 : false;
+            $recordName = $zone->cloudflareRecordName($subdomain);
         }
 
         $remote = $this->apiService->createDnsRecord(
@@ -117,7 +120,7 @@ class CloudflareDnsService
             'cloudflare_record_id' => $remote['id'],
             'type' => $type,
             'subdomain' => $subdomain,
-            'name' => $remote['name'] ?? ($srvPayload['full_name'] ?? $recordName),
+            'name' => $remote['name'] ?? ($srvPayload['full_name'] ?? $zone->recordFqdn($subdomain)),
             'content' => $content,
             'ttl' => (int) ($remote['ttl'] ?? 1),
             'proxied' => (bool) ($remote['proxied'] ?? $proxied),
@@ -190,17 +193,18 @@ class CloudflareDnsService
         Server $server,
         EggDnsProfile $profile,
         string $subdomain,
-        string $domain
+        CloudflareZone $zone
     ): array {
         $service = $profile->srvService();
         $protocol = $profile->srvProtocol();
         $priority = $profile->srv_priority;
         $weight = $profile->srv_weight;
         $port = $this->resolveAllocationPort($server);
-        $target = $this->resolveSrvTarget($subdomain, $domain);
+        $target = $this->resolveSrvTarget($zone, $subdomain);
+        $relativeName = $zone->cloudflareRecordName($subdomain);
 
-        $recordName = "{$service}.{$protocol}.{$subdomain}";
-        $fullName = "{$recordName}.{$domain}";
+        $recordName = "{$service}.{$protocol}.{$relativeName}";
+        $fullName = "{$recordName}.{$zone->domain}";
         $content = "{$priority} {$weight} {$port} {$target}";
 
         return [
@@ -210,7 +214,7 @@ class CloudflareDnsService
             'data' => [
                 'service' => $service,
                 'proto' => $protocol,
-                'name' => $subdomain,
+                'name' => $relativeName,
                 'priority' => $priority,
                 'weight' => $weight,
                 'port' => $port,
@@ -250,11 +254,11 @@ class CloudflareDnsService
     }
 
     /**
-     * Cloudflare exige hostname como target SRV — usamos o próprio subdomínio no domínio da zona.
+     * Cloudflare exige hostname como target SRV — usamos o FQDN público do registro.
      */
-    public function resolveSrvTarget(string $subdomain, string $domain): string
+    public function resolveSrvTarget(CloudflareZone $zone, string $subdomain): string
     {
-        return $this->buildRecordName($subdomain, $domain);
+        return $zone->recordFqdn($subdomain);
     }
 
     /**
@@ -275,7 +279,8 @@ class CloudflareDnsService
             ->first();
 
         $ip = $this->resolveAllocationIp($server);
-        $recordName = $this->buildRecordName($subdomain, $zone->domain);
+        $recordName = $zone->cloudflareRecordName($subdomain);
+        $fqdn = $zone->recordFqdn($subdomain);
 
         if ($existing) {
             if ($existing->content !== $ip) {
@@ -315,7 +320,7 @@ class CloudflareDnsService
             'cloudflare_record_id' => $remote['id'],
             'type' => EggDnsProfile::TYPE_A,
             'subdomain' => $subdomain,
-            'name' => $remote['name'] ?? $recordName,
+            'name' => $remote['name'] ?? $fqdn,
             'content' => $ip,
             'ttl' => (int) ($remote['ttl'] ?? 1),
             'proxied' => false,
@@ -456,10 +461,5 @@ class CloudflareDnsService
         }
 
         return rtrim($content, '.');
-    }
-
-    private function buildRecordName(string $subdomain, string $domain): string
-    {
-        return "{$subdomain}.{$domain}";
     }
 }

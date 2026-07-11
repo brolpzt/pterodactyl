@@ -82,7 +82,7 @@ const CreateDnsForm = ({
     onCreate: (data: { zoneId: number; subdomain: string; type: string; content?: string; proxied?: boolean }) => Promise<void>;
     allowedTypes: string[];
     defaultType: string;
-    zones: { id: number; domain: string }[];
+    zones: { id: number; label: string; domain: string }[];
     primaryIp: string | null;
     primaryPort: number | null;
     primaryAlias: string | null;
@@ -169,7 +169,7 @@ const CreateDnsForm = ({
                     <Select id={'dns-zone'} value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
                         {zones.map((zone) => (
                             <option key={zone.id} value={zone.id}>
-                                {zone.domain}
+                                {zone.label} ({zone.domain})
                             </option>
                         ))}
                     </Select>

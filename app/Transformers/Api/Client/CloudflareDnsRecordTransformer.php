@@ -16,7 +16,8 @@ class CloudflareDnsRecordTransformer extends BaseClientTransformer
         return [
             'id' => $record->id,
             'zone_id' => $record->zone_id,
-            'domain' => $record->zone?->domain,
+            'domain' => $record->zone?->publicDomain(),
+            'zone_label' => $record->zone?->label,
             'type' => $record->type,
             'subdomain' => $record->subdomain,
             'name' => $record->name,

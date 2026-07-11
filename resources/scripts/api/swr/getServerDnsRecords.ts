@@ -3,7 +3,9 @@ import http from '@/api/http';
 
 export interface DnsZone {
     id: number;
+    label: string;
     domain: string;
+    zoneDomain: string;
 }
 
 export interface DnsSrvTemplate {
@@ -82,7 +84,9 @@ export default (uuid: string, config?: any) => {
                     maxRecords: data.meta.dns.max_records,
                     zones: (data.meta.dns.zones || []).map((zone: any) => ({
                         id: zone.id,
+                        label: zone.label,
                         domain: zone.domain,
+                        zoneDomain: zone.zone_domain,
                     })),
                     canCreate: data.meta.dns.can_create,
                     primaryIp: data.meta.dns.primary_ip,

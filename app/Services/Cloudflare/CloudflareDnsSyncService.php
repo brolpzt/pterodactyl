@@ -111,7 +111,7 @@ class CloudflareDnsSyncService
         if ($record->type === EggDnsProfile::TYPE_SRV && $profile) {
             $this->syncCompanionARecord($server, $record, $apiToken);
 
-            $srv = $this->dnsService->buildSrvPayload($server, $profile, $record->subdomain, $zone->domain);
+            $srv = $this->dnsService->buildSrvPayload($server, $profile, $record->subdomain, $zone);
             if ($record->content === $srv['content']) {
                 return;
             }

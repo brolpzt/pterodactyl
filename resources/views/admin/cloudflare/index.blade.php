@@ -56,14 +56,18 @@
                 <table class="table table-hover">
                     <tbody>
                         <tr>
-                            <th>Domínio</th>
+                            <th>Label</th>
+                            <th>Domínio público</th>
+                            <th>Zona CF</th>
                             <th>Status</th>
                             <th>Usuários</th>
                             <th>Registros</th>
                         </tr>
                         @forelse ($zones as $zone)
                             <tr>
-                                <td><a href="{{ route('admin.cloudflare.zones.view', $zone->id) }}">{{ $zone->domain }}</a></td>
+                                <td><a href="{{ route('admin.cloudflare.zones.view', $zone->id) }}">{{ $zone->label }}</a></td>
+                                <td><code>{{ $zone->publicDomain() }}</code></td>
+                                <td><code>{{ $zone->domain }}</code></td>
                                 <td>
                                     @if($zone->is_active)
                                         <span class="label label-success">Ativo</span>
@@ -82,7 +86,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted">Nenhum domínio configurado.</td>
+                                <td colspan="6" class="text-center text-muted">Nenhum domínio configurado.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -119,7 +123,7 @@
                                         —
                                     @endif
                                 </td>
-                                <td>{{ $record->zone?->domain }}</td>
+                                <td>{{ $record->zone?->label }} <code>{{ $record->zone?->publicDomain() }}</code></td>
                                 <td><code>{{ $record->type }}</code></td>
                                 <td><code>{{ $record->name }}</code></td>
                                 <td><code>{{ $record->content }}</code></td>

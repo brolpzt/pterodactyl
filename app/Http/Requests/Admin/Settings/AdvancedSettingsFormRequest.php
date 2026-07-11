@@ -31,6 +31,7 @@ class AdvancedSettingsFormRequest extends AdminFormRequest
                 'between:1024,65535',
                 'gt:pterodactyl:client_features:allocations:range_start',
             ],
+            'pterodactyl:steam:api_key' => 'nullable|string|max:191',
         ];
     }
 
@@ -45,6 +46,7 @@ class AdvancedSettingsFormRequest extends AdminFormRequest
             'pterodactyl:client_features:allocations:enabled' => 'Auto Create Allocations Enabled',
             'pterodactyl:client_features:allocations:range_start' => 'Starting Port',
             'pterodactyl:client_features:allocations:range_end' => 'Ending Port',
+            'pterodactyl:steam:api_key' => 'Steam Web API Key',
         ];
     }
 }

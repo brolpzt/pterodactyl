@@ -7,9 +7,11 @@ use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
 use Illuminate\Contracts\Console\Kernel;
 use Pterodactyl\Http\Controllers\Controller;
+use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Pterodactyl\Contracts\Repository\SettingsRepositoryInterface;
 use Pterodactyl\Http\Requests\Admin\Settings\AdvancedSettingsFormRequest;
+use Pterodactyl\Providers\SettingsServiceProvider;
 
 class AdvancedController extends Controller
 {
@@ -19,6 +21,7 @@ class AdvancedController extends Controller
     public function __construct(
         private AlertsMessageBag $alert,
         private ConfigRepository $config,
+        private Encrypter $encrypter,
         private Kernel $kernel,
         private SettingsRepositoryInterface $settings,
     ) {
@@ -39,6 +42,7 @@ class AdvancedController extends Controller
 
         return view('admin.settings.advanced', [
             'showRecaptchaWarning' => $showRecaptchaWarning,
+            'steamApiKeyConfigured' => !empty($this->config->get('pterodactyl.steam.api_key')),
         ]);
     }
 
@@ -48,7 +52,22 @@ class AdvancedController extends Controller
      */
     public function update(AdvancedSettingsFormRequest $request): RedirectResponse
     {
-        foreach ($request->normalize() as $key => $value) {
+        $values = $request->normalize();
+        $clearSteamKey = array_get($values, 'pterodactyl:steam:api_key') === '!e';
+
+        if ($clearSteamKey) {
+            $values['pterodactyl:steam:api_key'] = '';
+        }
+
+        foreach ($values as $key => $value) {
+            if ($key === 'pterodactyl:steam:api_key' && $value === '' && !$clearSteamKey) {
+                continue;
+            }
+
+            if (in_array($key, SettingsServiceProvider::getEncryptedKeys()) && !empty($value)) {
+                $value = $this->encrypter->encrypt($value);
+            }
+
             $this->settings->set('settings::' . $key, $value);
         }
 

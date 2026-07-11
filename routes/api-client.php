@@ -158,6 +158,14 @@ Route::group([
         Route::post('/{addon}/install', [Client\Servers\AddonController::class, 'install'])->withoutScopedBindings();
     });
 
+    Route::group(['prefix' => '/workshop'], function () {
+        Route::get('/browse', [Client\Servers\WorkshopController::class, 'browse']);
+        Route::get('/installed', [Client\Servers\WorkshopController::class, 'installed']);
+        Route::post('/installed', [Client\Servers\WorkshopController::class, 'install']);
+        Route::get('/items/{fileId}', [Client\Servers\WorkshopController::class, 'show']);
+        Route::delete('/installed/{fileId}', [Client\Servers\WorkshopController::class, 'uninstall']);
+    });
+
     Route::group(['prefix' => '/firewall'], function () {
         Route::get('/', [Client\Servers\FirewallController::class, 'index']);
         Route::post('/', [Client\Servers\FirewallController::class, 'store']);

@@ -30,6 +30,7 @@ class SettingsServiceProvider extends ServiceProvider
         'pterodactyl:client_features:allocations:enabled',
         'pterodactyl:client_features:allocations:range_start',
         'pterodactyl:client_features:allocations:range_end',
+        'pterodactyl:steam:api_key',
     ];
 
     /**
@@ -52,6 +53,7 @@ class SettingsServiceProvider extends ServiceProvider
      */
     protected static array $encrypted = [
         'mail:mailers:smtp:password',
+        'pterodactyl:steam:api_key',
     ];
 
     /**

@@ -23,6 +23,7 @@ import {
     faAngleDoubleRight,
     faArrowLeft,
     faGamepad,
+    faStore,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
@@ -255,6 +256,8 @@ const ServerLinks = () => {
             case 'Firewall': return faShieldAlt;
             case 'server.dns':
             case 'DNS': return faGlobe;
+            case 'server.workshop':
+            case 'Workshop': return faStore;
             case 'server.amxx.web':
             case 'AMXX Web': return faGamepad;
             case 'server.amxx.admins':
@@ -367,7 +370,8 @@ const ServerLinks = () => {
         .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
         .filter((route) => route.path !== '/ts3/query' || rootAdmin)
         .filter((route) => !(isCs16 && isAmxxRoute(route.path)))
-        .filter((route) => route.path !== '/dns' || dnsEnabled || eggFeatures.includes('dns'));
+        .filter((route) => route.path !== '/dns' || dnsEnabled || eggFeatures.includes('dns'))
+        .filter((route) => route.path !== '/workshop' || eggFeatures.includes('workshop'));
 
     const sortedRoutes = isTs3
         ? sortRoutes(filteredRoutes, ts3RouteOrder)

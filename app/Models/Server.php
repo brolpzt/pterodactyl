@@ -395,6 +395,14 @@ class Server extends Model
     }
 
     /**
+     * Returns all Steam Workshop items configured for this server.
+     */
+    public function workshopItems(): HasMany
+    {
+        return $this->hasMany(ServerWorkshopItem::class);
+    }
+
+    /**
      * Returns all of the activity log entries where the server is the subject.
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany<\Pterodactyl\Models\ActivityLog, $this>

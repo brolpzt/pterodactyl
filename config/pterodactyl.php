@@ -201,4 +201,17 @@ return [
     'telemetry' => [
         'enabled' => env('PTERODACTYL_TELEMETRY_ENABLED', true),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Steam Workshop
+    |--------------------------------------------------------------------------
+    |
+    | API key used to browse Steam Workshop content from the client panel.
+    | Can be overridden via Admin → Settings → Advanced.
+    */
+
+    'steam' => [
+        'api_key' => env('STEAM_API_KEY', ''),
+    ],
 ];

@@ -157,6 +157,13 @@ export default {
             component: lazy(() => import('@/components/server/addons/AddonsContainer')),
         },
         {
+            path: '/workshop',
+            permission: 'workshop.*',
+            name: 'Workshop',
+            nameKey: 'server.workshop',
+            component: lazy(() => import('@/components/server/workshop/WorkshopContainer')),
+        },
+        {
             path: '/firewall',
             permission: 'firewall.*',
             name: 'Firewall',

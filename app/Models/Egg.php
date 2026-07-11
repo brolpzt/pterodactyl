@@ -79,6 +79,7 @@ class Egg extends Model
     public const FEATURE_EULA_POPUP = 'eula';
     public const FEATURE_FASTDL = 'fastdl';
     public const FEATURE_DNS = 'dns';
+    public const FEATURE_WORKSHOP = 'workshop';
 
     /**
      * The table associated with the model.

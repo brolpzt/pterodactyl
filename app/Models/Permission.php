@@ -253,6 +253,14 @@ class Permission extends Model
                 'cvar' => 'Allows viewing and changing common server cvars via AMXX Web.',
             ],
         ],
+
+        'workshop' => [
+            'description' => 'Permissions for browsing and managing Steam Workshop content.',
+            'keys' => [
+                'read' => 'Allows browsing Steam Workshop items for this server.',
+                'manage' => 'Allows adding and removing Steam Workshop items from this server.',
+            ],
+        ],
     ];
 
     /**

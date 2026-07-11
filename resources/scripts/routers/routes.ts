@@ -228,7 +228,7 @@ export default {
         },
         {
             path: '/amxx',
-            permission: 'control.console',
+            permission: ['amxx.read', 'control.console'],
             name: 'AMXX Web',
             nameKey: 'server.amxx.web',
             component: AmxxWebContainer,

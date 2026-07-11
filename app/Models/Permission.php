@@ -69,6 +69,14 @@ class Permission extends Model
     public const ACTION_FIREWALL_CREATE = 'firewall.create';
     public const ACTION_FIREWALL_DELETE = 'firewall.delete';
 
+    public const ACTION_AMXX_READ = 'amxx.read';
+    public const ACTION_AMXX_KICK = 'amxx.kick';
+    public const ACTION_AMXX_BAN = 'amxx.ban';
+    public const ACTION_AMXX_SLAY = 'amxx.slay';
+    public const ACTION_AMXX_MAP = 'amxx.map';
+    public const ACTION_AMXX_CHAT = 'amxx.chat';
+    public const ACTION_AMXX_CVAR = 'amxx.cvar';
+
     /**
      * Should timestamps be used on this model.
      */
@@ -217,6 +225,19 @@ class Permission extends Model
                 'read'   => 'Allows a user to view all banned IPs for this server.',
                 'create' => 'Allows a user to ban an IP address from connecting to this server.',
                 'delete' => 'Allows a user to remove an IP ban from this server.',
+            ],
+        ],
+
+        'amxx' => [
+            'description' => 'Permissions for AMXX Web management on Counter-Strike 1.6 servers.',
+            'keys' => [
+                'read' => 'Allows viewing the AMXX Web page and listing players from the server console.',
+                'kick' => 'Allows kicking players via AMXX Web.',
+                'ban' => 'Allows banning players via AMXX Web (SteamID or IP).',
+                'slay' => 'Allows slap and slay actions via AMXX Web.',
+                'map' => 'Allows changing the server map via AMXX Web.',
+                'chat' => 'Allows sending admin chat messages via AMXX Web.',
+                'cvar' => 'Allows viewing and changing common server cvars via AMXX Web.',
             ],
         ],
     ];

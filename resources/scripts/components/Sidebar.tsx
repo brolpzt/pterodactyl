@@ -20,8 +20,6 @@ import {
     faMicrochip,
     faAngleDoubleLeft,
     faAngleDoubleRight,
-    faLifeRing,
-    faReceipt,
     faArrowLeft,
     faGamepad,
 } from '@fortawesome/free-solid-svg-icons';
@@ -45,8 +43,6 @@ const navItemText = css`
 
 const CLIENT_ACCOUNT_URL = 'https://hostgamer.net/account';
 const CLIENT_SERVICES_URL = `${CLIENT_ACCOUNT_URL}/services`;
-const CLIENT_SUPPORT_URL = `${CLIENT_ACCOUNT_URL}/support`;
-const CLIENT_INVOICES_URL = `${CLIENT_ACCOUNT_URL}/invoices`;
 
 const serverLinksFade = `
     @keyframes fadeInItems {
@@ -129,16 +125,10 @@ const BrandLogo = styled.img<{ collapsed: boolean }>`
     object-position: left center;
 `;
 
-const NavItemLabel = styled.span.attrs({ className: 'nav-item-label' })<{ collapsed: boolean; $amxx?: boolean }>`
+const NavItemLabel = styled.span.attrs({ className: 'nav-item-label' })<{ collapsed: boolean }>`
     ${navItemText};
     ${tw`transition-all duration-150 whitespace-nowrap overflow-hidden`};
     ${props => props.collapsed ? 'max-width: 0; opacity: 0; margin: 0;' : 'max-width: 200px; opacity: 1; margin-left: 0.5rem;'};
-    ${(props) =>
-        props.$amxx &&
-        css`
-            color: #f87171;
-            text-shadow: 0 0 10px rgba(248, 113, 113, 0.45);
-        `}
 `;
 
 const NavSectionTitle = styled.div<{ collapsed: boolean }>`
@@ -152,7 +142,7 @@ const SidebarFooter = styled.div<{ collapsed: boolean }>`
     ${(props) => props.collapsed && tw`text-center px-0`};
 `;
 
-const NavItem = styled(NavLink)<{ collapsed?: boolean; $amxx?: boolean }>`
+const NavItem = styled(NavLink)<{ collapsed?: boolean }>`
     ${navItemText};
     ${tw`relative z-10 flex items-center py-2.5 text-sm font-header font-semibold uppercase no-underline transition-all duration-150 hover:bg-white/5`};
     padding-left: 1.25rem;
@@ -175,32 +165,6 @@ const NavItem = styled(NavLink)<{ collapsed?: boolean; $amxx?: boolean }>`
             ${tw`text-white`};
         }
     }
-
-    ${(props) =>
-        props.$amxx &&
-        css`
-            &:hover .nav-item-label,
-            &:hover .icon-container {
-                color: #fca5a5;
-                text-shadow: 0 0 14px rgba(248, 113, 113, 0.55);
-            }
-
-            & .icon-container {
-                color: #f87171;
-                text-shadow: 0 0 10px rgba(248, 113, 113, 0.45);
-            }
-
-            &.active {
-                background: rgba(239, 68, 68, 0.18);
-                border-right-color: #ef4444;
-
-                & .nav-item-label,
-                & .icon-container {
-                    color: #fecaca;
-                    text-shadow: 0 0 14px rgba(239, 68, 68, 0.65);
-                }
-            }
-        `}
 `;
 
 const ExternalNavItem = styled.a<{ collapsed?: boolean }>`
@@ -324,9 +288,6 @@ const ServerLinks = () => {
     ];
     const cs16RouteOrder = [
         '/',
-        '/amxx',
-        '/amxx/admins',
-        '/amxx/bans',
         '/console',
         '/files',
         '/addons',
@@ -338,79 +299,92 @@ const ServerLinks = () => {
         '/activity',
         '/settings',
     ];
+    const amxxRouteOrder = ['/amxx', '/amxx/admins', '/amxx/bans'];
 
     const isAmxxRoute = (path: string) => path.startsWith('/amxx');
+
+    const sortRoutes = (routeList: typeof routes.server, order: string[]) =>
+        routeList
+            .filter((route) => !!route.name)
+            .sort((a, b) => {
+                const aIndex = order.indexOf(a.path);
+                const bIndex = order.indexOf(b.path);
+                const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+                const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+
+                return safeA - safeB;
+            });
+
+    const renderServerRoute = (route: (typeof routes.server)[number]) => (
+        route.permission ? (
+            <Can key={route.path} action={route.permission as any} matchAny>
+                <NavItem
+                    to={to(route.path)}
+                    exact={route.exact}
+                    collapsed={collapsed}
+                    title={route.nameKey ? t(route.nameKey) : route.name!}
+                >
+                    <IconContainer className="icon-container">
+                        <FontAwesomeIcon icon={getIcon((route as any).nameKey, route.name!)} />
+                    </IconContainer>
+                    <NavItemLabel collapsed={collapsed}>
+                        {route.nameKey ? t(route.nameKey) : route.name!}
+                    </NavItemLabel>
+                </NavItem>
+            </Can>
+        ) : (
+            <NavItem
+                key={route.path}
+                to={to(route.path)}
+                exact={route.exact}
+                collapsed={collapsed}
+                title={route.nameKey ? t(route.nameKey) : route.name!}
+            >
+                <IconContainer className="icon-container">
+                    <FontAwesomeIcon icon={getIcon((route as any).nameKey, route.name!)} />
+                </IconContainer>
+                <NavItemLabel collapsed={collapsed}>
+                    {route.nameKey ? t(route.nameKey) : route.name!}
+                </NavItemLabel>
+            </NavItem>
+        )
+    );
+
+    const filteredRoutes = routes.server
+        .filter((route) => (isTs3
+            ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/activity' || route.path === '/settings' || route.path === '/console' || route.path === '/files'
+            : isCs16
+            ? !route.path.startsWith('/ts3')
+            : !route.path.startsWith('/ts3') && !route.path.startsWith('/amxx')))
+        .filter((route) => !(isTs3 && route.path === '/backups'))
+        .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
+        .filter((route) => route.path !== '/ts3/query' || rootAdmin)
+        .filter((route) => !(isCs16 && isAmxxRoute(route.path)));
+
+    const sortedRoutes = isTs3
+        ? sortRoutes(filteredRoutes, ts3RouteOrder)
+        : isCs16
+        ? sortRoutes(filteredRoutes, cs16RouteOrder)
+        : filteredRoutes.filter((route) => !!route.name);
+
+    const amxxRoutes = isCs16
+        ? sortRoutes(
+            routes.server.filter((route) => isAmxxRoute(route.path)),
+            amxxRouteOrder
+        )
+        : [];
 
     return (
         <>
             <SectionTitle collapsed={collapsed}>{t('nav.server_menu')}</SectionTitle>
-            {routes.server
-                .filter((route) => (isTs3
-                    ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/activity' || route.path === '/settings' || route.path === '/console' || route.path === '/files'
-                    : isCs16
-                    ? !route.path.startsWith('/ts3')
-                    : !route.path.startsWith('/ts3') && !route.path.startsWith('/amxx')))
-                .filter((route) => !(isTs3 && route.path === '/backups'))
-                .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
-                .filter((route) => route.path !== '/ts3/query' || rootAdmin)
-                .sort((a, b) => {
-                    if (isTs3) {
-                        const aIndex = ts3RouteOrder.indexOf(a.path);
-                        const bIndex = ts3RouteOrder.indexOf(b.path);
-                        const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-                        const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+            {sortedRoutes.map((route) => renderServerRoute(route))}
 
-                        return safeA - safeB;
-                    }
-
-                    if (isCs16) {
-                        const aIndex = cs16RouteOrder.indexOf(a.path);
-                        const bIndex = cs16RouteOrder.indexOf(b.path);
-                        const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-                        const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-
-                        return safeA - safeB;
-                    }
-
-                    return 0;
-                })
-                .filter((route) => !!route.name)
-                .map((route) => (
-                    route.permission ? (
-                        <Can key={route.path} action={route.permission as any} matchAny>
-                            <NavItem
-                                to={to(route.path)}
-                                exact={route.exact}
-                                collapsed={collapsed}
-                                $amxx={isCs16 && isAmxxRoute(route.path)}
-                                title={route.nameKey ? t(route.nameKey) : route.name!}
-                            >
-                                <IconContainer className="icon-container">
-                                    <FontAwesomeIcon icon={getIcon((route as any).nameKey, route.name!)} />
-                                </IconContainer>
-                                <NavItemLabel collapsed={collapsed} $amxx={isCs16 && isAmxxRoute(route.path)}>
-                                    {route.nameKey ? t(route.nameKey) : route.name!}
-                                </NavItemLabel>
-                            </NavItem>
-                        </Can>
-                    ) : (
-                        <NavItem
-                            key={route.path}
-                            to={to(route.path)}
-                            exact={route.exact}
-                            collapsed={collapsed}
-                            $amxx={isCs16 && isAmxxRoute(route.path)}
-                            title={route.nameKey ? t(route.nameKey) : route.name!}
-                        >
-                            <IconContainer className="icon-container">
-                                <FontAwesomeIcon icon={getIcon((route as any).nameKey, route.name!)} />
-                            </IconContainer>
-                            <NavItemLabel collapsed={collapsed} $amxx={isCs16 && isAmxxRoute(route.path)}>
-                                {route.nameKey ? t(route.nameKey) : route.name!}
-                            </NavItemLabel>
-                        </NavItem>
-                    )
-                ))}
+            {amxxRoutes.length > 0 && (
+                <>
+                    <SectionTitle collapsed={collapsed}>{t('nav.quick_menu')}</SectionTitle>
+                    {amxxRoutes.map((route) => renderServerRoute(route))}
+                </>
+            )}
 
             {rootAdmin && internalId && (
                 <ExternalNavItem
@@ -461,36 +435,6 @@ const Sidebar = () => {
                     />
                 </SidebarBrand>
                 <SidebarScroll>
-                <SectionTitle collapsed={collapsed}>{t('nav.navigation')}</SectionTitle>
-                <NavItem to={'/'} exact collapsed={collapsed} title={collapsed ? t('nav.dashboard') : undefined}>
-                    <IconContainer className="icon-container">
-                        <FontAwesomeIcon icon={faLayerGroup} />
-                    </IconContainer>
-                    <NavItemLabel collapsed={collapsed}>{t('nav.dashboard')}</NavItemLabel>
-                </NavItem>
-
-                <ExternalNavItem
-                    href={CLIENT_SUPPORT_URL}
-                    collapsed={collapsed}
-                    title={collapsed ? t('nav.support') : undefined}
-                >
-                    <IconContainer className="icon-container">
-                        <FontAwesomeIcon icon={faLifeRing} />
-                    </IconContainer>
-                    <NavItemLabel collapsed={collapsed}>{t('nav.support')}</NavItemLabel>
-                </ExternalNavItem>
-
-                <ExternalNavItem
-                    href={CLIENT_INVOICES_URL}
-                    collapsed={collapsed}
-                    title={collapsed ? t('nav.invoices') : undefined}
-                >
-                    <IconContainer className="icon-container">
-                        <FontAwesomeIcon icon={faReceipt} />
-                    </IconContainer>
-                    <NavItemLabel collapsed={collapsed}>{t('nav.invoices')}</NavItemLabel>
-                </ExternalNavItem>
-
                 {match && (
                     <React.Suspense fallback={<ServerLinksPlaceholder />}>
                         <FadeInWrapper key={match.params.id}>

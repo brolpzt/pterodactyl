@@ -8,6 +8,7 @@ use Pterodactyl\Models\Server;
 use Pterodactyl\Models\ServerVariable;
 use Pterodactyl\Exceptions\Service\Amxx\AmxxException;
 use Pterodactyl\Repositories\Wings\DaemonCommandRepository;
+use Pterodactyl\Repositories\Wings\DaemonConsoleCommandRepository;
 use Pterodactyl\Repositories\Wings\DaemonFileRepository;
 use Pterodactyl\Repositories\Wings\DaemonServerPlayersRepository;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
@@ -46,10 +47,25 @@ class AmxxService
         'mod' => 'bcdj',
     ];
 
+    public const COMMON_CVARS = [
+        'mp_roundtime' => 'Round time (minutes)',
+        'mp_timelimit' => 'Map time limit (minutes)',
+        'mp_freezetime' => 'Freeze time (seconds)',
+        'mp_buytime' => 'Buy time (minutes)',
+        'mp_c4timer' => 'C4 timer (seconds)',
+        'mp_friendlyfire' => 'Friendly fire (0/1)',
+        'mp_flashlight' => 'Flashlight (0/1)',
+        'mp_footsteps' => 'Footsteps (0/1)',
+        'sv_password' => 'Server password',
+        'sv_gravity' => 'Gravity',
+        'sv_maxspeed' => 'Max speed',
+    ];
+
     public function __construct(
         private DaemonFileRepository $fileRepository,
         private DaemonCommandRepository $commandRepository,
         private DaemonServerPlayersRepository $playersRepository,
+        private DaemonConsoleCommandRepository $consoleCommandRepository,
     ) {
     }
 
@@ -75,7 +91,7 @@ class AmxxService
 
         if ($overview['wings_reachable'] && $overview['amxx_installed'] && $overview['users_ini_exists']) {
             $content = $this->readFile($server, $overview['paths']['users_ini']);
-            $admins = $this->parseUsersIni($content)['admins'];
+            $admins = $this->filterListedAdmins($this->parseUsersIni($content)['admins']);
         }
 
         return [
@@ -184,6 +200,185 @@ class AmxxService
         ];
     }
 
+    public function listMaps(Server $server): array
+    {
+        $paths = $this->resolvePaths($server);
+        $listing = $this->getDirectoryListing($server, $paths['game_dir'] . '/maps');
+        $maps = [];
+
+        if ($listing !== null) {
+            foreach ($listing as $item) {
+                $name = $item['name'] ?? null;
+                if (!$name || !($item['file'] ?? false)) {
+                    continue;
+                }
+
+                if (!str_ends_with(strtolower($name), '.bsp')) {
+                    continue;
+                }
+
+                $mapName = pathinfo($name, PATHINFO_FILENAME);
+                if ($mapName === '') {
+                    continue;
+                }
+
+                $maps[] = [
+                    'name' => $mapName,
+                    'file' => $name,
+                ];
+            }
+        }
+
+        usort($maps, fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+
+        return $maps;
+    }
+
+    public function changeMap(Server $server, string $map): array
+    {
+        $map = strtolower(trim($map));
+        $map = preg_replace('/[^a-z0-9_-]/', '', $map) ?? '';
+
+        if ($map === '') {
+            throw new AmxxException('Nome de mapa inválido.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $available = array_column($this->listMaps($server), 'name');
+        if (!empty($available) && !in_array($map, $available, true)) {
+            throw new AmxxException('Mapa não encontrado no servidor.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $this->sendRequiredCommand($server, 'amx_map ' . $map);
+
+        return [
+            'map' => $map,
+            'command_sent' => true,
+        ];
+    }
+
+    public function slapPlayer(Server $server, int $userid, int $damage = 0): array
+    {
+        if ($userid < 1) {
+            throw new AmxxException('O userid do jogador é inválido.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $damage = max(0, min(100, $damage));
+        $command = 'amx_slap #' . $userid;
+        if ($damage > 0) {
+            $command .= ' ' . $damage;
+        }
+
+        $this->sendRequiredCommand($server, $command);
+
+        return [
+            'userid' => $userid,
+            'damage' => $damage,
+            'command_sent' => true,
+        ];
+    }
+
+    public function slayPlayer(Server $server, int $userid): array
+    {
+        if ($userid < 1) {
+            throw new AmxxException('O userid do jogador é inválido.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $this->sendRequiredCommand($server, 'amx_slay #' . $userid);
+
+        return [
+            'userid' => $userid,
+            'command_sent' => true,
+        ];
+    }
+
+    public function sendSay(Server $server, string $message): array
+    {
+        $message = $this->sanitizeChatMessage($message);
+        if ($message === '') {
+            throw new AmxxException('A mensagem é obrigatória.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $this->sendRequiredCommand($server, 'amx_say "' . $message . '"');
+
+        return [
+            'message' => $message,
+            'command_sent' => true,
+        ];
+    }
+
+    public function sendPsay(Server $server, int $userid, string $message): array
+    {
+        if ($userid < 1) {
+            throw new AmxxException('O userid do jogador é inválido.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $message = $this->sanitizeChatMessage($message);
+        if ($message === '') {
+            throw new AmxxException('A mensagem é obrigatória.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $this->sendRequiredCommand($server, 'amx_psay #' . $userid . ' "' . $message . '"');
+
+        return [
+            'userid' => $userid,
+            'message' => $message,
+            'command_sent' => true,
+        ];
+    }
+
+    public function listCvars(Server $server): array
+    {
+        $cvars = [];
+
+        foreach (self::COMMON_CVARS as $name => $label) {
+            $cvars[] = [
+                'name' => $name,
+                'label' => $label,
+                'value' => null,
+            ];
+        }
+
+        return $cvars;
+    }
+
+    public function queryCvar(Server $server, string $name): array
+    {
+        $name = strtolower(trim($name));
+        if (!array_key_exists($name, self::COMMON_CVARS)) {
+            throw new AmxxException('Cvar não permitida.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $result = $this->executeConsoleQuery($server, $name);
+        $value = $this->parseCvarValue($name, $result['lines'] ?? []);
+
+        return [
+            'name' => $name,
+            'label' => self::COMMON_CVARS[$name],
+            'value' => $value,
+        ];
+    }
+
+    public function setCvar(Server $server, string $name, string $value): array
+    {
+        $name = strtolower(trim($name));
+        if (!array_key_exists($name, self::COMMON_CVARS)) {
+            throw new AmxxException('Cvar não permitida.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $value = $this->sanitizeCvarValue($value);
+        if ($value === '') {
+            throw new AmxxException('O valor da cvar é obrigatório.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $this->sendRequiredCommand($server, 'amx_cvar ' . $name . ' ' . $value);
+
+        return [
+            'name' => $name,
+            'value' => $value,
+            'command_sent' => true,
+        ];
+    }
+
     public function createAdmin(
         Server $server,
         string $authType,
@@ -207,6 +402,10 @@ class AmxxService
 
         if ($authType === 'ip' && !filter_var($auth, FILTER_VALIDATE_IP)) {
             throw new AmxxException('Endereço IP inválido.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if ($this->isLoopbackAdmin($auth)) {
+            throw new AmxxException('O identificador loopback é reservado pelo AMXX.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $paths = $this->resolvePaths($server);
@@ -271,6 +470,10 @@ class AmxxService
             throw new AmxxException('Admin não encontrado.', Response::HTTP_NOT_FOUND);
         }
 
+        if ($this->isLoopbackAdmin($parsed['admins'][$id]['auth'])) {
+            throw new AmxxException('O admin loopback não pode ser editado.', Response::HTTP_FORBIDDEN);
+        }
+
         foreach ($parsed['admins'] as $index => $admin) {
             if ($index === $id || !$admin['enabled']) {
                 continue;
@@ -316,6 +519,10 @@ class AmxxService
             throw new AmxxException('Admin não encontrado.', Response::HTTP_NOT_FOUND);
         }
 
+        if ($this->isLoopbackAdmin($parsed['admins'][$id]['auth'])) {
+            throw new AmxxException('O admin loopback não pode ser removido.', Response::HTTP_FORBIDDEN);
+        }
+
         unset($parsed['admins'][$id]);
         $parsed['admins'] = array_values($parsed['admins']);
 
@@ -333,20 +540,13 @@ class AmxxService
     {
         $paths = $this->resolvePaths($server);
         $bans = [];
-        $gameListing = $this->getDirectoryListing($server, $paths['game_dir']);
 
-        if ($gameListing !== null && $this->fileExistsInDirectoryListing($gameListing, 'banned.cfg')) {
-            $content = $this->readFile($server, $paths['banned_cfg']);
-            foreach ($this->parseBannedCfg($content) as $ban) {
-                $bans[] = $ban;
-            }
+        foreach ($this->parseBannedCfg($this->readFile($server, $paths['banned_cfg'])) as $ban) {
+            $bans[] = $ban;
         }
 
-        if ($gameListing !== null && $this->fileExistsInDirectoryListing($gameListing, 'listip.cfg')) {
-            $content = $this->readFile($server, $paths['listip_cfg']);
-            foreach ($this->parseListIpCfg($content) as $ban) {
-                $bans[] = $ban;
-            }
+        foreach ($this->parseListIpCfg($this->readFile($server, $paths['listip_cfg'])) as $ban) {
+            $bans[] = $ban;
         }
 
         return $bans;
@@ -359,6 +559,7 @@ class AmxxService
         int $minutes = 0,
         ?string $reason = null,
         bool $applyLive = true,
+        ?int $userid = null,
     ): array {
         $identifier = trim($identifier);
         $reason = $reason ? $this->sanitizeComment($reason) : null;
@@ -369,15 +570,16 @@ class AmxxService
             }
 
             $paths = $this->resolvePaths($server);
-            $content = $this->fileExists($server, $paths['banned_cfg'])
-                ? $this->readFile($server, $paths['banned_cfg'])
-                : '';
+            $content = $this->readFile($server, $paths['banned_cfg']);
+            if ($this->bannedCfgContains($content, $identifier)) {
+                throw new AmxxException('Este SteamID já está banido.', Response::HTTP_CONFLICT);
+            }
+
             $line = 'banid ' . max(0, $minutes) . ' ' . $identifier . ($reason ? ' // ' . $reason : '');
             $content = rtrim($content) . ($content === '' ? '' : "\n") . $line . "\n";
             $this->writeFile($server, $paths['banned_cfg'], $content);
 
-            $command = 'amx_ban "' . $identifier . '" ' . max(0, $minutes) . ($reason ? ' "' . $reason . '"' : '');
-            $commandSent = $applyLive && $this->trySendCommand($server, $command);
+            $commandSent = $this->applyBanLive($server, 'steamid', $identifier, $minutes, $applyLive, $userid);
 
             return [
                 'ban' => [
@@ -398,15 +600,16 @@ class AmxxService
             }
 
             $paths = $this->resolvePaths($server);
-            $content = $this->fileExists($server, $paths['listip_cfg'])
-                ? $this->readFile($server, $paths['listip_cfg'])
-                : '';
+            $content = $this->readFile($server, $paths['listip_cfg']);
+            if ($this->listIpCfgContains($content, $identifier)) {
+                throw new AmxxException('Este IP já está banido.', Response::HTTP_CONFLICT);
+            }
+
             $line = 'addip ' . $identifier . ($reason ? ' // ' . $reason : '');
             $content = rtrim($content) . ($content === '' ? '' : "\n") . $line . "\n";
             $this->writeFile($server, $paths['listip_cfg'], $content);
 
-            $command = 'amx_banip "' . $identifier . '" ' . max(0, $minutes) . ($reason ? ' "' . $reason . '"' : '');
-            $commandSent = $applyLive && $this->trySendCommand($server, $command);
+            $commandSent = $this->applyBanLive($server, 'ip', $identifier, $minutes, $applyLive, $userid);
 
             return [
                 'ban' => [
@@ -433,7 +636,12 @@ class AmxxService
             $updated = $this->removeBannedCfgEntry($content, $steamId);
             $this->writeFile($server, $paths['banned_cfg'], $updated);
 
-            return $applyLive && $this->trySendCommand($server, 'amx_unban "' . $steamId . '"');
+            if (!$applyLive) {
+                return false;
+            }
+
+            return $this->trySendCommand($server, 'removeid ' . $steamId)
+                || $this->trySendCommand($server, 'exec banned.cfg');
         }
 
         if (str_starts_with($banId, 'ip:')) {
@@ -443,7 +651,12 @@ class AmxxService
             $updated = $this->removeListIpEntry($content, $ip);
             $this->writeFile($server, $paths['listip_cfg'], $updated);
 
-            return $applyLive && $this->trySendCommand($server, 'removeip ' . $ip);
+            if (!$applyLive) {
+                return false;
+            }
+
+            return $this->trySendCommand($server, 'removeip ' . $ip)
+                || $this->trySendCommand($server, 'exec listip.cfg');
         }
 
         throw new AmxxException('Ban não encontrado.', Response::HTTP_NOT_FOUND);
@@ -627,6 +840,7 @@ class AmxxService
     {
         try {
             $this->fileRepository->setServer($server)->putContent($path, $content);
+            $this->invalidateDirectoryCache($server, $path);
         } catch (DaemonConnectionException $exception) {
             if (!$this->wingsReachable($server)) {
                 throw new AmxxException(
@@ -654,6 +868,164 @@ class AmxxService
         } catch (DaemonConnectionException) {
             return false;
         }
+    }
+
+    private function sendRequiredCommand(Server $server, string $command): void
+    {
+        if (!$this->trySendCommand($server, $command)) {
+            throw new AmxxException(
+                'Não foi possível enviar o comando. Verifique se o servidor está online.',
+                Response::HTTP_BAD_GATEWAY
+            );
+        }
+    }
+
+    /**
+     * @return array{command: string, lines: string[], queried_at?: string}
+     */
+    private function executeConsoleQuery(Server $server, string $command): array
+    {
+        try {
+            return $this->consoleCommandRepository->setServer($server)->execute($command);
+        } catch (DaemonConnectionException $exception) {
+            $previous = $exception->getPrevious();
+            if ($previous instanceof ClientException) {
+                $statusCode = $previous->getResponse()?->getStatusCode();
+
+                if ($statusCode === Response::HTTP_BAD_GATEWAY) {
+                    throw new AmxxException(
+                        'O servidor precisa estar online para consultar a consola.',
+                        Response::HTTP_BAD_GATEWAY,
+                        $exception
+                    );
+                }
+
+                if ($statusCode === Response::HTTP_GATEWAY_TIMEOUT || $statusCode === Response::HTTP_REQUEST_TIMEOUT) {
+                    throw new AmxxException(
+                        'A consulta à consola expirou. Tente novamente em instantes.',
+                        Response::HTTP_GATEWAY_TIMEOUT,
+                        $exception
+                    );
+                }
+            }
+
+            throw new AmxxException(
+                'Não foi possível consultar a consola do servidor.',
+                Response::HTTP_BAD_GATEWAY,
+                $exception
+            );
+        }
+    }
+
+    private function parseCvarValue(string $cvar, array $lines): ?string
+    {
+        $needle = strtolower($cvar);
+
+        foreach ($lines as $rawLine) {
+            $line = trim($rawLine);
+            if ($line === '') {
+                continue;
+            }
+
+            if (preg_match('/^"' . preg_quote($cvar, '/') . '"\s+is\s+"([^"]*)"$/i', $line, $matches)) {
+                return $matches[1];
+            }
+
+            if (preg_match('/^' . preg_quote($cvar, '/') . '\s*=\s*(.+)$/i', $line, $matches)) {
+                return trim($matches[1], " \t\"'");
+            }
+
+            if (stripos($line, $needle) !== false && preg_match('/"([^"]+)"\s+is\s+"([^"]*)"/i', $line, $matches)
+                && strcasecmp($matches[1], $cvar) === 0) {
+                return $matches[2];
+            }
+        }
+
+        return null;
+    }
+
+    private function sanitizeChatMessage(string $value): string
+    {
+        return trim(preg_replace('/[\r\n"]/', '', $value) ?? '');
+    }
+
+    private function sanitizeCvarValue(string $value): string
+    {
+        return trim(preg_replace('/[\r\n";]/', '', $value) ?? '');
+    }
+
+    private function applyBanLive(
+        Server $server,
+        string $type,
+        string $identifier,
+        int $minutes,
+        bool $applyLive,
+        ?int $userid = null,
+    ): bool {
+        if (!$applyLive) {
+            return false;
+        }
+
+        $commandSent = false;
+
+        if ($type === 'steamid') {
+            $commandSent = $this->trySendCommand($server, 'exec banned.cfg');
+        } else {
+            $commandSent = $this->trySendCommand($server, 'addip ' . $identifier)
+                || $this->trySendCommand($server, 'exec listip.cfg');
+        }
+
+        if ($userid !== null && $userid > 0) {
+            $this->trySendCommand($server, 'kick #' . $userid);
+            $this->trySendCommand($server, 'amx_kick #' . $userid);
+        }
+
+        return $commandSent;
+    }
+
+    private function invalidateDirectoryCache(Server $server, string $path): void
+    {
+        $path = ltrim($path, '/');
+        $directory = dirname($path);
+
+        if ($directory !== '.' && isset($this->directoryListingCache[$server->id][$directory])) {
+            unset($this->directoryListingCache[$server->id][$directory]);
+        }
+    }
+
+    private function bannedCfgContains(string $content, string $steamId): bool
+    {
+        foreach ($this->parseBannedCfg($content) as $ban) {
+            if (strcasecmp($ban['identifier'], $steamId) === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function listIpCfgContains(string $content, string $ip): bool
+    {
+        foreach ($this->parseListIpCfg($content) as $ban) {
+            if ($ban['identifier'] === $ip) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function filterListedAdmins(array $admins): array
+    {
+        return array_values(array_filter(
+            $admins,
+            fn (array $admin): bool => !$this->isLoopbackAdmin($admin['auth'] ?? '')
+        ));
+    }
+
+    private function isLoopbackAdmin(string $auth): bool
+    {
+        return strcasecmp(trim($auth), 'loopback') === 0;
     }
 
     private function parseUsersIni(string $content): array
@@ -789,13 +1161,26 @@ class AmxxService
                 continue;
             }
 
-            if (!preg_match('/^banid\s+(\d+)\s+(\S+)(?:\s*\/\/\s*(.*))?$/i', $trimmed, $matches)) {
+            $minutes = null;
+            $identifier = null;
+            $reason = null;
+
+            if (preg_match('/^banid\s+(\d+)\s+(\d+)\s+(\S+)(?:\s*\/\/\s*(.*))?$/i', $trimmed, $matches)) {
+                $minutes = (int) $matches[1];
+                $identifier = $matches[3];
+                $reason = isset($matches[4]) ? trim($matches[4]) : null;
+            } elseif (preg_match('/^banid\s+(\d+)\s+(\S+)(?:\s*\/\/\s*(.*))?$/i', $trimmed, $matches)) {
+                $minutes = (int) $matches[1];
+                $identifier = $matches[2];
+                $reason = isset($matches[3]) ? trim($matches[3]) : null;
+            } else {
                 continue;
             }
 
-            $minutes = (int) $matches[1];
-            $identifier = $matches[2];
-            $reason = isset($matches[3]) ? trim($matches[3]) : null;
+            $identifier = trim($identifier, '"\'');
+            if ($identifier === '') {
+                continue;
+            }
 
             $bans[] = [
                 'id' => 'steam:' . strtolower($identifier),
@@ -843,8 +1228,8 @@ class AmxxService
         $found = false;
 
         foreach (preg_split('/\r\n|\n|\r/', $content) as $line) {
-            if (preg_match('/^banid\s+\d+\s+(\S+)/i', trim($line), $matches)
-                && strcasecmp($matches[1], $steamId) === 0) {
+            if (preg_match('/^banid\s+\d+\s+(?:\d+\s+)?(\S+)/i', trim($line), $matches)
+                && strcasecmp(trim($matches[1], '"\''), $steamId) === 0) {
                 $found = true;
                 continue;
             }

@@ -47,6 +47,7 @@ export interface AmxxConsolePlayer {
     loss: number;
     state: string;
     address?: string;
+    connected?: string;
 }
 
 export interface AmxxPlayersResult {
@@ -55,6 +56,17 @@ export interface AmxxPlayersResult {
     hostname?: string | null;
     queried_at: string;
     source: string;
+}
+
+export interface AmxxMap {
+    name: string;
+    file: string;
+}
+
+export interface AmxxCvar {
+    name: string;
+    label: string;
+    value: string | null;
 }
 
 export type AmxxAuthType = 'steamid' | 'ip' | 'nickname';

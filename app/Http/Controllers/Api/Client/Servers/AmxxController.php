@@ -22,7 +22,7 @@ class AmxxController extends ClientApiController
     public function overview(Request $request, Server $server): array
     {
         $this->assertCs16($server);
-        $this->assertCanReadFiles($request, $server);
+        $this->assertCanReadAmxxOverview($request, $server);
 
         return [
             'object' => 'amxx_overview',
@@ -165,7 +165,7 @@ class AmxxController extends ClientApiController
     public function listPlayers(Request $request, Server $server): array
     {
         $this->assertCs16($server);
-        $this->assertCanUseConsole($request, $server);
+        $this->assertCanReadAmxx($request, $server);
 
         return [
             'object' => 'amxx_players',
@@ -176,7 +176,7 @@ class AmxxController extends ClientApiController
     public function kickPlayer(Request $request, Server $server): array
     {
         $this->assertCs16($server);
-        $this->assertCanUseConsole($request, $server);
+        $this->assertCanKickAmxx($request, $server);
 
         $data = $request->validate([
             'userid' => ['required', 'integer', 'min:1'],
@@ -205,7 +205,7 @@ class AmxxController extends ClientApiController
     public function createBan(Request $request, Server $server): array
     {
         $this->assertCs16($server);
-        $this->assertCanCreateBan($request, $server);
+        $this->assertCanBanAmxx($request, $server);
 
         $data = $request->validate([
             'type' => ['required', 'string', 'in:steamid,ip'],
@@ -213,6 +213,7 @@ class AmxxController extends ClientApiController
             'minutes' => ['sometimes', 'integer', 'min:0', 'max:525600'],
             'reason' => ['sometimes', 'nullable', 'string', 'max:255'],
             'apply_live' => ['sometimes', 'boolean'],
+            'userid' => ['sometimes', 'nullable', 'integer', 'min:1'],
         ]);
 
         $result = $this->amxxService->createBan(
@@ -222,6 +223,7 @@ class AmxxController extends ClientApiController
             (int) ($data['minutes'] ?? 0),
             $data['reason'] ?? null,
             $data['apply_live'] ?? true,
+            isset($data['userid']) ? (int) $data['userid'] : null,
         );
 
         Activity::event('server:amxx.ban.create')
@@ -251,6 +253,181 @@ class AmxxController extends ClientApiController
             ->log();
 
         return new JsonResponse([], JsonResponse::HTTP_NO_CONTENT);
+    }
+
+    public function listMaps(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanReadAmxx($request, $server);
+
+        return [
+            'object' => 'list',
+            'data' => $this->amxxService->listMaps($server),
+        ];
+    }
+
+    public function changeMap(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanChangeMapAmxx($request, $server);
+
+        $data = $request->validate([
+            'map' => ['required', 'string', 'max:64'],
+        ]);
+
+        $result = $this->amxxService->changeMap($server, $data['map']);
+
+        Activity::event('server:amxx.map.change')
+            ->property(['map' => $result['map']])
+            ->log();
+
+        return [
+            'object' => 'amxx_map',
+            'attributes' => $result,
+        ];
+    }
+
+    public function slapPlayer(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanSlayAmxx($request, $server);
+
+        $data = $request->validate([
+            'userid' => ['required', 'integer', 'min:1'],
+            'damage' => ['sometimes', 'integer', 'min:0', 'max:100'],
+        ]);
+
+        $result = $this->amxxService->slapPlayer(
+            $server,
+            (int) $data['userid'],
+            (int) ($data['damage'] ?? 0),
+        );
+
+        Activity::event('server:amxx.player.slap')
+            ->property([
+                'userid' => $data['userid'],
+                'damage' => $data['damage'] ?? 0,
+            ])
+            ->log();
+
+        return [
+            'object' => 'amxx_slap',
+            'attributes' => $result,
+        ];
+    }
+
+    public function slayPlayer(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanSlayAmxx($request, $server);
+
+        $data = $request->validate([
+            'userid' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $result = $this->amxxService->slayPlayer($server, (int) $data['userid']);
+
+        Activity::event('server:amxx.player.slay')
+            ->property(['userid' => $data['userid']])
+            ->log();
+
+        return [
+            'object' => 'amxx_slay',
+            'attributes' => $result,
+        ];
+    }
+
+    public function sendSay(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanChatAmxx($request, $server);
+
+        $data = $request->validate([
+            'message' => ['required', 'string', 'max:255'],
+        ]);
+
+        $result = $this->amxxService->sendSay($server, $data['message']);
+
+        Activity::event('server:amxx.chat.say')
+            ->property(['message' => $result['message']])
+            ->log();
+
+        return [
+            'object' => 'amxx_say',
+            'attributes' => $result,
+        ];
+    }
+
+    public function sendPsay(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanChatAmxx($request, $server);
+
+        $data = $request->validate([
+            'userid' => ['required', 'integer', 'min:1'],
+            'message' => ['required', 'string', 'max:255'],
+        ]);
+
+        $result = $this->amxxService->sendPsay($server, (int) $data['userid'], $data['message']);
+
+        Activity::event('server:amxx.chat.psay')
+            ->property([
+                'userid' => $data['userid'],
+                'message' => $result['message'],
+            ])
+            ->log();
+
+        return [
+            'object' => 'amxx_psay',
+            'attributes' => $result,
+        ];
+    }
+
+    public function listCvars(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanCvarAmxx($request, $server);
+
+        return [
+            'object' => 'list',
+            'data' => $this->amxxService->listCvars($server),
+        ];
+    }
+
+    public function queryCvar(Request $request, Server $server, string $name): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanCvarAmxx($request, $server);
+
+        return [
+            'object' => 'amxx_cvar',
+            'attributes' => $this->amxxService->queryCvar($server, $name),
+        ];
+    }
+
+    public function setCvar(Request $request, Server $server): array
+    {
+        $this->assertCs16($server);
+        $this->assertCanCvarAmxx($request, $server);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:64'],
+            'value' => ['required', 'string', 'max:128'],
+        ]);
+
+        $result = $this->amxxService->setCvar($server, $data['name'], $data['value']);
+
+        Activity::event('server:amxx.cvar.set')
+            ->property([
+                'name' => $result['name'],
+                'value' => $result['value'],
+            ])
+            ->log();
+
+        return [
+            'object' => 'amxx_cvar',
+            'attributes' => $result,
+        ];
     }
 
     private function assertCs16(Server $server): void
@@ -283,7 +460,7 @@ class AmxxController extends ClientApiController
 
     private function assertCanCreateBan(Request $request, Server $server): void
     {
-        if (!$request->user()->can(Permission::ACTION_FIREWALL_CREATE, $server)) {
+        if (!$this->hasAmxxOr($request, $server, Permission::ACTION_AMXX_BAN, Permission::ACTION_FIREWALL_CREATE)) {
             throw new AccessDeniedHttpException('Não tem permissão para criar bans.');
         }
     }
@@ -295,10 +472,65 @@ class AmxxController extends ClientApiController
         }
     }
 
-    private function assertCanUseConsole(Request $request, Server $server): void
+    private function assertCanReadAmxxOverview(Request $request, Server $server): void
     {
-        if (!$request->user()->can(Permission::ACTION_CONTROL_CONSOLE, $server)) {
-            throw new AccessDeniedHttpException('Não tem permissão para usar a consola do servidor.');
+        if (!$this->hasAmxxOr($request, $server, Permission::ACTION_AMXX_READ, Permission::ACTION_FILE_READ_CONTENT)) {
+            throw new AccessDeniedHttpException('Não tem permissão para visualizar o estado AMXX.');
         }
+    }
+
+    private function assertCanReadAmxx(Request $request, Server $server): void
+    {
+        if (!$this->hasAmxxOr($request, $server, Permission::ACTION_AMXX_READ, Permission::ACTION_CONTROL_CONSOLE)) {
+            throw new AccessDeniedHttpException('Não tem permissão para listar jogadores AMXX.');
+        }
+    }
+
+    private function assertCanKickAmxx(Request $request, Server $server): void
+    {
+        if (!$this->hasAmxxOr($request, $server, Permission::ACTION_AMXX_KICK, Permission::ACTION_CONTROL_CONSOLE)) {
+            throw new AccessDeniedHttpException('Não tem permissão para expulsar jogadores via AMXX Web.');
+        }
+    }
+
+    private function assertCanBanAmxx(Request $request, Server $server): void
+    {
+        if (!$this->hasAmxxOr($request, $server, Permission::ACTION_AMXX_BAN, Permission::ACTION_FIREWALL_CREATE)) {
+            throw new AccessDeniedHttpException('Não tem permissão para banir jogadores via AMXX Web.');
+        }
+    }
+
+    private function assertCanSlayAmxx(Request $request, Server $server): void
+    {
+        if (!$this->hasAmxxOr($request, $server, Permission::ACTION_AMXX_SLAY, Permission::ACTION_CONTROL_CONSOLE)) {
+            throw new AccessDeniedHttpException('Não tem permissão para slap/slay via AMXX Web.');
+        }
+    }
+
+    private function assertCanChangeMapAmxx(Request $request, Server $server): void
+    {
+        if (!$this->hasAmxxOr($request, $server, Permission::ACTION_AMXX_MAP, Permission::ACTION_CONTROL_CONSOLE)) {
+            throw new AccessDeniedHttpException('Não tem permissão para trocar o mapa via AMXX Web.');
+        }
+    }
+
+    private function assertCanChatAmxx(Request $request, Server $server): void
+    {
+        if (!$this->hasAmxxOr($request, $server, Permission::ACTION_AMXX_CHAT, Permission::ACTION_CONTROL_CONSOLE)) {
+            throw new AccessDeniedHttpException('Não tem permissão para enviar mensagens via AMXX Web.');
+        }
+    }
+
+    private function assertCanCvarAmxx(Request $request, Server $server): void
+    {
+        if (!$this->hasAmxxOr($request, $server, Permission::ACTION_AMXX_CVAR, Permission::ACTION_CONTROL_CONSOLE)) {
+            throw new AccessDeniedHttpException('Não tem permissão para gerir cvars via AMXX Web.');
+        }
+    }
+
+    private function hasAmxxOr(Request $request, Server $server, string $amxxPermission, string $fallbackPermission): bool
+    {
+        return $request->user()->can($amxxPermission, $server)
+            || $request->user()->can($fallbackPermission, $server);
     }
 }

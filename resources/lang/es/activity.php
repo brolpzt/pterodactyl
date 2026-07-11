@@ -120,5 +120,31 @@ return [
             'update' => 'Permisos del subusuario :email actualizados',
             'delete' => 'Eliminado :email como subusuario',
         ],
+        'amxx' => [
+            'admin' => [
+                'create' => 'Admin AMXX :auth creado (:auth_type)',
+                'update' => 'Admin AMXX #:admin_id actualizado',
+                'delete' => 'Admin AMXX #:admin_id eliminado',
+            ],
+            'player' => [
+                'kick' => 'Kick al jugador #:userid vía AMXX Web',
+                'slap' => 'Slap al jugador #:userid (:damage daño) vía AMXX Web',
+                'slay' => 'Slay al jugador #:userid vía AMXX Web',
+            ],
+            'ban' => [
+                'create' => 'Ban a :identifier (:type) por :minutes minutos vía AMXX Web',
+                'delete' => 'Ban AMXX :ban_id eliminado',
+            ],
+            'map' => [
+                'change' => 'Mapa cambiado a :map vía AMXX Web',
+            ],
+            'chat' => [
+                'say' => 'Mensaje admin vía AMXX Web: :message',
+                'psay' => 'Mensaje privado a #:userid vía AMXX Web: :message',
+            ],
+            'cvar' => [
+                'set' => ':name establecido a :value vía AMXX Web',
+            ],
+        ],
     ],
 ];

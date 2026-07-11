@@ -19,7 +19,7 @@ class GameQueryController extends ClientApiController
     }
 
     /**
-     * Consulta o servidor de jogo via GameQ, usando o tipo definido no campo gamedig do egg.
+     * Consulta o servidor de jogo via Wings (gjq), usando o tipo definido no campo gamedig do egg.
      */
     public function __invoke(GetServerRequest $request, Server $server): array
     {

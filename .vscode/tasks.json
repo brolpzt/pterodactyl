@@ -2,6 +2,20 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Wings: Build (Docker)",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/docker-wings-build.sh",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            },
+            "problemMatcher": [
+                "$go"
+            ]
+        },
+        {
             "label": "Frontend: Build (Docker)",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/docker-frontend-build.sh",

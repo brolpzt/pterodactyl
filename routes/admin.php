@@ -208,6 +208,7 @@ Route::group(['prefix' => 'cloudflare'], function () {
     Route::get('/zones/view/{zone:id}', [Admin\CloudflareController::class, 'viewZone'])->name('admin.cloudflare.zones.view');
     Route::patch('/zones/view/{zone:id}', [Admin\CloudflareController::class, 'updateZone']);
     Route::delete('/zones/view/{zone:id}', [Admin\CloudflareController::class, 'deleteZone'])->name('admin.cloudflare.zones.delete');
+    Route::delete('/records/{record:id}', [Admin\CloudflareController::class, 'deleteRecord'])->name('admin.cloudflare.records.delete');
 });
 
 /*

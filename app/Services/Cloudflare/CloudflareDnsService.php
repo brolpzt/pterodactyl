@@ -174,6 +174,19 @@ class CloudflareDnsService
     /**
      * @throws DisplayException
      */
+    public function deleteRecord(CloudflareDnsRecord $record): void
+    {
+        $server = $record->server;
+        if (!$server) {
+            throw new DisplayException('O servidor associado a este registro DNS não foi encontrado.');
+        }
+
+        $this->deleteForServer($server, $record);
+    }
+
+    /**
+     * @throws DisplayException
+     */
     public function resolveDnsProfile(Server $server): EggDnsProfile
     {
         $features = $server->egg->inherit_features ?? [];

@@ -10,6 +10,7 @@ use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Models\CloudflareDnsRecord;
 use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Services\Cloudflare\CloudflareAccountService;
+use Pterodactyl\Services\Cloudflare\CloudflareDnsService;
 use Pterodactyl\Http\Requests\Admin\Cloudflare\CloudflareAccountFormRequest;
 use Pterodactyl\Http\Requests\Admin\Cloudflare\CloudflareZoneFormRequest;
 
@@ -18,6 +19,7 @@ class CloudflareController extends Controller
     public function __construct(
         protected AlertsMessageBag $alert,
         protected CloudflareAccountService $accountService,
+        protected CloudflareDnsService $dnsService,
     ) {
     }
 
@@ -101,6 +103,18 @@ class CloudflareController extends Controller
             $this->alert->danger($exception->getMessage())->flash();
 
             return redirect()->route('admin.cloudflare.zones.view', $zone->id);
+        }
+
+        return redirect()->route('admin.cloudflare');
+    }
+
+    public function deleteRecord(CloudflareDnsRecord $record): RedirectResponse
+    {
+        try {
+            $this->dnsService->deleteRecord($record);
+            $this->alert->success('Registro DNS removido com sucesso.')->flash();
+        } catch (DisplayException $exception) {
+            $this->alert->danger($exception->getMessage())->flash();
         }
 
         return redirect()->route('admin.cloudflare');

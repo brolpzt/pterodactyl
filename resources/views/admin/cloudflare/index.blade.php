@@ -113,6 +113,7 @@
                             <th>Conteúdo</th>
                             <th>Proxy</th>
                             <th class="text-right">Criado</th>
+                            <th></th>
                         </tr>
                         @forelse ($records as $record)
                             <tr>
@@ -124,15 +125,31 @@
                                     @endif
                                 </td>
                                 <td>{{ $record->zone?->label }} <code>{{ $record->zone?->publicDomain() }}</code></td>
-                                <td><code>{{ $record->type }}</code></td>
+                                <td>
+                                    <code>{{ $record->type }}</code>
+                                    @if($record->is_companion)
+                                        <span class="label label-default">Auxiliar</span>
+                                    @endif
+                                </td>
                                 <td><code>{{ $record->name }}</code></td>
                                 <td><code>{{ $record->content }}</code></td>
                                 <td>{{ $record->proxied ? 'Sim' : 'Não' }}</td>
                                 <td class="text-right">{{ $record->created_at->diffForHumans() }}</td>
+                                <td class="text-right">
+                                    @if(!$record->is_companion)
+                                        <form action="{{ route('admin.cloudflare.records.delete', $record->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Remover o registro {{ $record->name }} da Cloudflare?');">
+                                            {!! csrf_field() !!}
+                                            <input type="hidden" name="_method" value="DELETE" />
+                                            <button type="submit" class="btn btn-xs btn-danger" title="Remover registro">
+                                                <i class="fa fa-trash-o"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">Nenhum registro DNS criado pelo painel.</td>
+                                <td colspan="8" class="text-center text-muted">Nenhum registro DNS criado pelo painel.</td>
                             </tr>
                         @endforelse
                     </tbody>

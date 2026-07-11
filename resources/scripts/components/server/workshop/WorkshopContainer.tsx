@@ -54,7 +54,7 @@ const WorkshopCard = ({
 
     return (
         <div css={tw`bg-neutral-700 rounded border border-neutral-600 overflow-hidden flex flex-col`}>
-            <div css={tw`aspect-video bg-neutral-800 relative`}>
+            <div css={tw`h-40 bg-neutral-800 relative overflow-hidden`}>
                 {item.previewUrl ? (
                     <img src={item.previewUrl} alt={item.title} css={tw`w-full h-full object-cover`} loading={'lazy'} />
                 ) : (
@@ -69,7 +69,7 @@ const WorkshopCard = ({
                 )}
             </div>
             <div css={tw`p-3 flex-1 flex flex-col gap-2`}>
-                <p css={tw`text-sm font-medium text-neutral-100 line-clamp-2`}>{item.title}</p>
+                <p css={tw`text-sm font-medium text-neutral-100 truncate`}>{item.title}</p>
                 <p css={tw`text-xs text-neutral-400`}>
                     {t('server_workshop.votes', { count: item.votesUp.toLocaleString() })}
                     {' · '}
@@ -235,7 +235,7 @@ export default () => {
             </TitledGreyBox>
 
             <TitledGreyBox title={t('server_workshop.browse_title')}>
-                <div css={tw`grid gap-4 md:grid-cols-[1fr_auto_auto] mb-4`}>
+                <div css={tw`grid gap-4 md:grid-cols-3 mb-4`}>
                     <div>
                         <Label htmlFor={'workshop-search'}>{t('server_workshop.search')}</Label>
                         <div css={tw`relative`}>

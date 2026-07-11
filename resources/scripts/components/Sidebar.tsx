@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { NavLink, useRouteMatch } from 'react-router-dom';
+import { Link, NavLink, useRouteMatch } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCogs,
@@ -29,13 +29,23 @@ import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
 import { ServerContext } from '@/state/server';
 import tw from 'twin.macro';
-import styled from 'styled-components/macro';
+import styled, { css } from 'styled-components/macro';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 import { useTranslation } from 'react-i18next';
+import { glassContentLayer, glassSidebarShell } from '@/assets/css/glassPanel';
+import ScrollArea from '@/components/elements/ScrollArea';
+import { HOSTGAMER_LOGO_SRC } from '@/lib/branding';
+import { HEADER_HEIGHT, sidebarWidthRule } from '@/lib/sidebarLayout';
 
-const CLIENT_AREA_URL = 'https://clientarea.hostgamer.net';
-const CLIENT_SERVICES_URL = 'https://hostgamer.net/account/services';
+const navItemText = css`
+    color: var(--hg-nav-text);
+`;
+
+const CLIENT_ACCOUNT_URL = 'https://hostgamer.net/account';
+const CLIENT_SERVICES_URL = `${CLIENT_ACCOUNT_URL}/services`;
+const CLIENT_SUPPORT_URL = `${CLIENT_ACCOUNT_URL}/support`;
+const CLIENT_INVOICES_URL = `${CLIENT_ACCOUNT_URL}/invoices`;
 
 const serverLinksFade = `
     @keyframes fadeInItems {
@@ -71,49 +81,114 @@ const ServerLinksPlaceholder = () => {
     );
 };
 
-const SidebarContainer = styled.div<{ collapsed: boolean }>`
-    ${tw`flex flex-col bg-neutral-900 shadow-md border-r border-neutral-800 fixed left-0 bottom-0 z-40 transition-all duration-300`};
-    width: ${props => props.collapsed ? '70px' : '240px'};
-    top: 3.5rem;
+const SidebarContainer = styled.div.attrs({ className: 'hg-glass-sidebar' })<{ collapsed: boolean }>`
+    ${glassSidebarShell};
+    box-shadow: 6px 0 28px -14px rgba(0, 0, 0, 0.38);
+    ${tw`flex flex-col fixed left-0 top-0 bottom-0 z-40`};
+    transition: width 300ms ease;
+    ${(props) => sidebarWidthRule(props.collapsed)};
+
+    @media (max-width: 767px) {
+        z-index: 45;
+
+        ${(props) =>
+            props.collapsed &&
+            css`
+                overflow: hidden;
+                pointer-events: none;
+                box-shadow: none;
+
+                &::before {
+                    opacity: 0;
+                }
+            `}
+    }
 `;
 
-const NavItemLabel = styled.span<{ collapsed: boolean }>`
-    ${tw`transition-all duration-300 whitespace-nowrap overflow-hidden`};
+const SidebarInner = styled.div`
+    ${glassContentLayer};
+`;
+
+const SidebarBrand = styled(Link)<{ collapsed: boolean }>`
+    ${tw`flex items-center justify-center flex-shrink-0 no-underline transition-all duration-300 overflow-hidden`};
+    height: ${HEADER_HEIGHT};
+    padding: ${(props) => (props.collapsed ? '0 0.75rem' : '0 1.25rem')};
+
+    &:hover img {
+        ${tw`opacity-90`};
+    }
+`;
+
+const BrandLogo = styled.img<{ collapsed: boolean }>`
+    ${tw`block transition-all duration-300`};
+    height: ${(props) => (props.collapsed ? '1.25rem' : '1.375rem')};
+    width: ${(props) => (props.collapsed ? '2rem' : 'auto')};
+    max-width: ${(props) => (props.collapsed ? '2rem' : '11.5rem')};
+    object-fit: ${(props) => (props.collapsed ? 'cover' : 'contain')};
+    object-position: left center;
+`;
+
+const NavItemLabel = styled.span.attrs({ className: 'nav-item-label' })<{ collapsed: boolean }>`
+    ${navItemText};
+    ${tw`transition-all duration-150 whitespace-nowrap overflow-hidden`};
     ${props => props.collapsed ? 'max-width: 0; opacity: 0; margin: 0;' : 'max-width: 200px; opacity: 1; margin-left: 0.5rem;'};
 `;
 
 const NavSectionTitle = styled.div<{ collapsed: boolean }>`
-    ${tw`px-4 pt-4 pb-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest truncate transition-colors duration-300`};
-    ${props => props.collapsed ? tw`text-transparent` : ''};
+    ${tw`px-4 pt-4 pb-3 font-header text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate transition-colors duration-300`};
+    ${(props) => props.collapsed && tw`text-transparent`};
 `;
 
 const SidebarFooter = styled.div<{ collapsed: boolean }>`
-    ${tw`p-4 border-t border-neutral-800 text-[10px] text-neutral-500 font-medium transition-all duration-300`};
-    ${props => props.collapsed ? tw`text-center px-0` : ''};
+    ${tw`p-4 border-t text-[10px] text-neutral-400 font-medium transition-all duration-300`};
+    border-color: rgba(45, 45, 58, 0.45);
+    ${(props) => props.collapsed && tw`text-center px-0`};
 `;
 
-const NavItem = styled(NavLink) <{ collapsed?: boolean }>`
-    ${tw`flex items-center py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
+const NavItem = styled(NavLink)<{ collapsed?: boolean }>`
+    ${navItemText};
+    ${tw`relative z-10 flex items-center py-2.5 text-sm font-header font-semibold uppercase no-underline transition-all duration-150 hover:bg-white/5`};
     padding-left: 1.25rem;
     padding-right: 1.25rem;
-    justify-content: ${props => props.collapsed ? 'center' : 'flex-start'};
+    justify-content: ${(props) => (props.collapsed ? 'center' : 'flex-start')};
+
+    &:hover .nav-item-label {
+        ${tw`text-white`};
+    }
+
+    &:hover .icon-container {
+        ${navItemText};
+    }
+
     &.active {
-        ${tw`bg-neutral-800 text-neutral-100 border-r-2 border-neutral-100`};
+        ${tw`bg-primary-500 text-white border-r-2 border-primary-500`};
+
+        & .nav-item-label,
         & .icon-container {
-            ${tw`text-neutral-100`};
+            ${tw`text-white`};
         }
     }
 `;
 
 const ExternalNavItem = styled.a<{ collapsed?: boolean }>`
-    ${tw`flex items-center py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100`};
+    ${navItemText};
+    ${tw`relative z-10 flex items-center py-2.5 text-sm font-header font-semibold uppercase no-underline transition-all duration-150 hover:bg-white/5`};
     padding-left: 1.25rem;
     padding-right: 1.25rem;
     justify-content: ${props => props.collapsed ? 'center' : 'flex-start'};
+
+    &:hover .nav-item-label {
+        ${tw`text-white`};
+    }
+
+    &:hover .icon-container {
+        ${navItemText};
+    }
 `;
 
 const IconContainer = styled.div<{ collapsed?: boolean }>`
-    ${tw`flex items-center justify-center flex-shrink-0 text-neutral-500 transition-colors duration-150`};
+    ${navItemText};
+    ${tw`flex items-center justify-center flex-shrink-0 transition-colors duration-150`};
     width: 1.25rem;
 `;
 
@@ -122,18 +197,15 @@ const SectionTitle = ({ children, collapsed }: { children: React.ReactNode, coll
 );
 
 const Divider = styled.div`
-    ${tw`mx-4 my-2 border-t border-neutral-800`};
+    ${tw`mx-4 my-2 border-t`};
+    border-color: rgba(45, 45, 58, 0.45);
 `;
 
-const SidebarScroll = styled.div`
-    ${tw`flex-1 overflow-y-auto overflow-x-hidden pb-4`};
-    &::-webkit-scrollbar {
-        width: 4px;
-    }
-    &::-webkit-scrollbar-thumb {
-        ${tw`bg-neutral-700`};
-    }
-`;
+const SidebarScroll = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+    <ScrollArea variant={'thin'} css={tw`flex-1 pb-4`} {...props}>
+        {children}
+    </ScrollArea>
+);
 
 const ServerLinks = () => {
     const internalId = ServerContext.useStoreState((state) => state.server.data?.internalId);
@@ -246,19 +318,18 @@ const ServerLinks = () => {
                 ))}
 
             {rootAdmin && internalId && (
-                <a
+                <ExternalNavItem
                     href={`/admin/servers/view/${internalId}`}
                     target={'_blank'}
                     rel="noreferrer"
+                    collapsed={collapsed}
                     title={t('nav.admin_view')}
-                    style={{ justifyContent: collapsed ? 'center' : 'flex-start', paddingLeft: '1.25rem', paddingRight: '1.25rem' }}
-                    tw="flex items-center py-2.5 text-sm text-neutral-400 no-underline transition-all duration-150 hover:bg-neutral-800 hover:text-neutral-100"
                 >
                     <IconContainer className="icon-container">
                         <FontAwesomeIcon icon={faExternalLinkAlt} />
                     </IconContainer>
                     <NavItemLabel collapsed={collapsed}>{t('nav.admin_view')}</NavItemLabel>
-                </a>
+                </ExternalNavItem>
             )}
 
             <Divider />
@@ -285,7 +356,16 @@ const Sidebar = () => {
 
     return (
         <SidebarContainer collapsed={collapsed}>
-            <SidebarScroll>
+            <SidebarInner>
+                <SidebarBrand to={'/'} collapsed={collapsed} title={t('nav.dashboard')}>
+                    <BrandLogo
+                        collapsed={collapsed}
+                        src={HOSTGAMER_LOGO_SRC}
+                        alt={'HostGamer'}
+                        draggable={false}
+                    />
+                </SidebarBrand>
+                <SidebarScroll>
                 <SectionTitle collapsed={collapsed}>{t('nav.navigation')}</SectionTitle>
                 <NavItem to={'/'} exact collapsed={collapsed} title={collapsed ? t('nav.dashboard') : undefined}>
                     <IconContainer className="icon-container">
@@ -295,7 +375,7 @@ const Sidebar = () => {
                 </NavItem>
 
                 <ExternalNavItem
-                    href={`${CLIENT_AREA_URL}/support`}
+                    href={CLIENT_SUPPORT_URL}
                     collapsed={collapsed}
                     title={collapsed ? t('nav.support') : undefined}
                 >
@@ -306,7 +386,7 @@ const Sidebar = () => {
                 </ExternalNavItem>
 
                 <ExternalNavItem
-                    href={`${CLIENT_AREA_URL}/faturas`}
+                    href={CLIENT_INVOICES_URL}
                     collapsed={collapsed}
                     title={collapsed ? t('nav.invoices') : undefined}
                 >
@@ -325,9 +405,10 @@ const Sidebar = () => {
                 )}
             </SidebarScroll>
 
-            <SidebarFooter collapsed={collapsed}>
-                {collapsed ? 'v2.0' : 'HostGamer Control v2.0'}
-            </SidebarFooter>
+                <SidebarFooter collapsed={collapsed}>
+                    {collapsed ? 'v2.0' : 'HostGamer Control v2.0'}
+                </SidebarFooter>
+            </SidebarInner>
         </SidebarContainer>
     );
 };

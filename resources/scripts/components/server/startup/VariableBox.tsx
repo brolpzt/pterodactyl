@@ -1,6 +1,5 @@
 import React, { memo, useState } from 'react';
 import { ServerEggVariable } from '@/api/server/types';
-import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import { usePermissions } from '@/plugins/usePermissions';
 import InputSpinner from '@/components/elements/InputSpinner';
 import Input from '@/components/elements/Input';
@@ -13,6 +12,8 @@ import getServerStartup from '@/api/swr/getServerStartup';
 import Select from '@/components/elements/Select';
 import isEqual from 'react-fast-compare';
 import { ServerContext } from '@/state/server';
+import StartupFormRow from '@/components/server/startup/StartupFormRow';
+import tw from 'twin.macro';
 
 interface Props {
     variable: ServerEggVariable;
@@ -55,81 +56,80 @@ const VariableBox = ({ variable }: Props) => {
         (v) => v === 'boolean' || v === 'in:0,1' || v === 'in:1,0' || v === 'in:true,false' || v === 'in:false,true'
     );
     const isStringSwitch = variable.rules.some((v) => v === 'string');
-    const selectValues = variable.rules.find((v) => v.startsWith('in:'))?.split(',') || [];
+    const selectRule = variable.rules.find((v) => v.startsWith('in:'));
+    const selectValues = selectRule
+        ? selectRule
+              .replace('in:', '')
+              .split(',')
+              .map((value) => value.trim())
+              .filter(Boolean)
+        : [];
 
     return (
-        <TitledGreyBox
-            title={
-                <p className='text-sm uppercase'>
+        <StartupFormRow
+            htmlFor={variable.envVariable}
+            label={
+                <>
                     {!variable.isEditable && (
-                        <span className='bg-neutral-700 text-xs py-1 px-2 rounded-full mr-2 mb-1'>Read Only</span>
+                        <span css={tw`bg-neutral-700 text-2xs py-0.5 px-2 rounded-full mr-2 inline-block mb-1`}>
+                            Read Only
+                        </span>
                     )}
                     {variable.name}
-                </p>
+                </>
             }
+            description={variable.description || undefined}
         >
-            <FlashMessageRender byKey={FLASH_KEY} className='mb-2 md:mb-4' />
+            <FlashMessageRender byKey={FLASH_KEY} className='mb-2' />
             <InputSpinner visible={loading}>
                 {useSwitch ? (
-                    <>
-                        <Switch
-                            readOnly={!canEdit || !variable.isEditable}
-                            name={variable.envVariable}
-                            defaultChecked={
-                                isStringSwitch ? variable.serverValue === 'true' : variable.serverValue === '1'
-                            }
-                            onChange={() => {
-                                if (canEdit && variable.isEditable) {
-                                    if (isStringSwitch) {
-                                        setVariableValue(variable.serverValue === 'true' ? 'false' : 'true');
-                                    } else {
-                                        setVariableValue(variable.serverValue === '1' ? '0' : '1');
-                                    }
+                    <Switch
+                        readOnly={!canEdit || !variable.isEditable}
+                        name={variable.envVariable}
+                        id={variable.envVariable}
+                        defaultChecked={
+                            isStringSwitch ? variable.serverValue === 'true' : variable.serverValue === '1'
+                        }
+                        onChange={() => {
+                            if (canEdit && variable.isEditable) {
+                                if (isStringSwitch) {
+                                    setVariableValue(variable.serverValue === 'true' ? 'false' : 'true');
+                                } else {
+                                    setVariableValue(variable.serverValue === '1' ? '0' : '1');
                                 }
-                            }}
-                        />
-                    </>
+                            }
+                        }}
+                    />
+                ) : selectValues.length > 0 ? (
+                    <Select
+                        id={variable.envVariable}
+                        onChange={(e) => setVariableValue(e.target.value)}
+                        name={variable.envVariable}
+                        defaultValue={variable.serverValue ?? variable.defaultValue}
+                        disabled={!canEdit || !variable.isEditable}
+                    >
+                        {selectValues.map((selectValue) => (
+                            <option key={selectValue} value={selectValue}>
+                                {selectValue}
+                            </option>
+                        ))}
+                    </Select>
                 ) : (
-                    <>
-                        {selectValues.length > 0 ? (
-                            <>
-                                <Select
-                                    onChange={(e) => setVariableValue(e.target.value)}
-                                    name={variable.envVariable}
-                                    defaultValue={variable.serverValue ?? variable.defaultValue}
-                                    disabled={!canEdit || !variable.isEditable}
-                                >
-                                    {selectValues.map((selectValue) => (
-                                        <option
-                                            key={selectValue.replace('in:', '')}
-                                            value={selectValue.replace('in:', '')}
-                                        >
-                                            {selectValue.replace('in:', '')}
-                                        </option>
-                                    ))}
-                                </Select>
-                            </>
-                        ) : (
-                            <>
-                                <Input
-                                    onKeyUp={(e) => {
-                                        if (canEdit && variable.isEditable) {
-                                            setVariableValue(e.currentTarget.value);
-                                        }
-                                    }}
-                                    readOnly={!canEdit || !variable.isEditable}
-                                    name={variable.envVariable}
-                                    defaultValue={variable.serverValue ?? ''}
-                                    placeholder={variable.defaultValue}
-                                />
-                            </>
-                        )}
-                    </>
+                    <Input
+                        id={variable.envVariable}
+                        onKeyUp={(e) => {
+                            if (canEdit && variable.isEditable) {
+                                setVariableValue(e.currentTarget.value);
+                            }
+                        }}
+                        readOnly={!canEdit || !variable.isEditable}
+                        name={variable.envVariable}
+                        defaultValue={variable.serverValue ?? ''}
+                        placeholder={variable.defaultValue}
+                    />
                 )}
             </InputSpinner>
-
-            <p className='mt-1 text-xs text-neutral-300'>{variable.description}</p>
-        </TitledGreyBox>
+        </StartupFormRow>
     );
 };
 

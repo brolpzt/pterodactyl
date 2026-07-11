@@ -1,16 +1,30 @@
 const colors = require('tailwindcss/colors');
 
-const gray = {
-    50: 'hsl(216, 33%, 97%)',
-    100: 'hsl(214, 15%, 91%)',
-    200: 'hsl(210, 16%, 82%)',
-    300: 'hsl(211, 13%, 65%)',
-    400: 'hsl(211, 10%, 53%)',
-    500: 'hsl(211, 12%, 43%)',
-    600: 'hsl(209, 14%, 37%)',
-    700: 'hsl(209, 18%, 30%)',
-    800: 'hsl(209, 20%, 25%)',
-    900: 'hsl(210, 24%, 16%)',
+/** Paleta alinhada ao hostgamer.net */
+const neutral = {
+    50: '#f7f9ff',
+    100: '#e8ecf7',
+    200: '#c5cce0',
+    300: '#8a97bb',
+    400: '#7d7d8e',
+    500: '#5a5a6c',
+    600: '#2d2d3a',
+    700: '#111420',
+    800: '#111420',
+    900: '#090911',
+};
+
+const blue = {
+    50: '#f7f9ff',
+    100: '#e8efff',
+    200: '#c5d4ff',
+    300: '#8fabff',
+    400: '#4f7bff',
+    500: '#2258ff',
+    600: '#1a46cc',
+    700: '#14214b',
+    800: '#0f1840',
+    900: '#090d28',
 };
 
 module.exports = {
@@ -20,16 +34,17 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                header: ['"IBM Plex Sans"', '"Roboto"', 'system-ui', 'sans-serif'],
+                sans: ['"Manrope"', 'Arial', 'Helvetica', 'sans-serif'],
+                header: ['"Oxanium"', 'Arial', 'Helvetica', 'sans-serif'],
+                mono: ['ui-monospace', '"Cascadia Code"', '"Courier New"', 'Courier', 'monospace'],
             },
             colors: {
-                black: '#131a20',
-                // "primary" and "neutral" are deprecated, prefer the use of "blue" and "gray"
-                // in new code.
-                primary: colors.blue,
-                gray: gray,
-                neutral: gray,
-                cyan: colors.cyan,
+                black: '#090911',
+                primary: blue,
+                blue,
+                gray: neutral,
+                neutral,
+                cyan: blue,
             },
             fontSize: {
                 '2xs': '0.625rem',
@@ -38,7 +53,7 @@ module.exports = {
                 250: '250ms',
             },
             borderColor: theme => ({
-                default: theme('colors.neutral.400', 'currentColor'),
+                default: theme('colors.neutral.600', 'currentColor'),
             }),
         },
     },
@@ -47,5 +62,5 @@ module.exports = {
         require('@tailwindcss/forms')({
             strategy: 'class',
         }),
-    ]
+    ],
 };

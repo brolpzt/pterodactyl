@@ -1,8 +1,14 @@
 .checkbox_input {
-    @apply w-4 h-4 rounded-sm border-neutral-500 bg-neutral-600 text-primary-500;
+    @apply w-4 h-4 rounded-sm text-primary-500;
+    border: 1px solid var(--field-border);
+    background-color: var(--field-bg);
+    transition: border-color var(--transition-base), box-shadow var(--transition-base);
 
-    &:focus, &:active {
-        @apply ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-700;
+    &:focus-visible,
+    &:active {
+        border-color: var(--color-primary) !important;
+        box-shadow: var(--field-glow) !important;
+        outline: none;
     }
 
     &.indeterminate:checked {
@@ -12,11 +18,25 @@
 }
 
 .text_input {
-    @apply transition-shadow duration-75;
-    @apply w-full bg-neutral-800 rounded px-4 py-2 outline-none border-0;
+    @apply w-full outline-none text-white font-semibold;
+    border: 1px solid var(--field-border);
+    border-radius: var(--radius-ui);
+    background-color: var(--field-bg);
+    padding: 0.58rem 0.75rem;
+    font-size: 0.92rem;
+    line-height: 1.35;
+    transition: border-color var(--transition-base), box-shadow var(--transition-base),
+        background-color var(--transition-base);
 
-    &:focus, &:active {
-        @apply ring-4 ring-blue-300 ring-opacity-75;
+    &::placeholder {
+        color: var(--color-input-placeholder);
+    }
+
+    &:hover:not(:disabled):not(:read-only),
+    &:focus-visible:not(:disabled):not(:read-only) {
+        border-color: var(--color-primary) !important;
+        box-shadow: var(--field-glow) !important;
+        outline: none;
     }
 
     &.loose {

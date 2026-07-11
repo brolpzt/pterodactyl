@@ -9,24 +9,26 @@ import SubNavigation from '@/components/elements/SubNavigation';
 import { useLocation } from 'react-router';
 import Spinner from '@/components/elements/Spinner';
 import routes from '@/routers/routes';
+import useScrollToTopOnRouteChange from '@/plugins/useScrollToTopOnRouteChange';
 
 import Sidebar from '@/components/Sidebar';
+import { MainContent } from '@/components/layout/MainContent';
+import PageFallbackBackground from '@/components/layout/PageFallbackBackground';
 import tw from 'twin.macro';
 
 export default () => {
     const location = useLocation();
+    useScrollToTopOnRouteChange();
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
 
     return (
         <>
+            <Sidebar />
             <NavigationBar />
-            <div css={tw`flex min-h-screen pt-[3.5rem]`}>
-                <Sidebar />
-                <div
-                    css={tw`flex-1 bg-neutral-800 transition-all duration-300`}
-                    style={{ marginLeft: sidebarCollapsed ? '70px' : '240px' }}
-                >
+            <PageFallbackBackground />
+            <div css={tw`relative z-10 flex min-h-screen pt-[3.5rem]`}>
+                <MainContent $collapsed={sidebarCollapsed}>
                     {location.pathname.startsWith('/account') && (
                         <SubNavigation>
                             <div>
@@ -59,7 +61,7 @@ export default () => {
                             </Switch>
                         </React.Suspense>
                     </TransitionRouter>
-                </div>
+                </MainContent>
             </div>
         </>
     );

@@ -17,13 +17,13 @@ const SubNavigation = styled.div`
             }
 
             &:hover {
-                ${tw`text-neutral-100`};
+                ${tw`text-primary-400`};
             }
 
             &:active,
             &.active {
-                ${tw`text-neutral-100`};
-                box-shadow: inset 0 -2px ${theme`colors.cyan.600`.toString()};
+                ${tw`text-primary-400`};
+                box-shadow: inset 0 -2px ${theme`colors.primary.500`.toString()};
             }
         }
     }

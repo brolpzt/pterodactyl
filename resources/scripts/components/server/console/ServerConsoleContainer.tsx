@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { ServerContext } from '@/state/server';
-import Can from '@/components/elements/Can';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import isEqual from 'react-fast-compare';
 import Spinner from '@/components/elements/Spinner';
@@ -10,7 +9,6 @@ import StatGraphs from '@/components/server/console/StatGraphs';
 import PowerButtons from '@/components/server/console/PowerButtons';
 import ServerDetailsBlock from '@/components/server/console/ServerDetailsBlock';
 import { Alert } from '@/components/elements/alert';
-import StartupContainer from '@/components/server/startup/StartupContainer';
 
 export type PowerAction = 'start' | 'stop' | 'restart' | 'kill';
 
@@ -33,8 +31,8 @@ const ServerConsoleContainer = () => {
                             : 'This server is currently being transferred to another node and all actions are unavailable.'}
                 </Alert>
             )}
-            <div className={'grid grid-cols-4 gap-2 sm:gap-4 mb-4'}>
-                <div className={'flex col-span-4 lg:col-span-3'}>
+            <div className={'mb-4 grid grid-cols-4 items-start gap-2 sm:gap-4 lg:items-stretch'}>
+                <div className={'col-span-4 flex w-full flex-col lg:col-span-3 lg:h-full'}>
                     <Spinner.Suspense>
                         <Console />
                     </Spinner.Suspense>
@@ -46,11 +44,6 @@ const ServerConsoleContainer = () => {
                     <StatGraphs />
                 </Spinner.Suspense>
             </div>
-            <Can action={'startup.*'}>
-                <Spinner.Suspense>
-                    <StartupContainer />
-                </Spinner.Suspense>
-            </Can>
             <Features enabled={eggFeatures} />
         </ServerContentBlock>
     );

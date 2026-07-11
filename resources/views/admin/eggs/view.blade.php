@@ -104,7 +104,10 @@
                             <div class="form-group">
                                 <label for="pGamedig" class="control-label">GameDig</label>
                                 <input type="text" id="pGamedig" name="gamedig" value="{{ $egg->gamedig }}" class="form-control" />
-                                <p class="text-muted small">The GameDig value necessary for querying server information.</p>
+                                <p class="text-muted small">
+                                    Valor GameDig para consulta do servidor. Também define o fundo do painel do cliente
+                                    (use o slug da pasta em <code>public/bg/</code>, ex.: <code>cod4</code>, <code>bo1</code>, <code>cs16</code>).
+                                </p>
                             </div>
 
                         </div>

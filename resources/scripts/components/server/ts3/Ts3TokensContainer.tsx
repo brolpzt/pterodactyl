@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import tw from 'twin.macro';
+import { emptyStateText } from '@/assets/css/cardTheme';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import Spinner from '@/components/elements/Spinner';
@@ -93,7 +94,7 @@ export default () => {
                 {loading ? (
                     <Spinner size={Spinner.Size.LARGE} centered />
                 ) : tokens.length === 0 ? (
-                    <p css={tw`text-sm text-neutral-400 text-center py-4`}>Nenhum token encontrado.</p>
+                    <p css={[emptyStateText, tw`py-4`]}>Nenhum token encontrado.</p>
                 ) : (
                     <table css={tw`w-full text-sm`}>
                         <thead>

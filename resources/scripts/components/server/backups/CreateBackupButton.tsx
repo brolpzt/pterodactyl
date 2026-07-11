@@ -7,7 +7,7 @@ import FormikFieldWrapper from '@/components/elements/FormikFieldWrapper';
 import useFlash from '@/plugins/useFlash';
 import createServerBackup from '@/api/server/backups/createServerBackup';
 import FlashMessageRender from '@/components/FlashMessageRender';
-import Button from '@/components/elements/Button';
+import { Button } from '@/components/elements/button/index';
 import tw from 'twin.macro';
 import { Textarea } from '@/components/elements/Input';
 import getServerBackups from '@/api/swr/getServerBackups';
@@ -108,7 +108,11 @@ export default () => {
                     <ModalContent appear visible={visible} onDismissed={() => setVisible(false)} />
                 </Formik>
             )}
-            <Button css={tw`w-full sm:w-auto`} onClick={() => setVisible(true)}>
+            <Button
+                variant={Button.Variants.Secondary}
+                className={'w-full sm:w-auto'}
+                onClick={() => setVisible(true)}
+            >
                 Create backup
             </Button>
         </>

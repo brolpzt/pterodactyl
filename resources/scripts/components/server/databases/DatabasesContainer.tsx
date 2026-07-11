@@ -9,6 +9,7 @@ import CreateDatabaseButton from '@/components/server/databases/CreateDatabaseBu
 import Can from '@/components/elements/Can';
 import useFlash from '@/plugins/useFlash';
 import tw from 'twin.macro';
+import { emptyStateText, navText } from '@/assets/css/cardTheme';
 import Fade from '@/components/elements/Fade';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import { useDeepMemoize } from '@/plugins/useDeepMemoize';
@@ -53,7 +54,7 @@ export default () => {
                                 />
                             ))
                         ) : (
-                            <p css={tw`text-center text-sm text-neutral-300`}>
+                            <p css={emptyStateText}>
                                 {databaseLimit > 0
                                     ? 'It looks like you have no databases.'
                                     : 'Databases cannot be created for this server.'}
@@ -62,7 +63,7 @@ export default () => {
                         <Can action={'database.create'}>
                             <div css={tw`mt-6 flex items-center justify-end`}>
                                 {databaseLimit > 0 && databases.length > 0 && (
-                                    <p css={tw`text-sm text-neutral-300 mb-4 sm:mr-6 sm:mb-0`}>
+                                    <p css={[navText, tw`text-sm mb-4 sm:mr-6 sm:mb-0`]}>
                                         {databases.length} of {databaseLimit} databases have been allocated to this
                                         server.
                                     </p>

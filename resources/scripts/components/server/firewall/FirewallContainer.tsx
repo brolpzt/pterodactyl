@@ -13,6 +13,7 @@ import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import { Button } from '@/components/elements/button/index';
 import { Dialog } from '@/components/elements/dialog';
 import tw from 'twin.macro';
+import { emptyStateText } from '@/assets/css/cardTheme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import Input from '@/components/elements/Input';
@@ -50,7 +51,7 @@ const FirewallRuleRow = ({ rule, onDelete }: { rule: FirewallRule; onDelete: (ru
                     {new Date(rule.createdAt).toLocaleString('pt-BR')}
                 </td>
                 <td css={tw`px-3 py-3 text-right`}>
-                    <Button.Danger onClick={() => setConfirmOpen(true)} css={tw`text-xs py-1 px-3`}>
+                    <Button.Danger onClick={() => setConfirmOpen(true)}>
                         <FontAwesomeIcon icon={faTrash} css={tw`mr-1`} />
                         Remover
                     </Button.Danger>
@@ -108,7 +109,7 @@ const AddRuleForm = ({ onAdd }: { onAdd: (ip: string, reason: string) => Promise
                     onChange={(e) => setReason(e.target.value)}
                 />
             </div>
-            <Button css={tw`flex-shrink-0`} type={'submit'} disabled={loading || !ip.trim()}>
+            <Button.Danger className={'flex-shrink-0'} type={'submit'} disabled={loading || !ip.trim()}>
                 {loading ? (
                     <Spinner size={Spinner.Size.SMALL} />
                 ) : (
@@ -117,7 +118,7 @@ const AddRuleForm = ({ onAdd }: { onAdd: (ip: string, reason: string) => Promise
                         Banir IP
                     </>
                 )}
-            </Button>
+            </Button.Danger>
         </form>
     );
 };
@@ -197,7 +198,7 @@ export default () => {
                 }
             >
                 {data.length === 0 ? (
-                    <p css={tw`text-center text-neutral-500 py-6 text-sm`}>
+                    <p css={[emptyStateText, tw`py-6`]}>
                         Nenhum IP banido para este servidor.
                     </p>
                 ) : (

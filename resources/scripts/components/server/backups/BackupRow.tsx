@@ -62,7 +62,7 @@ export default ({ backup, className }: Props) => {
                     )}
                 </div>
                 <div css={tw`flex flex-col truncate`}>
-                    <div css={tw`flex items-center text-sm mb-1`}>
+                    <div css={tw`flex items-center mb-1`}>
                         {backup.completedAt !== null && !backup.isSuccessful && (
                             <span
                                 css={tw`bg-red-500 py-px px-2 rounded-full text-white text-xs uppercase border border-red-600 mr-2`}
@@ -81,7 +81,7 @@ export default ({ backup, className }: Props) => {
                 </div>
             </div>
             <div css={tw`flex-1 md:flex-none md:w-48 mt-4 md:mt-0 md:ml-8 md:text-center`}>
-                <p title={format(backup.createdAt, 'ddd, MMMM do, yyyy HH:mm:ss')} css={tw`text-sm`}>
+                <p title={format(backup.createdAt, 'ddd, MMMM do, yyyy HH:mm:ss')}>
                     {formatDistanceToNow(backup.createdAt, { includeSeconds: true, addSuffix: true })}
                 </p>
                 <p css={tw`text-2xs text-neutral-500 uppercase mt-1`}>Created</p>

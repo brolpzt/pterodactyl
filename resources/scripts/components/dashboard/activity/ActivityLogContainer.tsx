@@ -10,6 +10,7 @@ import Spinner from '@/components/elements/Spinner';
 import { styles as btnStyles } from '@/components/elements/button/index';
 import classNames from 'classnames';
 import ActivityLogEntry from '@/components/elements/activity/ActivityLogEntry';
+import ActivityLogList from '@/components/elements/activity/ActivityLogList';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
 import useLocationHash from '@/plugins/useLocationHash';
 
@@ -47,7 +48,7 @@ export default () => {
             {!data && isValidating ? (
                 <Spinner centered />
             ) : (
-                <div className={'bg-gray-700'}>
+                <ActivityLogList>
                     {data?.items.map((activity) => (
                         <ActivityLogEntry key={activity.id} activity={activity}>
                             {typeof activity.properties.useragent === 'string' && (
@@ -59,7 +60,7 @@ export default () => {
                             )}
                         </ActivityLogEntry>
                     ))}
-                </div>
+                </ActivityLogList>
             )}
             {data && (
                 <PaginationFooter

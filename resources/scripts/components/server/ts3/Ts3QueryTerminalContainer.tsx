@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import tw from 'twin.macro';
+import { emptyStateText } from '@/assets/css/cardTheme';
 import { useStoreState } from 'easy-peasy';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
@@ -67,9 +68,9 @@ export default () => {
 
             <TitledGreyBox title={'Retorno'}>
                 {!response ? (
-                    <p css={tw`text-sm text-neutral-400`}>Nenhum comando executado ainda.</p>
+                    <p css={emptyStateText}>Nenhum comando executado ainda.</p>
                 ) : response.length === 0 ? (
-                    <p css={tw`text-sm text-neutral-400`}>Comando executado sem linhas de retorno.</p>
+                    <p css={emptyStateText}>Comando executado sem linhas de retorno.</p>
                 ) : (
                     <pre css={tw`bg-neutral-900 rounded p-3 text-xs overflow-auto max-h-[32rem]`}>
                         {JSON.stringify(response, null, 2)}

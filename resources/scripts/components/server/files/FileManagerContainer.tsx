@@ -11,6 +11,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import Can from '@/components/elements/Can';
 import { ServerError } from '@/components/elements/ScreenBlock';
 import tw from 'twin.macro';
+import { emptyStateText } from '@/assets/css/cardTheme';
 import { Button } from '@/components/elements/button/index';
 import { ServerContext } from '@/state/server';
 import useFileManagerSwr from '@/plugins/useFileManagerSwr';
@@ -94,7 +95,7 @@ export default () => {
             ) : (
                 <>
                     {!files.length ? (
-                        <p css={tw`text-sm text-neutral-400 text-center`}>This directory seems to be empty.</p>
+                        <p css={emptyStateText}>This directory seems to be empty.</p>
                     ) : (
                         <CSSTransition classNames={'fade'} timeout={150} appear in>
                             <div>

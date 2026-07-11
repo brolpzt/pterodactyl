@@ -16,6 +16,8 @@ import StatBlock from '@/components/server/console/StatBlock';
 import useWebsocketEvent from '@/plugins/useWebsocketEvent';
 import classNames from 'classnames';
 import { capitalize } from '@/lib/strings';
+import { cardLabelText } from '@/assets/css/cardTheme';
+import tw from 'twin.macro';
 
 type Stats = Record<'memory' | 'cpu' | 'disk' | 'uptime' | 'rx' | 'tx', number>;
 
@@ -35,7 +37,9 @@ const getBackgroundColor = (value: number, max: number | null): string | undefin
 const Limit = ({ limit, children }: { limit: string | null; children: React.ReactNode }) => (
     <>
         {children}
-        <span className={'ml-1 text-gray-300 text-[70%] select-none'}>/ {limit || <>&infin;</>}</span>
+        <span css={[cardLabelText, tw`ml-1 text-[70%] select-none`]}>
+            / {limit || <>&infin;</>}
+        </span>
     </>
 );
 

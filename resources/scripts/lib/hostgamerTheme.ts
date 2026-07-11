@@ -1,0 +1,50 @@
+/** Tokens de marca HostGamer — hostgamer.net */
+export const hostgamerColors = {
+    bg: '#090911',
+    /** Fundo das páginas de servidor sem imagem de background. */
+    serverBgFallback: '#252d45',
+    surface: '#111420',
+    text: '#7d7d8e',
+    textMuted: '#7d7d8e',
+    textContrast: '#8a97bb',
+    primary: '#2258ff',
+    primaryStrong: '#4f7bff',
+    primarySoft: '#14214b',
+    primaryContrast: '#f7f9ff',
+    divider: '#2d2d3ab3',
+    fieldBorder: '#2d2d3ab3',
+    labelColor: '#7d7d8e',
+    inputPlaceholder: '#ffffffa6',
+    headerGlassBg: '#090911bf',
+    /** Barra do servidor — só blur, sem tint escuro por cima. */
+    serverBarGlassBg: 'transparent',
+    /** Subheader (Start / Restart / Stop) — sombra do vidro. */
+    subheaderShadow: '0 6px 24px -10px rgba(0, 0, 0, 0.68), inset 0 0 0 1px rgba(45, 45, 58, 0.28)',
+    subheaderShadowScrolled: '0 12px 32px -18px rgba(0, 0, 0, 0.82), inset 0 0 0 1px rgba(45, 45, 58, 0.28)',
+    cardGlassBg: '#090911bf',
+    cardHeaderBg: 'color-mix(in srgb, #2d2d3a 38%, transparent)',
+    focusRing: '0 0 0 3px #2258ff4d',
+    btnGlow: '0 0 26px -8px #2258ffd9',
+    btnDangerGlow: '0 0 26px -8px #dc2626d9',
+    danger: '#dc2626',
+    button: {
+        fontSize: '0.875rem',
+        lineHeight: '1',
+        gap: '0.45rem',
+        minHeight: '2.55rem',
+        padding: '0 1.1rem',
+        minHeightMd: '2.55rem',
+        paddingMd: '0 1.1rem',
+        minHeightSm: '2rem',
+        paddingSm: '0 0.75rem',
+        fontSizeSm: '0.75rem',
+    },
+    fieldGlow: '0 0 30px -15px #2258ffe6',
+    transitionBase: '0.22s ease',
+    mono: {
+        fontSize: '0.75rem',
+        lineHeight: '1.45',
+        /** Console ao vivo — mantém legibilidade do terminal. */
+        consoleFontSize: '0.875rem',
+    },
+} as const;

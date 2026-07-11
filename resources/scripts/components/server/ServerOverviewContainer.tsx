@@ -16,6 +16,9 @@ import useWebsocketEvent from '@/plugins/useWebsocketEvent';
 import { capitalize } from '@/lib/strings';
 import tw from 'twin.macro';
 import { useTranslation } from 'react-i18next';
+import { cardLabelText, cardRowBorder, cardValueText } from '@/assets/css/cardTheme';
+import Spinner from '@/components/elements/Spinner';
+import StartupContainer from '@/components/server/startup/StartupContainer';
 
 type Stats = { uptime: number };
 
@@ -28,16 +31,16 @@ const InfoRow = ({
     value: React.ReactNode;
     copyValue?: string;
 }) => (
-    <div css={tw`flex items-center justify-between text-sm py-2 border-b border-neutral-600 last:border-0`}>
-        <p css={tw`text-neutral-400`}>{label}</p>
+    <div css={[tw`flex items-center justify-between text-sm py-2 border-b last:border-0`, cardRowBorder]}>
+        <p css={cardLabelText}>{label}</p>
         {copyValue !== undefined ? (
             <CopyOnClick text={copyValue}>
-                <code css={tw`font-mono bg-neutral-900 rounded py-1 px-2 cursor-pointer hover:bg-neutral-800`}>
+                <code css={[cardValueText, tw`font-mono rounded py-1 px-2 cursor-pointer`]}>
                     {value}
                 </code>
             </CopyOnClick>
         ) : (
-            <span css={tw`text-neutral-200 font-medium`}>{value}</span>
+            <span css={[cardValueText, tw`font-medium`]}>{value}</span>
         )}
     </div>
 );
@@ -138,7 +141,7 @@ const ServerOverviewContainer = () => {
                                 />
                             </CopyOnClick>
                         </div>
-                        <div css={tw`border-l-4 border-cyan-500 p-3 mt-4`}>
+                        <div css={tw`border-l-4 border-primary-500 p-3 mt-4`}>
                             <p css={tw`text-xs text-neutral-200`}>
                                 {t('server_overview.sftp_password_note')}
                             </p>
@@ -174,6 +177,12 @@ const ServerOverviewContainer = () => {
                     />
                 </CopyOnClick>
             </TitledGreyBox>
+
+            <Can action={'startup.*'}>
+                <Spinner.Suspense>
+                    <StartupContainer />
+                </Spinner.Suspense>
+            </Can>
         </ServerContentBlock>
     );
 };

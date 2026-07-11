@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import tw from 'twin.macro';
+import { emptyStateText } from '@/assets/css/cardTheme';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import Spinner from '@/components/elements/Spinner';
@@ -89,7 +90,7 @@ export default () => {
                         </p>
                         <div css={tw`bg-neutral-900/70 border border-neutral-700 rounded p-3 max-h-[34rem] overflow-auto`}>
                             {channels.length === 0 ? (
-                                <p css={tw`text-sm text-neutral-400`}>Nenhum canal encontrado.</p>
+                                <p css={emptyStateText}>Nenhum canal encontrado.</p>
                             ) : (
                                 renderChannelTree('0')
                             )}

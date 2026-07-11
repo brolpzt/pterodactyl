@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Server } from '@/api/server/getServer';
 import getServerResourceUsage, { ServerPowerState, ServerStats } from '@/api/server/getServerResourceUsage';
 import { bytesToString, ip, mbToBytes } from '@/lib/formatters';
-import tw from 'twin.macro';
+import tw, { css } from 'twin.macro';
 import GreyRowBox from '@/components/elements/GreyRowBox';
 import Spinner from '@/components/elements/Spinner';
 import styled from 'styled-components/macro';
@@ -23,27 +23,44 @@ const Icon = memo(
 );
 
 const IconDescription = styled.p<{ $alarm: boolean }>`
-    ${tw`text-sm ml-2`};
+    ${tw`text-xs ml-2`};
     ${(props) => (props.$alarm ? tw`text-white` : tw`text-neutral-400`)};
 `;
 
-const StatusIndicatorBox = styled(GreyRowBox)<{ $status: ServerPowerState | undefined }>`
-    ${tw`grid grid-cols-12 gap-4 relative`};
-
-    & .status-bar {
-        ${tw`w-2 bg-red-500 absolute right-0 z-20 rounded-full m-1 opacity-50 transition-all duration-150`};
-        height: calc(100% - 0.5rem);
-
-        ${({ $status }) =>
-            !$status || $status === 'offline'
-                ? tw`bg-red-500`
-                : $status === 'running'
-                ? tw`bg-green-500`
-                : tw`bg-yellow-500`};
+const statusBarGlow = ($status: ServerPowerState | undefined) => {
+    if (!$status || $status === 'offline') {
+        return css`
+            background-color: #ef4444;
+            box-shadow: 0 0 20px -4px rgba(239, 68, 68, 0.9);
+        `;
     }
 
-    &:hover .status-bar {
-        ${tw`opacity-75`};
+    if ($status === 'running') {
+        return css`
+            background-color: #22c55e;
+            box-shadow: 0 0 20px -4px rgba(34, 197, 94, 0.9);
+        `;
+    }
+
+    return css`
+        background-color: #facc15;
+        box-shadow: 0 0 20px -4px rgba(250, 204, 21, 0.9);
+    `;
+};
+
+const StatusIndicatorBox = styled(GreyRowBox).attrs({ $hoverable: false })<{ $status: ServerPowerState | undefined }>`
+    ${tw`grid grid-cols-12 gap-4 relative text-sm`};
+
+    & .icon {
+        ${tw`w-12 p-2.5 text-sm`};
+    }
+
+    & .status-bar {
+        ${tw`w-2 absolute right-0 z-20 rounded-full m-1`};
+        height: calc(100% - 0.5rem);
+        opacity: 1;
+
+        ${({ $status }) => statusBarGlow($status)};
     }
 `;
 
@@ -95,16 +112,16 @@ export default ({ server, className }: { server: Server; className?: string }) =
                     <FontAwesomeIcon icon={faServer} />
                 </div>
                 <div css={tw`min-w-0 flex-1 overflow-hidden`}>
-                    <p css={tw`text-lg truncate`} title={server.name}>{server.name}</p>
+                    <p css={tw`text-sm font-semibold truncate`} title={server.name}>{server.name}</p>
                     {!!server.description && (
-                        <p css={tw`text-sm text-neutral-300 truncate`} title={server.description}>{server.description}</p>
+                        <p css={tw`text-xs text-neutral-400 truncate mt-0.5`} title={server.description}>{server.description}</p>
                     )}
                 </div>
             </div>
             <div css={tw`flex-1 ml-4 lg:block lg:col-span-2 hidden`}>
                 <div css={tw`flex justify-center`}>
                     <FontAwesomeIcon icon={faEthernet} css={tw`text-neutral-500`} />
-                    <p css={tw`text-sm text-neutral-400 ml-2`}>
+                    <p css={tw`text-xs text-neutral-400 ml-2`}>
                         {server.allocations
                             .filter((alloc) => alloc.isDefault)
                             .map((allocation) => (
@@ -118,7 +135,7 @@ export default ({ server, className }: { server: Server; className?: string }) =
             <div css={tw`hidden lg:flex lg:col-span-1 items-center justify-center`}>
                 <div css={tw`flex flex-col items-center`}>
                     <FontAwesomeIcon icon={faGlobe} css={tw`text-neutral-500 text-xs`} />
-                    <p css={tw`text-xs text-neutral-400 mt-1 max-w-[80px] truncate`} title={server.locationLong || server.location}>
+                    <p css={tw`text-[11px] text-neutral-500 mt-1 max-w-[80px] truncate`} title={server.locationLong || server.location}>
                         {server.locationLong || server.location || '—'}
                     </p>
                 </div>
@@ -155,7 +172,7 @@ export default ({ server, className }: { server: Server; className?: string }) =
                                     {stats.cpuUsagePercent.toFixed(2)} %
                                 </IconDescription>
                             </div>
-                            <p css={tw`text-xs text-neutral-600 text-center mt-1`}>of {cpuLimit}</p>
+                            <p css={tw`text-[11px] text-neutral-500 text-center mt-1`}>of {cpuLimit}</p>
                         </div>
                         <div css={tw`flex-1 ml-4 sm:block hidden`}>
                             <div css={tw`flex justify-center`}>
@@ -164,7 +181,7 @@ export default ({ server, className }: { server: Server; className?: string }) =
                                     {bytesToString(stats.memoryUsageInBytes)}
                                 </IconDescription>
                             </div>
-                            <p css={tw`text-xs text-neutral-600 text-center mt-1`}>of {memoryLimit}</p>
+                            <p css={tw`text-[11px] text-neutral-500 text-center mt-1`}>of {memoryLimit}</p>
                         </div>
                         <div css={tw`flex-1 ml-4 sm:block hidden`}>
                             <div css={tw`flex justify-center`}>
@@ -173,7 +190,7 @@ export default ({ server, className }: { server: Server; className?: string }) =
                                     {bytesToString(stats.diskUsageInBytes)}
                                 </IconDescription>
                             </div>
-                            <p css={tw`text-xs text-neutral-600 text-center mt-1`}>of {diskLimit}</p>
+                            <p css={tw`text-[11px] text-neutral-500 text-center mt-1`}>of {diskLimit}</p>
                         </div>
                     </React.Fragment>
                 )}

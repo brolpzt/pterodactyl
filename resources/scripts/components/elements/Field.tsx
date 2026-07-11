@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react';
 import { Field as FormikField, FieldProps } from 'formik';
 import Input from '@/components/elements/Input';
 import Label from '@/components/elements/Label';
+import { fieldGroup } from '@/assets/css/formTheme';
 
 interface OwnProps {
     name: string;
@@ -17,7 +18,7 @@ const Field = forwardRef<HTMLInputElement, Props>(
     ({ id, name, light = false, label, description, validate, ...props }, ref) => (
         <FormikField innerRef={ref} name={name} validate={validate}>
             {({ field, form: { errors, touched } }: FieldProps) => (
-                <div>
+                <div css={fieldGroup}>
                     {label && (
                         <Label htmlFor={id} isLight={light}>
                             {label}
@@ -29,6 +30,7 @@ const Field = forwardRef<HTMLInputElement, Props>(
                         {...props}
                         isLight={light}
                         hasError={!!(touched[field.name] && errors[field.name])}
+                        aria-invalid={touched[field.name] && errors[field.name] ? true : undefined}
                     />
                     {touched[field.name] && errors[field.name] ? (
                         <p className={'input-help error'}>

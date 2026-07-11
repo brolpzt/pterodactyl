@@ -1,15 +1,23 @@
 .icons {
-    @apply flex space-x-1 mx-2 transition-colors duration-100 text-gray-400;
+    @apply flex space-x-1 mx-2 transition-opacity duration-100;
+    color: color-mix(in srgb, var(--color-text-muted) 88%, var(--color-white) 12%);
 
     & svg {
-        @apply px-1 py-px cursor-pointer hover:text-gray-50 h-5 w-auto;
+        @apply px-1 py-px cursor-pointer h-5 w-auto;
+        transition: color 150ms ease;
+
+        &:hover {
+            color: var(--color-white);
+        }
     }
 }
 
 .description {
     @apply mt-1 text-sm break-words line-clamp-2 pr-4;
+    color: color-mix(in srgb, var(--color-text-muted) 88%, var(--color-white) 12%);
 
     & strong {
-        @apply text-gray-50 font-semibold break-all;
+        color: var(--color-white);
+        @apply font-semibold break-all;
     }
 }

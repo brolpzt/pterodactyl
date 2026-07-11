@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import tw from 'twin.macro';
+import { emptyStateText } from '@/assets/css/cardTheme';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import Spinner from '@/components/elements/Spinner';
@@ -55,7 +56,7 @@ export default () => {
                 {loading ? (
                     <Spinner centered size={Spinner.Size.LARGE} />
                 ) : logs.length === 0 ? (
-                    <p css={tw`text-sm text-neutral-400 text-center py-4`}>Nenhum log retornado.</p>
+                    <p css={[emptyStateText, tw`py-4`]}>Nenhum log retornado.</p>
                 ) : (
                     <pre css={tw`bg-neutral-900 rounded p-3 text-xs overflow-auto max-h-[28rem]`}>
                         {logs.map((line, index) => line.l || JSON.stringify(line)).join('\n')}

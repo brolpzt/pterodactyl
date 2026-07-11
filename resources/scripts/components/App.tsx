@@ -5,6 +5,7 @@ import { StoreProvider } from 'easy-peasy';
 import { store } from '@/state';
 import { SiteSettings } from '@/state/settings';
 import ProgressBar from '@/components/elements/ProgressBar';
+import { DocumentOverlayScrollbar } from '@/components/elements/OverlayScrollbar';
 import { NotFound } from '@/components/elements/ScreenBlock';
 import tw from 'twin.macro';
 import GlobalStylesheet from '@/assets/css/GlobalStylesheet';
@@ -61,6 +62,7 @@ const App = () => {
     return (
         <>
             <GlobalStylesheet />
+            <DocumentOverlayScrollbar />
             <StoreProvider store={store}>
                 <ProgressBar />
                 <div css={tw`mx-auto w-auto`}>
@@ -81,11 +83,11 @@ const App = () => {
                                                     </Spinner.Suspense>
                                                 </Route>
                                                 <AuthenticatedRoute path={'/server/:id'}>
-                                                    <Spinner.Suspense>
-                                                        <ServerContext.Provider>
+                                                    <ServerContext.Provider>
+                                                        <Spinner.Suspense>
                                                             <ServerRouter />
-                                                        </ServerContext.Provider>
-                                                    </Spinner.Suspense>
+                                                        </Spinner.Suspense>
+                                                    </ServerContext.Provider>
                                                 </AuthenticatedRoute>
                                                 <AuthenticatedRoute path={'/'}>
                                                     <Spinner.Suspense>

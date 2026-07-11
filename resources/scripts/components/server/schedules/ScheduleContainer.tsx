@@ -10,6 +10,7 @@ import EditScheduleModal from '@/components/server/schedules/EditScheduleModal';
 import Can from '@/components/elements/Can';
 import useFlash from '@/plugins/useFlash';
 import tw from 'twin.macro';
+import { emptyStateText } from '@/assets/css/cardTheme';
 import GreyRowBox from '@/components/elements/GreyRowBox';
 import { Button } from '@/components/elements/button/index';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
@@ -45,7 +46,7 @@ export default () => {
             ) : (
                 <>
                     {schedules.length === 0 ? (
-                        <p css={tw`text-sm text-center text-neutral-300`}>
+                        <p css={emptyStateText}>
                             There are no schedules configured for this server.
                         </p>
                     ) : (
@@ -67,7 +68,11 @@ export default () => {
                     <Can action={'schedule.create'}>
                         <div css={tw`mt-8 flex justify-end`}>
                             <EditScheduleModal visible={visible} onModalDismissed={() => setVisible(false)} />
-                            <Button type={'button'} onClick={() => setVisible(true)}>
+                            <Button
+                                type={'button'}
+                                variant={Button.Variants.Secondary}
+                                onClick={() => setVisible(true)}
+                            >
                                 Create schedule
                             </Button>
                         </div>

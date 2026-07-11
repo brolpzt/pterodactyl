@@ -11,7 +11,6 @@ import { ApplicationStore } from '@/state';
 import { httpErrorToHuman } from '@/api/http';
 import { Button } from '@/components/elements/button/index';
 import tw from 'twin.macro';
-import Label from '@/components/elements/Label';
 import FormikFieldWrapper from '@/components/elements/FormikFieldWrapper';
 import { Textarea } from '@/components/elements/Input';
 
@@ -29,9 +28,8 @@ const RenameServerBox = () => {
             <Form css={tw`mb-0`}>
                 <Field id={'name'} name={'name'} label={'Server Name'} type={'text'} />
                 <div css={tw`mt-6`}>
-                    <Label>Server Description</Label>
-                    <FormikFieldWrapper name={'description'}>
-                        <FormikField as={Textarea} name={'description'} rows={3} />
+                    <FormikFieldWrapper id={'description'} name={'description'} label={'Server Description'}>
+                        <FormikField as={Textarea} id={'description'} name={'description'} rows={3} />
                     </FormikFieldWrapper>
                 </div>
                 <div css={tw`mt-6 text-right`}>

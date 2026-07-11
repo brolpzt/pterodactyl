@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components/macro';
 import { v4 } from 'uuid';
 import tw from 'twin.macro';
+import { fieldHint } from '@/assets/css/formTheme';
 import Label from '@/components/elements/Label';
 import Input from '@/components/elements/Input';
 
@@ -71,7 +72,7 @@ const Switch = ({ name, label, description, defaultChecked, readOnly, onChange, 
                             {label}
                         </Label>
                     )}
-                    {description && <p css={tw`text-neutral-400 text-sm mt-2`}>{description}</p>}
+                    {description && <p css={[fieldHint, tw`text-sm mt-2`]}>{description}</p>}
                 </div>
             )}
         </div>

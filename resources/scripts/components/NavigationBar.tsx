@@ -1,27 +1,32 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCogs, faLayerGroup, faSignOutAlt, faBars, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
-import SearchContainer from '@/components/dashboard/search/SearchContainer';
 import tw, { theme } from 'twin.macro';
-import styled from 'styled-components/macro';
+import styled, { css } from 'styled-components/macro';
 import http from '@/api/http';
 import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
 import DropdownMenu from '@/components/elements/DropdownMenu';
-import Avatar from '@/components/Avatar';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { getExternalSiteUrl } from '@/lib/externalSite';
+import { glassHeaderInner, glassHeaderShell } from '@/assets/css/glassPanel';
+import FlagIcon from '@/components/elements/FlagIcon';
+import { HEADER_HEIGHT, sidebarLayoutOffset } from '@/lib/sidebarLayout';
+
+const headerNavText = css`
+    color: var(--hg-nav-text);
+`;
 
 const STORAGE_LNG = 'pterodactyl_lng';
 const UI_TO_LNG: Record<string, string> = { US: 'en', BR: 'pt', ES: 'es' };
-const LNG_TO_UI: Record<string, { code: string; name: string; flag: string }> = {
-    en: { code: 'US', name: 'English (US)', flag: '🇺🇸' },
-    pt: { code: 'BR', name: 'Português (BR)', flag: '🇧🇷' },
-    es: { code: 'ES', name: 'Español (AR)', flag: '🇦🇷' },
+const LNG_TO_UI: Record<string, { code: string; name: string }> = {
+    en: { code: 'US', name: 'English (US)' },
+    pt: { code: 'BR', name: 'Português (BR)' },
+    es: { code: 'ES', name: 'Español (AR)' },
 };
 
 const StyledRow = styled.div<{ $active?: boolean }>`
@@ -50,27 +55,58 @@ const MenuWrapper = styled.div`
     }
 `;
 
+const HeaderBar = styled.div.attrs({ className: 'hg-glass-header' })<{ $collapsed: boolean }>`
+    ${glassHeaderShell};
+    ${tw`fixed top-0 right-0 z-50`};
+    ${(props) => sidebarLayoutOffset(props.$collapsed)};
+    transition: left 300ms ease;
+`;
+
+const HeaderInner = styled.div`
+    ${glassHeaderInner};
+    height: ${HEADER_HEIGHT};
+`;
+
+const HeaderLeading = styled.div`
+    ${tw`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 flex-shrink-0 min-w-0`};
+`;
+
+const MenuButton = styled.button`
+    ${headerNavText};
+    ${tw`flex items-center justify-center w-9 h-9 rounded-md hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150 flex-shrink-0`};
+`;
+
 const RightNavigation = styled.div`
+    ${tw`h-full flex items-center flex-shrink-0`};
     & > a,
     & > button,
-    & > .navigation-link {
-        ${tw`flex items-center h-full no-underline text-neutral-300 px-6 cursor-pointer transition-all duration-150`};
+    & > .navigation-link,
+    & > .navigation-link-compact {
+        ${headerNavText};
+        ${tw`flex items-center h-full no-underline cursor-pointer transition-all duration-150`};
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
 
-        &:active,
-        &:hover {
-            ${tw`text-neutral-100 bg-black transition-all duration-150`};
+        @media (min-width: 640px) {
+            padding-left: 1.25rem;
+            padding-right: 1.25rem;
+        }
+
+        @media (min-width: 768px) {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
         }
 
         &:active,
         &:hover,
         &.active {
-            box-shadow: inset 0 -2px ${theme`colors.cyan.600`.toString()};
+            ${tw`text-primary-400`};
+            box-shadow: inset 0 -2px ${theme`colors.primary.500`.toString()};
         }
     }
 `;
 
 export default () => {
-    const name = useStoreState((state: any) => state.settings.data!.name);
     const settings = useStoreState((state: any) => state.settings.data);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
     const { t } = useTranslation('strings');
@@ -83,9 +119,9 @@ export default () => {
     });
 
     const languages = [
-        { name: LNG_TO_UI.en.name, code: 'US', flag: LNG_TO_UI.en.flag },
-        { name: LNG_TO_UI.pt.name, code: 'BR', flag: LNG_TO_UI.pt.flag },
-        { name: LNG_TO_UI.es.name, code: 'ES', flag: LNG_TO_UI.es.flag },
+        { name: LNG_TO_UI.en.name, code: LNG_TO_UI.en.code },
+        { name: LNG_TO_UI.pt.name, code: LNG_TO_UI.pt.code },
+        { name: LNG_TO_UI.es.name, code: LNG_TO_UI.es.code },
     ];
 
     useEffect(() => {
@@ -105,54 +141,41 @@ export default () => {
     };
 
     return (
-        <div className={'w-full bg-neutral-900 shadow-md fixed top-0 z-50'}>
+        <HeaderBar $collapsed={sidebarCollapsed}>
             <SpinnerOverlay visible={isLoggingOut} fixed />
-            <div className={'w-full flex items-center h-[3.5rem]'}>
-                <div
-                    style={{ width: sidebarCollapsed ? '70px' : '240px', minWidth: sidebarCollapsed ? '70px' : '240px' }}
-                    className={'flex items-center px-4 transition-all duration-300 flex-shrink-0'}
-                >
-                    {!sidebarCollapsed && (
-                        <Link
-                            to={'/'}
-                            className={'text-2xl font-header font-medium no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 whitespace-nowrap'}
-                        >
-                            {name}
-                        </Link>
-                    )}
-                </div>
-                <button
-                    onClick={() => toggleSidebar()}
-                    className={'flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150 flex-shrink-0'}
-                    title={sidebarCollapsed ? t('navbar.expand_menu') : t('navbar.collapse_menu')}
-                >
-                    <FontAwesomeIcon icon={faBars} />
-                </button>
-                <div className={'flex-1'} />
-                <RightNavigation className={'flex h-full items-center justify-center'}>
-                    <SearchContainer />
+            <HeaderInner>
+                <HeaderLeading>
+                    <MenuButton
+                        onClick={() => toggleSidebar()}
+                        title={sidebarCollapsed ? t('navbar.expand_menu') : t('navbar.collapse_menu')}
+                    >
+                        <FontAwesomeIcon icon={faBars} />
+                    </MenuButton>
+                </HeaderLeading>
+                <div css={tw`flex-1 min-w-0`} />
+                <RightNavigation>
                     <Tooltip placement={'bottom'} content={t('navbar.dashboard')}>
-                        <NavLink to={'/'} exact>
+                        <NavLink to={'/'} exact css={tw`hidden md:flex`}>
                             <FontAwesomeIcon icon={faLayerGroup} />
                         </NavLink>
                     </Tooltip>
                     {rootAdmin && (
                         <Tooltip placement={'bottom'} content={t('navbar.admin')}>
-                            <a href={'/admin'} rel={'noreferrer'}>
+                            <a href={'/admin'} rel={'noreferrer'} css={tw`hidden md:flex`}>
                                 <FontAwesomeIcon icon={faCogs} />
                             </a>
                         </Tooltip>
                     )}
 
                     {rootAdmin && (
-                        <MenuWrapper className={'navigation-link'} style={{ padding: 0 }}>
+                        <MenuWrapper className={'navigation-link'} css={tw`hidden sm:flex`} style={{ padding: 0 }}>
                             <DropdownMenu
                                 renderToggle={(onClick) => (
                                     <div
                                         onClick={onClick}
-                                        className={'flex items-center h-full px-6 cursor-pointer'}
+                                        className={'flex items-center h-full px-3 sm:px-6 cursor-pointer'}
                                     >
-                                        <span className={'mr-2 text-base'}>{language.flag}</span>
+                                        <FlagIcon code={language.code} alt={language.name} size="header" className="mr-2" />
                                         <span className={'text-xs font-bold tracking-wide'}>{language.code}</span>
                                         <FontAwesomeIcon icon={faChevronDown} className={'ml-2 text-[10px]'} />
                                     </div>
@@ -161,7 +184,7 @@ export default () => {
                                 {languages.map((lang) => (
                                     <Row
                                         key={lang.code}
-                                        icon={lang.flag}
+                                        icon={<FlagIcon code={lang.code} alt={lang.name} size="sm" />}
                                         title={lang.name}
                                         $active={language.code === lang.code}
                                         onClick={() => setLanguage(lang)}
@@ -171,20 +194,13 @@ export default () => {
                         </MenuWrapper>
                     )}
 
-                    <Tooltip placement={'bottom'} content={t('navbar.account_settings')}>
-                        <NavLink to={'/account'}>
-                            <span className={'flex items-center w-5 h-5'}>
-                                <Avatar.User />
-                            </span>
-                        </NavLink>
-                    </Tooltip>
                     <Tooltip placement={'bottom'} content={t('navbar.sign_out')}>
                         <button onClick={onTriggerLogout}>
                             <FontAwesomeIcon icon={faSignOutAlt} />
                         </button>
                     </Tooltip>
                 </RightNavigation>
-            </div>
-        </div>
+            </HeaderInner>
+        </HeaderBar>
     );
 };

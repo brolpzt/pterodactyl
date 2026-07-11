@@ -47,6 +47,7 @@ class ServerTransformer extends BaseClientTransformer
             'egg_id' => $server->egg_id,
             'node' => $server->node->name,
             'egg' => $server->egg->name,
+            'gamedig' => $server->egg->gamedig,
             'location' => $server->node->location?->short ?? '—',
             'location_long' => $server->node->location?->long ?? null,
             'created_at' => $server->created_at?->toIso8601String(),

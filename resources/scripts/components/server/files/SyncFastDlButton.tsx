@@ -34,8 +34,13 @@ export default ({ className }: WithClassname) => {
     };
 
     return (
-        <Button.Text disabled={isSubmitting} onClick={onSubmit} className={className}>
+        <Button
+            variant={Button.Variants.Secondary}
+            disabled={isSubmitting}
+            onClick={onSubmit}
+            className={className}
+        >
             Sync FastDL
-        </Button.Text>
+        </Button>
     );
 };

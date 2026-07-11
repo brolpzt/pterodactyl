@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import tw from 'twin.macro';
+import { cardLabelText, cardRowBorder, cardValueText } from '@/assets/css/cardTheme';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import Spinner from '@/components/elements/Spinner';
@@ -78,13 +79,13 @@ export default () => {
             <TitledGreyBox title={'Informações do servidor TS3'} css={tw`mb-6`}>
                 <table css={tw`w-full text-left text-sm`}>
                     <tbody>
-                        <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Status</td><td>{data?.status || '—'}</td></tr>
-                        <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Version</td><td>{data?.version || '—'} {data?.build ? `(Build ${data.build})` : ''}</td></tr>
-                        <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Platform</td><td>{data?.platform || '—'}</td></tr>
-                        <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Server name</td><td>{data?.server_name || '—'}</td></tr>
-                        <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Uptime (s)</td><td>{data?.uptime_seconds ?? '—'}</td></tr>
-                        <tr css={tw`border-b border-neutral-600`}><td css={tw`py-2 text-neutral-400`}>Clients online</td><td>{data?.clients_online ?? '—'}</td></tr>
-                        <tr><td css={tw`py-2 text-neutral-400`}>Channels online</td><td>{data?.channels_online ?? '—'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Status</td><td css={[tw`py-2`, cardValueText]}>{data?.status || '—'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Version</td><td css={[tw`py-2`, cardValueText]}>{data?.version || '—'} {data?.build ? `(Build ${data.build})` : ''}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Platform</td><td css={[tw`py-2`, cardValueText]}>{data?.platform || '—'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Server name</td><td css={[tw`py-2`, cardValueText]}>{data?.server_name || '—'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Uptime (s)</td><td css={[tw`py-2`, cardValueText]}>{data?.uptime_seconds ?? '—'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Clients online</td><td css={[tw`py-2`, cardValueText]}>{data?.clients_online ?? '—'}</td></tr>
+                        <tr><td css={[tw`py-2`, cardLabelText]}>Channels online</td><td css={[tw`py-2`, cardValueText]}>{data?.channels_online ?? '—'}</td></tr>
                     </tbody>
                 </table>
             </TitledGreyBox>

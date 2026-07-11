@@ -19,6 +19,7 @@ export interface Server {
     eggId: number;
     node: string;
     egg: string;
+    gamedig: string | null;
     location: string;
     locationLong?: string | null;
     createdAt?: string | null;
@@ -60,6 +61,7 @@ export const rawDataToServerObject = ({ attributes: data }: FractalResponseData)
     eggId: data.egg_id,
     node: data.node,
     egg: data.egg,
+    gamedig: data.gamedig || null,
     location: data.location,
     locationLong: data.location_long,
     createdAt: data.created_at,

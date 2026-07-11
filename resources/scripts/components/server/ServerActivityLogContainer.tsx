@@ -5,6 +5,7 @@ import { useFlashKey } from '@/plugins/useFlash';
 import FlashMessageRender from '@/components/FlashMessageRender';
 import Spinner from '@/components/elements/Spinner';
 import ActivityLogEntry from '@/components/elements/activity/ActivityLogEntry';
+import ActivityLogList from '@/components/elements/activity/ActivityLogList';
 import PaginationFooter from '@/components/elements/table/PaginationFooter';
 import { ActivityLogFilters } from '@/api/account/activity';
 import { Link } from 'react-router-dom';
@@ -12,6 +13,8 @@ import classNames from 'classnames';
 import { styles as btnStyles } from '@/components/elements/button/index';
 import { XCircleIcon } from '@heroicons/react/solid';
 import useLocationHash from '@/plugins/useLocationHash';
+import tw from 'twin.macro';
+import { emptyStateText } from '@/assets/css/cardTheme';
 
 export default () => {
     const { hash } = useLocationHash();
@@ -48,15 +51,17 @@ export default () => {
             {!data && isValidating ? (
                 <Spinner centered />
             ) : !data?.items.length ? (
-                <p className={'text-sm text-center text-gray-400'}>No activity logs available for this server.</p>
+                <p css={emptyStateText}>
+                    No activity logs available for this server.
+                </p>
             ) : (
-                <div className={'bg-gray-700'}>
+                <ActivityLogList>
                     {data?.items.map((activity) => (
                         <ActivityLogEntry key={activity.id} activity={activity}>
                             <span />
                         </ActivityLogEntry>
                     ))}
-                </div>
+                </ActivityLogList>
             )}
             {data && (
                 <PaginationFooter

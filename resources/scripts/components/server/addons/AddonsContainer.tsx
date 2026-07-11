@@ -6,6 +6,7 @@ import { ServerError } from '@/components/elements/ScreenBlock';
 import { httpErrorToHuman } from '@/api/http';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import tw from 'twin.macro';
+import { emptyStateText } from '@/assets/css/cardTheme';
 import { Button } from '@/components/elements/button/index';
 import useFlash from '@/plugins/useFlash';
 import installAddon from '@/api/server/installAddon';
@@ -64,10 +65,14 @@ const AddonRow = ({ addon }: { addon: Addon }) => {
                     <p css={tw`text-xs text-neutral-400`}>{addon.description || '—'}</p>
                 </td>
                 <td css={tw`px-2 py-3 w-1/4 text-right`}>
-                    <Button.Text onClick={() => setModalVisible(true)} disabled={loading} css={tw`text-sm`}>
+                    <Button
+                        variant={Button.Variants.Secondary}
+                        onClick={() => setModalVisible(true)}
+                        disabled={loading}
+                    >
                         <FontAwesomeIcon icon={faDownload} css={tw`mr-2`} />
                         Instalar
-                    </Button.Text>
+                    </Button>
                 </td>
             </tr>
         </React.Fragment>
@@ -124,7 +129,7 @@ export default () => {
                     })}
                 </div>
             ) : (
-                <p css={tw`text-center text-neutral-400 mt-8`}>Nenhum addon disponível para este tipo de servidor.</p>
+                <p css={[emptyStateText, tw`mt-8`]}>Nenhum addon disponível para este tipo de servidor.</p>
             )}
         </ServerContentBlock>
     );

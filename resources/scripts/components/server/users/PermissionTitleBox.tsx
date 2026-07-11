@@ -2,6 +2,7 @@ import React, { memo, useCallback } from 'react';
 import { useField } from 'formik';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import tw from 'twin.macro';
+import { cardTitleText } from '@/assets/css/cardTheme';
 import Input from '@/components/elements/Input';
 import isEqual from 'react-fast-compare';
 
@@ -30,7 +31,7 @@ const PermissionTitleBox: React.FC<Props> = memo(({ isEditable, title, permissio
         <TitledGreyBox
             title={
                 <div css={tw`flex items-center`}>
-                    <p css={tw`text-sm uppercase flex-1`}>{title}</p>
+                    <p css={[cardTitleText, tw`flex-1 m-0`]}>{title}</p>
                     {isEditable && (
                         <Input
                             type={'checkbox'}

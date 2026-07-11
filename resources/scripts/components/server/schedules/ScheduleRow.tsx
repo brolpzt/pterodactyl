@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { format } from 'date-fns';
 import tw from 'twin.macro';
+import { cardLabelText } from '@/assets/css/cardTheme';
 import ScheduleCronRow from '@/components/server/schedules/ScheduleCronRow';
 
 export default ({ schedule }: { schedule: Schedule }) => (
@@ -13,7 +14,7 @@ export default ({ schedule }: { schedule: Schedule }) => (
         </div>
         <div css={tw`flex-1 md:ml-4`}>
             <p>{schedule.name}</p>
-            <p css={tw`text-xs text-neutral-400`}>
+            <p css={[cardLabelText, tw`text-xs`]}>
                 Last run at: {schedule.lastRunAt ? format(schedule.lastRunAt, "MMM do 'at' h:mma") : 'never'}
             </p>
         </div>

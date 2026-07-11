@@ -1,27 +1,38 @@
 import styled, { css } from 'styled-components/macro';
 import tw from 'twin.macro';
+import {
+    fieldControl,
+    fieldControlError,
+    fieldControlLight,
+    fieldHintText,
+    fieldTextarea,
+} from '@/assets/css/formTheme';
 
 export interface Props {
     isLight?: boolean;
     hasError?: boolean;
 }
 
-const light = css<Props>`
-    ${tw`bg-white border-neutral-200 text-neutral-800`};
-    &:focus {
-        ${tw`border-primary-400`}
-    }
+const fieldInteraction = css<Props>`
+    border-color: ${(props) => (props.hasError ? 'var(--color-danger)' : 'var(--color-primary)')} !important;
+    box-shadow: ${(props) =>
+        props.hasError
+            ? '0 0 0 3px color-mix(in srgb, var(--color-danger) 24%, transparent)'
+            : 'var(--field-glow)'} !important;
+    outline: none;
+`;
 
-    &:disabled {
-        ${tw`bg-neutral-100 border-neutral-200`};
-    }
+const light = css<Props>`
+    ${fieldControlLight};
 `;
 
 const checkboxStyle = css<Props>`
-    ${tw`bg-neutral-500 cursor-pointer appearance-none inline-block align-middle select-none flex-shrink-0 w-4 h-4 text-primary-400 border border-neutral-300 rounded-sm`};
+    ${tw`cursor-pointer appearance-none inline-block align-middle select-none flex-shrink-0 w-4 h-4 text-primary-500 rounded-sm`};
+    border: 1px solid var(--field-border);
+    background-color: var(--field-bg);
     color-adjust: exact;
     background-origin: border-box;
-    transition: all 75ms linear, box-shadow 25ms linear;
+    transition: border-color var(--transition-base), box-shadow var(--transition-base);
 
     &:checked {
         ${tw`border-transparent bg-no-repeat bg-center`};
@@ -30,43 +41,31 @@ const checkboxStyle = css<Props>`
         background-size: 100% 100%;
     }
 
-    &:focus {
-        ${tw`outline-none border-primary-300`};
-        box-shadow: 0 0 0 1px rgba(9, 103, 210, 0.25);
+    &:focus-visible {
+        ${fieldInteraction};
     }
 `;
 
 const inputStyle = css<Props>`
-    // Reset to normal styling.
-    resize: none;
-    ${tw`appearance-none outline-none w-full min-w-0`};
-    ${tw`p-3 border-2 rounded text-sm transition-all duration-150`};
-    ${tw`bg-neutral-600 border-neutral-500 hover:border-neutral-400 text-neutral-200 shadow-none focus:ring-0`};
+    ${fieldControl};
 
     & + .input-help {
-        ${tw`mt-1 text-xs`};
-        ${(props) => (props.hasError ? tw`text-red-200` : tw`text-neutral-200`)};
+        ${tw`mt-2 text-sm font-semibold`};
+        ${(props) => (props.hasError ? tw`text-red-400` : fieldHintText)};
     }
 
     &:required,
     &:invalid {
-        ${tw`shadow-none`};
-    }
-
-    &:not(:disabled):not(:read-only):focus {
-        ${tw`shadow-md border-primary-300 ring-2 ring-primary-400 ring-opacity-50`};
-        ${(props) => props.hasError && tw`border-red-300 ring-red-200`};
-    }
-
-    &:disabled {
-        ${tw`opacity-75`};
+        box-shadow: none;
     }
 
     ${(props) => props.isLight && light};
-    ${(props) => props.hasError && tw`text-red-100 border-red-400 hover:border-red-300`};
+    ${(props) => props.hasError && fieldControlError};
 `;
 
-const Input = styled.input<Props>`
+const Input = styled.input.attrs<Props>(({ type }) => ({
+    className: type === 'checkbox' || type === 'radio' ? undefined : 'input-base',
+}))<Props>`
     &:not([type='checkbox']):not([type='radio']) {
         ${inputStyle};
     }
@@ -80,8 +79,16 @@ const Input = styled.input<Props>`
         }
     }
 `;
-const Textarea = styled.textarea<Props>`
-    ${inputStyle}
+
+const Textarea = styled.textarea.attrs({ className: 'textarea-base' })<Props>`
+    ${fieldTextarea};
+    ${(props) => props.isLight && light};
+    ${(props) => props.hasError && fieldControlError};
+
+    & + .input-help {
+        ${tw`mt-2 text-sm font-semibold`};
+        ${(props) => (props.hasError ? tw`text-red-400` : fieldHintText)};
+    }
 `;
 
 export { Textarea };

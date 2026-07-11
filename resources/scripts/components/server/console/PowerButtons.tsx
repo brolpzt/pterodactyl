@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import tw from 'twin.macro';
 import { Button } from '@/components/elements/button/index';
 import Can from '@/components/elements/Can';
 import { ServerContext } from '@/state/server';
@@ -37,7 +38,7 @@ export default ({ className }: PowerButtonProps) => {
     }, [status]);
 
     return (
-        <div className={className}>
+        <div css={[tw`flex gap-2 overflow-visible`, className]}>
             <Dialog.Confirm
                 open={open}
                 hideCloseIcon
@@ -58,9 +59,14 @@ export default ({ className }: PowerButtonProps) => {
                 </Button>
             </Can>
             <Can action={'control.restart'}>
-                <Button.Text className={'flex-1'} disabled={!status} onClick={onButtonClick.bind(this, 'restart')}>
+                <Button
+                    variant={Button.Variants.Secondary}
+                    className={'flex-1'}
+                    disabled={!status}
+                    onClick={onButtonClick.bind(this, 'restart')}
+                >
                     Restart
-                </Button.Text>
+                </Button>
             </Can>
             <Can action={'control.stop'}>
                 <Button.Danger

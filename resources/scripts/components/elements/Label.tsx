@@ -1,9 +1,9 @@
 import styled from 'styled-components/macro';
-import tw from 'twin.macro';
+import { fieldLabel, fieldLabelLight } from '@/assets/css/formTheme';
 
-const Label = styled.label<{ isLight?: boolean }>`
-    ${tw`block text-xs uppercase text-neutral-200 mb-1 sm:mb-2`};
-    ${(props) => props.isLight && tw`text-neutral-700`};
+const Label = styled.label.attrs({ className: 'field-label' })<{ isLight?: boolean }>`
+    ${fieldLabel};
+    ${(props) => props.isLight && fieldLabelLight};
 `;
 
 export default Label;

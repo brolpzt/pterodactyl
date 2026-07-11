@@ -15,14 +15,32 @@ import { usePersistedState } from '@/plugins/usePersistedState';
 import { SocketEvent, SocketRequest } from '@/components/server/events';
 import classNames from 'classnames';
 import { ChevronDoubleRightIcon } from '@heroicons/react/solid';
+import styled from 'styled-components/macro';
+import tw from 'twin.macro';
+import { glassCardShell } from '@/assets/css/glassPanel';
+import OverlayScrollbar from '@/components/elements/OverlayScrollbar';
 
 import 'xterm/css/xterm.css';
 import styles from './style.module.css';
 
+const ConsoleShell = styled.div.attrs({ className: 'hg-glass-card' })`
+    ${glassCardShell};
+    ${tw`flex h-full min-h-[16rem] w-full flex-col rounded shadow-md`};
+`;
+
+const ConsoleInner = styled.div`
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+`;
+
 const theme = {
-    background: th`colors.black`.toString(),
+    background: 'transparent',
     cursor: 'transparent',
-    black: th`colors.black`.toString(),
+    black: 'transparent',
     red: '#E54B4B',
     green: '#9ECE58',
     yellow: '#FAED70',
@@ -54,6 +72,7 @@ const terminalProps: ITerminalOptions = {
 export default () => {
     const TERMINAL_PRELUDE = '\u001b[1m\u001b[33mcontainer@pterodactyl~ \u001b[0m';
     const ref = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const terminal = useMemo(() => new Terminal({ ...terminalProps }), []);
     const fitAddon = new FitAddon();
     const searchAddon = new SearchAddon();
@@ -66,6 +85,7 @@ export default () => {
     const isTransferring = ServerContext.useStoreState((state) => state.server.data!.isTransferring);
     const [history, setHistory] = usePersistedState<string[]>(`${serverId}:command_history`, []);
     const [historyIndex, setHistoryIndex] = useState(-1);
+    const [xtermViewport, setXtermViewport] = useState<HTMLElement | null>(null);
     // SearchBarAddon has hardcoded z-index: 999 :(
     const zIndex = `
     .xterm-search-bar__addon {
@@ -132,8 +152,7 @@ export default () => {
             terminal.open(ref.current);
             fitAddon.fit();
             searchBar.addNewStyle(zIndex);
-
-            // Add support for capturing keys
+            setXtermViewport(ref.current.querySelector('.xterm-viewport') as HTMLElement | null);
             terminal.attachCustomKeyEventHandler((e: KeyboardEvent) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
                     document.execCommand('copy');
@@ -158,6 +177,24 @@ export default () => {
             }
         }, 100)
     );
+
+    useEffect(() => {
+        if (!connected || !containerRef.current || !terminal.element) {
+            return;
+        }
+
+        const resize = debounce(() => {
+            if (terminal.element) {
+                fitAddon.fit();
+            }
+        }, 100);
+
+        const observer = new ResizeObserver(() => resize());
+        observer.observe(containerRef.current);
+        resize();
+
+        return () => observer.disconnect();
+    }, [connected, terminal]);
 
     useEffect(() => {
         const listeners: Record<string, (s: string) => void> = {
@@ -192,37 +229,43 @@ export default () => {
     }, [connected, instance]);
 
     return (
-        <div className={classNames(styles.terminal, 'relative')}>
-            <SpinnerOverlay visible={!connected} size={'large'} />
-            <div
-                className={classNames(styles.container, styles.overflows_container, { 'rounded-b': !canSendCommands })}
-            >
-                <div className={'h-full'}>
-                    <div id={styles.terminal} ref={ref} />
-                </div>
-            </div>
-            {canSendCommands && (
-                <div className={classNames('relative', styles.overflows_container)}>
-                    <input
-                        className={classNames('peer', styles.command_input)}
-                        type={'text'}
-                        placeholder={'Type a command...'}
-                        aria-label={'Console command input.'}
-                        disabled={!instance || !connected}
-                        onKeyDown={handleCommandKeyDown}
-                        autoCorrect={'off'}
-                        autoCapitalize={'none'}
-                    />
+        <ConsoleShell>
+            <ConsoleInner>
+                <div className={classNames(styles.terminal, 'console-mono', 'relative')}>
+                    <SpinnerOverlay visible={!connected} size={'large'} />
                     <div
-                        className={classNames(
-                            'text-gray-100 peer-focus:text-gray-50 peer-focus:animate-pulse',
-                            styles.command_icon
-                        )}
+                        ref={containerRef}
+                        className={classNames(styles.container, styles.overflows_container, 'relative', {
+                            'rounded-b': !canSendCommands,
+                        })}
                     >
-                        <ChevronDoubleRightIcon className={'w-4 h-4'} />
+                        <div className={styles.xtermHost} ref={ref} />
+                        <OverlayScrollbar target={xtermViewport} variant={'console'} />
                     </div>
+                    {canSendCommands && (
+                        <div className={classNames('relative', styles.overflows_container)}>
+                            <input
+                                className={classNames('peer', styles.command_input)}
+                                type={'text'}
+                                placeholder={'Type a command...'}
+                                aria-label={'Console command input.'}
+                                disabled={!instance || !connected}
+                                onKeyDown={handleCommandKeyDown}
+                                autoCorrect={'off'}
+                                autoCapitalize={'none'}
+                            />
+                            <div
+                                className={classNames(
+                                    'text-gray-100 peer-focus:text-gray-50 peer-focus:animate-pulse',
+                                    styles.command_icon
+                                )}
+                            >
+                                <ChevronDoubleRightIcon className={'w-4 h-4'} />
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
-        </div>
+            </ConsoleInner>
+        </ConsoleShell>
     );
 };

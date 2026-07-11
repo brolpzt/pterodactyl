@@ -11,11 +11,48 @@ import style from './style.module.css';
 import Avatar from '@/components/Avatar';
 import useLocationHash from '@/plugins/useLocationHash';
 import { getObjectKeys, isObject } from '@/lib/objects';
+import styled from 'styled-components/macro';
+import tw from 'twin.macro';
+import { cardLabelText, cardValueText } from '@/assets/css/cardTheme';
 
 interface Props {
     activity: ActivityLog;
     children?: React.ReactNode;
 }
+
+const EntryRow = styled.div.attrs({ className: 'group' })`
+    ${tw`grid grid-cols-10 py-4`};
+    border-bottom: 1px solid rgba(45, 45, 58, 0.45);
+
+    &:last-child {
+        border-bottom: 0;
+    }
+`;
+
+const AvatarWrap = styled.div`
+    ${tw`flex items-center w-10 h-10 rounded-full overflow-hidden`};
+    background: color-mix(in srgb, var(--color-divider) 38%, transparent);
+`;
+
+const EntryTitle = styled.div`
+    ${tw`flex items-center`};
+    ${cardValueText};
+`;
+
+const EntryMeta = styled.div`
+    ${tw`mt-1 flex items-center text-sm`};
+    ${cardLabelText};
+`;
+
+const EventLink = styled(Link)`
+    ${tw`transition-colors duration-150`};
+    color: inherit;
+
+    &:hover,
+    &:active {
+        ${tw`text-primary-400`};
+    }
+`;
 
 function wrapProperties(value: unknown): any {
     if (value === null || typeof value === 'string' || typeof value === 'number') {
@@ -44,26 +81,23 @@ export default ({ activity, children }: Props) => {
     const properties = wrapProperties(activity.properties);
 
     return (
-        <div className={'grid grid-cols-10 py-4 border-b-2 border-gray-800 last:rounded-b last:border-0 group'}>
+        <EntryRow>
             <div className={'hidden sm:flex sm:col-span-1 items-center justify-center select-none'}>
-                <div className={'flex items-center w-10 h-10 rounded-full bg-gray-600 overflow-hidden'}>
+                <AvatarWrap>
                     <Avatar name={actor?.uuid || 'system'} />
-                </div>
+                </AvatarWrap>
             </div>
             <div className={'col-span-10 sm:col-span-9 flex'}>
                 <div className={'flex-1 px-4 sm:px-0'}>
-                    <div className={'flex items-center text-gray-50'}>
+                    <EntryTitle>
                         <Tooltip placement={'top'} content={actor?.email || 'System User'}>
                             <span>{actor?.username || 'System'}</span>
                         </Tooltip>
-                        <span className={'text-gray-400'}>&nbsp;&mdash;&nbsp;</span>
-                        <Link
-                            to={`#${pathTo({ event: activity.event })}`}
-                            className={'transition-colors duration-75 active:text-cyan-400 hover:text-cyan-400'}
-                        >
+                        <span css={[cardLabelText, tw`mx-1`]}>&mdash;</span>
+                        <EventLink to={`#${pathTo({ event: activity.event })}`}>
                             {activity.event}
-                        </Link>
-                        <div className={classNames(style.icons, 'group-hover:text-gray-300')}>
+                        </EventLink>
+                        <div className={classNames(style.icons, 'group-hover:opacity-90')}>
                             {activity.isApi && (
                                 <Tooltip placement={'top'} content={'Using API Key'}>
                                     <TerminalIcon />
@@ -76,24 +110,24 @@ export default ({ activity, children }: Props) => {
                             )}
                             {children}
                         </div>
-                    </div>
+                    </EntryTitle>
                     <p className={style.description}>
                         <Translate ns={'activity'} values={properties} i18nKey={activity.event.replace(':', '.')} />
                     </p>
-                    <div className={'mt-1 flex items-center text-sm'}>
+                    <EntryMeta>
                         {activity.ip && (
                             <span>
                                 {activity.ip}
-                                <span className={'text-gray-400'}>&nbsp;|&nbsp;</span>
+                                <span css={[cardLabelText, tw`mx-1`]}>|</span>
                             </span>
                         )}
                         <Tooltip placement={'right'} content={format(activity.timestamp, 'MMM do, yyyy H:mm:ss')}>
                             <span>{formatDistanceToNowStrict(activity.timestamp, { addSuffix: true })}</span>
                         </Tooltip>
-                    </div>
+                    </EntryMeta>
                 </div>
                 {activity.hasAdditionalMetadata && <ActivityLogMetaButton meta={activity.properties} />}
             </div>
-        </div>
+        </EntryRow>
     );
 };

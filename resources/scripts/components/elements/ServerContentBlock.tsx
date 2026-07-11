@@ -10,7 +10,7 @@ const ServerContentBlock: React.FC<Props> = ({ title, children, ...props }) => {
     const name = ServerContext.useStoreState((state) => state.server.data!.name);
 
     return (
-        <PageContentBlock title={`${name} | ${title}`} {...props}>
+        <PageContentBlock dense title={`${name} | ${title}`} {...props}>
             {children}
         </PageContentBlock>
     );

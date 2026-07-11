@@ -1,6 +1,8 @@
 import React from 'react';
-import classNames from 'classnames';
-import styles from '@/components/server/console/style.module.css';
+import styled from 'styled-components/macro';
+import tw from 'twin.macro';
+import { cardLabelText } from '@/assets/css/cardTheme';
+import { glassContentLayer, glassHeaderShell } from '@/assets/css/glassPanel';
 
 interface ChartBlockProps {
     title: string;
@@ -8,14 +10,37 @@ interface ChartBlockProps {
     children: React.ReactNode;
 }
 
+const ChartShell = styled.div.attrs({ className: 'hg-glass-header' })`
+    ${glassHeaderShell};
+    ${tw`rounded overflow-hidden`};
+    box-shadow: inset 0 0 0 1px rgba(45, 45, 58, 0.28);
+`;
+
+const ChartInner = styled.div`
+    ${glassContentLayer};
+`;
+
+const ChartHeader = styled.div`
+    ${tw`relative z-10 flex items-center justify-between px-4 py-2`};
+`;
+
+const ChartTitle = styled.h3`
+    ${cardLabelText};
+    ${tw`font-header font-medium m-0 transition-colors duration-100`};
+`;
+
+const ChartBody = styled.div`
+    ${tw`relative z-10 ml-2`};
+`;
+
 export default ({ title, legend, children }: ChartBlockProps) => (
-    <div className={classNames(styles.chart_container, 'group')}>
-        <div className={'flex items-center justify-between px-4 py-2'}>
-            <h3 className={'font-header font-medium transition-colors duration-100 group-hover:text-gray-50'}>
-                {title}
-            </h3>
-            {legend && <p className={'text-sm flex items-center'}>{legend}</p>}
-        </div>
-        <div className={'z-10 ml-2'}>{children}</div>
-    </div>
+    <ChartShell className={'group'}>
+        <ChartInner>
+            <ChartHeader>
+                <ChartTitle>{title}</ChartTitle>
+                {legend && <p css={tw`text-sm flex items-center m-0`}>{legend}</p>}
+            </ChartHeader>
+            <ChartBody>{children}</ChartBody>
+        </ChartInner>
+    </ChartShell>
 );

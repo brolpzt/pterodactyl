@@ -145,22 +145,22 @@ export default ({ database, className }: Props) => {
                 </div>
                 <div css={tw`flex-1 ml-4`}>
                     <CopyOnClick text={database.name}>
-                        <p css={tw`text-lg`}>{database.name}</p>
+                        <p>{database.name}</p>
                     </CopyOnClick>
                 </div>
                 <div css={tw`ml-8 text-center hidden md:block`}>
                     <CopyOnClick text={database.connectionString}>
-                        <p css={tw`text-sm`}>{database.connectionString}</p>
+                        <p>{database.connectionString}</p>
                     </CopyOnClick>
                     <p css={tw`mt-1 text-2xs text-neutral-500 uppercase select-none`}>Endpoint</p>
                 </div>
                 <div css={tw`ml-8 text-center hidden md:block`}>
-                    <p css={tw`text-sm`}>{database.allowConnectionsFrom}</p>
+                    <p>{database.allowConnectionsFrom}</p>
                     <p css={tw`mt-1 text-2xs text-neutral-500 uppercase select-none`}>Connections from</p>
                 </div>
                 <div css={tw`ml-8 text-center hidden md:block`}>
                     <CopyOnClick text={database.username}>
-                        <p css={tw`text-sm`}>{database.username}</p>
+                        <p>{database.username}</p>
                     </CopyOnClick>
                     <p css={tw`mt-1 text-2xs text-neutral-500 uppercase select-none`}>Username</p>
                 </div>

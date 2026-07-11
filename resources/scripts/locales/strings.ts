@@ -37,6 +37,19 @@ export const stringsEn = {
         activity: 'Activity',
         addons: 'Addons',
         firewall: 'Firewall',
+        amxx: {
+            panel: 'AMXX Web Admin',
+            admins: 'AMXX Admins',
+            bans: 'AMXX Bans',
+        },
+        ts3: {
+            snapshots: 'Snapshots',
+            bans: 'Bans',
+            tokens: 'Tokens',
+            logs: 'Logs',
+            viewer: 'TS3 Viewer',
+            query: 'Query Terminal',
+        },
     },
     server_overview: {
         title: 'Home',
@@ -138,6 +151,19 @@ export const stringsPt = {
         activity: 'Atividade',
         addons: 'Addons',
         firewall: 'Firewall',
+        amxx: {
+            panel: 'AMXX Web Admin',
+            admins: 'Admins AMXX',
+            bans: 'Bans AMXX',
+        },
+        ts3: {
+            snapshots: 'Snapshots',
+            bans: 'Bans',
+            tokens: 'Tokens',
+            logs: 'Logs',
+            viewer: 'Visualizador TS3',
+            query: 'Terminal Query',
+        },
     },
     server_overview: {
         title: 'Início',
@@ -239,6 +265,19 @@ export const stringsEs = {
         activity: 'Actividad',
         addons: 'Complementos',
         firewall: 'Firewall',
+        amxx: {
+            panel: 'AMXX Web Admin',
+            admins: 'Admins AMXX',
+            bans: 'Bans AMXX',
+        },
+        ts3: {
+            snapshots: 'Instantáneas',
+            bans: 'Bans',
+            tokens: 'Tokens',
+            logs: 'Registros',
+            viewer: 'Visor TS3',
+            query: 'Terminal Query',
+        },
     },
     server_overview: {
         title: 'Inicio',

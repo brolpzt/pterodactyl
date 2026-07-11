@@ -256,18 +256,26 @@ const ServerLinks = () => {
             case 'Addons': return faPuzzlePiece;
             case 'server.firewall':
             case 'Firewall': return faShieldAlt;
-            case 'Snapshots': return faCloudUploadAlt;
-            case 'Bans': return faShieldAlt;
-            case 'Tokens': return faPlug;
-            case 'Logs': return faListUl;
-            case 'TS3 Viewer': return faExternalLinkAlt;
-            case 'Query Terminal': return faTerminal;
-            case 'server.amxx':
+            case 'server.startup':
+            case 'Startup': return faPlayCircle;
+            case 'server.amxx.panel':
             case 'AMXX Web Admin': return faUserShield;
             case 'server.amxx.admins':
             case 'AMXX Admins': return faUsers;
             case 'server.amxx.bans':
             case 'AMXX Bans': return faShieldAlt;
+            case 'server.ts3.snapshots':
+            case 'Snapshots': return faCloudUploadAlt;
+            case 'server.ts3.bans':
+            case 'Bans': return faShieldAlt;
+            case 'server.ts3.tokens':
+            case 'Tokens': return faPlug;
+            case 'server.ts3.logs':
+            case 'Logs': return faListUl;
+            case 'server.ts3.viewer':
+            case 'TS3 Viewer': return faExternalLinkAlt;
+            case 'server.ts3.query':
+            case 'Query Terminal': return faTerminal;
             default: return faLayerGroup;
         }
     };

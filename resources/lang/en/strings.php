@@ -127,6 +127,20 @@ return [
         'activity' => 'Activity',
         'addons' => 'Addons',
         'firewall' => 'Firewall',
+        'startup' => 'Startup',
+        'amxx' => [
+            'panel' => 'AMXX Web Admin',
+            'admins' => 'AMXX Admins',
+            'bans' => 'AMXX Bans',
+        ],
+        'ts3' => [
+            'snapshots' => 'Snapshots',
+            'bans' => 'Bans',
+            'tokens' => 'Tokens',
+            'logs' => 'Logs',
+            'viewer' => 'TS3 Viewer',
+            'query' => 'Query Terminal',
+        ],
     ],
     'server_overview' => [
         'title' => 'Home',

@@ -30,8 +30,10 @@ import ContentContainer from '@/components/elements/ContentContainer';
 import ServerBackground from '@/components/server/ServerBackground';
 import ServerStatusBar from '@/components/server/ServerStatusBar';
 import useScrollToTopOnRouteChange from '@/plugins/useScrollToTopOnRouteChange';
+import { useTranslation } from 'react-i18next';
 
 export default () => {
+    const { t } = useTranslation('strings');
     const { id: routeServerId } = useParams<{ id: string }>();
     const match = useRouteMatch<{ id: string }>('/server/:id');
     const location = useLocation();
@@ -132,7 +134,7 @@ export default () => {
                                         aria-label="Breadcrumb"
                                         css={[navText, tw`my-4 inline-flex items-center text-sm flex-wrap`]}
                                     >
-                                            <NavLink to="/" css={[navText, tw`no-underline hover:text-white transition-colors duration-150`]}>Início</NavLink>
+                                            <NavLink to="/" css={[navText, tw`no-underline hover:text-white transition-colors duration-150`]}>{t('nav.dashboard')}</NavLink>
                                             <span css={[navText, tw`mx-2 opacity-50`]}>/</span>
                                             <NavLink to={`/server/${routeServerId}`} css={[navText, tw`no-underline hover:text-white transition-colors duration-150`]}>{name}</NavLink>
                                             {(() => {
@@ -141,10 +143,12 @@ export default () => {
                                                 );
                                                 if (!current?.name || current.path === '/') return null;
 
+                                                const label = current.nameKey ? t(current.nameKey) : current.name;
+
                                                 return (
                                                     <>
                                                         <span css={[navText, tw`mx-2 opacity-50`]}>/</span>
-                                                        <span css={breadcrumbCurrentText}>{current.name}</span>
+                                                        <span css={breadcrumbCurrentText}>{label}</span>
                                                     </>
                                                 );
                                             })()}

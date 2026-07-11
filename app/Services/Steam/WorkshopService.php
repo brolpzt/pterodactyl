@@ -9,6 +9,15 @@ use Pterodactyl\Exceptions\DisplayException;
 
 class WorkshopService
 {
+    /**
+     * Maps dedicated server / tool app IDs to the consumer game app ID used by Workshop.
+     *
+     * @var array<int, int>
+     */
+    private const WORKSHOP_CONSUMER_APP_IDS = [
+        4020 => 4000, // Garry's Mod Dedicated Server -> Garry's Mod
+    ];
+
     public function __construct(
         private SteamWorkshopService $steamWorkshopService,
         private GmodWorkshopSyncService $gmodWorkshopSyncService,
@@ -134,11 +143,17 @@ class WorkshopService
     {
         $server->loadMissing('variables');
 
-        foreach (['SRCDS_APPID', 'STEAM_APPID', 'APP_ID'] as $env) {
+        foreach (['WORKSHOP_APPID', 'SRCDS_APPID', 'STEAM_APPID', 'APP_ID'] as $env) {
             $variable = $server->variables->firstWhere('env_variable', $env);
             $value = $variable?->server_value ?? $variable?->default_value;
             if (!empty($value) && is_numeric($value)) {
-                return (int) $value;
+                $appId = (int) $value;
+
+                if ($env === 'WORKSHOP_APPID') {
+                    return $appId;
+                }
+
+                return self::WORKSHOP_CONSUMER_APP_IDS[$appId] ?? $appId;
             }
         }
 

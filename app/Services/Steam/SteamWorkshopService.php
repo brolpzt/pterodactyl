@@ -14,6 +14,8 @@ class SteamWorkshopService
 
     public const SORT_RECENT = 1;
 
+    public const SORT_TEXT_SEARCH = 12;
+
     private const QUERY_URL = 'https://api.steampowered.com/IPublishedFileService/QueryFiles/v1/';
 
     private const DETAILS_URL = 'https://api.steampowered.com/IPublishedFileService/GetDetails/v1/';
@@ -27,9 +29,10 @@ class SteamWorkshopService
     {
         $apiKey = $this->getApiKey();
 
-        $queryType = match ($sort) {
-            'recent' => self::SORT_RECENT,
-            'popular' => self::SORT_MOST_SUBSCRIBED,
+        $queryType = match (true) {
+            $search !== '' => self::SORT_TEXT_SEARCH,
+            $sort === 'recent' => self::SORT_RECENT,
+            $sort === 'popular' => self::SORT_MOST_SUBSCRIBED,
             default => self::SORT_TRENDING,
         };
 
@@ -83,10 +86,10 @@ class SteamWorkshopService
             }
 
             $payload = $response->json('response') ?? [];
-            $items = array_map(
+            $items = array_values(array_filter(array_map(
                 fn (array $item) => $this->normalizeItem($item),
                 $payload['publishedfiledetails'] ?? []
-            );
+            ), fn (array $item) => $item['published_file_id'] !== ''));
 
             return [
                 'items' => $items,

@@ -60,6 +60,15 @@
             "rules": "required|string|max:20"
         },
         {
+            "name": "Workshop App ID",
+            "description": "Steam App ID used to browse Workshop content. For GMod use 4000 (not the dedicated server ID 4020).",
+            "env_variable": "WORKSHOP_APPID",
+            "default_value": "4000",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "nullable|integer"
+        },
+        {
             "name": "Workshop ID",
             "description": "The ID of your workshop collection (the numbers at the end of the URL)",
             "env_variable": "WORKSHOP_ID",

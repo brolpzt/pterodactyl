@@ -76,13 +76,58 @@
             <div class="box-header with-border">
                 <h3 class="box-title">Mods instalados</h3>
                 <div class="box-tools">
+                    @if($filters['q'] || $filters['server_id'] || $filters['egg_id'] || $filters['user_id'])
+                        <span class="label label-primary">{{ $filteredCount }} filtrados</span>
+                    @endif
                     <span class="label label-default">{{ $totalItems }} mods</span>
                     <span class="label label-default">{{ $totalServers }} servidores</span>
                 </div>
             </div>
-            <div class="box-body table-responsive no-padding">
+            <div class="box-body">
+                <form method="GET" action="{{ route('admin.workshop') }}" class="form-inline" style="margin-bottom: 15px;">
+                    <div class="form-group" style="margin-right: 8px; margin-bottom: 8px;">
+                        <label for="pFilterSearch" class="sr-only">Pesquisar</label>
+                        <input type="text" class="form-control input-sm" id="pFilterSearch" name="q" value="{{ $filters['q'] }}" placeholder="Mod, ID, servidor ou utilizador..." style="min-width: 220px;" />
+                    </div>
+                    <div class="form-group" style="margin-right: 8px; margin-bottom: 8px;">
+                        <select class="form-control input-sm" name="server_id">
+                            <option value="">Todos os servidores</option>
+                            @foreach($filterServers as $server)
+                                <option value="{{ $server->id }}" @if($filters['server_id'] === $server->id) selected @endif>{{ $server->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-right: 8px; margin-bottom: 8px;">
+                        <select class="form-control input-sm" name="egg_id">
+                            <option value="">Todos os eggs</option>
+                            @foreach($filterEggs as $egg)
+                                <option value="{{ $egg->id }}" @if($filters['egg_id'] === $egg->id) selected @endif>{{ $egg->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-right: 8px; margin-bottom: 8px;">
+                        <select class="form-control input-sm" name="user_id">
+                            <option value="">Todos os proprietários</option>
+                            @foreach($filterUsers as $user)
+                                <option value="{{ $user->id }}" @if($filters['user_id'] === $user->id) selected @endif>{{ $user->username }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-default" style="margin-bottom: 8px;">Filtrar</button>
+                    @if($filters['q'] || $filters['server_id'] || $filters['egg_id'] || $filters['user_id'])
+                        <a href="{{ route('admin.workshop') }}" class="btn btn-sm btn-link" style="margin-bottom: 8px;">Limpar</a>
+                    @endif
+                </form>
+            </div>
+            <div class="box-body table-responsive no-padding" style="border-top: 1px solid #f4f4f4; padding-top: 0 !important;">
                 @if($items->isEmpty())
-                    <p class="text-muted" style="padding: 15px;">Nenhum mod Workshop instalado em servidores.</p>
+                    <p class="text-muted" style="padding: 15px;">
+                        @if($filters['q'] || $filters['server_id'] || $filters['egg_id'] || $filters['user_id'])
+                            Nenhum mod encontrado com os filtros aplicados.
+                        @else
+                            Nenhum mod Workshop instalado em servidores.
+                        @endif
+                    </p>
                 @else
                     <table class="table table-hover">
                         <thead>

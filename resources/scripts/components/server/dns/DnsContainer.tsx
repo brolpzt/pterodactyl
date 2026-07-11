@@ -181,13 +181,6 @@ const CreateDnsForm = ({
                 </div>
             )}
 
-            {recordType === 'A' && (
-                <div>
-                    <Label css={tw`text-xs mb-1`}>IP (alocação primária)</Label>
-                    <Input type={'text'} value={primaryIp || '—'} readOnly css={tw`font-mono text-sm opacity-75`} />
-                </div>
-            )}
-
             {recordType === 'CNAME' && (
                 <label css={tw`flex items-center gap-2 text-sm text-neutral-300`}>
                     <input type={'checkbox'} checked={proxied} onChange={(e) => setProxied(e.target.checked)} />

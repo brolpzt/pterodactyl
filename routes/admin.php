@@ -261,6 +261,7 @@ Route::group(['prefix' => 'nests'], function () {
     Route::patch('/view/{nest:id}', [Admin\Nests\NestController::class, 'update']);
     Route::patch('/egg/{egg:id}', [Admin\Nests\EggController::class, 'update']);
     Route::patch('/egg/{egg:id}/dns', [Admin\Nests\EggDnsProfileController::class, 'update'])->name('admin.nests.egg.dns');
+    Route::patch('/egg/{egg:id}/workshop', [Admin\Nests\EggWorkshopFeatureController::class, 'update'])->name('admin.nests.egg.workshop');
     Route::patch('/egg/{egg:id}/scripts', [Admin\Nests\EggScriptController::class, 'update']);
     Route::patch('/egg/{egg:id}/variables/{variable:id}', [Admin\Nests\EggVariableController::class, 'update'])->name('admin.nests.egg.variables.edit');
 

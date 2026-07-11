@@ -15,6 +15,7 @@ class EggFormRequest extends AdminFormRequest
             'force_outgoing_ip' => 'sometimes|boolean',
             'file_denylist' => 'array',
             'features' => 'sometimes|array',
+            'workshop_enabled' => 'sometimes|boolean',
             'startup' => 'required|string',
             'config_from' => 'sometimes|bail|nullable|numeric',
             'config_stop' => 'required_without:config_from|nullable|string|max:191',
@@ -41,10 +42,24 @@ class EggFormRequest extends AdminFormRequest
     public function validated($key = null, $default = null): array
     {
         $data = parent::validated();
+        $features = array_values(array_unique(array_filter(array_get($data, 'features', []))));
+
+        if ($this->has('workshop_enabled')) {
+            if ($this->boolean('workshop_enabled')) {
+                if (!in_array('workshop', $features, true)) {
+                    $features[] = 'workshop';
+                }
+            } else {
+                $features = array_values(array_filter(
+                    $features,
+                    fn (string $feature) => $feature !== 'workshop'
+                ));
+            }
+        }
 
         return array_merge($data, [
             'force_outgoing_ip' => array_get($data, 'force_outgoing_ip', false),
-            'features' => array_get($data, 'features', []),
+            'features' => $features,
         ]);
     }
 }

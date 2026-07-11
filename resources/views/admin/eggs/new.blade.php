@@ -88,6 +88,13 @@
                                     <p class="text-muted small">Additional features belonging to the egg. Useful for configuring additional panel modifications.</p>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <div class="checkbox checkbox-primary">
+                                    <input id="pWorkshopEnabled" name="workshop_enabled" type="checkbox" value="1" {{ old('workshop_enabled') ? 'checked' : '' }} />
+                                    <label for="pWorkshopEnabled">Habilitar Steam Workshop para este egg</label>
+                                </div>
+                                <p class="text-muted small">Exibe a aba Workshop no painel do cliente para servidores deste egg.</p>
+                            </div>
                         </div>
                     </div>
                 </div>

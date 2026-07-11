@@ -135,6 +135,9 @@
                                         @if(!in_array('dns', $egg->features ?? []))
                                             <option value="dns">dns</option>
                                         @endif
+                                        @if(!in_array('workshop', $egg->features ?? []))
+                                            <option value="workshop">workshop</option>
+                                        @endif
                                     </select>
                                     <p class="text-muted small">Additional features belonging to the egg. Useful for configuring additional panel modifications.</p>
                                 </div>
@@ -200,6 +203,33 @@
                     <button id="deleteButton" type="submit" name="_method" value="DELETE" class="btn btn-danger btn-sm muted muted-hover">
                         <i class="fa fa-trash-o"></i>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@php($workshopEnabled = in_array('workshop', $egg->inherit_features ?? [], true))
+<form action="{{ route('admin.nests.egg.workshop', $egg->id) }}" method="POST">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Steam Workshop</h3>
+                </div>
+                <div class="box-body">
+                    <p class="text-muted">Permite que usuários naveguem e instalem mods da Steam Workshop no painel para servidores deste egg. Requer Steam Web API Key configurada em Settings → Advanced.</p>
+                    <div class="form-group">
+                        <div class="checkbox checkbox-primary">
+                            <input id="pWorkshopEnabled" name="enabled" type="checkbox" value="1" @if($workshopEnabled) checked @endif />
+                            <label for="pWorkshopEnabled">Habilitar Steam Workshop para este egg</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-footer">
+                    {!! csrf_field() !!}
+                    <input type="hidden" name="_method" value="PATCH" />
+                    <button type="submit" class="btn btn-primary btn-sm pull-right">Salvar Workshop</button>
                 </div>
             </div>
         </div>

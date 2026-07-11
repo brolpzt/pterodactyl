@@ -9,6 +9,8 @@ import Label from '@/components/elements/Label';
 import Input from '@/components/elements/Input';
 import Select from '@/components/elements/Select';
 import { Button } from '@/components/elements/button/index';
+import { httpErrorToHuman } from '@/api/http';
+import { ServerError } from '@/components/elements/ScreenBlock';
 import useFlash from '@/plugins/useFlash';
 import { ServerContext } from '@/state/server';
 import getAdmins from '@/api/server/amxx/getAdmins';
@@ -45,6 +47,7 @@ export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const [admins, setAdmins] = useState<AmxxAdmin[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [busyId, setBusyId] = useState<string | number | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -67,9 +70,11 @@ export default () => {
 
     const load = async () => {
         setLoading(true);
+        setLoadError(null);
         try {
             setAdmins(await getAdmins(uuid));
         } catch (err) {
+            setLoadError(httpErrorToHuman(err));
             clearAndAddHttpError({ key: 'amxx:admins', error: err });
         } finally {
             setLoading(false);
@@ -310,6 +315,8 @@ export default () => {
             <TitledGreyBox title={'Lista de admins'}>
                 {loading ? (
                     <Spinner size={Spinner.Size.LARGE} centered />
+                ) : loadError ? (
+                    <ServerError title={'Erro ao carregar admins'} message={loadError} />
                 ) : admins.length === 0 ? (
                     <p css={[emptyStateText, tw`py-4`]}>Nenhum admin cadastrado.</p>
                 ) : (

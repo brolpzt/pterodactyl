@@ -9,6 +9,8 @@ import Label from '@/components/elements/Label';
 import Input from '@/components/elements/Input';
 import Select from '@/components/elements/Select';
 import { Button } from '@/components/elements/button/index';
+import { httpErrorToHuman } from '@/api/http';
+import { ServerError } from '@/components/elements/ScreenBlock';
 import useFlash from '@/plugins/useFlash';
 import { ServerContext } from '@/state/server';
 import getBans from '@/api/server/amxx/getBans';
@@ -28,6 +30,7 @@ export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const [bans, setBans] = useState<AmxxBan[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [type, setType] = useState<'steamid' | 'ip'>('steamid');
     const [identifier, setIdentifier] = useState('');
     const [minutes, setMinutes] = useState('0');
@@ -37,9 +40,11 @@ export default () => {
 
     const load = async () => {
         setLoading(true);
+        setLoadError(null);
         try {
             setBans(await getBans(uuid));
         } catch (err) {
+            setLoadError(httpErrorToHuman(err));
             clearAndAddHttpError({ key: 'amxx:bans', error: err });
         } finally {
             setLoading(false);
@@ -140,6 +145,8 @@ export default () => {
             <TitledGreyBox title={'Lista de bans'}>
                 {loading ? (
                     <Spinner size={Spinner.Size.LARGE} centered />
+                ) : loadError ? (
+                    <ServerError title={'Erro ao carregar bans'} message={loadError} />
                 ) : bans.length === 0 ? (
                     <p css={[emptyStateText, tw`py-4`]}>Nenhum ban ativo.</p>
                 ) : (

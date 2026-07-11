@@ -53,12 +53,14 @@ class AmxxService
     public function overview(Server $server): array
     {
         $paths = $this->resolvePaths($server);
+        $wingsReachable = $this->wingsReachable($server);
 
         return [
             'game_directory' => $paths['game_dir'],
-            'users_ini_exists' => $this->fileExists($server, $paths['users_ini']),
-            'banned_cfg_exists' => $this->fileExists($server, $paths['banned_cfg']),
-            'listip_cfg_exists' => $this->fileExists($server, $paths['listip_cfg']),
+            'wings_reachable' => $wingsReachable,
+            'users_ini_exists' => $wingsReachable && $this->fileExists($server, $paths['users_ini']),
+            'banned_cfg_exists' => $wingsReachable && $this->fileExists($server, $paths['banned_cfg']),
+            'listip_cfg_exists' => $wingsReachable && $this->fileExists($server, $paths['listip_cfg']),
             'paths' => $paths,
             'presets' => array_keys(self::PRESET_FLAGS),
             'access_flags' => self::ACCESS_FLAG_LABELS,
@@ -339,7 +341,7 @@ class AmxxService
 
     private function resolvePaths(Server $server): array
     {
-        $gameDir = $this->resolveGameDirectory($server);
+        $gameDir = $this->detectGameDirectory($server);
 
         return [
             'game_dir' => $gameDir,
@@ -349,7 +351,27 @@ class AmxxService
         ];
     }
 
-    private function resolveGameDirectory(Server $server): string
+    private function detectGameDirectory(Server $server): string
+    {
+        $configured = $this->resolveGameDirectoryFromVariables($server);
+        $candidates = array_values(array_unique(array_filter([$configured, 'cstrike', 'valve', 'czero'])));
+
+        foreach ($candidates as $candidate) {
+            if ($this->fileExists($server, $candidate . '/addons/amxmodx/configs/users.ini')) {
+                return $candidate;
+            }
+        }
+
+        foreach ($candidates as $candidate) {
+            if ($this->directoryExists($server, $candidate . '/addons/amxmodx')) {
+                return $candidate;
+            }
+        }
+
+        return $configured;
+    }
+
+    private function resolveGameDirectoryFromVariables(Server $server): string
     {
         $eggVariables = EggVariable::query()
             ->where('egg_id', $server->egg_id)
@@ -388,11 +410,46 @@ class AmxxService
                 return '';
             }
 
-            throw new AmxxException(
-                'Não foi possível ler o ficheiro do servidor: ' . $path,
+            throw $this->buildFileAccessException($server, $path, $exception);
+        }
+    }
+
+    private function buildFileAccessException(Server $server, string $path, DaemonConnectionException $exception): AmxxException
+    {
+        if (!$this->wingsReachable($server)) {
+            return new AmxxException(
+                'Não foi possível comunicar com o node Wings deste servidor. Verifique se o node está online e se o gestor de ficheiros abre normalmente.',
                 Response::HTTP_BAD_GATEWAY,
                 $exception
             );
+        }
+
+        return new AmxxException(
+            'Não foi possível ler o ficheiro "' . $path . '". Confirme que o AMXX está instalado e que a variável HLDS_GAME do servidor está correta.',
+            Response::HTTP_BAD_GATEWAY,
+            $exception
+        );
+    }
+
+    private function wingsReachable(Server $server): bool
+    {
+        try {
+            $this->fileRepository->setServer($server)->getDirectory('/');
+
+            return true;
+        } catch (DaemonConnectionException) {
+            return false;
+        }
+    }
+
+    private function directoryExists(Server $server, string $path): bool
+    {
+        try {
+            $this->fileRepository->setServer($server)->getDirectory($path);
+
+            return true;
+        } catch (DaemonConnectionException) {
+            return false;
         }
     }
 
@@ -401,8 +458,16 @@ class AmxxService
         try {
             $this->fileRepository->setServer($server)->putContent($path, $content);
         } catch (DaemonConnectionException $exception) {
+            if (!$this->wingsReachable($server)) {
+                throw new AmxxException(
+                    'Não foi possível comunicar com o node Wings deste servidor. Verifique se o node está online e se o gestor de ficheiros abre normalmente.',
+                    Response::HTTP_BAD_GATEWAY,
+                    $exception
+                );
+            }
+
             throw new AmxxException(
-                'Não foi possível escrever o ficheiro do servidor: ' . $path,
+                'Não foi possível escrever o ficheiro "' . $path . '".',
                 Response::HTTP_BAD_GATEWAY,
                 $exception
             );

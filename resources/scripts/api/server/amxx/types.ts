@@ -1,5 +1,6 @@
 export interface AmxxOverview {
     game_directory: string;
+    wings_reachable: boolean;
     users_ini_exists: boolean;
     banned_cfg_exists: boolean;
     listip_cfg_exists: boolean;

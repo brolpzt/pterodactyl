@@ -5,6 +5,7 @@ import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import Spinner from '@/components/elements/Spinner';
 import FlashMessageRender from '@/components/FlashMessageRender';
+import { Alert } from '@/components/elements/alert';
 import { ServerError } from '@/components/elements/ScreenBlock';
 import { httpErrorToHuman } from '@/api/http';
 import useFlash from '@/plugins/useFlash';
@@ -62,6 +63,13 @@ export default () => {
         <ServerContentBlock title={'AMXX Web Admin'}>
             <FlashMessageRender byKey={'amxx:overview'} css={tw`mb-4`} />
 
+            {data?.wings_reachable && !data?.users_ini_exists && (
+                <Alert type={'danger'} className={'mb-4'}>
+                    O ficheiro <code>users.ini</code> ainda não existe. Instale o AMX Mod X pelo menu Addons ou crie o
+                    primeiro admin.
+                </Alert>
+            )}
+
             <TitledGreyBox title={'Estado do AMXX'} css={tw`mb-6`}>
                 <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-4`}>
                     <div>
@@ -69,6 +77,7 @@ export default () => {
                         <p css={[cardValueText, tw`font-mono text-sm`]}>{data?.game_directory || 'cstrike'}</p>
                     </div>
                     <div css={tw`flex flex-wrap gap-2`}>
+                        <StatusBadge ok={!!data?.wings_reachable} label={'Node Wings'} />
                         <StatusBadge ok={!!data?.users_ini_exists} label={'users.ini'} />
                         <StatusBadge ok={!!data?.banned_cfg_exists} label={'banned.cfg'} />
                         <StatusBadge ok={!!data?.listip_cfg_exists} label={'listip.cfg'} />
@@ -88,9 +97,9 @@ export default () => {
                         <strong>Stats/Rank</strong> — previsto para a segunda fase
                     </li>
                 </ul>
-                {!data?.users_ini_exists && (
+                {!data?.wings_reachable && (
                     <p css={[emptyStateText, tw`mt-4 text-sm`]}>
-                        O ficheiro users.ini ainda não existe. Instale o AMX Mod X pelo menu Addons ou crie o primeiro admin.
+                        O painel não conseguiu comunicar com o node Wings deste servidor. Abra o gestor de ficheiros para confirmar a ligação antes de usar o AMXX Web Admin.
                     </p>
                 )}
             </TitledGreyBox>

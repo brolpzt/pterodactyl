@@ -13,11 +13,23 @@ export interface WorkshopItem {
     workshopUrl: string | null;
 }
 
+export interface WorkshopSyncInfo {
+    id: string;
+    label: string;
+    description: string;
+}
+
 export interface WorkshopBrowseResult {
     items: WorkshopItem[];
     total: number;
     nextCursor: string | null;
     appId: number;
+    sync: WorkshopSyncInfo | null;
+}
+
+export interface WorkshopInstalledResult {
+    items: WorkshopInstalledItem[];
+    sync: WorkshopSyncInfo | null;
 }
 
 export interface WorkshopInstalledItem {
@@ -43,6 +55,18 @@ export const mapWorkshopItem = (raw: Record<string, unknown>): WorkshopItem => (
     children: Array.isArray(raw.children) ? raw.children.map(String) : [],
     workshopUrl: raw.workshop_url ? String(raw.workshop_url) : null,
 });
+
+export const mapWorkshopSync = (raw: Record<string, unknown> | null | undefined): WorkshopSyncInfo | null => {
+    if (!raw || !raw.id) {
+        return null;
+    }
+
+    return {
+        id: String(raw.id),
+        label: String(raw.label ?? ''),
+        description: String(raw.description ?? ''),
+    };
+};
 
 export const mapInstalledItem = (raw: Record<string, unknown>): WorkshopInstalledItem => ({
     id: Number(raw.id),

@@ -81,6 +81,12 @@ class Egg extends Model
     public const FEATURE_DNS = 'dns';
     public const FEATURE_WORKSHOP = 'workshop';
 
+    public const WORKSHOP_SYNC_BROWSE_ONLY = 'browse_only';
+    public const WORKSHOP_SYNC_GMOD_LUA = 'gmod_lua';
+    public const WORKSHOP_SYNC_L4D2_VPK = 'l4d2_vpk';
+    public const WORKSHOP_SYNC_ARK_INI = 'ark_ini';
+    public const WORKSHOP_SYNC_SOURCE_COLLECTION = 'source_collection';
+
     /**
      * The table associated with the model.
      */
@@ -108,6 +114,8 @@ class Egg extends Model
         'script_container',
         'copy_script_from',
         'gamedig',
+        'workshop_app_id',
+        'workshop_sync_driver',
     ];
 
     /**
@@ -122,6 +130,7 @@ class Egg extends Model
         'features' => 'array',
         'docker_images' => 'array',
         'file_denylist' => 'array',
+        'workshop_app_id' => 'integer',
     ];
 
     public static array $validationRules = [

@@ -6,6 +6,7 @@ use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\ServerWorkshopItem;
 use Pterodactyl\Exceptions\DisplayException;
+use Pterodactyl\Services\Steam\Workshop\WorkshopSyncManager;
 
 class WorkshopService
 {
@@ -16,16 +17,17 @@ class WorkshopService
      */
     private const WORKSHOP_CONSUMER_APP_IDS = [
         4020 => 4000, // Garry's Mod Dedicated Server -> Garry's Mod
+        222860 => 550, // L4D2 Dedicated Server -> Left 4 Dead 2
     ];
 
     public function __construct(
         private SteamWorkshopService $steamWorkshopService,
-        private GmodWorkshopSyncService $gmodWorkshopSyncService,
+        private WorkshopSyncManager $workshopSyncManager,
     ) {
     }
 
     /**
-     * @return array{items: array<int, array<string, mixed>>, total: int, next_cursor: string|null, app_id: int}
+     * @return array{items: array<int, array<string, mixed>>, total: int, next_cursor: string|null, app_id: int, sync: array<string, string>}
      */
     public function browse(Server $server, string $search, string $sort, ?string $cursor, int $perPage): array
     {
@@ -34,6 +36,7 @@ class WorkshopService
 
         $result = $this->steamWorkshopService->browse($appId, $search, $sort, $cursor, $perPage);
         $result['app_id'] = $appId;
+        $result['sync'] = $this->syncMetadata($server);
 
         return $result;
     }
@@ -55,13 +58,13 @@ class WorkshopService
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array{items: array<int, array<string, mixed>>, sync: array<string, string>}
      */
     public function installed(Server $server): array
     {
         $this->assertWorkshopEnabled($server);
 
-        return ServerWorkshopItem::query()
+        $items = ServerWorkshopItem::query()
             ->where('server_id', $server->id)
             ->orderBy('sort_order')
             ->orderBy('id')
@@ -76,6 +79,11 @@ class WorkshopService
             ])
             ->values()
             ->all();
+
+        return [
+            'items' => $items,
+            'sync' => $this->syncMetadata($server),
+        ];
     }
 
     /**
@@ -119,6 +127,7 @@ class WorkshopService
             'title' => $item->title,
             'preview_url' => $item->preview_url,
             'requires_restart' => true,
+            'sync' => $this->syncMetadata($server),
         ];
     }
 
@@ -141,7 +150,12 @@ class WorkshopService
 
     public function resolveAppId(Server $server): int
     {
-        $server->loadMissing('variables');
+        $server->loadMissing(['variables', 'egg.configFrom']);
+
+        $eggAppId = app(EggWorkshopFeatureService::class)->resolveWorkshopAppId($server->egg);
+        if ($eggAppId) {
+            return $eggAppId;
+        }
 
         foreach (['WORKSHOP_APPID', 'SRCDS_APPID', 'STEAM_APPID', 'APP_ID'] as $env) {
             $variable = $server->variables->firstWhere('env_variable', $env);
@@ -157,7 +171,7 @@ class WorkshopService
             }
         }
 
-        throw new DisplayException('Não foi possível determinar o App ID Steam deste servidor.');
+        throw new DisplayException('Não foi possível determinar o App ID Steam deste servidor. Configure o Workshop App ID no egg.');
     }
 
     public function assertWorkshopEnabled(Server $server): void
@@ -174,17 +188,22 @@ class WorkshopService
         }
     }
 
+    /**
+     * @return array{id: string, label: string, description: string}
+     */
+    private function syncMetadata(Server $server): array
+    {
+        $driver = $this->workshopSyncManager->driverForServer($server);
+
+        return [
+            'id' => $driver->id(),
+            'label' => $driver->label(),
+            'description' => $driver->description(),
+        ];
+    }
+
     private function syncServerFiles(Server $server, int $appId): void
     {
-        $server->loadMissing('egg');
-        $eggName = strtolower($server->egg->name ?? '');
-
-        if (str_contains($eggName, 'garry') || str_contains($eggName, 'gmod')) {
-            $this->gmodWorkshopSyncService->sync($server, $appId);
-
-            return;
-        }
-
-        throw new DisplayException('Sincronização automática de Workshop ainda não está implementada para este jogo.');
+        $this->workshopSyncManager->sync($server, $appId);
     }
 }

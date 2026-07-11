@@ -125,7 +125,9 @@ export default () => {
         sort,
         cursor,
     });
-    const { data: installedItems, mutate: mutateInstalled, error: installedError } = getWorkshopInstalled(uuid);
+    const { data: installedData, mutate: mutateInstalled, error: installedError } = getWorkshopInstalled(uuid);
+    const installedItems = installedData?.items;
+    const syncInfo = installedData?.sync ?? browseData?.sync ?? null;
 
     const installedIds = useMemo(
         () => new Set((installedItems ?? []).map((item) => item.publishedFileId)),
@@ -231,7 +233,9 @@ export default () => {
                         ))}
                     </div>
                 )}
-                <p css={tw`text-xs text-neutral-500 mt-3`}>{t('server_workshop.restart_hint')}</p>
+                <p css={tw`text-xs text-neutral-500 mt-3`}>
+                    {syncInfo?.description || t('server_workshop.restart_hint')}
+                </p>
             </TitledGreyBox>
 
             <TitledGreyBox title={t('server_workshop.browse_title')}>

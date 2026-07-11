@@ -19,7 +19,13 @@ class EggWorkshopFeatureController extends Controller
 
     public function update(EggWorkshopFeatureFormRequest $request, Egg $egg): RedirectResponse
     {
-        $this->workshopFeatureService->syncForEgg($egg, $request->validated()['enabled']);
+        $validated = $request->validated();
+        $this->workshopFeatureService->syncForEgg(
+            $egg,
+            $validated['enabled'],
+            $validated['workshop_app_id'] ?? null,
+            $validated['workshop_sync_driver'] ?? null,
+        );
         $this->alert->success('Configuração Steam Workshop do egg atualizada com sucesso.')->flash();
 
         return redirect()->route('admin.nests.egg.view', $egg->id);

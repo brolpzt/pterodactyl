@@ -1,6 +1,6 @@
 import useSWR, { SWRConfiguration } from 'swr';
 import http from '@/api/http';
-import { mapWorkshopItem, WorkshopBrowseResult } from '@/api/server/workshop/types';
+import { mapWorkshopItem, mapWorkshopSync, WorkshopBrowseResult } from '@/api/server/workshop/types';
 
 export interface WorkshopBrowseParams {
     q?: string;
@@ -31,6 +31,7 @@ export default (uuid: string, params: WorkshopBrowseParams, config?: SWRConfigur
                 total: Number(attributes.total ?? 0),
                 nextCursor: attributes.next_cursor ?? null,
                 appId: Number(attributes.app_id ?? 0),
+                sync: mapWorkshopSync(attributes.sync as Record<string, unknown> | undefined),
             };
         },
         config

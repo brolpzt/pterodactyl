@@ -45,11 +45,16 @@ class WorkshopController extends ClientApiController
 
     public function installed(ListInstalledWorkshopRequest $request, Server $server): array
     {
+        $result = $this->workshopService->installed($server);
+
         return [
             'object' => 'list',
+            'meta' => [
+                'sync' => $result['sync'],
+            ],
             'data' => array_map(
                 fn (array $item) => ['object' => 'workshop_installed_item', 'attributes' => $item],
-                $this->workshopService->installed($server)
+                $result['items']
             ),
         ];
     }

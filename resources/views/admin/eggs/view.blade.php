@@ -225,6 +225,29 @@
                             <label for="pWorkshopEnabled">Habilitar Steam Workshop para este egg</label>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="pWorkshopAppId" class="control-label">Workshop App ID</label>
+                        <input type="number" class="form-control" name="workshop_app_id" id="pWorkshopAppId" min="1" value="{{ old('workshop_app_id', $egg->workshop_app_id) }}" placeholder="Ex.: 4000 (GMod), 550 (L4D2), 346110 (ARK)" />
+                        <p class="text-muted small">App ID do <strong>jogo</strong> na Steam Workshop (não use o ID do dedicated server). Exemplos: Garry's Mod = <code>4000</code>, Left 4 Dead 2 = <code>550</code>, ARK = <code>346110</code>.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="pWorkshopSyncDriver" class="control-label">Driver de sync</label>
+                        <select class="form-control" name="workshop_sync_driver" id="pWorkshopSyncDriver">
+                            <option value="">Automático (detectar pelo nome do egg)</option>
+                            @foreach($workshopSyncDrivers ?? [] as $driver)
+                                <option value="{{ $driver['id'] }}" @if(old('workshop_sync_driver', $egg->workshop_sync_driver) === $driver['id']) selected @endif>
+                                    {{ $driver['label'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="text-muted small" id="pWorkshopSyncDriverHelp">
+                            @foreach($workshopSyncDrivers ?? [] as $driver)
+                                @if(old('workshop_sync_driver', $egg->workshop_sync_driver) === $driver['id'])
+                                    {{ $driver['description'] }}
+                                @endif
+                            @endforeach
+                        </p>
+                    </div>
                 </div>
                 <div class="box-footer">
                     {!! csrf_field() !!}
@@ -338,6 +361,11 @@
         tags: true,
         selectOnClose: false,
         tokenSeparators: [',', ' '],
+    });
+    var workshopDriverDescriptions = @json(collect($workshopSyncDrivers ?? [])->pluck('description', 'id'));
+    $('#pWorkshopSyncDriver').on('change', function () {
+        var id = $(this).val();
+        $('#pWorkshopSyncDriverHelp').text(id ? (workshopDriverDescriptions[id] || '') : 'Deixe em branco para detectar automaticamente com base no nome do egg.');
     });
     </script>
 @endsection

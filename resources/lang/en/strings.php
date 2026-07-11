@@ -214,7 +214,7 @@ return [
         'votes' => ':count votes',
         'install_success' => 'Workshop item added. Restart the server to apply changes.',
         'remove_success' => 'Workshop item removed. Restart the server to apply changes.',
-        'restart_hint' => 'Changes are written to garrysmod/lua/autorun/server/workshop.lua. Restart the server to download content. Configure Steam Account Token (GSLT) in Startup if mods do not mount.',
+        'restart_hint' => 'Restart the server after adding or removing mods to apply changes. Configure Steam Account Token (GSLT) in Startup if content does not mount.',
     ],
     'server_network' => [
         'dns_cloudflare_title' => 'Cloudflare DNS',

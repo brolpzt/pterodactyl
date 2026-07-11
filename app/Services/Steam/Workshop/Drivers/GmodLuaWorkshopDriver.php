@@ -1,14 +1,17 @@
 <?php
 
-namespace Pterodactyl\Services\Steam;
+namespace Pterodactyl\Services\Steam\Workshop\Drivers;
 
+use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\ServerWorkshopItem;
 use Pterodactyl\Exceptions\DisplayException;
+use Pterodactyl\Services\Steam\SteamWorkshopService;
+use Pterodactyl\Services\Steam\Workshop\WorkshopSyncDriver;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 use Pterodactyl\Repositories\Wings\DaemonFileRepository;
 
-class GmodWorkshopSyncService
+class GmodLuaWorkshopDriver implements WorkshopSyncDriver
 {
     private const WORKSHOP_LUA_PATH = 'garrysmod/lua/autorun/server/workshop.lua';
 
@@ -18,10 +21,22 @@ class GmodWorkshopSyncService
     ) {
     }
 
-    /**
-     * Regenerate workshop.lua from the server's installed workshop items.
-     */
-    public function sync(Server $server, int $appId): void
+    public function id(): string
+    {
+        return Egg::WORKSHOP_SYNC_GMOD_LUA;
+    }
+
+    public function label(): string
+    {
+        return 'Garry\'s Mod (workshop.lua)';
+    }
+
+    public function description(): string
+    {
+        return 'Escreve resource.AddWorkshop() em garrysmod/lua/autorun/server/workshop.lua.';
+    }
+
+    public function sync(Server $server, int $workshopAppId): void
     {
         $items = ServerWorkshopItem::query()
             ->where('server_id', $server->id)
@@ -32,7 +47,7 @@ class GmodWorkshopSyncService
         $resolvedIds = [];
         foreach ($items as $item) {
             try {
-                $ids = $this->steamWorkshopService->resolveItemIds($appId, (int) $item->published_file_id);
+                $ids = $this->steamWorkshopService->resolveItemIds($workshopAppId, (int) $item->published_file_id);
             } catch (DisplayException) {
                 $ids = [(int) $item->published_file_id];
             }
@@ -42,10 +57,11 @@ class GmodWorkshopSyncService
             }
         }
 
-        $content = $this->buildWorkshopLua(array_keys($resolvedIds));
-
         try {
-            $this->fileRepository->setServer($server)->putContent(self::WORKSHOP_LUA_PATH, $content);
+            $this->fileRepository->setServer($server)->putContent(
+                self::WORKSHOP_LUA_PATH,
+                $this->buildWorkshopLua(array_keys($resolvedIds))
+            );
         } catch (DaemonConnectionException $exception) {
             throw new DisplayException(
                 'Não foi possível atualizar workshop.lua no servidor. Verifique se o Garry\'s Mod está instalado.',

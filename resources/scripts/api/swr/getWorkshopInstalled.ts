@@ -1,16 +1,19 @@
 import useSWR, { SWRConfiguration } from 'swr';
 import http from '@/api/http';
-import { mapInstalledItem, WorkshopInstalledItem } from '@/api/server/workshop/types';
+import { mapInstalledItem, mapWorkshopSync, WorkshopInstalledResult } from '@/api/server/workshop/types';
 
 export default (uuid: string, config?: SWRConfiguration) => {
-    return useSWR<WorkshopInstalledItem[]>(
+    return useSWR<WorkshopInstalledResult>(
         ['server:workshop:installed', uuid],
         async () => {
             const { data } = await http.get(`/api/client/servers/${uuid}/workshop/installed`);
 
-            return (data.data ?? []).map((entry: { attributes: Record<string, unknown> }) =>
-                mapInstalledItem(entry.attributes)
-            );
+            return {
+                items: (data.data ?? []).map((entry: { attributes: Record<string, unknown> }) =>
+                    mapInstalledItem(entry.attributes)
+                ),
+                sync: mapWorkshopSync(data.meta?.sync as Record<string, unknown> | undefined),
+            };
         },
         config
     );

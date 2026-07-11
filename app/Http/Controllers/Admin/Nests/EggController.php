@@ -14,6 +14,7 @@ use Pterodactyl\Services\Eggs\EggDeletionService;
 use Pterodactyl\Http\Requests\Admin\Egg\EggFormRequest;
 use Pterodactyl\Contracts\Repository\EggRepositoryInterface;
 use Pterodactyl\Contracts\Repository\NestRepositoryInterface;
+use Pterodactyl\Services\Steam\Workshop\WorkshopSyncManager;
 
 class EggController extends Controller
 {
@@ -28,6 +29,7 @@ class EggController extends Controller
         protected EggUpdateService $updateService,
         protected NestRepositoryInterface $nestRepository,
         protected ViewFactory $view,
+        protected WorkshopSyncManager $workshopSyncManager,
     ) {
     }
 
@@ -68,6 +70,7 @@ class EggController extends Controller
     {
         return view('admin.eggs.view', [
             'egg' => $egg->load('dnsProfile'),
+            'workshopSyncDrivers' => $this->workshopSyncManager->definitions(),
             'images' => array_map(
                 fn ($key, $value) => $key === $value ? $value : "$key|$value",
                 array_keys($egg->docker_images),

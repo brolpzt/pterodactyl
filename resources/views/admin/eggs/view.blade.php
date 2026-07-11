@@ -215,7 +215,7 @@
                     <h3 class="box-title">Configuração DNS (Cloudflare)</h3>
                 </div>
                 <div class="box-body">
-                    <p class="text-muted">Configure quais tipos de registro DNS os usuários podem criar para servidores deste egg. Adicione a feature <code>dns</code> acima para exibir o menu DNS no painel do cliente.</p>
+                    <p class="text-muted">Configure quais tipos de registro DNS os usuários podem criar para servidores deste egg. Marque <strong>Habilitar DNS</strong> abaixo e clique em <strong>Salvar DNS</strong> — a feature <code>dns</code> será adicionada automaticamente ao egg.</p>
                     <div class="row">
                         <div class="col-sm-6">
                             <div class="form-group">

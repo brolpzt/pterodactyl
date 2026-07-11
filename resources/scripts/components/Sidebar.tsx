@@ -209,6 +209,7 @@ const ServerLinks = () => {
     const internalId = ServerContext.useStoreState((state) => state.server.data?.internalId);
     const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data?.eggFeatures ?? []);
+    const dnsEnabled = ServerContext.useStoreState((state) => state.server.data?.dnsEnabled ?? false);
     const gamedig = ServerContext.useStoreState((state) => state.server.data?.gamedig);
     const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
@@ -281,6 +282,7 @@ const ServerLinks = () => {
         '/',
         '/console',
         '/files',
+        '/dns',
         '/ts3/snapshots',
         '/ts3/bans',
         '/ts3/tokens',
@@ -296,6 +298,7 @@ const ServerLinks = () => {
         '/files',
         '/addons',
         '/firewall',
+        '/dns',
         '/schedules',
         '/backups',
         '/users',
@@ -356,7 +359,7 @@ const ServerLinks = () => {
 
     const filteredRoutes = routes.server
         .filter((route) => (isTs3
-            ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/activity' || route.path === '/settings' || route.path === '/console' || route.path === '/files'
+            ? route.path.startsWith('/ts3') || route.path === '/' || route.path === '/activity' || route.path === '/settings' || route.path === '/console' || route.path === '/files' || route.path === '/dns'
             : isCs16
             ? !route.path.startsWith('/ts3')
             : !route.path.startsWith('/ts3') && !route.path.startsWith('/amxx')))
@@ -364,7 +367,7 @@ const ServerLinks = () => {
         .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
         .filter((route) => route.path !== '/ts3/query' || rootAdmin)
         .filter((route) => !(isCs16 && isAmxxRoute(route.path)))
-        .filter((route) => route.path !== '/dns' || eggFeatures.includes('dns'));
+        .filter((route) => route.path !== '/dns' || dnsEnabled || eggFeatures.includes('dns'));
 
     const sortedRoutes = isTs3
         ? sortRoutes(filteredRoutes, ts3RouteOrder)

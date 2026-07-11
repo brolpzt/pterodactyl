@@ -31,7 +31,7 @@ class ServerTransformer extends BaseClientTransformer
      */
     public function transform(Server $server): array
     {
-        $server->loadMissing(['node.location', 'egg']);
+        $server->loadMissing(['node.location', 'egg.dnsProfile']);
 
         /** @var StartupCommandService $service */
         $service = Container::getInstance()->make(StartupCommandService::class);
@@ -69,6 +69,7 @@ class ServerTransformer extends BaseClientTransformer
             'invocation' => $service->handle($server, !$user->can(Permission::ACTION_STARTUP_READ, $server)),
             'docker_image' => $server->image,
             'egg_features' => $server->egg->inherit_features,
+            'dns_enabled' => $this->resolveDnsEnabled($server),
             'feature_limits' => [
                 'databases' => $server->database_limit,
                 'allocations' => $server->allocation_limit,
@@ -108,6 +109,17 @@ class ServerTransformer extends BaseClientTransformer
 
         return $base . '/' . $server->uuidShort . '/';
 
+    }
+
+    /**
+     * Determines if DNS management should be exposed in the client UI.
+     */
+    private function resolveDnsEnabled(Server $server): bool
+    {
+        $features = $server->egg->inherit_features ?? [];
+        $profileEnabled = (bool) ($server->egg->dnsProfile?->enabled ?? false);
+
+        return in_array(Egg::FEATURE_DNS, $features, true) && $profileEnabled;
     }
 
     /**

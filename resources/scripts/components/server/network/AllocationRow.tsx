@@ -37,9 +37,10 @@ const AllocationRow = ({ allocation }: Props) => {
     const { clearFlashes, clearAndAddHttpError } = useFlashKey('server:network');
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures);
+    const dnsEnabled = ServerContext.useStoreState((state) => state.server.data!.dnsEnabled);
     const { mutate } = getServerAllocations();
     const match = useRouteMatch<{ id: string }>('/server/:id');
-    const hasDnsFeature = eggFeatures.includes('dns');
+    const hasDnsFeature = dnsEnabled || eggFeatures.includes('dns');
 
     const onNotesChanged = useCallback((id: number, notes: string) => {
         mutate((data) => data?.map((a) => (a.id === id ? { ...a, notes } : a)), false);

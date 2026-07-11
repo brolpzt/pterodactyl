@@ -23,11 +23,12 @@ const NetworkContainer = () => {
     const [loading, setLoading] = useState(false);
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures);
+    const dnsEnabled = ServerContext.useStoreState((state) => state.server.data!.dnsEnabled);
     const allocationLimit = ServerContext.useStoreState((state) => state.server.data!.featureLimits.allocations);
     const allocations = ServerContext.useStoreState((state) => state.server.data!.allocations, isEqual);
     const setServerFromState = ServerContext.useStoreActions((actions) => actions.server.setServerFromState);
     const match = useRouteMatch<{ id: string }>('/server/:id');
-    const hasDnsFeature = eggFeatures.includes('dns');
+    const hasDnsFeature = dnsEnabled || eggFeatures.includes('dns');
     const primaryAllocation = allocations.find((allocation) => allocation.isDefault);
 
     const { clearFlashes, clearAndAddHttpError } = useFlashKey('server:network');

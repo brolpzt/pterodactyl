@@ -286,13 +286,14 @@ export default () => {
     const location = useLocation();
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures);
+    const dnsEnabled = ServerContext.useStoreState((state) => state.server.data!.dnsEnabled);
     const { data, error, isValidating, mutate } = getServerDnsRecords(uuid);
     const { clearFlashes, addFlash, clearAndAddHttpError } = useFlash();
 
     const query = new URLSearchParams(location.search);
     const initialSubdomain = query.get('subdomain') || undefined;
 
-    const hasDnsFeature = eggFeatures.includes('dns');
+    const hasDnsFeature = dnsEnabled || eggFeatures.includes('dns');
 
     if (!hasDnsFeature) {
         return (

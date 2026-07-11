@@ -494,10 +494,24 @@ class AmxxService
 
     private function fileExists(Server $server, string $path): bool
     {
-        try {
-            $this->fileRepository->setServer($server)->getContent($path, 1);
+        $path = ltrim($path, '/');
+        $directory = dirname($path);
+        $fileName = basename($path);
 
-            return true;
+        if ($fileName === '' || $directory === '.') {
+            return false;
+        }
+
+        try {
+            $listing = $this->fileRepository->setServer($server)->getDirectory($directory);
+
+            foreach ($listing as $item) {
+                if (($item['name'] ?? null) === $fileName && ($item['file'] ?? true)) {
+                    return true;
+                }
+            }
+
+            return false;
         } catch (DaemonConnectionException) {
             return false;
         }

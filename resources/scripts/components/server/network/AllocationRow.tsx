@@ -20,9 +20,11 @@ import setPrimaryServerAllocation from '@/api/server/network/setPrimaryServerAll
 import getServerAllocations from '@/api/swr/getServerAllocations';
 import { ip } from '@/lib/formatters';
 import Code from '@/components/elements/Code';
+import { fieldLabel } from '@/assets/css/formTheme';
 
 const Label = styled.label`
-    ${tw`uppercase text-xs mt-1 text-neutral-400 block px-1 select-none transition-colors duration-150`}
+    ${fieldLabel};
+    ${tw`mt-1 block px-1 select-none transition-colors duration-150`}
 `;
 
 interface Props {

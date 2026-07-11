@@ -376,15 +376,15 @@ const ServerLinks = () => {
 
     return (
         <>
-            <SectionTitle collapsed={collapsed}>{t('nav.server_menu')}</SectionTitle>
-            {sortedRoutes.map((route) => renderServerRoute(route))}
-
             {amxxRoutes.length > 0 && (
                 <>
                     <SectionTitle collapsed={collapsed}>{t('nav.quick_menu')}</SectionTitle>
                     {amxxRoutes.map((route) => renderServerRoute(route))}
                 </>
             )}
+
+            <SectionTitle collapsed={collapsed}>{t('nav.server_menu')}</SectionTitle>
+            {sortedRoutes.map((route) => renderServerRoute(route))}
 
             {rootAdmin && internalId && (
                 <ExternalNavItem

@@ -23,6 +23,7 @@ import createAdmin from '@/api/server/amxx/createAdmin';
 import AmxxWebToolbar from '@/components/server/amxx/AmxxWebToolbar';
 import AmxxWebLivePanel from '@/components/server/amxx/AmxxWebLivePanel';
 import { AMXX_PRESET_FLAGS, AmxxConsolePlayer, AmxxPreset } from '@/api/server/amxx/types';
+import MessageBox from '@/components/MessageBox';
 
 type DisplayPlayer = AmxxConsolePlayer;
 type BanType = 'steamid' | 'ip';
@@ -109,12 +110,24 @@ export default () => {
     const runtimeStateMessage = useMemo(() => {
         switch (status) {
             case 'starting':
-                return t('server_amxx_web.starting');
+                return t('server_amxx_web.starting_screen');
             case 'stopping':
-                return t('server_amxx_web.stopping');
+                return t('server_amxx_web.stopping_screen');
             case 'offline':
             default:
-                return t('server_amxx_web.offline');
+                return t('server_amxx_web.offline_screen');
+        }
+    }, [status, t]);
+
+    const runtimeStateTitle = useMemo(() => {
+        switch (status) {
+            case 'starting':
+                return t('server_amxx_web.starting_title');
+            case 'stopping':
+                return t('server_amxx_web.stopping_title');
+            case 'offline':
+            default:
+                return t('server_amxx_web.offline_title');
         }
     }, [status, t]);
 
@@ -307,14 +320,12 @@ export default () => {
         }
     };
 
-    const playersOffline = !isServerRunning;
-    const playersRuntimeError = isServerRunning && playersError && isPlayersUnavailableError(playersError);
+    const playersUnavailableMessage = t('server_amxx_web.players_unavailable');
+
+    const playersRuntimeError = playersError && isPlayersUnavailableError(playersError);
     const playersLoadError = playersError && !isPlayersUnavailableError(playersError)
         ? httpErrorToHuman(playersError)
         : null;
-    const playersUnavailableMessage = playersOffline
-        ? runtimeStateMessage
-        : t('server_amxx_web.players_unavailable');
 
     const banTargetIp = banTarget ? parsePlayerIp(banTarget.address) : null;
     const banTargetHasSteam = banTarget ? isValidSteamId(banTarget.steamid) : false;
@@ -331,36 +342,40 @@ export default () => {
         <ServerContentBlock title={t('server_amxx_web.title')}>
             <FlashMessageRender byKey={'amxx:web'} css={tw`mb-4`} />
 
-            <div css={tw`flex justify-end mb-4`}>
-                <Button
-                    size={Button.Sizes.Small}
-                    disabled={!isServerRunning || refreshing}
-                    onClick={onRefresh}
-                >
-                    {refreshing ? <Spinner size={'small'} /> : t('server_amxx_web.refresh')}
-                </Button>
-            </div>
+            {!isServerRunning ? (
+                <MessageBox type={'warning'} title={runtimeStateTitle}>
+                    {runtimeStateMessage}
+                </MessageBox>
+            ) : (
+                <>
+                    <div css={tw`flex justify-end mb-4`}>
+                        <Button
+                            size={Button.Sizes.Small}
+                            disabled={refreshing}
+                            onClick={onRefresh}
+                        >
+                            {refreshing ? <Spinner size={'small'} /> : t('server_amxx_web.refresh')}
+                        </Button>
+                    </div>
 
-            <AmxxWebToolbar
-                uuid={uuid}
-                isServerRunning={isServerRunning}
-                currentMap={currentMap}
-                consolePlayers={displayPlayers}
-            />
+                    <AmxxWebToolbar
+                        uuid={uuid}
+                        isServerRunning={isServerRunning}
+                        currentMap={currentMap}
+                        consolePlayers={displayPlayers}
+                    />
 
-            <TitledGreyBox title={t('server_amxx_web.players_online')}>
-                {playersOffline ? (
-                    <p css={emptyStateText}>{runtimeStateMessage}</p>
-                ) : playersLoading && displayPlayers.length === 0 && !playersRuntimeError ? (
-                    <Spinner size={'large'} centered />
-                ) : playersRuntimeError && displayPlayers.length === 0 ? (
-                    <p css={emptyStateText}>{playersUnavailableMessage}</p>
-                ) : playersLoadError && displayPlayers.length === 0 ? (
-                    <p css={emptyStateText}>{playersLoadError}</p>
-                ) : displayPlayers.length === 0 ? (
-                    <p css={emptyStateText}>{t('server_amxx_web.no_players')}</p>
-                ) : (
-                    <div css={tw`overflow-x-auto`}>
+                    <TitledGreyBox title={t('server_amxx_web.players_online')}>
+                        {playersLoading && displayPlayers.length === 0 && !playersRuntimeError ? (
+                            <Spinner size={'large'} centered />
+                        ) : playersRuntimeError && displayPlayers.length === 0 ? (
+                            <p css={emptyStateText}>{playersUnavailableMessage}</p>
+                        ) : playersLoadError && displayPlayers.length === 0 ? (
+                            <p css={emptyStateText}>{playersLoadError}</p>
+                        ) : displayPlayers.length === 0 ? (
+                            <p css={emptyStateText}>{t('server_amxx_web.no_players')}</p>
+                        ) : (
+                            <div css={tw`overflow-x-auto`}>
                             <table css={tw`w-full text-sm text-left text-neutral-200`}>
                                 <thead>
                                     <tr css={tw`border-b border-neutral-700 text-neutral-400 uppercase text-xs`}>
@@ -527,6 +542,8 @@ export default () => {
             )}
 
             <AmxxWebLivePanel uuid={uuid} isServerRunning={isServerRunning} />
+                </>
+            )}
         </ServerContentBlock>
     );
 };

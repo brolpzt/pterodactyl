@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import tw from 'twin.macro';
 import { emptyStateText } from '@/assets/css/cardTheme';
@@ -11,12 +11,11 @@ import { Button } from '@/components/elements/button/index';
 import Can from '@/components/elements/Can';
 import useFlash from '@/plugins/useFlash';
 import getMaps from '@/api/server/amxx/getMaps';
-import getMapPreview from '@/api/server/amxx/getMapPreview';
 import changeMap from '@/api/server/amxx/changeMap';
 import sendSay from '@/api/server/amxx/sendSay';
 import sendPsay from '@/api/server/amxx/sendPsay';
 import { AmxxConsolePlayer, AmxxMap } from '@/api/server/amxx/types';
-import { getCs16MapFallbackImageUrl } from '@/lib/cs16MapImage';
+import { getCs16MapImageUrl } from '@/lib/cs16MapImage';
 
 type ConsolePlayerOption = Pick<AmxxConsolePlayer, 'userid' | 'name'>;
 
@@ -35,21 +34,11 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
     const [mapsLoading, setMapsLoading] = useState(false);
     const [selectedMap, setSelectedMap] = useState('');
     const [mapBusy, setMapBusy] = useState(false);
-    const [mapPreviewUrl, setMapPreviewUrl] = useState<string | null>(null);
-    const [mapPreviewLoading, setMapPreviewLoading] = useState(false);
     const [mapPreviewFailed, setMapPreviewFailed] = useState(false);
-    const mapPreviewBlobRef = useRef<string | null>(null);
 
-    const revokeMapPreviewBlob = () => {
-        if (mapPreviewBlobRef.current) {
-            URL.revokeObjectURL(mapPreviewBlobRef.current);
-            mapPreviewBlobRef.current = null;
-        }
-    };
-
-    const selectedMapMeta = useMemo(
-        () => maps.find((map) => map.name === selectedMap) ?? null,
-        [maps, selectedMap]
+    const mapPreviewUrl = useMemo(
+        () => (selectedMap ? getCs16MapImageUrl(selectedMap) : null),
+        [selectedMap]
     );
 
     const [sayMessage, setSayMessage] = useState('');
@@ -96,67 +85,8 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
     }, [currentMap, maps]);
 
     useEffect(() => {
-        if (!selectedMap || !isServerRunning) {
-            revokeMapPreviewBlob();
-            setMapPreviewUrl(null);
-            setMapPreviewFailed(false);
-            return;
-        }
-
-        let cancelled = false;
-
-        const loadPreview = async () => {
-            setMapPreviewLoading(true);
-            setMapPreviewFailed(false);
-            revokeMapPreviewBlob();
-            setMapPreviewUrl(null);
-
-            if (selectedMapMeta?.has_preview) {
-                const objectUrl = await getMapPreview(uuid, selectedMap);
-                if (cancelled) {
-                    if (objectUrl) {
-                        URL.revokeObjectURL(objectUrl);
-                    }
-                    return;
-                }
-
-                if (objectUrl) {
-                    mapPreviewBlobRef.current = objectUrl;
-                    setMapPreviewUrl(objectUrl);
-                    setMapPreviewLoading(false);
-                    return;
-                }
-            }
-
-            if (!cancelled) {
-                setMapPreviewUrl(getCs16MapFallbackImageUrl(selectedMap));
-                setMapPreviewLoading(false);
-            }
-        };
-
-        loadPreview();
-
-        return () => {
-            cancelled = true;
-            revokeMapPreviewBlob();
-        };
-    }, [uuid, selectedMap, selectedMapMeta?.has_preview, isServerRunning]);
-
-    const onMapPreviewError = () => {
-        if (!selectedMap) {
-            setMapPreviewUrl(null);
-            return;
-        }
-
-        if (mapPreviewFailed) {
-            setMapPreviewUrl(null);
-            return;
-        }
-
-        setMapPreviewFailed(true);
-        revokeMapPreviewBlob();
-        setMapPreviewUrl(getCs16MapFallbackImageUrl(selectedMap));
-    };
+        setMapPreviewFailed(false);
+    }, [selectedMap]);
 
     const onChangeMap = async () => {
         if (!selectedMap) {
@@ -221,13 +151,13 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
         }
     };
 
+    const showMapPreview = Boolean(mapPreviewUrl) && !mapPreviewFailed;
+
     return (
         <div css={tw`grid gap-4 mb-4 lg:grid-cols-2`}>
             <Can action={['amxx.map', 'control.console']} matchAny>
                 <TitledGreyBox title={t('server_amxx_web.map_title')}>
-                    {!isServerRunning ? (
-                        <p css={emptyStateText}>{t('server_amxx_web.offline')}</p>
-                    ) : mapsLoading && maps.length === 0 ? (
+                    {mapsLoading && maps.length === 0 ? (
                         <Spinner size={'small'} centered />
                     ) : maps.length === 0 ? (
                         <p css={emptyStateText}>{t('server_amxx_web.map_empty')}</p>
@@ -237,16 +167,12 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
                                 <div
                                     css={tw`relative overflow-hidden rounded-lg border border-neutral-700 bg-neutral-900/70`}
                                 >
-                                    {mapPreviewLoading ? (
-                                        <div css={tw`flex items-center justify-center h-36`}>
-                                            <Spinner size={'small'} />
-                                        </div>
-                                    ) : mapPreviewUrl ? (
+                                    {showMapPreview ? (
                                         <img
-                                            src={mapPreviewUrl}
+                                            src={mapPreviewUrl!}
                                             alt={t('server_amxx_web.map_preview_alt', { map: selectedMap })}
                                             css={tw`w-full h-36 object-cover`}
-                                            onError={onMapPreviewError}
+                                            onError={() => setMapPreviewFailed(true)}
                                         />
                                     ) : (
                                         <div css={[emptyStateText, tw`flex items-center justify-center h-36 px-4 text-center`]}>
@@ -276,7 +202,7 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
                                     ))}
                                 </Select>
                             </div>
-                            <Button disabled={mapBusy || !selectedMap} onClick={onChangeMap}>
+                            <Button size={Button.Sizes.Small} disabled={mapBusy || !selectedMap} onClick={onChangeMap}>
                                 {mapBusy ? <Spinner size={'small'} /> : t('server_amxx_web.map_change')}
                             </Button>
                         </div>
@@ -286,14 +212,12 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
 
             <Can action={['amxx.chat', 'control.console']} matchAny>
                 <TitledGreyBox title={t('server_amxx_web.chat_title')}>
-                    {!isServerRunning ? (
-                        <p css={emptyStateText}>{t('server_amxx_web.offline')}</p>
-                    ) : (
-                        <div css={tw`space-y-4`}>
+                    <div css={tw`space-y-4`}>
                             <div>
                                 <Label>{t('server_amxx_web.chat_say')}</Label>
                                 <Input value={sayMessage} onChange={(e) => setSayMessage(e.target.value)} />
                                 <Button
+                                    size={Button.Sizes.Small}
                                     css={tw`mt-2`}
                                     disabled={chatBusy !== null || !sayMessage.trim()}
                                     onClick={onSay}
@@ -317,6 +241,7 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
                                     onChange={(e) => setPsayMessage(e.target.value)}
                                 />
                                 <Button
+                                    size={Button.Sizes.Small}
                                     css={tw`mt-2`}
                                     disabled={chatBusy !== null || !psayMessage.trim() || !psayUserId}
                                     onClick={onPsay}
@@ -324,8 +249,7 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
                                     {chatBusy === 'psay' ? <Spinner size={'small'} /> : t('server_amxx_web.chat_send')}
                                 </Button>
                             </div>
-                        </div>
-                    )}
+                    </div>
                 </TitledGreyBox>
             </Can>
         </div>

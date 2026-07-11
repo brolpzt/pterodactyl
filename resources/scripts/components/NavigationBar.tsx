@@ -75,29 +75,6 @@ const HeaderLeading = styled.div`
     ${tw`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 flex-shrink-0 min-w-0`};
 `;
 
-const HeaderNavigation = styled.nav`
-    ${tw`hidden sm:flex items-center h-full`};
-
-    & > a {
-        ${headerNavText};
-        ${tw`flex items-center gap-2 h-full no-underline text-xs sm:text-sm font-header font-semibold uppercase transition-all duration-150 whitespace-nowrap`};
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
-
-        @media (min-width: 768px) {
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-
-        &:active,
-        &:hover,
-        &.active {
-            ${tw`text-primary-400`};
-            box-shadow: inset 0 -2px ${theme`colors.primary.500`.toString()};
-        }
-    }
-`;
-
 const MenuButton = styled.button`
     ${headerNavText};
     ${tw`flex items-center justify-center w-9 h-9 rounded-md hover:text-neutral-100 hover:bg-neutral-800 transition-all duration-150 flex-shrink-0`};
@@ -178,41 +155,27 @@ export default () => {
                     >
                         <FontAwesomeIcon icon={faBars} />
                     </MenuButton>
-                    <HeaderNavigation>
-                        <NavLink to={'/'} exact>
-                            <FontAwesomeIcon icon={faLayerGroup} />
-                            <span>{t('nav.dashboard')}</span>
-                        </NavLink>
-                        <a href={CLIENT_SUPPORT_URL}>
-                            <FontAwesomeIcon icon={faLifeRing} />
-                            <span>{t('nav.support')}</span>
-                        </a>
-                        <a href={CLIENT_INVOICES_URL}>
-                            <FontAwesomeIcon icon={faReceipt} />
-                            <span>{t('nav.invoices')}</span>
-                        </a>
-                    </HeaderNavigation>
                 </HeaderLeading>
                 <div css={tw`flex-1 min-w-0`} />
                 <RightNavigation>
                     <Tooltip placement={'bottom'} content={t('nav.dashboard')}>
-                        <NavLink to={'/'} exact css={tw`flex sm:hidden`}>
+                        <NavLink to={'/'} exact>
                             <FontAwesomeIcon icon={faLayerGroup} />
                         </NavLink>
                     </Tooltip>
                     <Tooltip placement={'bottom'} content={t('nav.support')}>
-                        <a href={CLIENT_SUPPORT_URL} css={tw`flex sm:hidden`}>
+                        <a href={CLIENT_SUPPORT_URL} rel={'noreferrer'}>
                             <FontAwesomeIcon icon={faLifeRing} />
                         </a>
                     </Tooltip>
                     <Tooltip placement={'bottom'} content={t('nav.invoices')}>
-                        <a href={CLIENT_INVOICES_URL} css={tw`flex sm:hidden`}>
+                        <a href={CLIENT_INVOICES_URL} rel={'noreferrer'}>
                             <FontAwesomeIcon icon={faReceipt} />
                         </a>
                     </Tooltip>
                     {rootAdmin && (
                         <Tooltip placement={'bottom'} content={t('navbar.admin')}>
-                            <a href={'/admin'} rel={'noreferrer'} css={tw`hidden md:flex`}>
+                            <a href={'/admin'} rel={'noreferrer'}>
                                 <FontAwesomeIcon icon={faCogs} />
                             </a>
                         </Tooltip>

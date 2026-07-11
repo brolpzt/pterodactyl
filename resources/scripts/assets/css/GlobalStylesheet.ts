@@ -68,17 +68,17 @@ export default createGlobalStyle`
 
     .field-label {
         display: inline-block;
-        margin-bottom: 0.4rem;
+        margin-bottom: 0.375rem;
         font-family: var(--font-family-heading);
-        font-size: 0.86rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: normal;
         text-transform: uppercase;
-        color: var(--color-label);
+        color: var(--hg-nav-text);
     }
 
     .hg-glass-card .field-label {
-        color: var(--color-label);
+        color: var(--hg-nav-text);
     }
 
     .font-mono {

@@ -11,6 +11,7 @@ import { cardLabelText, navText } from '@/assets/css/cardTheme';
 import { ServerContext } from '@/state/server';
 import useGameQuery from '@/api/swr/getGameQuery';
 import { supportsGameQuery } from '@/lib/supportsGameQuery';
+import { stripGameHostnameColors } from '@/lib/stripGameHostnameColors';
 
 interface Props {
     name?: string;
@@ -116,7 +117,12 @@ const ServerStatusBar = ({
     }, []);
 
     const address = allocation ? `${allocation.alias || formatIp(allocation.ip)}:${allocation.port}` : 'n/a';
-    const queryHostname = query?.online ? query.hostname || '—' : query ? 'Offline' : '—';
+    const rawQueryHostname = query?.online ? query.hostname : null;
+    const queryHostname = query?.online
+        ? stripGameHostnameColors(rawQueryHostname) || '—'
+        : query
+          ? 'Offline'
+          : '—';
     const queryMap = query?.online ? query.map || '—' : '—';
     const queryPlayers =
         query && query.online ? `${query.players}/${query.max_players || '?'}` : query ? '0/0' : '—';
@@ -168,7 +174,7 @@ const ServerStatusBar = ({
 
                                 {queryEnabled && (
                                     <>
-                                        <QueryStat label="Hostname" value={queryHostname} title={query?.hostname || undefined} />
+                                        <QueryStat label="Hostname" value={queryHostname} title={queryHostname !== '—' ? queryHostname : undefined} />
                                         <QueryStat label="Mapa" value={queryMap} title={query?.map || undefined} />
                                         <QueryStat label="Jogadores" value={queryPlayers} />
                                     </>

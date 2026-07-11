@@ -34,15 +34,20 @@ export const navText = css`
     color: var(--hg-nav-text);
 `;
 
+/** Tipografia e cor dos itens do sidebar — reutilizada em labels de formulário. */
+export const sidebarItemText = css`
+    ${navText};
+    ${cardTitleFont};
+`;
+
 /** Tipografia padrão das listas (backups, users, schedules, etc.). */
 export const rowListText = css`
     ${tw`text-sm leading-snug`};
 `;
 
-/** Lista compacta (arquivos) — entre xs e sm. */
+/** Lista compacta (arquivos) — um passo abaixo de text-base, alinhada a text-sm. */
 export const rowListTextFiles = css`
-    font-size: 0.8125rem;
-    line-height: 1.35;
+    ${tw`text-sm leading-snug`};
 `;
 
 /** Mensagens vazias e informativas nas páginas do servidor. */

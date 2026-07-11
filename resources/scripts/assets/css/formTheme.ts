@@ -1,4 +1,5 @@
 import { css } from 'styled-components/macro';
+import { sidebarItemText } from '@/assets/css/cardTheme';
 
 /** Espelha hostgamer.net/login — .field-group / .field-label / .input-base */
 export const fieldGroup = css`
@@ -7,14 +8,9 @@ export const fieldGroup = css`
 `;
 
 export const fieldLabel = css`
+    ${sidebarItemText};
     display: inline-block;
-    margin-bottom: 0.4rem;
-    font-family: var(--font-family-heading, 'Oxanium', Arial, Helvetica, sans-serif);
-    font-size: 0.86rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--color-label);
+    margin-bottom: 0.375rem;
 `;
 
 export const fieldLabelLight = css`

@@ -28,6 +28,7 @@ import { breadcrumbCurrentText, navText } from '@/assets/css/cardTheme';
 import useFlash from '@/plugins/useFlash';
 import ContentContainer from '@/components/elements/ContentContainer';
 import ServerBackground from '@/components/server/ServerBackground';
+import { getServerBackgroundUrl } from '@/lib/serverBackgrounds';
 import ServerStatusBar from '@/components/server/ServerStatusBar';
 import useScrollToTopOnRouteChange from '@/plugins/useScrollToTopOnRouteChange';
 import { useTranslation } from 'react-i18next';
@@ -91,6 +92,17 @@ export default () => {
             setError(httpErrorToHuman(error));
         });
     }, [routeServerId]);
+
+    useEffect(() => {
+        const url = getServerBackgroundUrl(gamedig, eggName);
+        if (!url) {
+            return;
+        }
+
+        const image = new Image();
+        image.decoding = 'async';
+        image.src = url;
+    }, [gamedig, eggName]);
 
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
     const isTs3 = eggId === 12;

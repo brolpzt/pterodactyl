@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import tw, { css } from 'twin.macro';
-import styled, { keyframes } from 'styled-components/macro';
+import styled from 'styled-components/macro';
 import { getServerBackgroundUrl } from '@/lib/serverBackgrounds';
 import { pageFallbackBackground } from '@/assets/css/pageBackground';
 
@@ -13,17 +13,6 @@ interface Props {
     className?: string;
     style?: React.CSSProperties;
 }
-
-const backgroundReveal = keyframes`
-    from {
-        opacity: 0;
-        transform: scale(1.05);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-`;
 
 const Wrapper = styled.div<{ $viewport?: boolean }>`
     ${tw`relative min-h-full`};
@@ -50,32 +39,58 @@ const FallbackLayer = styled.div`
 const BackgroundLayer = styled.div<{ $imageUrl: string; $ready: boolean }>`
     position: absolute;
     inset: 0;
-    background-image: linear-gradient(to bottom, rgba(9, 9, 17, 0.62), rgba(9, 9, 17, 0.8)),
+    background-image: linear-gradient(to bottom, rgba(9, 9, 17, 0.78), rgba(9, 9, 17, 0.92)),
         url('${(props) => props.$imageUrl}');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    opacity: 0;
-    transform: scale(1.05);
-    will-change: opacity, transform;
+    opacity: ${(props) => (props.$ready ? 1 : 0)};
+    transition: opacity 0.3s ease-out;
+`;
 
-    ${(props) =>
-        props.$ready &&
-        css`
-            animation: ${backgroundReveal} 1s ease-out forwards;
-        `}
+const VignetteLayer = styled.div`
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.28) 100%);
+    pointer-events: none;
 `;
 
 const ContentLayer = styled.div`
     ${tw`relative z-10 min-h-full`};
 `;
 
-const ServerBackground = ({ gamedig, eggName, children, viewport = false, className, style }: Props) => {
+const preloadBackgroundImage = (url: string): Promise<void> =>
+    new Promise((resolve, reject) => {
+        const image = new Image();
+
+        const finish = () => {
+            image.onload = null;
+            image.onerror = null;
+            resolve();
+        };
+
+        const fail = () => {
+            image.onload = null;
+            image.onerror = null;
+            reject(new Error('background load failed'));
+        };
+
+        image.onload = finish;
+        image.onerror = fail;
+        image.decoding = 'async';
+        image.src = url;
+
+        if (image.complete && image.naturalWidth > 0) {
+            finish();
+        }
+    });
+
+export default ({ gamedig, eggName, children, viewport = false, className, style }: Props) => {
     const [backgroundUrl] = useState(() => getServerBackgroundUrl(gamedig, eggName));
     const [imageReady, setImageReady] = useState(false);
     const [imageError, setImageError] = useState(false);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         setImageReady(false);
         setImageError(false);
 
@@ -83,14 +98,22 @@ const ServerBackground = ({ gamedig, eggName, children, viewport = false, classN
             return;
         }
 
-        const image = new Image();
-        image.onload = () => setImageReady(true);
-        image.onerror = () => setImageError(true);
-        image.src = backgroundUrl;
+        let cancelled = false;
+
+        preloadBackgroundImage(backgroundUrl)
+            .then(() => {
+                if (!cancelled) {
+                    setImageReady(true);
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setImageError(true);
+                }
+            });
 
         return () => {
-            image.onload = null;
-            image.onerror = null;
+            cancelled = true;
         };
     }, [backgroundUrl]);
 
@@ -99,6 +122,7 @@ const ServerBackground = ({ gamedig, eggName, children, viewport = false, classN
         <>
             <FallbackLayer />
             {showImage ? <BackgroundLayer $imageUrl={backgroundUrl!} $ready={imageReady} /> : null}
+            <VignetteLayer />
         </>
     );
 
@@ -117,5 +141,3 @@ const ServerBackground = ({ gamedig, eggName, children, viewport = false, classN
         </Wrapper>
     );
 };
-
-export default ServerBackground;

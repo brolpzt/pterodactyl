@@ -2,7 +2,7 @@
 export const hostgamerColors = {
     bg: '#090911',
     /** Fundo das páginas de servidor sem imagem de background. */
-    serverBgFallback: '#1f2435',
+    serverBgFallback: '#141824',
     surface: '#111420',
     text: '#7d7d8e',
     textMuted: '#7d7d8e',

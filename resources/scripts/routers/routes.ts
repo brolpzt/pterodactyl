@@ -232,6 +232,7 @@ export default {
             name: 'AMXX Web',
             nameKey: 'server.amxx.web',
             component: AmxxWebContainer,
+            exact: true,
         },
         {
             path: '/amxx/admins',

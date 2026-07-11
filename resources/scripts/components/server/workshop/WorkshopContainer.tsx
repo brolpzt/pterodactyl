@@ -152,10 +152,12 @@ export default () => {
         installWorkshopItem(uuid, item.publishedFileId)
             .then(() => {
                 mutateInstalled();
+                const messageKey =
+                    syncInfo?.id === 'l4d2_vpk' ? 'server_workshop.install_success_l4d2' : 'server_workshop.install_success';
                 addFlash({
                     key: 'server:workshop',
                     type: 'success',
-                    message: t('server_workshop.install_success'),
+                    message: t(messageKey),
                 });
             })
             .catch((error) => clearAndAddHttpError({ key: 'server:workshop', error }))

@@ -213,6 +213,7 @@ return [
         'app_id' => 'Steam App ID: :id',
         'votes' => ':count votos',
         'install_success' => 'Item Workshop adicionado. Reinicie o servidor para aplicar.',
+        'install_success_l4d2' => 'Item Workshop enfileirado para download. O servidor foi parado para sincronizar os VPKs — acompanhe o console e reinicie quando terminar.',
         'remove_success' => 'Item Workshop removido. Reinicie o servidor para aplicar.',
         'restart_hint' => 'Reinicie o servidor após adicionar ou remover mods para aplicar as alterações. Configure o Steam Account Token (GSLT) em Startup se o conteúdo não montar.',
     ],

@@ -213,6 +213,7 @@ return [
         'app_id' => 'Steam App ID: :id',
         'votes' => ':count votes',
         'install_success' => 'Workshop item added. Restart the server to apply changes.',
+        'install_success_l4d2' => 'Workshop item queued for download. The server was stopped to sync VPK files — check the console, then restart when finished.',
         'remove_success' => 'Workshop item removed. Restart the server to apply changes.',
         'restart_hint' => 'Restart the server after adding or removing mods to apply changes. Configure Steam Account Token (GSLT) in Startup if content does not mount.',
     ],

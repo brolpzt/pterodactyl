@@ -1,0 +1,99 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2026-07-11T00:00:00+00:00",
+    "name": "Left 4 Dead 2",
+    "author": "support@pterodactyl.io",
+    "description": "Left 4 Dead 2 dedicated server. Configure Workshop App ID 550 and driver l4d2_vpk no admin do egg após importar. STEAM_USER deve ser uma conta subscrita aos mods Workshop.",
+    "features": [
+        "gsl_token",
+        "steam_disk_space",
+        "workshop"
+    ],
+    "images": [
+        "ghcr.io\/pterodactyl\/games:source"
+    ],
+    "file_denylist": [],
+    "startup": ".\/srcds_run -game left4dead2 -console -port {{SERVER_PORT}} +map {{SRCDS_MAP}} +ip 0.0.0.0 -strictportbind -norestart +sv_setsteamaccount {{STEAM_ACC}}",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"gameserver Steam ID\"\r\n}",
+        "logs": "{}",
+        "stop": "quit"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# steamcmd Base Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\n\r\n## just in case someone removed the defaults.\r\nif [ \"${STEAM_USER}\" == \"\" ]; then\r\n    echo -e \"steam user is not set.\\n\"\r\n    echo -e \"Using anonymous user.\\n\"\r\n    STEAM_USER=anonymous\r\n    STEAM_PASS=\"\"\r\n    STEAM_AUTH=\"\"\r\nelse\r\n    echo -e \"user set to ${STEAM_USER}\"\r\nfi\r\n\r\n## download and install steamcmd\r\ncd \/tmp\r\nmkdir -p \/mnt\/server\/steamcmd\r\ncurl -sSL -o steamcmd.tar.gz https:\/\/steamcdn-a.akamaihd.net\/client\/installer\/steamcmd_linux.tar.gz\r\ntar -xzvf steamcmd.tar.gz -C \/mnt\/server\/steamcmd\r\nmkdir -p \/mnt\/server\/steamapps\r\ncd \/mnt\/server\/steamcmd\r\n\r\nchown -R root:root \/mnt\r\nexport HOME=\/mnt\/server\r\n\r\n## L4D2 may require a Windows platform pass before Linux download.\r\n.\/steamcmd.sh +force_install_dir \/mnt\/server +@sSteamCmdForcePlatformType windows +quit\r\n.\/steamcmd.sh +force_install_dir \/mnt\/server +login ${STEAM_USER} ${STEAM_PASS} ${STEAM_AUTH} +@sSteamCmdForcePlatformType linux +app_update ${SRCDS_APPID} ${EXTRA_FLAGS} validate +quit\r\n\r\nmkdir -p \/mnt\/server\/.steam\/sdk32\r\ncp -v linux32\/steamclient.so ..\/.steam\/sdk32\/steamclient.so\r\nmkdir -p \/mnt\/server\/.steam\/sdk64\r\ncp -v linux64\/steamclient.so ..\/.steam\/sdk64\/steamclient.so",
+            "container": "ghcr.io\/pterodactyl\/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Game ID",
+            "description": "Steam App ID of the Left 4 Dead 2 dedicated server.",
+            "env_variable": "SRCDS_APPID",
+            "default_value": "222860",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|regex:\/^(222860)$\/"
+        },
+        {
+            "name": "Workshop App ID",
+            "description": "Consumer game App ID used by Steam Workshop browse (550 for L4D2).",
+            "env_variable": "WORKSHOP_APPID",
+            "default_value": "550",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|regex:\/^(550)$\/"
+        },
+        {
+            "name": "Default Map",
+            "description": "The default map to use when starting the server.",
+            "env_variable": "SRCDS_MAP",
+            "default_value": "c1m1_hotel",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|regex:\/^(\\w{1,32})$\/"
+        },
+        {
+            "name": "Steam Game Server Login Token",
+            "description": "The Steam Game Server Login Token (GSLT). Generate one at https:\/\/steamcommunity.com\/dev\/managegameservers",
+            "env_variable": "STEAM_ACC",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|alpha_num|size:32"
+        },
+        {
+            "name": "Steam Username",
+            "description": "Steam account used by SteamCMD to download Workshop mods. Must be subscribed to the mods you install.",
+            "env_variable": "STEAM_USER",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:191"
+        },
+        {
+            "name": "Steam Password",
+            "description": "Password for the Steam account above.",
+            "env_variable": "STEAM_PASS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:191"
+        },
+        {
+            "name": "Steam Guard Code",
+            "description": "Steam Guard code if required during Workshop download.",
+            "env_variable": "STEAM_AUTH",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:191"
+        }
+    ]
+}

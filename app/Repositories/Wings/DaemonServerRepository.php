@@ -94,14 +94,17 @@ class DaemonServerRepository extends DaemonRepository
      *
      * @throws DaemonConnectionException
      */
-    public function executeAddon(array $data): void
+    public function executeAddon(array $data, ?int $timeout = null): void
     {
         Assert::isInstanceOf($this->server, Server::class);
 
         try {
-            $this->getHttpClient()->post("/api/servers/{$this->server->uuid}/addon", [
-                'json' => $data,
-            ]);
+            $options = ['json' => $data];
+            if ($timeout !== null) {
+                $options['timeout'] = $timeout;
+            }
+
+            $this->getHttpClient()->post("/api/servers/{$this->server->uuid}/addon", $options);
         } catch (GuzzleException $exception) {
             throw new DaemonConnectionException($exception);
         }

@@ -109,6 +109,16 @@
                                     (use o slug da pasta em <code>public/bg/</code>, ex.: <code>cod4</code>, <code>bo1</code>, <code>cs16</code>).
                                 </p>
                             </div>
+                            <div class="form-group">
+                                <div class="checkbox checkbox-primary no-margin-bottom">
+                                    <input id="pWarnSlotMismatch" name="warn_slot_mismatch" type="checkbox" value="1" @if($egg->warn_slot_mismatch) checked @endif />
+                                    <label for="pWarnSlotMismatch" class="strong">Aviso de slots acima do limite</label>
+                                    <p class="text-muted small">
+                                        Exibe um alerta no painel do cliente quando a query do jogo reportar mais slots
+                                        do que o valor da variável <code>SLOTS</code>. Usar menos ou igual slots é permitido.
+                                    </p>
+                                </div>
+                            </div>
 
                         </div>
                         <div class="col-sm-6">

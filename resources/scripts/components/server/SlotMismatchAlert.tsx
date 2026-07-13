@@ -18,7 +18,7 @@ const SlotMismatchAlert = () => {
         return null;
     }
 
-    const { configured, reported, env_variable: envVariable } = query.slots;
+    const { configured, reported } = query.slots;
 
     return (
         <ContentContainer css={tw`w-full min-w-0 mb-4`}>
@@ -26,7 +26,6 @@ const SlotMismatchAlert = () => {
                 {t('server.slots_mismatch_warning', {
                     reported,
                     configured,
-                    env: envVariable || '—',
                 })}
             </Alert>
         </ContentContainer>

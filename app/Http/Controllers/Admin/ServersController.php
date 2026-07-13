@@ -151,10 +151,15 @@ class ServersController extends Controller
                 'allocation_id', 'add_allocations', 'remove_allocations',
                 'memory', 'swap', 'io', 'cpu', 'threads', 'disk',
                 'database_limit', 'allocation_limit', 'backup_limit', 'oom_disabled',
-                'fastdl_enabled',
+                'fastdl_enabled', 'warn_slot_mismatch',
             ]);
             // Checkboxes are not submitted when unchecked; default to false explicitly.
             $buildData['fastdl_enabled'] = $request->boolean('fastdl_enabled');
+
+            if ($request->has('warn_slot_mismatch')) {
+                $warnSlotMismatch = $request->input('warn_slot_mismatch');
+                $buildData['warn_slot_mismatch'] = $warnSlotMismatch === '' ? null : $request->boolean('warn_slot_mismatch');
+            }
 
             $this->buildModificationService->handle($server, $buildData);
         } catch (DataValidationException $exception) {

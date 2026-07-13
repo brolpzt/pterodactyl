@@ -144,7 +144,7 @@ return [
             'viewer' => 'TS3 Viewer',
             'query' => 'Query Terminal',
         ],
-        'slots_mismatch_warning' => 'The server reports :reported slots in the game query, above the panel limit (:configured in :env). Using fewer or equal slots is allowed; reduce in-game slots or contact support.',
+        'slots_mismatch_warning' => 'The server reports :reported slots in the game query, above the panel SLOTS limit (:configured). Using fewer or equal slots is allowed; reduce in-game slots or contact support.',
     ],
     'server_overview' => [
         'title' => 'Home',

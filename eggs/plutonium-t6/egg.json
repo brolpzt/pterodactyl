@@ -13,7 +13,7 @@
         "Windows": "windows"
     },
     "file_denylist": [],
-    "startup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$d=$PWD.Path; & (Join-Path $d 'bin\\plutonium-bootstrapper-win32.exe') {{PLUTONIUM_MODE}} $d -dedicated +set key {{PLUTONIUM_KEY}} +set fs_game '{{FS_GAME}}' +exec '{{DEDICATED_CFG}}' +set net_port {{SERVER_PORT}} +set sv_maxclients {{MAX_CLIENTS}} +map_rotate\"",
+    "startup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$d=$PWD.Path; & (Join-Path $d 'bin\\plutonium-bootstrapper-win32.exe') {{PLUTONIUM_MODE}} $d -dedicated +set key {{PLUTONIUM_KEY}} +set fs_game '{{FS_GAME}}' +exec '{{DEDICATED_CFG}}' +set net_port {{SERVER_PORT}} +set sv_maxclients {{SLOTS}} +map_rotate\"",
     "config": {
         "files": "{}",
         "startup": "{\r\n    \"done\": \"Server restarts\"\r\n}",
@@ -79,33 +79,13 @@
             "field_type": "text"
         },
         {
-            "name": "Max Clients",
+            "name": "Slots",
             "description": "Máximo de jogadores (MP: 1-18, ZM: 1-8)",
-            "env_variable": "MAX_CLIENTS",
+            "env_variable": "SLOTS",
             "default_value": "18",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|integer|between:1,64",
-            "field_type": "text"
-        },
-        {
-            "name": "Slots Env Variable",
-            "description": "Variável de ambiente com o limite de slots no painel (apenas admin).",
-            "env_variable": "SLOTS_ENV_VARIABLE",
-            "default_value": "MAX_CLIENTS",
-            "user_viewable": false,
-            "user_editable": false,
-            "rules": "required|string|max:64",
-            "field_type": "text"
-        },
-        {
-            "name": "Warn Slot Mismatch",
-            "description": "Exibir aviso quando a query reportar mais slots que o limite do painel (apenas admin).",
-            "env_variable": "WARN_SLOT_MISMATCH",
-            "default_value": "1",
-            "user_viewable": false,
-            "user_editable": false,
-            "rules": "required|boolean",
             "field_type": "text"
         },
         {

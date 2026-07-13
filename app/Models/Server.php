@@ -45,6 +45,7 @@ use Pterodactyl\Exceptions\Http\Server\ServerStateConflictException;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $installed_at
  * @property bool $fastdl_enabled
+ * @property bool|null $warn_slot_mismatch
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\ActivityLog[] $activity
  * @property int|null $activity_count
  * @property Allocation|null $allocation
@@ -172,6 +173,7 @@ class Server extends Model
         'allocation_limit' => 'sometimes|nullable|integer|min:0',
         'backup_limit' => 'present|nullable|integer|min:0',
         'fastdl_enabled' => 'sometimes|boolean',
+        'warn_slot_mismatch' => 'sometimes|nullable|boolean',
     ];
 
     /**

@@ -54,7 +54,7 @@ export const stringsEn = {
             query: 'Query Terminal',
         },
         slots_mismatch_warning:
-            'The server reports {{reported}} slots in the game query, above the panel limit ({{configured}} in {{env}}). Using fewer or equal slots is allowed; reduce in-game slots or contact support.',
+            'The server reports {{reported}} slots in the game query, above the panel SLOTS limit ({{configured}}). Using fewer or equal slots is allowed; reduce in-game slots or contact support.',
     },
     server_overview: {
         title: 'Home',
@@ -343,7 +343,7 @@ export const stringsPt = {
             query: 'Terminal Query',
         },
         slots_mismatch_warning:
-            'O servidor reporta {{reported}} slots na query, acima do limite configurado no painel ({{configured}} em {{env}}). Usar menos ou igual slots é permitido; reduza os slots no jogo ou contacte o suporte.',
+            'O servidor reporta {{reported}} slots na query, acima do limite SLOTS configurado no painel ({{configured}}). Usar menos ou igual slots é permitido; reduza os slots no jogo ou contacte o suporte.',
     },
     server_overview: {
         title: 'Início',
@@ -632,7 +632,7 @@ export const stringsEs = {
             query: 'Terminal Query',
         },
         slots_mismatch_warning:
-            'El servidor reporta {{reported}} slots en la query, por encima del límite del panel ({{configured}} en {{env}}). Usar menos o igual slots está permitido; reduzca los slots en el juego o contacte con soporte.',
+            'El servidor reporta {{reported}} slots en la query, por encima del límite SLOTS del panel ({{configured}}). Usar menos o igual slots está permitido; reduzca los slots en el juego o contacte con soporte.',
     },
     server_overview: {
         title: 'Inicio',

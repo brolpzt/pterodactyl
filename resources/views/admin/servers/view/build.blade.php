@@ -126,6 +126,15 @@
                                     </div>
                                     <p class="text-muted small">If enabled, this server will be able to synchronize its files to a FastDL node.</p>
                                 </div>
+                                <div class="form-group col-xs-12">
+                                    <label for="pWarnSlotMismatch" class="control-label">Aviso de slots acima do limite</label>
+                                    <select id="pWarnSlotMismatch" name="warn_slot_mismatch" class="form-control">
+                                        <option value="" @if(is_null($server->getAttributes()['warn_slot_mismatch'] ?? null)) selected @endif>Padrão do egg</option>
+                                        <option value="1" @if(($server->getAttributes()['warn_slot_mismatch'] ?? null) === 1) selected @endif>Ativar aviso</option>
+                                        <option value="0" @if(($server->getAttributes()['warn_slot_mismatch'] ?? null) === 0) selected @endif>Desativar aviso</option>
+                                    </select>
+                                    <p class="text-muted small">Compara a query do jogo com a variável <code>SLOTS</code>. Só alerta quando o servidor reportar <strong>mais</strong> slots que o painel.</p>
+                                </div>
                             </div>
                         </div>
                     </div>

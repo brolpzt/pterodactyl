@@ -39,7 +39,7 @@ class GameQueryControllerTest extends ClientApiIntegrationTestCase
             'slots' => [
                 'configured' => null,
                 'reported' => 32,
-                'env_variable' => null,
+                'env_variable' => 'SLOTS',
                 'mismatch' => false,
                 'warn_enabled' => false,
                 'show_warning' => false,

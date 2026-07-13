@@ -15,8 +15,7 @@ const ServerContentBlock: React.FC<Props> = ({ title, children, ...props }) => {
         <PageContentBlock dense title={`${name} | ${title}`} {...props}>
             {isInstalling && (
                 <Alert type={'warning'} className={'mb-4'}>
-                    Este servidor está em processo de instalação. Algumas ações podem ficar indisponíveis até a
-                    conclusão.
+                    Aguarde a instalação. Arquivos e controles ficam disponíveis ao terminar.
                 </Alert>
             )}
             {children}

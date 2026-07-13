@@ -49,17 +49,19 @@ class AuthenticateServerAccess
         try {
             $server->validateCurrentState();
         } catch (ServerStateConflictException $exception) {
-            // Still allow users to get information about their server if it is installing or
-            // being transferred.
-            if (!$request->routeIs('api:client:server.view')) {
+            if ($request->routeIs('api:client:server.view')) {
+                // Allow fetching server metadata during conflict states.
+            } elseif ($server->status === Server::STATUS_INSTALLING) {
+                // During installation only websocket is allowed besides server.view (install console output).
+                if (!$request->routeIs($this->except)) {
+                    throw $exception;
+                }
+            } else {
                 if (($server->isSuspended() || $server->node->isUnderMaintenance()) && !$request->routeIs('api:client:server.resources')) {
                     throw $exception;
                 }
 
-                // Allow websocket during installation so users can follow install output in the console.
-                if ($server->status === Server::STATUS_INSTALLING && $request->routeIs($this->except)) {
-                    // Continue to the controller.
-                } elseif (!$user->root_admin || !$request->routeIs($this->except)) {
+                if (!$user->root_admin || !$request->routeIs($this->except)) {
                     throw $exception;
                 }
             }

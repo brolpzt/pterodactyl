@@ -30,6 +30,7 @@ interface Props {
 
 export default ({ backup }: Props) => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
+    const isInstalling = ServerContext.useStoreState((state) => state.server.isInstalling);
     const setServerFromState = ServerContext.useStoreActions((actions) => actions.server.setServerFromState);
     const [modal, setModal] = useState('');
     const [loading, setLoading] = useState(false);
@@ -181,7 +182,7 @@ export default ({ backup }: Props) => {
                         </DropdownButtonRow>
                     </Can>
                     <Can action={'backup.restore'}>
-                        <DropdownButtonRow onClick={() => setModal('restore')}>
+                        <DropdownButtonRow disabled={isInstalling} onClick={() => setModal('restore')}>
                             <FontAwesomeIcon fixedWidth icon={faBoxOpen} css={dropdownMenuIcon} />
                             <span css={tw`ml-2 truncate`}>Restore</span>
                         </DropdownButtonRow>

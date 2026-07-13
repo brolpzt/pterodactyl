@@ -14,8 +14,10 @@ export default ({ className }: PowerButtonProps) => {
     const [open, setOpen] = useState(false);
     const status = ServerContext.useStoreState((state) => state.status.value);
     const instance = ServerContext.useStoreState((state) => state.socket.instance);
+    const isInstalling = ServerContext.useStoreState((state) => state.server.isInstalling);
 
     const killable = status === 'stopping';
+    const actionsDisabled = isInstalling;
     const onButtonClick = (
         action: PowerAction | 'kill-confirmed',
         e: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -52,7 +54,7 @@ export default ({ className }: PowerButtonProps) => {
             <Can action={'control.start'}>
                 <Button
                     className={'flex-1'}
-                    disabled={status !== 'offline'}
+                    disabled={actionsDisabled || status !== 'offline'}
                     onClick={onButtonClick.bind(this, 'start')}
                 >
                     Start
@@ -62,7 +64,7 @@ export default ({ className }: PowerButtonProps) => {
                 <Button
                     variant={Button.Variants.Secondary}
                     className={'flex-1'}
-                    disabled={!status}
+                    disabled={actionsDisabled || !status}
                     onClick={onButtonClick.bind(this, 'restart')}
                 >
                     Restart
@@ -71,7 +73,7 @@ export default ({ className }: PowerButtonProps) => {
             <Can action={'control.stop'}>
                 <Button.Danger
                     className={'flex-1'}
-                    disabled={status === 'offline'}
+                    disabled={actionsDisabled || status === 'offline'}
                     onClick={onButtonClick.bind(this, killable ? 'kill' : 'stop')}
                 >
                     {killable ? 'Kill' : 'Stop'}

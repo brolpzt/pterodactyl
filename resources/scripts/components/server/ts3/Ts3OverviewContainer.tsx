@@ -23,6 +23,7 @@ const actionLabels: Record<Ts3Action, string> = {
 
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
+    const isInstalling = ServerContext.useStoreState((state) => state.server.isInstalling);
     const [data, setData] = useState<Ts3Overview | null>(null);
     const [error, setError] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -93,7 +94,7 @@ export default () => {
             <TitledGreyBox title={'Service management'}>
                 <div css={tw`grid grid-cols-2 md:grid-cols-4 gap-3`}>
                     {(['start', 'stop', 'restart', 'reinstall'] as Ts3Action[]).map((item) => (
-                        <Button key={item} disabled={action !== null} onClick={() => onAction(item)}>
+                        <Button key={item} disabled={isInstalling || action !== null} onClick={() => onAction(item)}>
                             {action === item ? <Spinner size={Spinner.Size.SMALL} /> : actionLabels[item]}
                         </Button>
                     ))}

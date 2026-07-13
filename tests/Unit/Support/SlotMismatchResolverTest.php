@@ -4,34 +4,57 @@ namespace Pterodactyl\Tests\Unit\Support;
 
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use PHPUnit\Framework\TestCase;
 use Pterodactyl\Models\Egg;
-use Pterodactyl\Models\EggVariable;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Services\Servers\EnvironmentService;
 use Pterodactyl\Support\SlotMismatchResolver;
+use Pterodactyl\Tests\TestCase;
 
 class SlotMismatchResolverTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
+    public function testParseSlotsFromEnvironmentUsesSlotsValue(): void
+    {
+        $this->assertSame(16, SlotMismatchResolver::parseSlotsFromEnvironment([
+            'SLOTS' => '16',
+        ]));
+    }
+
+    public function testParseSlotsFromEnvironmentFallsBackToMaxClients(): void
+    {
+        $this->assertSame(12, SlotMismatchResolver::parseSlotsFromEnvironment([
+            'MAX_CLIENTS' => '12',
+        ]));
+    }
+
+    public function testParseSlotsFromEnvironmentPrefersSlotsOverMaxClients(): void
+    {
+        $this->assertSame(16, SlotMismatchResolver::parseSlotsFromEnvironment([
+            'SLOTS' => '16',
+            'MAX_CLIENTS' => '8',
+        ]));
+    }
+
     public function testMismatchWhenReportedSlotsExceedConfiguredSlots(): void
     {
-        $server = $this->makeServer(slots: '18', eggWarn: true);
+        $server = $this->makeServer(eggWarn: true);
+        $this->bindEnvironment(['SLOTS' => '16']);
 
-        $result = SlotMismatchResolver::resolve($server, true, 32);
+        $result = SlotMismatchResolver::resolve($server, true, 30);
 
         $this->assertTrue($result['mismatch']);
         $this->assertTrue($result['show_warning']);
-        $this->assertSame(18, $result['configured']);
-        $this->assertSame(32, $result['reported']);
-        $this->assertSame('SLOTS', $result['env_variable']);
+        $this->assertSame(16, $result['configured']);
+        $this->assertSame(30, $result['reported']);
     }
 
     public function testNoMismatchWhenReportedSlotsAreEqualToConfiguredSlots(): void
     {
-        $server = $this->makeServer(slots: '18', eggWarn: true);
+        $server = $this->makeServer(eggWarn: true);
+        $this->bindEnvironment(['SLOTS' => '16']);
 
-        $result = SlotMismatchResolver::resolve($server, true, 18);
+        $result = SlotMismatchResolver::resolve($server, true, 16);
 
         $this->assertFalse($result['mismatch']);
         $this->assertFalse($result['show_warning']);
@@ -39,7 +62,8 @@ class SlotMismatchResolverTest extends TestCase
 
     public function testNoMismatchWhenReportedSlotsAreBelowConfiguredSlots(): void
     {
-        $server = $this->makeServer(slots: '18', eggWarn: true);
+        $server = $this->makeServer(eggWarn: true);
+        $this->bindEnvironment(['SLOTS' => '16']);
 
         $result = SlotMismatchResolver::resolve($server, true, 12);
 
@@ -49,9 +73,10 @@ class SlotMismatchResolverTest extends TestCase
 
     public function testWarningDisabledWhenEggSettingIsOff(): void
     {
-        $server = $this->makeServer(slots: '18', eggWarn: false);
+        $server = $this->makeServer(eggWarn: false);
+        $this->bindEnvironment(['SLOTS' => '16']);
 
-        $result = SlotMismatchResolver::resolve($server, true, 32);
+        $result = SlotMismatchResolver::resolve($server, true, 30);
 
         $this->assertTrue($result['mismatch']);
         $this->assertFalse($result['warn_enabled']);
@@ -60,9 +85,10 @@ class SlotMismatchResolverTest extends TestCase
 
     public function testNoWarningWhenServerIsOffline(): void
     {
-        $server = $this->makeServer(slots: '18', eggWarn: true);
+        $server = $this->makeServer(eggWarn: true);
+        $this->bindEnvironment(['SLOTS' => '16']);
 
-        $result = SlotMismatchResolver::resolve($server, false, 32);
+        $result = SlotMismatchResolver::resolve($server, false, 30);
 
         $this->assertFalse($result['mismatch']);
         $this->assertFalse($result['show_warning']);
@@ -70,22 +96,28 @@ class SlotMismatchResolverTest extends TestCase
 
     public function testServerOverrideDisablesWarning(): void
     {
-        $server = $this->makeServer(slots: '18', eggWarn: true, serverWarn: false);
+        $server = $this->makeServer(eggWarn: true, serverWarn: false);
+        $this->bindEnvironment(['SLOTS' => '16']);
 
-        $result = SlotMismatchResolver::resolve($server, true, 32);
+        $result = SlotMismatchResolver::resolve($server, true, 30);
 
         $this->assertTrue($result['mismatch']);
         $this->assertFalse($result['warn_enabled']);
         $this->assertFalse($result['show_warning']);
     }
 
-    private function makeServer(string $slots, bool $eggWarn, ?bool $serverWarn = null): Server
+    /**
+     * @param array<string, string> $environment
+     */
+    private function bindEnvironment(array $environment): void
     {
-        $variable = Mockery::mock(EggVariable::class)->makePartial();
-        $variable->env_variable = 'SLOTS';
-        $variable->default_value = $slots;
-        $variable->server_value = null;
+        $service = Mockery::mock(EnvironmentService::class);
+        $service->shouldReceive('handle')->andReturn($environment);
+        $this->app->instance(EnvironmentService::class, $service);
+    }
 
+    private function makeServer(bool $eggWarn, ?bool $serverWarn = null): Server
+    {
         $egg = Mockery::mock(Egg::class)->makePartial();
         $egg->warn_slot_mismatch = $eggWarn;
 
@@ -96,7 +128,7 @@ class SlotMismatchResolverTest extends TestCase
         }
         $server->shouldReceive('getAttributes')->andReturn($attributes);
         $server->setRelation('egg', $egg);
-        $server->setRelation('variables', collect([$variable]));
+        $server->setRelation('variables', collect());
 
         return $server;
     }

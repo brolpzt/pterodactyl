@@ -3,10 +3,17 @@
 namespace Pterodactyl\Support;
 
 use Pterodactyl\Models\Server;
+use Pterodactyl\Services\Servers\EnvironmentService;
 
 class SlotMismatchResolver
 {
     public const SLOTS_ENV = 'SLOTS';
+
+    /** @var list<string> */
+    private const SLOTS_ENV_FALLBACKS = [
+        self::SLOTS_ENV,
+        'MAX_CLIENTS',
+    ];
 
     /**
      * Resolve slot mismatch metadata for a game query response.
@@ -59,24 +66,19 @@ class SlotMismatchResolver
 
     public static function resolveConfiguredSlots(Server $server): ?int
     {
-        $value = self::resolveVariableValue($server, self::SLOTS_ENV);
-        if ($value === null || !ctype_digit($value)) {
-            return null;
-        }
-
-        return (int) $value;
+        return self::parseSlotsFromEnvironment(app(EnvironmentService::class)->handle($server));
     }
 
-    private static function resolveVariableValue(Server $server, string $envVariable): ?string
+    /**
+     * @param array<string, mixed> $environment
+     */
+    public static function parseSlotsFromEnvironment(array $environment): ?int
     {
-        foreach ($server->variables as $variable) {
-            if ($variable->env_variable !== $envVariable) {
-                continue;
+        foreach (self::SLOTS_ENV_FALLBACKS as $key) {
+            $value = trim((string) ($environment[$key] ?? ''));
+            if ($value !== '' && ctype_digit($value)) {
+                return (int) $value;
             }
-
-            $value = $variable->server_value ?? $variable->default_value;
-
-            return trim((string) $value);
         }
 
         return null;

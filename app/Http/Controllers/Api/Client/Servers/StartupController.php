@@ -52,7 +52,7 @@ class StartupController extends ClientApiController
      */
     public function update(UpdateStartupVariableRequest $request, Server $server): array
     {
-        $variable = $server->variables()->where('env_variable', $request->input('key'))->first();
+        $variable = $server->variables()->where('env_variable', $request->input('key'))->orderByDesc('id')->first();
 
         if (is_null($variable) || !$variable->user_viewable) {
             throw new BadRequestHttpException('The environment variable you are trying to edit does not exist.');

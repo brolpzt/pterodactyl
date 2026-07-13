@@ -144,7 +144,7 @@ return [
             'viewer' => 'TS3 Viewer',
             'query' => 'Query Terminal',
         ],
-        'slots_mismatch_warning' => 'The server reports :reported slots in the game query, above the panel SLOTS limit (:configured). Using fewer or equal slots is allowed; reduce in-game slots or contact support.',
+        'slots_mismatch_warning' => 'The server is advertising a maximum of :reported players, above your contracted limit. Exceeding your plan limit is not allowed and your server may be shut down. Maximum allowed: :configured slots. To upgrade your slot limit, contact support.',
     ],
     'server_overview' => [
         'title' => 'Home',

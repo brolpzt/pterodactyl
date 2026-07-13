@@ -21,8 +21,8 @@ const SlotMismatchAlert = () => {
     const { configured, reported } = query.slots;
 
     return (
-        <ContentContainer css={tw`w-full min-w-0 mb-4`}>
-            <Alert type={'warning'} className={'text-sm py-2 px-3 [&>svg]:w-4 [&>svg]:h-4 [&>svg]:mr-1.5'}>
+        <ContentContainer css={tw`w-full min-w-0 mt-4 mb-4`}>
+            <Alert type={'danger'} className={'text-sm py-2 px-3 [&>svg]:w-4 [&>svg]:h-4 [&>svg]:mr-1.5'}>
                 {t('server.slots_mismatch_warning', {
                     reported,
                     configured,

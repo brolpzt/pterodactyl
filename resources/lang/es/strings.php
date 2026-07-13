@@ -144,7 +144,7 @@ return [
             'viewer' => 'Visor TS3',
             'query' => 'Terminal Query',
         ],
-        'slots_mismatch_warning' => 'El servidor reporta :reported slots en la query, por encima del límite SLOTS del panel (:configured). Usar menos o igual slots está permitido; reduzca los slots en el juego o contacte con soporte.',
+        'slots_mismatch_warning' => 'El servidor está anunciando un máximo de :reported jugadores, por encima del contratado. No está permitido superar el límite de su plan — el servidor podría ser apagado. Máximo permitido: :configured slots. Para contratar más slots, contacte con soporte.',
     ],
     'server_overview' => [
         'title' => 'Inicio',

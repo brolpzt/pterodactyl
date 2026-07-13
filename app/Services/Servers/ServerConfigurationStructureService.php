@@ -87,6 +87,8 @@ class ServerConfigurationStructureService
             'egg' => [
                 'id' => $server->egg->uuid,
                 'file_denylist' => $server->egg->inherit_file_denylist,
+                'command_transmission_type' => $server->egg->command_transmission_type,
+                'rcon_protocol' => $server->egg->rcon_protocol,
             ],
         ];
     }

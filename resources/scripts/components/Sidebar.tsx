@@ -375,7 +375,7 @@ const ServerLinks = () => {
         .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
         .filter((route) => route.path !== '/ts3/query' || rootAdmin)
         .filter((route) => !(isCs16 && isAmxxRoute(route.path)))
-        .filter((route) => !(hasWebRcon && isWebRconRoute(route.path)))
+        .filter((route) => !isWebRconRoute(route.path))
         .filter((route) => route.path !== '/dns' || dnsEnabled || eggFeatures.includes('dns'))
         .filter((route) => route.path !== '/workshop' || eggFeatures.includes('workshop'));
 

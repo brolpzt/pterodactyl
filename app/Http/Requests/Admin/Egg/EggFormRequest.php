@@ -24,6 +24,8 @@ class EggFormRequest extends AdminFormRequest
             'config_files' => 'required_without:config_from|nullable|json',
             'gamedig' => 'nullable|string|max:191',
             'warn_slot_mismatch' => 'sometimes|boolean',
+            'command_transmission_type' => 'required|string|in:stdin,rcon',
+            'rcon_protocol' => 'required_if:command_transmission_type,rcon|nullable|string|in:source,quake3,webrcon',
         ];
 
         if ($this->method() === 'POST') {

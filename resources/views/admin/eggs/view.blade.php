@@ -189,6 +189,23 @@
                                 <p class="text-muted small">The command that should be sent to server processes to stop them gracefully. If you need to send a <code>SIGINT</code> you should enter <code>^C</code> here.</p>
                             </div>
                             <div class="form-group">
+                                <label for="pCommandTransmissionType" class="form-label">Command Transmission Type</label>
+                                <select name="command_transmission_type" id="pCommandTransmissionType" class="form-control">
+                                    <option value="stdin" {{ $egg->command_transmission_type !== 'rcon' ? 'selected' : '' }}>Console (Standard Stdin)</option>
+                                    <option value="rcon" {{ $egg->command_transmission_type === 'rcon' ? 'selected' : '' }}>RCON Connection</option>
+                                </select>
+                                <p class="text-muted small">Select how console commands are sent to the game server.</p>
+                            </div>
+                            <div class="form-group" id="rconProtocolGroup" style="{{ $egg->command_transmission_type === 'rcon' ? '' : 'display: none;' }}">
+                                <label for="pRconProtocol" class="form-label">RCON Protocol</label>
+                                <select name="rcon_protocol" id="pRconProtocol" class="form-control">
+                                    <option value="source" {{ $egg->rcon_protocol === 'source' ? 'selected' : '' }}>Source RCON (Minecraft, Source, Palworld, etc.)</option>
+                                    <option value="quake3" {{ $egg->rcon_protocol === 'quake3' ? 'selected' : '' }}>Quake3 RCON (Quake 3 Engine UDP)</option>
+                                    <option value="webrcon" {{ $egg->rcon_protocol === 'webrcon' ? 'selected' : '' }}>WebRcon (Rust/7Days WebSocket JSON)</option>
+                                </select>
+                                <p class="text-muted small">The specific RCON protocol to use for this game server.</p>
+                            </div>
+                            <div class="form-group">
                                 <label for="pConfigLogs" class="form-label">Log Configuration</label>
                                 <textarea data-action="handle-tabs" id="pConfigLogs" name="config_logs" class="form-control" rows="6">{{ ! is_null($egg->config_logs) ? json_encode(json_decode($egg->config_logs), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : '' }}</textarea>
                                 <p class="text-muted small">This should be a JSON representation of where log files are stored, and whether or not the daemon should be creating custom logs.</p>
@@ -378,6 +395,13 @@
     $('#pWorkshopSyncDriver').on('change', function () {
         var id = $(this).val();
         $('#pWorkshopSyncDriverHelp').text(id ? (workshopDriverDescriptions[id] || '') : 'Deixe em branco para detectar automaticamente com base no nome do egg.');
+    });
+    $('#pCommandTransmissionType').on('change', function() {
+        if ($(this).val() === 'rcon') {
+            $('#rconProtocolGroup').slideDown();
+        } else {
+            $('#rconProtocolGroup').slideUp();
+        }
     });
     </script>
 @endsection

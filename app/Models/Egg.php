@@ -119,6 +119,8 @@ class Egg extends Model
         'warn_slot_mismatch',
         'workshop_app_id',
         'workshop_sync_driver',
+        'command_transmission_type',
+        'rcon_protocol',
     ];
 
     /**
@@ -156,6 +158,8 @@ class Egg extends Model
         'config_files' => 'required_without:config_from|nullable|json',
         'update_url' => 'sometimes|nullable|string',
         'force_outgoing_ip' => 'sometimes|boolean',
+        'command_transmission_type' => 'sometimes|string|in:stdin,rcon',
+        'rcon_protocol' => 'sometimes|nullable|string|in:source,quake3,webrcon',
     ];
 
     protected $attributes = [

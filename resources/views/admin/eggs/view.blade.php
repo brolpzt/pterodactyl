@@ -147,6 +147,9 @@
                                         @if(!in_array('workshop', $egg->features ?? []))
                                             <option value="workshop">workshop</option>
                                         @endif
+                                        @if(!in_array('webrcon', $egg->features ?? []))
+                                            <option value="webrcon">webrcon</option>
+                                        @endif
                                     </select>
                                     <p class="text-muted small">Additional features belonging to the egg. Useful for configuring additional panel modifications.</p>
                                 </div>

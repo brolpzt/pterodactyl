@@ -81,6 +81,13 @@ class Permission extends Model
     public const ACTION_AMXX_CHAT = 'amxx.chat';
     public const ACTION_AMXX_CVAR = 'amxx.cvar';
 
+    public const ACTION_WEBRCON_READ = 'webrcon.read';
+    public const ACTION_WEBRCON_KICK = 'webrcon.kick';
+    public const ACTION_WEBRCON_BAN = 'webrcon.ban';
+    public const ACTION_WEBRCON_MAP = 'webrcon.map';
+    public const ACTION_WEBRCON_CHAT = 'webrcon.chat';
+    public const ACTION_WEBRCON_DVAR = 'webrcon.dvar';
+
     /**
      * Should timestamps be used on this model.
      */
@@ -259,6 +266,18 @@ class Permission extends Model
             'keys' => [
                 'read' => 'Allows browsing Steam Workshop items for this server.',
                 'manage' => 'Allows adding and removing Steam Workshop items from this server.',
+            ],
+        ],
+
+        'webrcon' => [
+            'description' => 'Permissions for WebRCON management via server console (id Tech 3 games).',
+            'keys' => [
+                'read' => 'Allows viewing the WebRCON page and listing players from the server console.',
+                'kick' => 'Allows kicking players via WebRCON.',
+                'ban' => 'Allows banning players via WebRCON.',
+                'map' => 'Allows changing the server map via WebRCON.',
+                'chat' => 'Allows sending admin chat messages via WebRCON.',
+                'dvar' => 'Allows viewing and changing common server dvars via WebRCON.',
             ],
         ],
     ];

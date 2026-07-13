@@ -51,6 +51,7 @@ export default () => {
     const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
     const gamedig = ServerContext.useStoreState((state) => state.server.data?.gamedig);
     const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
+    const eggFeatures = ServerContext.useStoreState((state) => state.server.data?.eggFeatures ?? []);
     const allocation = ServerContext.useStoreState((state) => state.server.data?.allocations.find((a) => a.isDefault));
     const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
@@ -113,10 +114,12 @@ export default () => {
 
     const isTs3 = eggId === 12;
     const isCs16 = isCs16Server(gamedig, eggName);
+    const hasWebRcon = eggFeatures.includes('webrcon');
     const isBlockedRouteForTs3 = (path: string) =>
         path === '/backups' || ((!rootAdmin) && (path === '/console' || path === '/files' || path === '/files/:action(edit|new)'));
     const isTs3OnlyRoute = (path: string) => path.startsWith('/ts3');
     const isAmxxOnlyRoute = (path: string) => path.startsWith('/amxx');
+    const isWebRconOnlyRoute = (path: string) => path.startsWith('/webrcon');
     const isRootAdminOnlyTs3Route = (path: string) => path === '/ts3/query';
 
     const serverReady = Boolean(uuid && id);
@@ -167,6 +170,7 @@ export default () => {
                                                         (isTs3 && isBlockedRouteForTs3(path)) ||
                                                         (!isTs3 && isTs3OnlyRoute(path)) ||
                                                         (!isCs16 && isAmxxOnlyRoute(path)) ||
+                                                        (!hasWebRcon && isWebRconOnlyRoute(path)) ||
                                                         (isTs3 && isRootAdminOnlyTs3Route(path) && !rootAdmin) ? (
                                                             <Route key={path} path={to(path)} exact>
                                                                 <Redirect to={to('/')} />

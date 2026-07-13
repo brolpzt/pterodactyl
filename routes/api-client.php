@@ -229,4 +229,18 @@ Route::group([
         Route::get('/cvars/{name}', [Client\Servers\AmxxController::class, 'queryCvar']);
         Route::post('/cvars', [Client\Servers\AmxxController::class, 'setCvar']);
     });
+
+    Route::group(['prefix' => '/webrcon'], function () {
+        Route::get('/overview', [Client\Servers\WebRconController::class, 'overview']);
+        Route::get('/players', [Client\Servers\WebRconController::class, 'listPlayers']);
+        Route::post('/kick', [Client\Servers\WebRconController::class, 'kickPlayer']);
+        Route::post('/ban', [Client\Servers\WebRconController::class, 'banPlayer']);
+        Route::get('/maps', [Client\Servers\WebRconController::class, 'listMaps']);
+        Route::post('/maps', [Client\Servers\WebRconController::class, 'changeMap']);
+        Route::post('/say', [Client\Servers\WebRconController::class, 'sendSay']);
+        Route::post('/tell', [Client\Servers\WebRconController::class, 'sendTell']);
+        Route::get('/dvars', [Client\Servers\WebRconController::class, 'listDvars']);
+        Route::get('/dvars/{name}', [Client\Servers\WebRconController::class, 'queryDvar']);
+        Route::post('/dvars', [Client\Servers\WebRconController::class, 'setDvar']);
+    });
 });

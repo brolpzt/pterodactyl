@@ -217,6 +217,7 @@ const ServerLinks = () => {
     const { t } = useTranslation('strings');
     const isTs3 = eggId === 12;
     const isCs16 = isCs16Server(gamedig, eggName);
+    const hasWebRcon = eggFeatures.includes('webrcon');
 
     const match = useRouteMatch<{ id: string }>('/server/:id');
 
@@ -264,6 +265,8 @@ const ServerLinks = () => {
             case 'AMXX Admins': return faUsers;
             case 'server.amxx.bans':
             case 'AMXX Bans': return faShieldAlt;
+            case 'server.webrcon.web':
+            case 'WebRCON': return faTerminal;
             case 'server.ts3.snapshots':
             case 'Snapshots': return faCloudUploadAlt;
             case 'server.ts3.bans':
@@ -310,8 +313,10 @@ const ServerLinks = () => {
         '/settings',
     ];
     const amxxRouteOrder = ['/amxx', '/amxx/admins', '/amxx/bans'];
+    const webrconRouteOrder = ['/webrcon'];
 
     const isAmxxRoute = (path: string) => path.startsWith('/amxx');
+    const isWebRconRoute = (path: string) => path.startsWith('/webrcon');
 
     const sortRoutes = (routeList: typeof routes.server, order: string[]) =>
         routeList
@@ -370,6 +375,7 @@ const ServerLinks = () => {
         .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
         .filter((route) => route.path !== '/ts3/query' || rootAdmin)
         .filter((route) => !(isCs16 && isAmxxRoute(route.path)))
+        .filter((route) => !(hasWebRcon && isWebRconRoute(route.path)))
         .filter((route) => route.path !== '/dns' || dnsEnabled || eggFeatures.includes('dns'))
         .filter((route) => route.path !== '/workshop' || eggFeatures.includes('workshop'));
 
@@ -386,12 +392,20 @@ const ServerLinks = () => {
         )
         : [];
 
+    const webrconRoutes = hasWebRcon
+        ? sortRoutes(
+            routes.server.filter((route) => isWebRconRoute(route.path)),
+            webrconRouteOrder
+        )
+        : [];
+
     return (
         <>
-            {amxxRoutes.length > 0 && (
+            {(amxxRoutes.length > 0 || webrconRoutes.length > 0) && (
                 <>
                     <SectionTitle collapsed={collapsed}>{t('nav.quick_menu')}</SectionTitle>
                     {amxxRoutes.map((route) => renderServerRoute(route))}
+                    {webrconRoutes.map((route) => renderServerRoute(route))}
                 </>
             )}
 

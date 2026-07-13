@@ -136,6 +136,9 @@ return [
             'admins' => 'AMXX Admins',
             'bans' => 'AMXX Bans',
         ],
+        'webrcon' => [
+            'web' => 'WebRCON',
+        ],
         'ts3' => [
             'snapshots' => 'Instantáneas',
             'bans' => 'Bans',
@@ -288,6 +291,9 @@ return [
         'ban_no_steamid' => 'Este jugador no tiene SteamID válido para ban.',
         'ban_no_ip' => 'Este jugador no tiene IP válido para ban.',
         'kick_reason' => 'Kick vía AMXX Web',
+    ],
+    'server_webrcon' => [
+        'title' => 'WebRCON',
     ],
     'common' => [
         'offline' => 'Desconectado',

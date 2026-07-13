@@ -31,6 +31,7 @@ const Ts3QueryTerminalContainer = lazy(() => import('@/components/server/ts3/Ts3
 const AmxxAdminsContainer = lazy(() => import('@/components/server/amxx/AmxxAdminsContainer'));
 const AmxxBansContainer = lazy(() => import('@/components/server/amxx/AmxxBansContainer'));
 const AmxxWebContainer = lazy(() => import('@/components/server/amxx/AmxxWebContainer'));
+const WebRconContainer = lazy(() => import('@/components/server/webrcon/WebRconContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -261,6 +262,14 @@ export default {
             name: 'AMXX Bans',
             nameKey: 'server.amxx.bans',
             component: AmxxBansContainer,
+        },
+        {
+            path: '/webrcon',
+            permission: ['webrcon.read', 'control.console'],
+            name: 'WebRCON',
+            nameKey: 'server.webrcon.web',
+            component: WebRconContainer,
+            exact: true,
         },
     ],
 } as Routes;

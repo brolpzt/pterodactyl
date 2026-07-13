@@ -154,5 +154,21 @@ return [
                 'set' => 'Set :name to :value via AMXX Web',
             ],
         ],
+        'webrcon' => [
+            'player' => [
+                'kick' => 'Kicked player #:clientnum via WebRCON',
+                'ban' => 'Banned player #:clientnum for :minutes minutes via WebRCON',
+            ],
+            'map' => [
+                'change' => 'Changed map to :map via WebRCON',
+            ],
+            'chat' => [
+                'say' => 'Sent admin message via WebRCON: :message',
+                'tell' => 'Sent private message to #:clientnum via WebRCON: :message',
+            ],
+            'dvar' => [
+                'set' => 'Set :name to :value via WebRCON',
+            ],
+        ],
     ],
 ];

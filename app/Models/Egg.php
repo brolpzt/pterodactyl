@@ -81,6 +81,7 @@ class Egg extends Model
     public const FEATURE_FASTDL = 'fastdl';
     public const FEATURE_DNS = 'dns';
     public const FEATURE_WORKSHOP = 'workshop';
+    public const FEATURE_WEBRCON = 'webrcon';
 
     public const WORKSHOP_SYNC_BROWSE_ONLY = 'browse_only';
     public const WORKSHOP_SYNC_GMOD_LUA = 'gmod_lua';

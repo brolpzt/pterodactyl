@@ -77,6 +77,37 @@ class HostnameBrandingResolverTest extends TestCase
         $this->assertFalse($result['show_warning']);
     }
 
+    public function testNoWarningForHostGamerDomainHostname(): void
+    {
+        $branding = $this->makeVariable(value: '1');
+        $server = $this->makeServer($branding);
+
+        $result = HostnameBrandingResolver::resolve(
+            $server,
+            true,
+            "Ev'team~ TEAM // @HostGamer.com.br"
+        );
+
+        $this->assertTrue($result['compliant']);
+        $this->assertFalse($result['mismatch']);
+        $this->assertFalse($result['show_warning']);
+    }
+
+    public function testNoWarningWhenColorCodeSplitsHostGamer(): void
+    {
+        $branding = $this->makeVariable(value: '1');
+        $server = $this->makeServer($branding);
+
+        $result = HostnameBrandingResolver::resolve(
+            $server,
+            true,
+            "Ev'team~ TEAM // @Host^Gamer.com.br"
+        );
+
+        $this->assertTrue($result['compliant']);
+        $this->assertFalse($result['show_warning']);
+    }
+
     public static function compliantHostnameProvider(): array
     {
         return [
@@ -87,6 +118,9 @@ class HostnameBrandingResolverTest extends TestCase
             ['host-gamer clan server'],
             ['HOST_GAMER_ARENA'],
             ['servidor host gamer br'],
+            ["Ev'team~ TEAM // @HostGamer.com.br"],
+            ["Ev'team~ TEAM // @Host^Gamer.com.br"],
+            ['^7Ev\'team~ TEAM // @Host^Gamer.com.br'],
         ];
     }
 

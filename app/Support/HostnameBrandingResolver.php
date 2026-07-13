@@ -22,7 +22,7 @@ class HostnameBrandingResolver
     {
         $warnEnabled = self::resolveWarnEnabled($server);
         $cleanHostname = self::stripHostnameColors($hostname);
-        $compliant = self::hostnameContainsBranding($cleanHostname);
+        $compliant = self::hostnameContainsBranding($hostname);
 
         $mismatch = $online && $cleanHostname !== '' && !$compliant;
 
@@ -64,17 +64,22 @@ class HostnameBrandingResolver
 
     public static function hostnameContainsBranding(?string $hostname): bool
     {
-        $cleaned = self::stripHostnameColors($hostname);
-        if ($cleaned === '') {
+        if ($hostname === null || trim($hostname) === '') {
             return false;
         }
 
-        $compact = strtolower(preg_replace('/[^a-z0-9]/', '', $cleaned) ?? '');
-        if (str_contains($compact, 'hostgamer')) {
-            return true;
+        $candidates = array_unique(array_filter([
+            $hostname,
+            self::stripHostnameColors($hostname),
+        ]));
+
+        foreach ($candidates as $candidate) {
+            if (self::candidateContainsBranding($candidate)) {
+                return true;
+            }
         }
 
-        return (bool) preg_match('/host(?:[\s\W_]+)gamer/i', $cleaned);
+        return false;
     }
 
     public static function stripHostnameColors(?string $hostname): string
@@ -91,5 +96,15 @@ class HostnameBrandingResolver
         $value = preg_replace('/\s+/u', ' ', $value) ?? '';
 
         return trim($value);
+    }
+
+    private static function candidateContainsBranding(string $candidate): bool
+    {
+        $compact = strtolower(preg_replace('/[^a-z0-9]/', '', $candidate) ?? '');
+        if (str_contains($compact, 'hostgamer')) {
+            return true;
+        }
+
+        return (bool) preg_match('/host(?:[\s\W_]+)gamer/i', $candidate);
     }
 }

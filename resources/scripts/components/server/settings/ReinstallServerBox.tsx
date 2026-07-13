@@ -11,7 +11,7 @@ import { Dialog } from '@/components/elements/dialog';
 
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
-    const isInstalling = ServerContext.useStoreState((state) => state.server.isInstalling);
+    const isInstallRestricted = ServerContext.useStoreState((state) => state.server.isInstallRestricted);
     const [modalVisible, setModalVisible] = useState(false);
     const { addFlash, clearFlashes } = useStoreActions((actions: Actions<ApplicationStore>) => actions.flashes);
 
@@ -58,7 +58,7 @@ export default () => {
                 </strong>
             </p>
             <div css={tw`mt-6 text-right`}>
-                <Button.Danger disabled={isInstalling} onClick={() => setModalVisible(true)}>
+                <Button.Danger disabled={isInstallRestricted} onClick={() => setModalVisible(true)}>
                     Reinstall Server
                 </Button.Danger>
             </div>

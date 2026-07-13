@@ -21,7 +21,7 @@ const AddonRow = ({ addon }: { addon: Addon }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const { clearFlashes, addFlash, clearAndAddHttpError } = useFlash();
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
-    const isInstalling = ServerContext.useStoreState((state) => state.server.isInstalling);
+    const isInstallRestricted = ServerContext.useStoreState((state) => state.server.isInstallRestricted);
 
     const doInstall = () => {
         setModalVisible(false);
@@ -69,7 +69,7 @@ const AddonRow = ({ addon }: { addon: Addon }) => {
                     <Button
                         variant={Button.Variants.Secondary}
                         onClick={() => setModalVisible(true)}
-                        disabled={loading || isInstalling}
+                        disabled={loading || isInstallRestricted}
                     >
                         <FontAwesomeIcon icon={faDownload} css={tw`mr-2`} />
                         Instalar

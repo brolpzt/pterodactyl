@@ -14,10 +14,10 @@ export default ({ className }: PowerButtonProps) => {
     const [open, setOpen] = useState(false);
     const status = ServerContext.useStoreState((state) => state.status.value);
     const instance = ServerContext.useStoreState((state) => state.socket.instance);
-    const isInstalling = ServerContext.useStoreState((state) => state.server.isInstalling);
+    const isInstallRestricted = ServerContext.useStoreState((state) => state.server.isInstallRestricted);
 
     const killable = status === 'stopping';
-    const actionsDisabled = isInstalling;
+    const actionsDisabled = isInstallRestricted;
     const onButtonClick = (
         action: PowerAction | 'kill-confirmed',
         e: React.MouseEvent<HTMLButtonElement, MouseEvent>

@@ -18,7 +18,7 @@ import { Ts3Snapshot } from '@/api/server/ts3/types';
 
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
-    const isInstalling = ServerContext.useStoreState((state) => state.server.isInstalling);
+    const isInstallRestricted = ServerContext.useStoreState((state) => state.server.isInstallRestricted);
     const [snapshots, setSnapshots] = useState<Ts3Snapshot[]>([]);
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(true);
@@ -119,7 +119,7 @@ export default () => {
                                     <td css={tw`py-2`}>{new Date(snapshot.created_at).toLocaleString('pt-BR')}</td>
                                     <td css={tw`py-2 text-right space-x-2`}>
                                         <Button
-                                            disabled={isInstalling || busy !== null}
+                                            disabled={isInstallRestricted || busy !== null}
                                             onClick={() => onRestore(snapshot.uuid)}
                                         >
                                             {busy === `restore:${snapshot.uuid}` ? <Spinner size={Spinner.Size.SMALL} /> : 'Restaurar'}

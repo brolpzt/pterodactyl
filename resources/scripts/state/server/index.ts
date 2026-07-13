@@ -14,6 +14,7 @@ interface ServerDataStore {
     data?: Server;
     inConflictState: Computed<ServerDataStore, boolean>;
     isInstalling: Computed<ServerDataStore, boolean>;
+    isInstallRestricted: Computed<ServerDataStore, boolean>;
     permissions: string[];
 
     getServer: Thunk<ServerDataStore, string, Record<string, unknown>, ServerStore, Promise<void>>;
@@ -30,15 +31,22 @@ const server: ServerDataStore = {
             return false;
         }
 
-        if (state.data.status === 'installing') {
+        const { status, isTransferring, isNodeUnderMaintenance } = state.data;
+
+        if (status === 'installing' || status === 'install_failed' || status === 'reinstall_failed') {
             return false;
         }
 
-        return state.data.status !== null || state.data.isTransferring || state.data.isNodeUnderMaintenance;
+        return status !== null || isTransferring || isNodeUnderMaintenance;
     }),
 
     isInstalling: computed((state) => {
         return state.data?.status === 'installing';
+    }),
+
+    isInstallRestricted: computed((state) => {
+        const status = state.data?.status;
+        return status === 'installing' || status === 'install_failed' || status === 'reinstall_failed';
     }),
 
     getServer: thunk(async (actions, payload) => {

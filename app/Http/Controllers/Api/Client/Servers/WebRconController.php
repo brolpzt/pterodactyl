@@ -182,53 +182,6 @@ class WebRconController extends ClientApiController
         ];
     }
 
-    public function listDvars(Request $request, Server $server): array
-    {
-        $this->assertWebRconEnabled($server);
-        $this->assertCanDvarWebRcon($request, $server);
-
-        return [
-            'object' => 'list',
-            'data' => $this->webRconService->listDvars($server),
-        ];
-    }
-
-    public function queryDvar(Request $request, Server $server, string $name): array
-    {
-        $this->assertWebRconEnabled($server);
-        $this->assertCanDvarWebRcon($request, $server);
-
-        return [
-            'object' => 'webrcon_dvar',
-            'attributes' => $this->webRconService->queryDvar($server, $name),
-        ];
-    }
-
-    public function setDvar(Request $request, Server $server): array
-    {
-        $this->assertWebRconEnabled($server);
-        $this->assertCanDvarWebRcon($request, $server);
-
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:64'],
-            'value' => ['required', 'string', 'max:128'],
-        ]);
-
-        $result = $this->webRconService->setDvar($server, $data['name'], $data['value']);
-
-        Activity::event('server:webrcon.dvar.set')
-            ->property([
-                'name' => $result['name'],
-                'value' => $result['value'],
-            ])
-            ->log();
-
-        return [
-            'object' => 'webrcon_dvar',
-            'attributes' => $result,
-        ];
-    }
-
     private function assertWebRconEnabled(Server $server): void
     {
         if (!WebRcon::isEnabled($server)) {
@@ -268,13 +221,6 @@ class WebRconController extends ClientApiController
     {
         if (!$this->hasWebRconOr($request, $server, Permission::ACTION_WEBRCON_CHAT, Permission::ACTION_CONTROL_CONSOLE)) {
             throw new AccessDeniedHttpException('Não tem permissão para enviar mensagens via WebRCON.');
-        }
-    }
-
-    private function assertCanDvarWebRcon(Request $request, Server $server): void
-    {
-        if (!$this->hasWebRconOr($request, $server, Permission::ACTION_WEBRCON_DVAR, Permission::ACTION_CONTROL_CONSOLE)) {
-            throw new AccessDeniedHttpException('Não tem permissão para gerir dvars via WebRCON.');
         }
     }
 

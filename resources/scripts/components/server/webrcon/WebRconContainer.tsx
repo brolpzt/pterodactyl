@@ -227,11 +227,11 @@ export default () => {
                                     <tbody>
                                         {displayPlayers.map((player) => (
                                             <tr
-                                                key={`${player.clientnum}-${player.name}`}
+                                                key={`${player.clientnum}-${player.guid}-${player.address}`}
                                                 css={tw`border-b border-neutral-800`}
                                             >
                                                 <td css={tw`py-2 pr-4 font-mono`}>#{player.clientnum}</td>
-                                                <td css={tw`py-2 pr-4`}>{player.name}</td>
+                                                <td css={tw`py-2 pr-4`}>{player.name || '—'}</td>
                                                 <td css={tw`py-2 pr-4 font-mono text-xs`}>
                                                     {player.guid || '—'}
                                                 </td>
@@ -309,7 +309,7 @@ export default () => {
                         </TitledGreyBox>
                     )}
 
-                    <WebRconLivePanel uuid={uuid} isServerRunning={isServerRunning} />
+                    <WebRconLivePanel />
                 </>
             )}
         </ServerContentBlock>

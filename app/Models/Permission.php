@@ -86,7 +86,6 @@ class Permission extends Model
     public const ACTION_WEBRCON_BAN = 'webrcon.ban';
     public const ACTION_WEBRCON_MAP = 'webrcon.map';
     public const ACTION_WEBRCON_CHAT = 'webrcon.chat';
-    public const ACTION_WEBRCON_DVAR = 'webrcon.dvar';
 
     /**
      * Should timestamps be used on this model.
@@ -277,7 +276,6 @@ class Permission extends Model
                 'ban' => 'Allows banning players via WebRCON.',
                 'map' => 'Allows changing the server map via WebRCON.',
                 'chat' => 'Allows sending admin chat messages via WebRCON.',
-                'dvar' => 'Allows viewing and changing common server dvars via WebRCON.',
             ],
         ],
     ];

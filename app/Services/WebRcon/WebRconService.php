@@ -17,18 +17,6 @@ use GuzzleHttp\Exception\ConnectException;
 
 class WebRconService
 {
-    public const COMMON_DVARS = [
-        'g_gravity' => 'Gravidade',
-        'g_speed' => 'Velocidade de movimento',
-        'g_friendlyfire' => 'Friendly fire (0/1)',
-        'g_maxclients' => 'Máximo de jogadores',
-        'sv_maxclients' => 'Máximo de jogadores',
-        'g_password' => 'Password do servidor',
-        'sv_password' => 'Password do servidor',
-        'g_gametype' => 'Tipo de jogo',
-        'scr_team_fftype' => 'Tipo de friendly fire',
-    ];
-
     /** @var array<string, string> */
     private const DEFAULT_GAME_DIRS = [
         'cod4' => 'main',
@@ -237,66 +225,6 @@ class WebRconService
         ];
     }
 
-    public function listDvars(Server $server): array
-    {
-        $dvars = [];
-
-        foreach (self::COMMON_DVARS as $name => $label) {
-            try {
-                $result = $this->executeConsoleQuery($server, $name);
-                $value = $this->parser->parseDvarValue($name, $result['lines'] ?? []);
-            } catch (WebRconException) {
-                $value = null;
-            }
-
-            $dvars[] = [
-                'name' => $name,
-                'label' => $label,
-                'value' => $value,
-            ];
-        }
-
-        return $dvars;
-    }
-
-    public function queryDvar(Server $server, string $name): array
-    {
-        $name = strtolower(trim($name));
-        if (!array_key_exists($name, self::COMMON_DVARS)) {
-            throw new WebRconException('Dvar não permitida.', Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $result = $this->executeConsoleQuery($server, $name);
-        $value = $this->parser->parseDvarValue($name, $result['lines'] ?? []);
-
-        return [
-            'name' => $name,
-            'label' => self::COMMON_DVARS[$name],
-            'value' => $value,
-        ];
-    }
-
-    public function setDvar(Server $server, string $name, string $value): array
-    {
-        $name = strtolower(trim($name));
-        if (!array_key_exists($name, self::COMMON_DVARS)) {
-            throw new WebRconException('Dvar não permitida.', Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $value = $this->sanitizeDvarValue($value);
-        if ($value === '') {
-            throw new WebRconException('O valor da dvar é obrigatório.', Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $this->sendRequiredCommand($server, 'seta ' . $name . ' ' . $value);
-
-        return [
-            'name' => $name,
-            'value' => $value,
-            'command_sent' => true,
-        ];
-    }
-
     /**
      * @return array{
      *     hostname: ?string,
@@ -485,10 +413,5 @@ class WebRconService
     private function sanitizeText(string $value): string
     {
         return trim(preg_replace('/[\r\n"]/', '', $value) ?? '');
-    }
-
-    private function sanitizeDvarValue(string $value): string
-    {
-        return trim(preg_replace('/[\r\n";]/', '', $value) ?? '');
     }
 }

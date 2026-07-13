@@ -28,9 +28,3 @@ export interface WebRconMap {
     name: string;
     file: string;
 }
-
-export interface WebRconDvar {
-    name: string;
-    label: string;
-    value: string | null;
-}

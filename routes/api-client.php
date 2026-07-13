@@ -239,8 +239,5 @@ Route::group([
         Route::post('/maps', [Client\Servers\WebRconController::class, 'changeMap']);
         Route::post('/say', [Client\Servers\WebRconController::class, 'sendSay']);
         Route::post('/tell', [Client\Servers\WebRconController::class, 'sendTell']);
-        Route::get('/dvars', [Client\Servers\WebRconController::class, 'listDvars']);
-        Route::get('/dvars/{name}', [Client\Servers\WebRconController::class, 'queryDvar']);
-        Route::post('/dvars', [Client\Servers\WebRconController::class, 'setDvar']);
     });
 });

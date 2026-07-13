@@ -160,9 +160,6 @@ return [
                 'say' => 'Mensaje admin vía WebRCON: :message',
                 'tell' => 'Mensaje privado a #:clientnum vía WebRCON: :message',
             ],
-            'dvar' => [
-                'set' => ':name establecido a :value vía WebRCON',
-            ],
         ],
     ],
 ];

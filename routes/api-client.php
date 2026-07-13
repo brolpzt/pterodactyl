@@ -83,6 +83,12 @@ Route::group([
         Route::delete('/{database}', [Client\Servers\DatabaseController::class, 'delete']);
     });
 
+    Route::group(['prefix' => '/sftp'], function () {
+        Route::get('/password', [Client\Servers\SftpController::class, 'index']);
+        Route::post('/password/reveal', [Client\Servers\SftpController::class, 'reveal']);
+        Route::post('/rotate-password', [Client\Servers\SftpController::class, 'rotate']);
+    });
+
     Route::group(['prefix' => '/files', 'middleware' => [DenyFilesForTs3::class]], function () {
         Route::get('/list', [Client\Servers\FileController::class, 'directory']);
         Route::get('/contents', [Client\Servers\FileController::class, 'contents']);

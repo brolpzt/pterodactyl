@@ -24,6 +24,8 @@ return [
         'account' => [
             'email-changed' => 'Changed email from :old to :new',
             'password-changed' => 'Changed password',
+            'sftp-password-reveal' => 'Revealed SFTP password',
+            'sftp-password-rotate' => 'Generated new SFTP password',
         ],
         'api-key' => [
             'create' => 'Created new API key :identifier',

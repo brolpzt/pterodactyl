@@ -18,6 +18,8 @@ return [
         'account' => [
             'email-changed' => 'Correo cambiado de :old a :new',
             'password-changed' => 'Contraseña cambiada',
+            'sftp-password-reveal' => 'Contraseña SFTP revelada',
+            'sftp-password-rotate' => 'Nueva contraseña SFTP generada',
         ],
         'api-key' => [
             'create' => 'Creada nueva clave API :identifier',

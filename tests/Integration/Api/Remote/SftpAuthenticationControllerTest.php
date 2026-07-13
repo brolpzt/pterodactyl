@@ -8,6 +8,7 @@ use Pterodactyl\Models\User;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Permission;
 use Pterodactyl\Models\UserSSHKey;
+use Illuminate\Contracts\Encryption\Encrypter;
 use Pterodactyl\Tests\Integration\IntegrationTestCase;
 
 class SftpAuthenticationControllerTest extends IntegrationTestCase
@@ -89,6 +90,35 @@ class SftpAuthenticationControllerTest extends IntegrationTestCase
             'password' => 'foobar',
         ])
             ->assertOk();
+    }
+
+    /**
+     * Test that a dedicated SFTP password is validated correctly.
+     */
+    public function testSftpPasswordIsValidatedCorrectly()
+    {
+        /** @var Encrypter $encrypter */
+        $encrypter = app(Encrypter::class);
+
+        $this->user->update([
+            'password' => password_hash('panel-password', PASSWORD_DEFAULT),
+            'sftp_password' => $encrypter->encrypt('sftp-only-password'),
+        ]);
+
+        $this->postJson('/api/remote/sftp/auth', [
+            'username' => $this->getUsername(),
+            'password' => 'wrong password',
+        ])->assertForbidden();
+
+        $this->postJson('/api/remote/sftp/auth', [
+            'username' => $this->getUsername(),
+            'password' => 'panel-password',
+        ])->assertOk();
+
+        $this->postJson('/api/remote/sftp/auth', [
+            'username' => $this->getUsername(),
+            'password' => 'sftp-only-password',
+        ])->assertOk();
     }
 
     /**

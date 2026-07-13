@@ -125,6 +125,7 @@ class User extends Model implements
         'name_first',
         'name_last',
         'password',
+        'sftp_password',
         'language',
         'use_totp',
         'totp_secret',
@@ -146,7 +147,7 @@ class User extends Model implements
     /**
      * The attributes excluded from the model's JSON form.
      */
-    protected $hidden = ['password', 'remember_token', 'totp_secret', 'totp_authenticated_at'];
+    protected $hidden = ['password', 'sftp_password', 'remember_token', 'totp_secret', 'totp_authenticated_at'];
 
     /**
      * Default values for specific fields in the database.
@@ -171,6 +172,7 @@ class User extends Model implements
         'name_first' => 'required|string|between:1,191',
         'name_last' => 'required|string|between:1,191',
         'password' => 'sometimes|nullable|string',
+        'sftp_password' => 'sometimes|nullable|string',
         'root_admin' => 'boolean',
         'language' => 'string',
         'use_totp' => 'boolean',

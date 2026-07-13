@@ -15,6 +15,7 @@ import CopyOnClick from '@/components/elements/CopyOnClick';
 import { ip } from '@/lib/formatters';
 import { Button } from '@/components/elements/button/index';
 import { fieldGroup } from '@/assets/css/formTheme';
+import SftpPasswordField from '@/components/server/SftpPasswordField';
 
 export default () => {
     const username = useStoreState((state) => state.user.data!.username);
@@ -32,6 +33,7 @@ export default () => {
                 <div css={tw`w-full md:flex-1 md:mr-10`}>
                     <Can action={'file.sftp'}>
                         <TitledGreyBox title={'SFTP Details'} css={tw`mb-6 md:mb-10`}>
+                            <FlashMessageRender byKey={'server:sftp-password'} css={tw`mb-4`} />
                             <div css={fieldGroup}>
                                 <Label htmlFor={'sftp-address'}>Server Address</Label>
                                 <CopyOnClick text={`sftp://${ip(sftp.ip)}:${sftp.port}`}>
@@ -44,19 +46,11 @@ export default () => {
                                     <Input id={'sftp-username'} type={'text'} value={`${username}.${id}`} readOnly />
                                 </CopyOnClick>
                             </div>
-                            <div css={tw`mt-6 flex items-center`}>
-                                <div css={tw`flex-1`}>
-                                    <div css={tw`border-l-4 border-primary-500 p-3`}>
-                                        <p css={tw`text-xs text-neutral-200`}>
-                                            Your SFTP password is the same as the password you use to access this panel.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div css={tw`ml-4`}>
-                                    <a href={`sftp://${username}.${id}@${ip(sftp.ip)}:${sftp.port}`}>
-                                        <Button.Text variant={Button.Variants.Secondary}>Launch SFTP</Button.Text>
-                                    </a>
-                                </div>
+                            <SftpPasswordField serverUuid={uuid} />
+                            <div css={tw`mt-6 flex items-center justify-end`}>
+                                <a href={`sftp://${username}.${id}@${ip(sftp.ip)}:${sftp.port}`}>
+                                    <Button.Text variant={Button.Variants.Secondary}>Launch SFTP</Button.Text>
+                                </a>
                             </div>
                         </TitledGreyBox>
                     </Can>

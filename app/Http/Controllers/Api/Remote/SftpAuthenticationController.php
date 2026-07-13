@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Pterodactyl\Models\User;
 use Pterodactyl\Models\Server;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Contracts\Encryption\Encrypter;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Pterodactyl\Facades\Activity;
 use Pterodactyl\Models\Permission;
 use phpseclib3\Crypt\PublicKeyLoader;
@@ -22,8 +24,10 @@ class SftpAuthenticationController extends Controller
 {
     use ThrottlesLogins;
 
-    public function __construct(protected GetUserPermissionsService $permissions)
-    {
+    public function __construct(
+        protected GetUserPermissionsService $permissions,
+        protected Encrypter $encrypter,
+    ) {
     }
 
     /**
@@ -48,7 +52,7 @@ class SftpAuthenticationController extends Controller
         $server = $this->getServer($request, $connection['server']);
 
         if ($request->input('type') !== 'public_key') {
-            if (!password_verify($request->input('password'), $user->password)) {
+            if (!$this->verifyPassword($request->input('password'), $user)) {
                 Activity::event('auth:sftp.fail')->property('method', 'password')->subject($user)->log();
 
                 $this->reject($request);
@@ -80,6 +84,30 @@ class SftpAuthenticationController extends Controller
             'server' => $server->uuid,
             'permissions' => $this->permissions->handle($server, $user),
         ]);
+    }
+
+    /**
+     * Verify a password against the user's panel password or dedicated SFTP password.
+     */
+    protected function verifyPassword(?string $password, User $user): bool
+    {
+        if ($password === null || $password === '') {
+            return false;
+        }
+
+        if (password_verify($password, $user->password)) {
+            return true;
+        }
+
+        if (empty($user->sftp_password)) {
+            return false;
+        }
+
+        try {
+            return hash_equals($this->encrypter->decrypt($user->sftp_password), $password);
+        } catch (DecryptException) {
+            return false;
+        }
     }
 
     /**

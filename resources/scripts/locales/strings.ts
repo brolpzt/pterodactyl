@@ -66,6 +66,13 @@ export const stringsEn = {
         sftp_access: 'SFTP Access Details',
         server_address: 'Server Address',
         username: 'Username',
+        sftp_password: 'SFTP Password',
+        sftp_password_not_set: 'Not set — click generate',
+        sftp_password_reveal: 'Reveal password',
+        sftp_password_generate: 'Generate SFTP password',
+        sftp_password_rotate: 'Reset SFTP password',
+        sftp_password_help:
+            'This password is dedicated to SFTP and separate from SSO login. Use generate/reset if you do not have one configured yet.',
         sftp_password_note: 'Your SFTP password is the same as the password you use to access this panel.',
         connection_string: 'Connection String',
         connection_string_help: 'Use this string to connect to the server (e.g. in-game: connect IP:port; password xxx).',
@@ -128,7 +135,7 @@ export const stringsEn = {
         restart_hint: 'Restart the server after adding or removing mods to apply changes. Configure Steam Account Token (GSLT) in Startup if content does not mount.',
     },
     server_network: {
-        dns_cloudflare_title: 'Cloudflare DNS',
+        dns_cloudflare_title: 'DNS',
         dns_primary_allocation:
             'The current primary allocation is {{address}}. A or SRV DNS records use this data automatically.',
         dns_create_button: 'Create DNS record',
@@ -348,6 +355,13 @@ export const stringsPt = {
         sftp_access: 'Dados de acesso SFTP',
         server_address: 'Endereço do servidor',
         username: 'Usuário',
+        sftp_password: 'Senha SFTP',
+        sftp_password_not_set: 'Não definida — clique em gerar',
+        sftp_password_reveal: 'Revelar senha',
+        sftp_password_generate: 'Gerar senha SFTP',
+        sftp_password_rotate: 'Redefinir senha SFTP',
+        sftp_password_help:
+            'Esta senha é exclusiva para SFTP e independente do login SSO. Use o botão de gerar/redefinir se ainda não tiver uma senha configurada.',
         sftp_password_note: 'A senha SFTP é a mesma que você usa para acessar este painel.',
         connection_string: 'Connection string',
         connection_string_help: 'Use esta string para conectar ao servidor (ex.: no jogo: connect IP:porta; password xxx).',
@@ -410,7 +424,7 @@ export const stringsPt = {
         restart_hint: 'Reinicie o servidor após adicionar ou remover mods para aplicar as alterações. Configure o Steam Account Token (GSLT) em Startup se o conteúdo não montar.',
     },
     server_network: {
-        dns_cloudflare_title: 'DNS Cloudflare',
+        dns_cloudflare_title: 'DNS',
         dns_primary_allocation:
             'A alocação primária atual é {{address}}. Registros DNS do tipo A ou SRV usam estes dados automaticamente.',
         dns_create_button: 'Criar registro DNS',
@@ -630,6 +644,13 @@ export const stringsEs = {
         sftp_access: 'Datos de acceso SFTP',
         server_address: 'Dirección del servidor',
         username: 'Usuario',
+        sftp_password: 'Contraseña SFTP',
+        sftp_password_not_set: 'No definida — haz clic en generar',
+        sftp_password_reveal: 'Revelar contraseña',
+        sftp_password_generate: 'Generar contraseña SFTP',
+        sftp_password_rotate: 'Restablecer contraseña SFTP',
+        sftp_password_help:
+            'Esta contraseña es exclusiva para SFTP e independiente del inicio de sesión SSO. Usa generar/restablecer si aún no tienes una configurada.',
         sftp_password_note: 'La contraseña SFTP es la misma que usas para acceder a este panel.',
         connection_string: 'Cadena de conexión',
         connection_string_help: 'Usa esta cadena para conectarte al servidor (ej. en el juego: connect IP:puerto; password xxx).',
@@ -692,7 +713,7 @@ export const stringsEs = {
         restart_hint: 'Reinicia el servidor después de añadir o quitar mods para aplicar los cambios. Configura el Steam Account Token (GSLT) en Startup si el contenido no se monta.',
     },
     server_network: {
-        dns_cloudflare_title: 'DNS Cloudflare',
+        dns_cloudflare_title: 'DNS',
         dns_primary_allocation:
             'La asignación primaria actual es {{address}}. Los registros DNS tipo A o SRV usan estos datos automáticamente.',
         dns_create_button: 'Crear registro DNS',

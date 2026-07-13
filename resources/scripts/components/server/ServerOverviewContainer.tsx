@@ -16,9 +16,9 @@ import useWebsocketEvent from '@/plugins/useWebsocketEvent';
 import { capitalize } from '@/lib/strings';
 import tw from 'twin.macro';
 import { useTranslation } from 'react-i18next';
+import FlashMessageRender from '@/components/FlashMessageRender';
 import { cardLabelText, cardRowBorder, cardValueText } from '@/assets/css/cardTheme';
-import Spinner from '@/components/elements/Spinner';
-import StartupContainer from '@/components/server/startup/StartupContainer';
+import SftpPasswordField from '@/components/server/SftpPasswordField';
 
 type Stats = { uptime: number };
 
@@ -119,6 +119,7 @@ const ServerOverviewContainer = () => {
 
                 <Can action="file.sftp">
                     <TitledGreyBox title={t('server_overview.sftp_access')} icon={faKey}>
+                        <FlashMessageRender byKey={'server:sftp-password'} css={tw`mb-4`} />
                         <div>
                             <Label>{t('server_overview.server_address')}</Label>
                             <CopyOnClick text={`sftp://${ip(server.sftpDetails.ip)}:${server.sftpDetails.port}`}>
@@ -141,11 +142,7 @@ const ServerOverviewContainer = () => {
                                 />
                             </CopyOnClick>
                         </div>
-                        <div css={tw`border-l-4 border-primary-500 p-3 mt-4`}>
-                            <p css={tw`text-xs text-neutral-200`}>
-                                {t('server_overview.sftp_password_note')}
-                            </p>
-                        </div>
+                        <SftpPasswordField serverUuid={server.uuid} />
                     </TitledGreyBox>
                 </Can>
             </div>
@@ -177,12 +174,6 @@ const ServerOverviewContainer = () => {
                     />
                 </CopyOnClick>
             </TitledGreyBox>
-
-            <Can action={'startup.*'}>
-                <Spinner.Suspense>
-                    <StartupContainer />
-                </Spinner.Suspense>
-            </Can>
         </ServerContentBlock>
     );
 };

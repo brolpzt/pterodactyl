@@ -6,6 +6,7 @@ import ContentContainer from '@/components/elements/ContentContainer';
 import PowerButtons from '@/components/server/console/PowerButtons';
 import Fade from '@/components/elements/Fade';
 import FlagIcon from '@/components/elements/FlagIcon';
+import { motionDurations } from '@/assets/css/motionTheme';
 import { glassHeaderInner, glassStickyBarShell } from '@/assets/css/glassPanel';
 import { cardLabelText, navText } from '@/assets/css/cardTheme';
 import { hideNativeScrollbar } from '@/assets/css/scrollTheme';
@@ -23,10 +24,9 @@ interface Props {
     formatIp: (value: string) => string;
 }
 
-const stickyShellStyles = (scrolled: boolean) => css`
+const stickyShellStyles = css`
     ${glassStickyBarShell};
-    ${tw`sticky top-[3.5rem] z-30 w-full transition-[box-shadow] duration-300`};
-    box-shadow: ${scrolled ? 'var(--hg-subheader-shadow-scrolled)' : 'var(--hg-subheader-shadow)'};
+    ${tw`sticky top-[3.5rem] z-30 w-full`};
 
     &::before {
         opacity: 1;
@@ -36,7 +36,7 @@ const stickyShellStyles = (scrolled: boolean) => css`
 const barInnerStyles = (scrolled: boolean) => css`
     ${glassHeaderInner};
     overflow: hidden;
-    transition: padding 300ms ease;
+    transition: padding ${motionDurations.layout}ms ease;
     padding-top: ${scrolled ? '0.5rem' : '0.625rem'};
     padding-bottom: ${scrolled ? '0.5rem' : '0.625rem'};
 
@@ -47,7 +47,7 @@ const barInnerStyles = (scrolled: boolean) => css`
 `;
 
 const titleStyles = (scrolled: boolean) => css`
-    ${tw`text-white font-header font-semibold uppercase truncate m-0 transition-all duration-300 min-w-0`};
+    ${tw`text-white font-header font-semibold uppercase truncate m-0 transition-all duration-200 min-w-0`};
     font-size: ${scrolled ? '0.9375rem' : '1rem'};
 
     @media (min-width: 640px) {
@@ -61,7 +61,7 @@ const titleStyles = (scrolled: boolean) => css`
 
 const metaStyles = (scrolled: boolean) => css`
     ${navText};
-    ${tw`flex flex-wrap items-center gap-x-2 gap-y-1 m-0 transition-all duration-300 min-w-0`};
+    ${tw`flex flex-wrap items-center gap-x-2 gap-y-1 m-0 transition-all duration-200 min-w-0`};
     font-size: ${scrolled ? '12px' : '13px'};
 `;
 
@@ -144,8 +144,8 @@ const ServerStatusBar = ({
     const showStatsRow = Boolean(locationName) || queryEnabled;
 
     return (
-        <div className="hg-glass-server-bar" css={stickyShellStyles(scrolled)}>
-            <Fade timeout={150} in appear>
+        <div className="hg-glass-server-bar" css={stickyShellStyles}>
+            <Fade in appear>
                 <div css={barInnerStyles(scrolled)}>
                     <ContentContainer css={tw`w-full min-w-0`}>
                         <div tw="flex w-full min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:gap-6">

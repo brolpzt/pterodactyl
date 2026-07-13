@@ -88,7 +88,7 @@ const Modal: React.FC<ModalProps> = ({
     useEffect(() => setRender(visible), [visible]);
 
     return (
-        <Fade in={render} timeout={150} appear={appear || true} unmountOnExit onExited={() => onDismissed()}>
+        <Fade in={render} appear={appear || true} unmountOnExit onExited={() => onDismissed()}>
             <ModalMask
                 onClick={(e) => e.stopPropagation()}
                 onContextMenu={(e) => e.stopPropagation()}
@@ -120,7 +120,7 @@ const Modal: React.FC<ModalProps> = ({
                         </div>
                     )}
                     {showSpinnerOverlay && (
-                        <Fade timeout={150} appear in>
+                        <Fade appear in>
                             <div
                                 css={tw`absolute w-full h-full rounded flex items-center justify-center`}
                                 style={{ background: 'hsla(211, 10%, 53%, 0.35)', zIndex: 9999 }}

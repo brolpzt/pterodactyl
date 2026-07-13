@@ -13,6 +13,7 @@ export interface ApplicationStore {
     progress: ProgressStore;
     sidebarCollapsed: boolean;
     toggleSidebar: Action<ApplicationStore>;
+    setSidebarCollapsed: Action<ApplicationStore, boolean>;
 }
 
 const state: ApplicationStore = {
@@ -25,6 +26,10 @@ const state: ApplicationStore = {
     toggleSidebar: action((state) => {
         state.sidebarCollapsed = !state.sidebarCollapsed;
         localStorage.setItem('sidebar_collapsed', state.sidebarCollapsed ? 'true' : 'false');
+    }),
+    setSidebarCollapsed: action((state, collapsed) => {
+        state.sidebarCollapsed = collapsed;
+        localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false');
     }),
 };
 

@@ -1,4 +1,6 @@
 import { css } from 'styled-components/macro';
+import { motionDurations } from '@/assets/css/motionTheme';
+import { hgBorderBottom } from '@/assets/css/borderTheme';
 
 /**
  * Vidro / backdrop-filter — espelha .site-header do hostgamer.net.
@@ -18,7 +20,7 @@ export const glassHeaderBeforeLayer = css`
         -webkit-backdrop-filter: blur(4px);
         backdrop-filter: blur(4px);
         transform: translateZ(0);
-        transition: opacity 220ms ease;
+        transition: opacity ${motionDurations.glass}ms ease;
     }
 `;
 
@@ -34,7 +36,7 @@ export const glassCardBeforeLayer = css`
         -webkit-backdrop-filter: blur(4px);
         backdrop-filter: blur(4px);
         transform: translateZ(0);
-        transition: opacity 220ms ease;
+        transition: opacity ${motionDurations.glass}ms ease;
     }
 `;
 
@@ -53,7 +55,7 @@ export const glassServerBarBeforeLayer = css`
         -webkit-backdrop-filter: blur(8px);
         backdrop-filter: blur(8px);
         transform: translateZ(0);
-        transition: opacity 220ms ease, backdrop-filter 220ms ease;
+        transition: opacity ${motionDurations.glass}ms ease, backdrop-filter ${motionDurations.glass}ms ease;
     }
 `;
 
@@ -64,6 +66,7 @@ export const glassHeaderShell = css`
     box-shadow: none;
 
     ${glassHeaderBeforeLayer};
+    ${hgBorderBottom};
 
     &::before {
         opacity: 1;
@@ -87,8 +90,9 @@ export const glassCardShell = css`
     position: relative;
     background: transparent;
     overflow: hidden;
-    box-shadow: 0 12px 32px -18px rgba(0, 0, 0, 0.82),
-        inset 0 0 0 1px rgba(45, 45, 58, 0.28);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--hg-border);
+    box-shadow: none;
 
     ${glassCardBeforeLayer};
 
@@ -97,18 +101,19 @@ export const glassCardShell = css`
     }
 `;
 
-/** Barra sticky do servidor (subheader) — vidro transparente + sombra. */
+/** Barra sticky do servidor (subheader) — vidro transparente + borda inferior. */
 export const glassStickyBarShell = css`
     position: relative;
     background: transparent;
     overflow: visible;
-    box-shadow: var(--hg-subheader-shadow);
+    box-shadow: none;
 
     ${glassServerBarBeforeLayer};
+    ${hgBorderBottom};
 
     &::before {
         opacity: 1;
-        transition: opacity 220ms ease;
+        transition: opacity ${motionDurations.glass}ms ease;
     }
 `;
 

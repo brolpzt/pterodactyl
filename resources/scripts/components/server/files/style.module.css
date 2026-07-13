@@ -15,7 +15,7 @@
 }
 
 .details {
-    @apply flex flex-1 items-center no-underline px-4 overflow-hidden truncate min-w-0;
+    @apply flex flex-1 items-center no-underline pr-3 pl-11 py-2.5 overflow-hidden truncate min-w-0;
     color: inherit;
 
     &:not(a) {

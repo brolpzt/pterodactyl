@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import tw from 'twin.macro';
+import { css } from 'styled-components/macro';
 import { ServerContext } from '@/state/server';
 import getWorkshopBrowse from '@/api/swr/getWorkshopBrowse';
 import getWorkshopInstalled from '@/api/swr/getWorkshopInstalled';
@@ -235,9 +236,6 @@ export default () => {
                         ))}
                     </div>
                 )}
-                <p css={tw`text-xs text-neutral-500 mt-3`}>
-                    {syncInfo?.description || t('server_workshop.restart_hint')}
-                </p>
             </TitledGreyBox>
 
             <TitledGreyBox title={t('server_workshop.browse_title')}>
@@ -245,13 +243,26 @@ export default () => {
                     <div>
                         <Label htmlFor={'workshop-search'}>{t('server_workshop.search')}</Label>
                         <div css={tw`relative`}>
-                            <FontAwesomeIcon icon={faSearch} css={tw`absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500`} />
+                            <FontAwesomeIcon
+                                icon={faSearch}
+                                css={css`
+                                    position: absolute;
+                                    left: 0.75rem;
+                                    top: 50%;
+                                    transform: translateY(-50%);
+                                    color: var(--color-text-muted, #737373);
+                                    pointer-events: none;
+                                    font-size: 0.875rem;
+                                `}
+                            />
                             <Input
                                 id={'workshop-search'}
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.currentTarget.value)}
                                 placeholder={t('server_workshop.search_placeholder')}
-                                css={tw`pl-9`}
+                                css={css`
+                                    padding-left: 2.25rem !important;
+                                `}
                             />
                         </div>
                     </div>

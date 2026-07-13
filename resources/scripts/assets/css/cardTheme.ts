@@ -1,7 +1,7 @@
 import { css } from 'styled-components/macro';
 import tw from 'twin.macro';
 
-/** Mesmo padrão tipográfico dos itens do sidebar (NavItem), em branco. */
+/** Tipografia dos títulos de card — alinhada ao header do site. */
 export const cardTitleFont = css`
     ${tw`text-sm font-header font-semibold uppercase`};
 `;
@@ -18,11 +18,11 @@ export const cardHeaderSurface = css`
 `;
 
 export const cardHeaderBorder = css`
-    border-bottom: 1px solid rgba(45, 45, 58, 0.45);
+    border-bottom: 1px solid var(--hg-border);
 `;
 
 export const cardRowBorder = css`
-    border-color: color-mix(in srgb, var(--color-divider) 45%, transparent);
+    border-color: var(--hg-border);
 `;
 
 export const cardLabelText = css`
@@ -67,7 +67,7 @@ export const dropdownMenuShell = css`
     background: color-mix(in srgb, var(--hg-surface) 97%, transparent);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(45, 45, 58, 0.62);
+    border: 1px solid var(--hg-border);
     box-shadow: 0 16px 40px -14px rgba(0, 0, 0, 0.94), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 `;
 
@@ -134,5 +134,5 @@ export const cardValueText = css`
 
 export const cardTitleText = css`
     ${cardTitleFont};
-    color: var(--color-white);
+    color: color-mix(in srgb, var(--color-text-muted) 88%, var(--color-white) 12%);
 `;

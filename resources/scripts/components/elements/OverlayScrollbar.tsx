@@ -60,7 +60,6 @@ const OverlayScrollbar = ({
     className,
 }: Props) => {
     const [hovered, setHovered] = useState(false);
-    const [anchor, setAnchor] = useState({ top: 0, right: 0, height: 0 });
     const [headerOffset, setHeaderOffset] = useState(() => (belowHeader ? getFixedHeaderHeight() : 0));
     const { metrics, onThumbMouseDown, onTrackMouseDown } = useOverlayScrollbar(target, {
         viewportTop: belowHeader ? headerOffset : 0,
@@ -93,36 +92,6 @@ const OverlayScrollbar = ({
     }, [belowHeader]);
 
     useEffect(() => {
-        if (!useAnchoredTrack || !target || target === 'document') {
-            return;
-        }
-
-        const updateAnchor = () => {
-            const rect = target.getBoundingClientRect();
-            setAnchor({
-                top: rect.top,
-                right: window.innerWidth - rect.right,
-                height: rect.height,
-            });
-        };
-
-        updateAnchor();
-        target.addEventListener('scroll', updateAnchor, { passive: true });
-        window.addEventListener('scroll', updateAnchor, { passive: true });
-        window.addEventListener('resize', updateAnchor);
-
-        const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateAnchor) : undefined;
-        observer?.observe(target);
-
-        return () => {
-            target.removeEventListener('scroll', updateAnchor);
-            window.removeEventListener('scroll', updateAnchor);
-            window.removeEventListener('resize', updateAnchor);
-            observer?.disconnect();
-        };
-    }, [target, useAnchoredTrack]);
-
-    useEffect(() => {
         if (!hovered) {
             return;
         }
@@ -139,9 +108,9 @@ const OverlayScrollbar = ({
 
     const trackStyle = useAnchoredTrack
         ? {
-              top: anchor.top,
-              right: anchor.right,
-              height: anchor.height,
+              top: 0,
+              right: 0,
+              height: '100%',
           }
         : belowHeader && fixed
             ? {
@@ -156,7 +125,7 @@ const OverlayScrollbar = ({
         <Track
             className={className}
             $width={trackWidth}
-            $fixed={fixed || useAnchoredTrack}
+            $fixed={fixed && !useAnchoredTrack}
             style={trackStyle}
             onMouseDown={(event) => onTrackMouseDown(event, metrics.trackHeight)}
             onMouseEnter={() => setHovered(true)}

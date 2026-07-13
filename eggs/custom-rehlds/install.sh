@@ -174,7 +174,6 @@ rcon_password ""
 sv_password ""
 
 // Configurações de Rede e Otimização ReHLDS/ReGameDLL
-sys_ticrate "1000" // Define o FPS do servidor (ReHLDS usa sys_ticrate)
 sv_maxrate "100000"
 sv_minrate "25000"
 sv_maxupdaterate "102"

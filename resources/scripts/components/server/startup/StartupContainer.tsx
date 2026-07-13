@@ -52,19 +52,29 @@ const StartupContainer = () => {
             <ServerError title={'Oops!'} message={httpErrorToHuman(error)} onRetry={() => mutate()} />
         )
     ) : (
-        <div css={tw`mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start`}>
+        <div css={tw`mt-6 flex flex-col gap-6`}>
             <TitledGreyBox title={'Startup Command'}>
-                <div css={tw`px-1 py-2`}>
-                    <p className={'mono-panel'}>{data.invocation}</p>
+                <div css={tw`px-1 py-2 min-w-0`}>
+                    <p
+                        className={'mono-panel'}
+                        css={tw`m-0 overflow-x-auto overflow-y-hidden`}
+                        style={{ whiteSpace: 'nowrap', wordBreak: 'normal' }}
+                    >
+                        {data.invocation}
+                    </p>
                     <p css={tw`mt-2 text-xs text-[var(--hg-nav-text)]`}>{STARTUP_COMMAND_DESCRIPTION}</p>
                 </div>
             </TitledGreyBox>
 
-            <TitledGreyBox title={'Variables'}>
-                {data.variables.map((variable) => (
-                    <VariableBox key={variable.envVariable} variable={variable} />
-                ))}
-            </TitledGreyBox>
+            <div css={tw`grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start`}>
+                <TitledGreyBox title={'Variables'}>
+                    {data.variables.map((variable) => (
+                        <VariableBox key={variable.envVariable} variable={variable} />
+                    ))}
+                </TitledGreyBox>
+
+                <div aria-hidden css={tw`hidden lg:block`} />
+            </div>
         </div>
     );
 };

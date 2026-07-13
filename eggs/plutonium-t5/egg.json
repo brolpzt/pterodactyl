@@ -1,0 +1,102 @@
+{
+    "_comment": "Import via Admin → Nests → Import Egg. Adjust docker image for your Windows Wings node.",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-07-12T04:45:00+00:00",
+    "name": "Plutonium T5",
+    "author": "CALDAS",
+    "description": "Call of Duty: Black Ops (Plutonium T5). Downloads game files via plutonium-updater, applies T5ServerConfig (GitHub) and configures dedicated.cfg in localappdata.",
+    "features": null,
+    "docker_images": {
+        "Windows": "windows"
+    },
+    "file_denylist": [],
+    "startup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$env:LOCALAPPDATA='C:\\mnt\\server\\localappdata'; Set-Location 'C:\\mnt\\server\\localappdata\\Plutonium'; & '.\\bin\\plutonium-bootstrapper-win32.exe' {{PLUTONIUM_MODE}} 'C:\\mnt\\server' -dedicated +set key {{PLUTONIUM_KEY}} +set fs_game '{{FS_GAME}}' +exec '{{DEDICATED_CFG}}' +set net_port {{SERVER_PORT}} +set sv_maxclients {{MAX_CLIENTS}} +map_rotate\"",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"Server restarts\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "# Plutonium T5 — install script (Windows Wings / PowerShell)\r\n# Uses plutonium-updater: https://github.com/mxve/plutonium-updater.rs\r\n$ErrorActionPreference = 'Stop'\r\n\r\n$ServerDir = if ($env:SERVER_DIR) { $env:SERVER_DIR } else { 'C:\\mnt\\server' }\r\n$ConfigUrl = if ($env:T5_CONFIG_URL) { $env:T5_CONFIG_URL } else { 'https://github.com/xerxes-at/T5ServerConfig/archive/refs/heads/master.zip' }\r\n$UpdaterUrl = if ($env:PLUTONIUM_UPDATER_URL) {\r\n    $env:PLUTONIUM_UPDATER_URL\r\n} else {\r\n    'https://github.com/mxve/plutonium-updater.rs/releases/download/v0.4.5/plutonium-updater-x86_64-pc-windows-msvc.zip'\r\n}\r\n\r\n$WorkDir = Join-Path $env:TEMP (\"ptero-t5-install-\" + [guid]::NewGuid().ToString())\r\n$UpdaterZip = Join-Path $WorkDir 'plutonium-updater.zip'\r\n$UpdaterDir = Join-Path $WorkDir 'updater'\r\n$ConfigZip = Join-Path $WorkDir 'T5ServerConfig.zip'\r\n$ConfigExtractDir = Join-Path $WorkDir 'config-extract'\r\n$ServerLocalAppData = Join-Path $ServerDir 'localappdata'\r\n$Bootstrapper = Join-Path $ServerLocalAppData 'Plutonium\\bin\\plutonium-bootstrapper-win32.exe'\r\n\r\nfunction Invoke-Robocopy {\r\n    param(\r\n        [string]$Source,\r\n        [string]$Destination\r\n    )\r\n\r\n    robocopy $Source $Destination /E /COPY:DAT /DCOPY:DAT /R:2 /W:2 /NFL /NDL /NJH /NJS /NC /NS /NP | Out-Host\r\n    if ($LASTEXITCODE -ge 8) {\r\n        throw \"Robocopy failed (exit code $LASTEXITCODE) from $Source to $Destination\"\r\n    }\r\n}\r\n\r\nWrite-Host '[1/8] Removing server directory:' $ServerDir\r\nSet-Location $env:TEMP\r\nif (Test-Path -LiteralPath $ServerDir) {\r\n    Remove-Item -LiteralPath $ServerDir -Recurse -Force\r\n}\r\n\r\nWrite-Host '[2/8] Creating clean server directory'\r\nNew-Item -ItemType Directory -Path $ServerDir -Force | Out-Null\r\nNew-Item -ItemType Directory -Path $ServerLocalAppData -Force | Out-Null\r\nNew-Item -ItemType Directory -Path $WorkDir -Force | Out-Null\r\n\r\nWrite-Host '[3/8] Downloading plutonium-updater'\r\nInvoke-WebRequest -Uri $UpdaterUrl -OutFile $UpdaterZip\r\n\r\nWrite-Host '[4/8] Extracting plutonium-updater'\r\nNew-Item -ItemType Directory -Path $UpdaterDir -Force | Out-Null\r\nExpand-Archive -LiteralPath $UpdaterZip -DestinationPath $UpdaterDir -Force\r\n\r\n$UpdaterExe = Get-ChildItem -Path $UpdaterDir -Filter 'plutonium-updater.exe' -Recurse -File |\r\n    Select-Object -First 1\r\nif (-not $UpdaterExe) {\r\n    throw \"plutonium-updater.exe not found in $UpdaterDir\"\r\n}\r\n\r\nWrite-Host '[5/8] Downloading Plutonium T5 files from CDN'\r\n$env:LOCALAPPDATA = $ServerLocalAppData\r\n& $UpdaterExe.FullName -d $ServerDir -l -q --no-color --threads 4\r\nif ($LASTEXITCODE -ne 0) {\r\n    throw \"plutonium-updater failed (exit code $LASTEXITCODE)\"\r\n}\r\n\r\nif (-not (Test-Path -LiteralPath $Bootstrapper)) {\r\n    throw \"Bootstrapper not found after update: $Bootstrapper\"\r\n}\r\n\r\nWrite-Host '[6/8] Downloading T5ServerConfig'\r\nInvoke-WebRequest -Uri $ConfigUrl -OutFile $ConfigZip\r\n\r\nWrite-Host '[7/8] Extracting T5ServerConfig'\r\nStart-Sleep -Seconds 2\r\nNew-Item -ItemType Directory -Path $ConfigExtractDir -Force | Out-Null\r\nExpand-Archive -LiteralPath $ConfigZip -DestinationPath $ConfigExtractDir -Force\r\n\r\n# GitHub zip layout:\r\n#   T5ServerConfig-master/\r\n#     !start_mp_server.bat\r\n#     !start_zm_server.bat\r\n#     localappdata/Plutonium/storage/t5/dedicated.cfg\r\n$ConfigRoot = Get-ChildItem -Path $ConfigExtractDir -Directory |\r\n    Where-Object { Test-Path (Join-Path $_.FullName 'localappdata') } |\r\n    Select-Object -First 1\r\n\r\nif (-not $ConfigRoot) {\r\n    throw \"T5ServerConfig root folder not found (expected T5ServerConfig-*/localappdata in $ConfigExtractDir)\"\r\n}\r\n\r\nWrite-Host \"       Config root:\" $ConfigRoot.FullName\r\n\r\n$ConfigLocalAppData = Join-Path $ConfigRoot.FullName 'localappdata'\r\nif (-not (Test-Path -LiteralPath $ConfigLocalAppData -PathType Container)) {\r\n    throw \"T5ServerConfig localappdata folder not found: $ConfigLocalAppData\"\r\n}\r\n\r\nWrite-Host \"       Config source:\" $ConfigLocalAppData\r\nWrite-Host \"       Config target:\" $ServerLocalAppData\r\n\r\n# Merges localappdata/Plutonium/storage/t5 into server localappdata (keeps bootstrapper from updater)\r\nInvoke-Robocopy -Source $ConfigLocalAppData -Destination $ServerLocalAppData\r\n\r\nWrite-Host '[8/8] Removing temporary files'\r\nRemove-Item $WorkDir -Recurse -Force -ErrorAction SilentlyContinue\r\n\r\nWrite-Host '[DONE] Plutonium T5 installation completed successfully'\r\nWrite-Host '       Game path :' $ServerDir\r\nWrite-Host '       Bootstrap :' $Bootstrapper\r\nWrite-Host '       Configs   :' (Join-Path $ServerLocalAppData 'Plutonium\\storage\\t5')\r\n",
+            "container": "windows",
+            "entrypoint": "powershell.exe"
+        }
+    },
+    "variables": [
+        {
+            "name": "T5 Config URL",
+            "description": "URL do zip T5ServerConfig (GitHub).",
+            "env_variable": "T5_CONFIG_URL",
+            "default_value": "https://github.com/xerxes-at/T5ServerConfig/archive/refs/heads/master.zip",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:512",
+            "field_type": "text"
+        },
+        {
+            "name": "Plutonium Updater URL",
+            "description": "URL do zip do plutonium-updater para Windows (GitHub releases).",
+            "env_variable": "PLUTONIUM_UPDATER_URL",
+            "default_value": "https://github.com/mxve/plutonium-updater.rs/releases/download/v0.4.5/plutonium-updater-x86_64-pc-windows-msvc.zip",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:512",
+            "field_type": "text"
+        },
+        {
+            "name": "Plutonium Server Key",
+            "description": "Server key de https://platform.plutonium.pw/serverkeys",
+            "env_variable": "PLUTONIUM_KEY",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:128",
+            "field_type": "text"
+        },
+        {
+            "name": "Plutonium Mode",
+            "description": "t5mp = multiplayer, t5sp = zombies",
+            "env_variable": "PLUTONIUM_MODE",
+            "default_value": "t5mp",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:t5mp,t5sp",
+            "field_type": "text"
+        },
+        {
+            "name": "Dedicated Config",
+            "description": "Ficheiro cfg em localappdata\\Plutonium\\storage\\t5",
+            "env_variable": "DEDICATED_CFG",
+            "default_value": "dedicated.cfg",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Max Clients",
+            "description": "Máximo de jogadores",
+            "env_variable": "MAX_CLIENTS",
+            "default_value": "18",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:1,64",
+            "field_type": "text"
+        },
+        {
+            "name": "Mod Directory",
+            "description": "Pasta do mod (fs_game). Deixe vazio se não usar mod.",
+            "env_variable": "FS_GAME",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:128",
+            "field_type": "text"
+        }
+    ]
+}

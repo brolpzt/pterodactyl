@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEthernet, faGlobe, faHdd, faMemory, faMicrochip, faServer } from '@fortawesome/free-solid-svg-icons';
+import { faEthernet, faGlobe, faHdd, faMemory, faMicrochip, faServer, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
 import { Server } from '@/api/server/getServer';
 import getServerResourceUsage, { ServerPowerState, ServerStats } from '@/api/server/getServerResourceUsage';
@@ -11,22 +11,9 @@ import Spinner from '@/components/elements/Spinner';
 import styled from 'styled-components/macro';
 import isEqual from 'react-fast-compare';
 import { hostgamerColors } from '@/lib/hostgamerTheme';
+import { navText } from '@/assets/css/cardTheme';
 
-// Determines if the current value is in an alarm threshold so we can show it in red rather
-// than the more faded default style.
 const isAlarmState = (current: number, limit: number): boolean => limit > 0 && current / (limit * 1024 * 1024) >= 0.9;
-
-const Icon = memo(
-    styled(FontAwesomeIcon)<{ $alarm: boolean }>`
-        ${(props) => (props.$alarm ? tw`text-red-400` : tw`text-neutral-500`)};
-    `,
-    isEqual
-);
-
-const IconDescription = styled.p<{ $alarm: boolean }>`
-    ${tw`text-xs ml-2`};
-    ${(props) => (props.$alarm ? tw`text-white` : tw`text-neutral-400`)};
-`;
 
 const statusColor = ($status: ServerPowerState | undefined) => {
     if (!$status || $status === 'offline') {
@@ -49,21 +36,92 @@ const statusBarStyles = ($status: ServerPowerState | undefined) => {
     `;
 };
 
-const StatusIndicatorBox = styled(GreyRowBox).attrs({ $hoverable: false })<{ $status: ServerPowerState | undefined }>`
-    ${tw`grid grid-cols-12 gap-4 relative text-sm overflow-visible`};
+const serverRowGrid = css`
+    display: grid;
+    align-items: center;
+    column-gap: 1rem;
+    row-gap: 0.5rem;
+    grid-template-columns: minmax(0, 1fr);
 
-    & .icon {
-        ${tw`w-12 p-2.5 text-sm`};
+    @media (min-width: 640px) {
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
     }
 
+    @media (min-width: 768px) {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.95fr) minmax(0, 1.05fr);
+    }
+
+    @media (min-width: 1024px) {
+        grid-template-columns:
+            minmax(0, 1.15fr)
+            minmax(0, 0.95fr)
+            minmax(0, 1.05fr)
+            6.25rem
+            7.25rem
+            7.25rem;
+    }
+`;
+
+const StatusIndicatorBox = styled(GreyRowBox).attrs({ $hoverable: true })<{
+    $status: ServerPowerState | undefined;
+}>`
+    ${tw`relative overflow-visible pr-4 py-2.5 px-4`};
+    ${serverRowGrid};
+
     & .status-bar {
-        ${tw`w-2 absolute right-0 z-20 rounded-full m-1`};
-        height: calc(100% - 0.5rem);
+        ${tw`w-1.5 absolute right-0 z-20 rounded-full my-1`};
+        top: 0.375rem;
+        bottom: 0.375rem;
         opacity: 1;
 
         ${({ $status }) => statusBarStyles($status)};
     }
 `;
+
+const Cell = styled.div<{ $hideBelow?: 'sm' | 'md' }>`
+    ${tw`flex items-center gap-1.5 min-w-0`};
+
+    ${(props) => props.$hideBelow === 'sm' && tw`hidden sm:flex`};
+    ${(props) => props.$hideBelow === 'md' && tw`hidden md:flex`};
+`;
+
+const metricText = (alarm: boolean) => css`
+    ${navText};
+    ${tw`text-xs whitespace-nowrap tabular-nums`};
+    ${alarm ? tw`text-white` : tw`opacity-80`};
+`;
+
+const metricLimit = css`
+    ${navText};
+    ${tw`text-xs opacity-50 tabular-nums`};
+`;
+
+const Metric = memo(
+    ({
+        icon,
+        value,
+        limit,
+        alarm,
+    }: {
+        icon: IconDefinition;
+        value: string;
+        limit: string;
+        alarm: boolean;
+    }) => (
+        <Cell css={tw`hidden lg:flex`}>
+            <FontAwesomeIcon
+                icon={icon}
+                css={[tw`text-xs flex-shrink-0`, alarm ? tw`text-red-400` : tw`text-neutral-500`]}
+                fixedWidth
+            />
+            <span css={metricText(alarm)}>
+                {value}
+                <span css={metricLimit}> / {limit}</span>
+            </span>
+        </Cell>
+    ),
+    isEqual
+);
 
 type Timer = ReturnType<typeof setInterval>;
 
@@ -82,8 +140,6 @@ export default ({ server, className }: { server: Server; className?: string }) =
     }, [stats?.isSuspended, server.status]);
 
     useEffect(() => {
-        // Don't waste a HTTP request if there is nothing important to show to the user because
-        // the server is suspended.
         if (isSuspended) return;
 
         getStats().then(() => {
@@ -102,100 +158,84 @@ export default ({ server, className }: { server: Server; className?: string }) =
         alarms.disk = server.limits.disk === 0 ? false : isAlarmState(stats.diskUsageInBytes, server.limits.disk);
     }
 
-    const diskLimit = server.limits.disk !== 0 ? bytesToString(mbToBytes(server.limits.disk)) : 'Unlimited';
-    const memoryLimit = server.limits.memory !== 0 ? bytesToString(mbToBytes(server.limits.memory)) : 'Unlimited';
-    const cpuLimit = server.limits.cpu !== 0 ? server.limits.cpu + ' %' : 'Unlimited';
+    const diskLimit = server.limits.disk !== 0 ? bytesToString(mbToBytes(server.limits.disk)) : '∞';
+    const memoryLimit = server.limits.memory !== 0 ? bytesToString(mbToBytes(server.limits.memory)) : '∞';
+    const cpuLimit = server.limits.cpu !== 0 ? `${server.limits.cpu}%` : '∞';
+
+    const defaultAllocation = server.allocations.find((alloc) => alloc.isDefault);
+    const address = defaultAllocation
+        ? `${defaultAllocation.alias || ip(defaultAllocation.ip)}:${defaultAllocation.port}`
+        : '—';
+
+    const locationLabel = server.locationLong || server.location || '—';
+    const rowTitle = server.description ? `${server.name} — ${server.description}` : server.name;
 
     return (
-        <StatusIndicatorBox as={Link} to={`/server/${server.id}`} className={className} $status={stats?.status}>
-            <div css={tw`flex items-center col-span-12 sm:col-span-4 lg:col-span-4 min-w-0`}>
-                <div className={'icon mr-3 flex-shrink-0'}>
-                    <FontAwesomeIcon icon={faServer} />
-                </div>
-                <div css={tw`min-w-0 flex-1 overflow-hidden`}>
-                    <p css={tw`text-sm font-semibold truncate`} title={server.name}>{server.name}</p>
-                    {!!server.description && (
-                        <p css={tw`text-xs text-neutral-400 truncate mt-0.5`} title={server.description}>{server.description}</p>
-                    )}
-                </div>
-            </div>
-            <div css={tw`flex-1 ml-4 lg:block lg:col-span-2 hidden`}>
-                <div css={tw`flex justify-center`}>
-                    <FontAwesomeIcon icon={faEthernet} css={tw`text-neutral-500`} />
-                    <p css={tw`text-xs text-neutral-400 ml-2`}>
-                        {server.allocations
-                            .filter((alloc) => alloc.isDefault)
-                            .map((allocation) => (
-                                <React.Fragment key={allocation.ip + allocation.port.toString()}>
-                                    {allocation.alias || ip(allocation.ip)}:{allocation.port}
-                                </React.Fragment>
-                            ))}
-                    </p>
-                </div>
-            </div>
-            <div css={tw`hidden lg:flex lg:col-span-1 items-center justify-center`}>
-                <div css={tw`flex flex-col items-center`}>
-                    <FontAwesomeIcon icon={faGlobe} css={tw`text-neutral-500 text-xs`} />
-                    <p css={tw`text-[11px] text-neutral-500 mt-1 max-w-[80px] truncate`} title={server.locationLong || server.location}>
-                        {server.locationLong || server.location || '—'}
-                    </p>
-                </div>
-            </div>
-            <div css={tw`hidden col-span-7 lg:col-span-5 sm:flex items-baseline justify-center`}>
-                {!stats || isSuspended ? (
-                    isSuspended ? (
-                        <div css={tw`flex-1 text-center`}>
-                            <span css={tw`bg-red-500 rounded px-2 py-1 text-red-100 text-xs`}>
-                                {server.status === 'suspended' ? 'Suspended' : 'Connection Error'}
-                            </span>
-                        </div>
+        <StatusIndicatorBox as={Link} to={`/server/${server.id}`} className={className} $status={stats?.status} title={rowTitle}>
+            <Cell>
+                <FontAwesomeIcon icon={faServer} css={tw`text-neutral-500 flex-shrink-0 text-xs`} fixedWidth />
+                <span css={tw`truncate font-semibold text-sm`}>{server.name}</span>
+            </Cell>
+
+            <Cell $hideBelow={'sm'}>
+                <FontAwesomeIcon icon={faGlobe} css={tw`text-neutral-500 text-xs flex-shrink-0`} fixedWidth />
+                <span css={[navText, tw`text-xs truncate opacity-80`]} title={locationLabel}>
+                    {locationLabel}
+                </span>
+            </Cell>
+
+            <Cell $hideBelow={'md'}>
+                <FontAwesomeIcon icon={faEthernet} css={tw`text-neutral-500 text-xs flex-shrink-0`} fixedWidth />
+                <span css={[navText, tw`text-xs truncate opacity-80 font-mono tabular-nums`]} title={address}>
+                    {address}
+                </span>
+            </Cell>
+
+            {!stats || isSuspended ? (
+                <Cell
+                    css={css`
+                        ${tw`flex justify-start lg:justify-end`};
+                        @media (min-width: 1024px) {
+                            grid-column: 4 / span 3;
+                        }
+                    `}
+                >
+                    {isSuspended ? (
+                        <span css={tw`bg-red-500 rounded px-2 py-0.5 text-red-100 text-xs`}>
+                            {server.status === 'suspended' ? 'Suspended' : 'Connection Error'}
+                        </span>
                     ) : server.isTransferring || server.status ? (
-                        <div css={tw`flex-1 text-center`}>
-                            <span css={tw`bg-neutral-500 rounded px-2 py-1 text-neutral-100 text-xs`}>
-                                {server.isTransferring
-                                    ? 'Transferring'
-                                    : server.status === 'installing'
-                                    ? 'Installing'
-                                    : server.status === 'restoring_backup'
+                        <span css={tw`bg-neutral-500 rounded px-2 py-0.5 text-neutral-100 text-xs`}>
+                            {server.isTransferring
+                                ? 'Transferring'
+                                : server.status === 'installing'
+                                  ? 'Installing'
+                                  : server.status === 'restoring_backup'
                                     ? 'Restoring Backup'
                                     : 'Unavailable'}
-                            </span>
-                        </div>
+                        </span>
                     ) : (
                         <Spinner size={'small'} />
-                    )
-                ) : (
-                    <React.Fragment>
-                        <div css={tw`flex-1 ml-4 sm:block hidden`}>
-                            <div css={tw`flex justify-center`}>
-                                <Icon icon={faMicrochip} $alarm={alarms.cpu} />
-                                <IconDescription $alarm={alarms.cpu}>
-                                    {stats.cpuUsagePercent.toFixed(2)} %
-                                </IconDescription>
-                            </div>
-                            <p css={tw`text-[11px] text-neutral-500 text-center mt-1`}>of {cpuLimit}</p>
-                        </div>
-                        <div css={tw`flex-1 ml-4 sm:block hidden`}>
-                            <div css={tw`flex justify-center`}>
-                                <Icon icon={faMemory} $alarm={alarms.memory} />
-                                <IconDescription $alarm={alarms.memory}>
-                                    {bytesToString(stats.memoryUsageInBytes)}
-                                </IconDescription>
-                            </div>
-                            <p css={tw`text-[11px] text-neutral-500 text-center mt-1`}>of {memoryLimit}</p>
-                        </div>
-                        <div css={tw`flex-1 ml-4 sm:block hidden`}>
-                            <div css={tw`flex justify-center`}>
-                                <Icon icon={faHdd} $alarm={alarms.disk} />
-                                <IconDescription $alarm={alarms.disk}>
-                                    {bytesToString(stats.diskUsageInBytes)}
-                                </IconDescription>
-                            </div>
-                            <p css={tw`text-[11px] text-neutral-500 text-center mt-1`}>of {diskLimit}</p>
-                        </div>
-                    </React.Fragment>
-                )}
-            </div>
+                    )}
+                </Cell>
+            ) : (
+                <>
+                    <Metric
+                        icon={faMicrochip}
+                        value={`${stats.cpuUsagePercent.toFixed(1)}%`}
+                        limit={cpuLimit}
+                        alarm={alarms.cpu}
+                    />
+                    <Metric
+                        icon={faMemory}
+                        value={bytesToString(stats.memoryUsageInBytes)}
+                        limit={memoryLimit}
+                        alarm={alarms.memory}
+                    />
+                    <Metric icon={faHdd} value={bytesToString(stats.diskUsageInBytes)} limit={diskLimit} alarm={alarms.disk} />
+                </>
+            )}
+
             <div className={'status-bar'} />
         </StatusIndicatorBox>
     );

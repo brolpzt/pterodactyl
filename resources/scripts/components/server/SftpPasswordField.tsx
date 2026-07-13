@@ -110,9 +110,6 @@ export default ({ serverUuid }: Props) => {
                     <FontAwesomeIcon icon={faSync} fixedWidth />
                 </Button>
             </div>
-            <div css={tw`border-l-4 border-primary-500 p-3 mt-4`}>
-                <p css={tw`text-xs text-neutral-200`}>{t('server_overview.sftp_password_help')}</p>
-            </div>
         </div>
     );
 };

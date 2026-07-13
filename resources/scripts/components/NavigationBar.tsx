@@ -11,7 +11,9 @@ import Tooltip from '@/components/elements/tooltip/Tooltip';
 import DropdownMenu, { DropdownMenuRow } from '@/components/elements/DropdownMenu';
 import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
+import { useRouteMatch } from 'react-router-dom';
 import { getExternalSiteUrl } from '@/lib/externalSite';
+import { motionDurations } from '@/assets/css/motionTheme';
 import { glassHeaderInner, glassHeaderShell } from '@/assets/css/glassPanel';
 import FlagIcon from '@/components/elements/FlagIcon';
 import { HEADER_HEIGHT, sidebarLayoutOffset } from '@/lib/sidebarLayout';
@@ -59,7 +61,7 @@ const HeaderBar = styled.div.attrs({ className: 'hg-glass-header' })<{ $collapse
     ${glassHeaderShell};
     ${tw`fixed top-0 right-0 z-50`};
     ${(props) => sidebarLayoutOffset(props.$collapsed)};
-    transition: left 300ms ease;
+    transition: left ${motionDurations.layout}ms ease;
 `;
 
 const HeaderInner = styled.div`
@@ -113,6 +115,7 @@ export default () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const toggleSidebar = useStoreActions((actions) => actions.toggleSidebar);
     const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
+    const isServerRoute = Boolean(useRouteMatch<{ id: string }>('/server/:id'));
     const [language, setLanguage] = useState(() => {
         const lng = i18n.language?.split('-')[0] || 'en';
         return LNG_TO_UI[lng] || LNG_TO_UI.en;
@@ -145,12 +148,14 @@ export default () => {
             <SpinnerOverlay visible={isLoggingOut} fixed />
             <HeaderInner>
                 <HeaderLeading>
-                    <MenuButton
-                        onClick={() => toggleSidebar()}
-                        title={sidebarCollapsed ? t('navbar.expand_menu') : t('navbar.collapse_menu')}
-                    >
-                        <FontAwesomeIcon icon={faBars} />
-                    </MenuButton>
+                    {isServerRoute && (
+                        <MenuButton
+                            onClick={() => toggleSidebar()}
+                            title={sidebarCollapsed ? t('navbar.expand_menu') : t('navbar.collapse_menu')}
+                        >
+                            <FontAwesomeIcon icon={faBars} />
+                        </MenuButton>
+                    )}
                 </HeaderLeading>
                 <div css={tw`flex-1 min-w-0`} />
                 <RightNavigation>

@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useState } from 'react';
 import tw, { css } from 'twin.macro';
 import styled from 'styled-components/macro';
 import { getServerBackgroundUrl } from '@/lib/serverBackgrounds';
@@ -86,7 +86,7 @@ const preloadBackgroundImage = (url: string): Promise<void> =>
     });
 
 export default ({ gamedig, eggName, children, viewport = false, className, style }: Props) => {
-    const [backgroundUrl] = useState(() => getServerBackgroundUrl(gamedig, eggName));
+    const backgroundUrl = useMemo(() => getServerBackgroundUrl(gamedig, eggName), [gamedig, eggName]);
     const [imageReady, setImageReady] = useState(false);
     const [imageError, setImageError] = useState(false);
 

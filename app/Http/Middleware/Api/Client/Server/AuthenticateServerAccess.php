@@ -55,7 +55,11 @@ class AuthenticateServerAccess
                 if (($server->isSuspended() || $server->node->isUnderMaintenance()) && !$request->routeIs('api:client:server.resources')) {
                     throw $exception;
                 }
-                if (!$user->root_admin || !$request->routeIs($this->except)) {
+
+                // Allow websocket during installation so users can follow install output in the console.
+                if ($server->status === Server::STATUS_INSTALLING && $request->routeIs($this->except)) {
+                    // Continue to the controller.
+                } elseif (!$user->root_admin || !$request->routeIs($this->except)) {
                     throw $exception;
                 }
             }

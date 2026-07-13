@@ -2,13 +2,24 @@ import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components/macro';
 import { useStoreActions, useStoreState } from 'easy-peasy';
 import { randomInt } from '@/helpers';
+import { motionDurations } from '@/assets/css/motionTheme';
 import { CSSTransition } from 'react-transition-group';
-import tw from 'twin.macro';
+
+const BarTrack = styled.div`
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 60;
+    pointer-events: none;
+`;
 
 const BarFill = styled.div`
-    ${tw`h-full bg-primary-500`};
-    transition: 250ms ease-in-out;
-    box-shadow: 0 -2px 10px 2px hsl(178, 78%, 57%);
+    height: 100%;
+    background-color: #2258ff;
+    transition: ${motionDurations.progressBar}ms ease-in-out;
+    box-shadow: 0 0 10px 1px rgba(34, 88, 255, 0.45);
 `;
 
 type Timer = ReturnType<typeof setTimeout>;
@@ -59,10 +70,10 @@ export default () => {
     }, [progress, continuous]);
 
     return (
-        <div css={tw`w-full fixed`} style={{ height: '2px' }}>
-            <CSSTransition timeout={150} appear in={visible} unmountOnExit classNames={'fade'}>
+        <BarTrack>
+            <CSSTransition timeout={motionDurations.fade} appear in={visible} unmountOnExit classNames={'fade'}>
                 <BarFill style={{ width: progress === undefined ? '100%' : `${progress}%` }} />
             </CSSTransition>
-        </div>
+        </BarTrack>
     );
 };

@@ -20,7 +20,7 @@ export default ({ name }: { name: string }) => {
     const removeSelectedFile = ServerContext.useStoreActions((actions) => actions.files.removeSelectedFile);
 
     return (
-        <label data-file-row-control css={tw`flex-none px-4 py-2 absolute self-center z-30 cursor-pointer`}>
+        <label data-file-row-control css={tw`flex-none pl-3 pr-2 py-2.5 absolute self-center z-30 cursor-pointer`}>
             <FileActionCheckbox
                 name={'selectedFiles'}
                 value={name}

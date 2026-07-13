@@ -33,6 +33,7 @@ import styled, { css } from 'styled-components/macro';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 import { useTranslation } from 'react-i18next';
+import { motionDurations } from '@/assets/css/motionTheme';
 import { glassContentLayer, glassSidebarShell } from '@/assets/css/glassPanel';
 import ScrollArea from '@/components/elements/ScrollArea';
 import { isCs16Server } from '@/lib/isCs16Server';
@@ -54,7 +55,7 @@ const serverLinksFade = `
 `;
 
 const FadeInWrapper = styled.div`
-    animation: fadeInItems 200ms ease-out both;
+    animation: fadeInItems ${motionDurations.orderFade}ms ease-out both;
 `;
 
 const ServerLinksPlaceholder = () => {
@@ -80,11 +81,10 @@ const ServerLinksPlaceholder = () => {
     );
 };
 
-const SidebarContainer = styled.div.attrs({ className: 'hg-glass-sidebar' })<{ collapsed: boolean }>`
+const SidebarContainer = styled.div.attrs({ className: 'hg-glass-sidebar hg-layout-sidebar' })<{ collapsed: boolean }>`
     ${glassSidebarShell};
-    box-shadow: 6px 0 28px -14px rgba(0, 0, 0, 0.38);
     ${tw`flex flex-col fixed left-0 top-0 bottom-0 z-40`};
-    transition: width 300ms ease;
+    transition: width ${motionDurations.layout}ms ease;
     ${(props) => sidebarWidthRule(props.collapsed)};
 
     @media (max-width: 767px) {
@@ -109,7 +109,7 @@ const SidebarInner = styled.div`
 `;
 
 const SidebarBrand = styled(Link)<{ collapsed: boolean }>`
-    ${tw`flex items-center justify-center flex-shrink-0 no-underline transition-all duration-300 overflow-hidden`};
+    ${tw`flex items-center justify-center flex-shrink-0 no-underline transition-all duration-200 overflow-hidden`};
     height: ${HEADER_HEIGHT};
     padding: ${(props) => (props.collapsed ? '0 0.75rem' : '0 1.25rem')};
 
@@ -119,7 +119,7 @@ const SidebarBrand = styled(Link)<{ collapsed: boolean }>`
 `;
 
 const BrandLogo = styled.img<{ collapsed: boolean }>`
-    ${tw`block transition-all duration-300`};
+    ${tw`block transition-all duration-200`};
     height: ${(props) => (props.collapsed ? '1.25rem' : '1.375rem')};
     width: ${(props) => (props.collapsed ? '2rem' : 'auto')};
     max-width: ${(props) => (props.collapsed ? '2rem' : '11.5rem')};
@@ -134,13 +134,13 @@ const NavItemLabel = styled.span.attrs({ className: 'nav-item-label' })<{ collap
 `;
 
 const NavSectionTitle = styled.div<{ collapsed: boolean }>`
-    ${tw`px-4 pt-4 pb-3 font-header text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate transition-colors duration-300`};
+    ${tw`px-4 pt-4 pb-3 font-header text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate transition-colors duration-200`};
     ${(props) => props.collapsed && tw`text-transparent`};
 `;
 
 const SidebarFooter = styled.div<{ collapsed: boolean }>`
-    ${tw`p-4 border-t text-[10px] text-neutral-400 font-medium transition-all duration-300`};
-    border-color: rgba(45, 45, 58, 0.45);
+    ${tw`p-4 border-t text-[10px] text-neutral-400 font-medium transition-all duration-200`};
+    border-color: var(--hg-border);
     ${(props) => props.collapsed && tw`text-center px-0`};
 `;
 
@@ -197,7 +197,7 @@ const SectionTitle = ({ children, collapsed }: { children: React.ReactNode, coll
 
 const Divider = styled.div`
     ${tw`mx-4 my-2 border-t`};
-    border-color: rgba(45, 45, 58, 0.45);
+    border-color: var(--hg-border);
 `;
 
 const SidebarScroll = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

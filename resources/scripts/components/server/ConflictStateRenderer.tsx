@@ -12,7 +12,7 @@ export default () => {
         (state) => state.server.data?.isNodeUnderMaintenance || false
     );
 
-    return status === 'installing' || status === 'install_failed' || status === 'reinstall_failed' ? (
+    return status === 'install_failed' || status === 'reinstall_failed' ? (
         <ScreenBlock
             title={'Running Installer'}
             image={ServerInstallSvg}

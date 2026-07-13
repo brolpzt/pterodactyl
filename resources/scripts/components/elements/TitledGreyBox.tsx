@@ -6,6 +6,7 @@ import styled from 'styled-components/macro';
 import isEqual from 'react-fast-compare';
 import { cardHeaderBorder, cardHeaderSurface, cardSurface, cardTitleText } from '@/assets/css/cardTheme';
 import { glassCardShell, glassContentLayer } from '@/assets/css/glassPanel';
+import { hgRadiusSm } from '@/assets/css/borderTheme';
 
 interface Props {
     icon?: IconProp;
@@ -16,7 +17,7 @@ interface Props {
 
 const CardShell = styled.div.attrs({ className: 'hg-glass-card' })`
     ${glassCardShell};
-    ${tw`rounded shadow-md`};
+    ${hgRadiusSm};
 `;
 
 const CardInner = styled.div`
@@ -40,7 +41,7 @@ const TitledGreyBox = ({ icon, title, children, className }: Props) => (
             <CardHeader>
                 {typeof title === 'string' ? (
                     <p css={[cardTitleText, tw`flex items-center m-0`]}>
-                        {icon && <FontAwesomeIcon icon={icon} css={tw`mr-2 text-primary-500`} />}
+                        {icon && <FontAwesomeIcon icon={icon} css={tw`mr-2`} />}
                         {title}
                     </p>
                 ) : (

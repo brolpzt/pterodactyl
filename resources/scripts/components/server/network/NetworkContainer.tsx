@@ -87,7 +87,7 @@ const NetworkContainer = () => {
                                 </p>
                                 {match && (
                                     <Link to={`/server/${match.params.id}/dns`}>
-                                        <Button>
+                                        <Button size={Button.Sizes.Small}>
                                             <FontAwesomeIcon icon={faGlobe} css={tw`mr-2`} />
                                             {t('server_network.dns_create_button')}
                                         </Button>

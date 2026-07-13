@@ -162,7 +162,6 @@ return [
         'sftp_password_reveal' => 'Revelar senha',
         'sftp_password_generate' => 'Gerar senha SFTP',
         'sftp_password_rotate' => 'Redefinir senha SFTP',
-        'sftp_password_help' => 'Esta senha é exclusiva para SFTP e independente do login SSO. Use o botão de gerar/redefinir se ainda não tiver uma senha configurada.',
         'sftp_password_note' => 'A senha SFTP é a mesma que você usa para acessar este painel.',
         'connection_string' => 'Connection string',
         'connection_string_help' => 'Use esta string para conectar ao servidor (ex.: no jogo: connect IP:porta; password xxx).',

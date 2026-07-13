@@ -9,26 +9,25 @@ import StatGraphs from '@/components/server/console/StatGraphs';
 import PowerButtons from '@/components/server/console/PowerButtons';
 import ServerDetailsBlock from '@/components/server/console/ServerDetailsBlock';
 import { Alert } from '@/components/elements/alert';
+import Can from '@/components/elements/Can';
+import StartupContainer from '@/components/server/startup/StartupContainer';
 
 export type PowerAction = 'start' | 'stop' | 'restart' | 'kill';
 
 const ServerConsoleContainer = () => {
     const name = ServerContext.useStoreState((state) => state.server.data!.name);
     const description = ServerContext.useStoreState((state) => state.server.data!.description);
-    const isInstalling = ServerContext.useStoreState((state) => state.server.isInstalling);
     const isTransferring = ServerContext.useStoreState((state) => state.server.data!.isTransferring);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures, isEqual);
     const isNodeUnderMaintenance = ServerContext.useStoreState((state) => state.server.data!.isNodeUnderMaintenance);
 
     return (
         <ServerContentBlock title={'Console'}>
-            {(isNodeUnderMaintenance || isInstalling || isTransferring) && (
+            {(isNodeUnderMaintenance || isTransferring) && (
                 <Alert type={'warning'} className={'mb-4'}>
                     {isNodeUnderMaintenance
                         ? 'The node of this server is currently under maintenance and all actions are unavailable.'
-                        : isInstalling
-                            ? 'This server is currently running its installation process and most actions are unavailable.'
-                            : 'This server is currently being transferred to another node and all actions are unavailable.'}
+                        : 'This server is currently being transferred to another node and all actions are unavailable.'}
                 </Alert>
             )}
             <div className={'mb-4 grid grid-cols-4 items-start gap-2 sm:gap-4 lg:items-stretch'}>
@@ -44,6 +43,11 @@ const ServerConsoleContainer = () => {
                     <StatGraphs />
                 </Spinner.Suspense>
             </div>
+            <Can action={'startup.*'}>
+                <Spinner.Suspense>
+                    <StartupContainer />
+                </Spinner.Suspense>
+            </Can>
             <Features enabled={eggFeatures} />
         </ServerContentBlock>
     );

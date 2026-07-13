@@ -132,7 +132,7 @@ class DropdownMenu extends React.PureComponent<Props, State> {
             <div style={{ position: 'relative' }}>
                 {this.props.renderToggle(this.onClickHandler)}
                 <Portal>
-                    <Fade timeout={150} in={visible} unmountOnExit>
+                    <Fade in={visible} unmountOnExit>
                         <div
                             ref={this.menu}
                             className={'hg-dropdown-menu'}

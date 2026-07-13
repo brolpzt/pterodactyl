@@ -43,7 +43,7 @@ export default () => {
             {!databases.length && loading ? (
                 <Spinner size={'large'} centered />
             ) : (
-                <Fade timeout={150}>
+                <Fade>
                     <>
                         {databases.length > 0 ? (
                             databases.map((database, index) => (

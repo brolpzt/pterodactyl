@@ -2,6 +2,7 @@ import tw from 'twin.macro';
 import { createGlobalStyle } from 'styled-components/macro';
 import { hostgamerColors } from '@/lib/hostgamerTheme';
 import { globalScrollbarStyles } from '@/assets/css/scrollTheme';
+import { revealThemeStyles } from '@/assets/css/revealTheme';
 
 export default createGlobalStyle`
     :root {
@@ -38,7 +39,10 @@ export default createGlobalStyle`
         --field-glow: ${hostgamerColors.fieldGlow};
         --transition-base: ${hostgamerColors.transitionBase};
         --color-danger: #dc2626;
-        --radius-ui: 0.375rem;
+        --radius-sm: 0.375rem;
+        --radius-ui: var(--radius-sm);
+        --hg-border: color-mix(in srgb, var(--color-divider) 55%, transparent);
+        --hg-card-header-text: color-mix(in srgb, var(--color-text-muted) 88%, var(--color-white) 12%);
         --font-family-heading: 'Oxanium', Arial, Helvetica, sans-serif;
         --font-family-mono: ui-monospace, 'Cascadia Code', 'Courier New', Courier, monospace;
         --font-size-mono: ${hostgamerColors.mono.fontSize};
@@ -63,7 +67,21 @@ export default createGlobalStyle`
         --hg-nav-text: color-mix(in srgb, var(--color-white) 58%, var(--color-text-muted));
         --hg-field-hint: color-mix(in srgb, var(--color-text-muted) 88%, transparent);
         --hg-card-surface: transparent;
-        --hg-card-label: color-mix(in srgb, var(--color-text-muted) 88%, var(--color-white) 12%);
+        --hg-card-label: var(--hg-card-header-text);
+    }
+
+    .hg-layout-sidebar {
+        border-right: 1px solid var(--hg-border);
+        box-shadow: none;
+    }
+
+    .hg-glass-card {
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--hg-border);
+    }
+
+    .hg-card-header {
+        color: var(--hg-card-header-text);
     }
 
     .field-label {
@@ -259,12 +277,16 @@ export default createGlobalStyle`
     .hg-card-header p,
     .hg-card-header > div,
     .hg-card-header > div p {
-        color: var(--color-white);
+        color: var(--hg-card-header-text);
         font-family: 'Oxanium', Arial, Helvetica, sans-serif;
         font-size: 0.875rem;
         font-weight: 600;
         text-transform: uppercase;
         line-height: 1.25rem;
+    }
+
+    .hg-card-header svg {
+        color: currentColor;
     }
 
     .flag-icon {
@@ -335,7 +357,7 @@ export default createGlobalStyle`
     ${globalScrollbarStyles}
 
     body {
-        background: var(--color-bg);
+        background-color: var(--color-bg) !important;
         color: var(--color-text-muted);
         font-family: 'Manrope', Arial, Helvetica, sans-serif;
         font-size: 1.125rem;
@@ -391,4 +413,6 @@ export default createGlobalStyle`
     code, pre, kbd, samp {
         font-family: ui-monospace, 'Cascadia Code', 'Courier New', Courier, monospace;
     }
+
+    ${revealThemeStyles}
 `;

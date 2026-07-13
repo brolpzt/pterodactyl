@@ -3,6 +3,7 @@ import { Websocket } from '@/plugins/Websocket';
 import { ServerContext } from '@/state/server';
 import getWebsocketToken from '@/api/server/getWebsocketToken';
 import ContentContainer from '@/components/elements/ContentContainer';
+import { motionDurations } from '@/assets/css/motionTheme';
 import { CSSTransition } from 'react-transition-group';
 import Spinner from '@/components/elements/Spinner';
 import tw from 'twin.macro';
@@ -108,7 +109,7 @@ export default () => {
     }, [uuid]);
 
     return error ? (
-        <CSSTransition timeout={150} in appear classNames={'fade'}>
+        <CSSTransition timeout={motionDurations.fade} in appear classNames={'fade'}>
             <div css={tw`bg-red-500 py-2`}>
                 <ContentContainer css={tw`flex items-center justify-center`}>
                     {error === 'connecting' ? (

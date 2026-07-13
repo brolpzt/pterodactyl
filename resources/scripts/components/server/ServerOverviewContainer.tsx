@@ -99,7 +99,7 @@ const ServerOverviewContainer = () => {
 
     return (
         <ServerContentBlock title={t('server_overview.title')}>
-            <div css={tw`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8`}>
+            <div css={tw`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 items-start`}>
                 <TitledGreyBox title={t('server_overview.server_info')} icon={faServer}>
                     <div css={tw`space-y-0`}>
                         <InfoRow label={t('server_overview.egg_name')} value={server.egg || '—'} />

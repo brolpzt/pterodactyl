@@ -8,13 +8,30 @@ import FileDropdownMenu from '@/components/server/files/FileDropdownMenu';
 import { ServerContext } from '@/state/server';
 import { Link } from 'react-router-dom';
 import tw from 'twin.macro';
+import styled from 'styled-components/macro';
 import isEqual from 'react-fast-compare';
 import SelectFileCheckbox from '@/components/server/files/SelectFileCheckbox';
 import { usePermissions } from '@/plugins/usePermissions';
 import { join } from 'pathe';
 import { bytesToString } from '@/lib/formatters';
-import GreyRowBox from '@/components/elements/GreyRowBox';
+import { rowListTextFiles } from '@/assets/css/cardTheme';
 import styles from './style.module.css';
+
+const FileRow = styled.div`
+    ${rowListTextFiles};
+    ${tw`relative flex items-center transition-colors duration-150`};
+    color: var(--hg-nav-text);
+    border-bottom: 1px solid var(--hg-border);
+
+    &:last-child {
+        border-bottom: 0;
+    }
+
+    &:hover {
+        color: color-mix(in srgb, var(--hg-nav-text) 65%, var(--color-white) 35%);
+        background: color-mix(in srgb, var(--hg-header-glass-bg) 82%, var(--color-white) 18%);
+    }
+`;
 
 const Clickable: React.FC<{ file: FileObject }> = memo(({ file, children }) => {
     const [canRead] = usePermissions(['file.read']);
@@ -36,10 +53,7 @@ const Clickable: React.FC<{ file: FileObject }> = memo(({ file, children }) => {
 }, isEqual);
 
 const FileObjectRow = ({ file }: { file: FileObject }) => (
-    <GreyRowBox
-        $compact
-        $allowMenuOverflow
-        css={tw`mb-px`}
+    <FileRow
         key={file.name}
         onContextMenu={(e) => {
             e.preventDefault();
@@ -50,7 +64,7 @@ const FileObjectRow = ({ file }: { file: FileObject }) => (
     >
         <SelectFileCheckbox name={file.name} />
         <Clickable file={file}>
-            <div css={tw`flex-none ml-4 mr-3 pl-2 opacity-80`}>
+            <div css={tw`flex-none mr-2 opacity-80`}>
                 {file.isFile ? (
                     <FontAwesomeIcon
                         icon={file.isSymlink ? faFileImport : file.isArchiveType() ? faFileArchive : faFileAlt}
@@ -61,16 +75,16 @@ const FileObjectRow = ({ file }: { file: FileObject }) => (
             </div>
             <div css={tw`flex-1 truncate`}>{file.name}</div>
             {file.isFile && (
-                <div css={tw`w-1/6 text-right mr-4 hidden sm:block opacity-80`}>{bytesToString(file.size)}</div>
+                <div css={tw`w-1/6 text-right mr-3 hidden sm:block opacity-80`}>{bytesToString(file.size)}</div>
             )}
-            <div css={tw`w-1/5 text-right mr-4 hidden md:block opacity-80`} title={file.modifiedAt.toString()}>
+            <div css={tw`w-1/5 text-right mr-3 hidden md:block opacity-80`} title={file.modifiedAt.toString()}>
                 {Math.abs(differenceInHours(file.modifiedAt, new Date())) > 48
                     ? format(file.modifiedAt, 'MMM do, yyyy h:mma')
                     : formatDistanceToNow(file.modifiedAt, { addSuffix: true })}
             </div>
         </Clickable>
         <FileDropdownMenu file={file} />
-    </GreyRowBox>
+    </FileRow>
 );
 
 export default memo(FileObjectRow, (prevProps, nextProps) => {

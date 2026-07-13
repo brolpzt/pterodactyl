@@ -17,9 +17,10 @@ import '@/assets/tailwind.css';
 import Spinner from '@/components/elements/Spinner';
 import { SwitchTransition } from 'react-transition-group';
 import Fade from '@/components/elements/Fade';
+import { motionDurations } from '@/assets/css/motionTheme';
+import ServerRouter from '@/routers/ServerRouter';
 
 const DashboardRouter = lazy(() => import(/* webpackChunkName: "dashboard" */ '@/routers/DashboardRouter'));
-const ServerRouter = lazy(() => import(/* webpackChunkName: "server" */ '@/routers/ServerRouter'));
 const AuthenticationRouter = lazy(() => import(/* webpackChunkName: "auth" */ '@/routers/AuthenticationRouter'));
 
 interface ExtendedWindow extends Window {
@@ -74,7 +75,7 @@ const App = () => {
                             const topKey = location.pathname.startsWith('/server/') ? 'server' : location.pathname;
                             return (
                                 <SwitchTransition>
-                                    <Fade timeout={150} key={topKey} in appear unmountOnExit>
+                                    <Fade timeout={motionDurations.fade} key={topKey} in appear unmountOnExit>
                                         <div>
                                             <Switch location={location}>
                                                 <Route path={'/auth'}>

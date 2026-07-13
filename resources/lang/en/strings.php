@@ -162,7 +162,6 @@ return [
         'sftp_password_reveal' => 'Reveal password',
         'sftp_password_generate' => 'Generate SFTP password',
         'sftp_password_rotate' => 'Reset SFTP password',
-        'sftp_password_help' => 'This password is dedicated to SFTP and separate from SSO login. Use generate/reset if you do not have one configured yet.',
         'sftp_password_note' => 'Your SFTP password is the same as the password you use to access this panel.',
         'connection_string' => 'Connection String',
         'connection_string_help' => 'Use this string to connect to the server (e.g. in-game: connect IP:port; password xxx).',

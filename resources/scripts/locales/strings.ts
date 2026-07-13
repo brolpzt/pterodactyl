@@ -71,8 +71,6 @@ export const stringsEn = {
         sftp_password_reveal: 'Reveal password',
         sftp_password_generate: 'Generate SFTP password',
         sftp_password_rotate: 'Reset SFTP password',
-        sftp_password_help:
-            'This password is dedicated to SFTP and separate from SSO login. Use generate/reset if you do not have one configured yet.',
         sftp_password_note: 'Your SFTP password is the same as the password you use to access this panel.',
         connection_string: 'Connection String',
         connection_string_help: 'Use this string to connect to the server (e.g. in-game: connect IP:port; password xxx).',
@@ -360,8 +358,6 @@ export const stringsPt = {
         sftp_password_reveal: 'Revelar senha',
         sftp_password_generate: 'Gerar senha SFTP',
         sftp_password_rotate: 'Redefinir senha SFTP',
-        sftp_password_help:
-            'Esta senha é exclusiva para SFTP e independente do login SSO. Use o botão de gerar/redefinir se ainda não tiver uma senha configurada.',
         sftp_password_note: 'A senha SFTP é a mesma que você usa para acessar este painel.',
         connection_string: 'Connection string',
         connection_string_help: 'Use esta string para conectar ao servidor (ex.: no jogo: connect IP:porta; password xxx).',
@@ -649,8 +645,6 @@ export const stringsEs = {
         sftp_password_reveal: 'Revelar contraseña',
         sftp_password_generate: 'Generar contraseña SFTP',
         sftp_password_rotate: 'Restablecer contraseña SFTP',
-        sftp_password_help:
-            'Esta contraseña es exclusiva para SFTP e independiente del inicio de sesión SSO. Usa generar/restablecer si aún no tienes una configurada.',
         sftp_password_note: 'La contraseña SFTP es la misma que usas para acceder a este panel.',
         connection_string: 'Cadena de conexión',
         connection_string_help: 'Usa esta cadena para conectarte al servidor (ej. en el juego: connect IP:puerto; password xxx).',

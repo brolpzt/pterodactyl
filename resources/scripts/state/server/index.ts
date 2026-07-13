@@ -30,11 +30,15 @@ const server: ServerDataStore = {
             return false;
         }
 
+        if (state.data.status === 'installing') {
+            return false;
+        }
+
         return state.data.status !== null || state.data.isTransferring || state.data.isNodeUnderMaintenance;
     }),
 
     isInstalling: computed((state) => {
-        return state.data?.status === 'installing' || state.data?.status === 'install_failed';
+        return state.data?.status === 'installing';
     }),
 
     getServer: thunk(async (actions, payload) => {

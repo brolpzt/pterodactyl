@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { httpErrorToHuman } from '@/api/http';
+import { motionDurations } from '@/assets/css/motionTheme';
 import { CSSTransition } from 'react-transition-group';
 import Spinner from '@/components/elements/Spinner';
 import FileObjectRow from '@/components/server/files/FileObjectRow';
+import FileList from '@/components/server/files/FileList';
 import FileManagerBreadcrumbs from '@/components/server/files/FileManagerBreadcrumbs';
 import { FileObject } from '@/api/server/files/loadDirectory';
 import NewDirectoryButton from '@/components/server/files/NewDirectoryButton';
@@ -97,19 +99,21 @@ export default () => {
                     {!files.length ? (
                         <p css={emptyStateText}>This directory seems to be empty.</p>
                     ) : (
-                        <CSSTransition classNames={'fade'} timeout={150} appear in>
+                        <CSSTransition classNames={'fade'} timeout={motionDurations.fade} appear in>
                             <div>
                                 {files.length > 250 && (
-                                    <div css={tw`rounded bg-yellow-400 mb-px p-3`}>
+                                    <div css={tw`rounded bg-yellow-400 mb-3 p-3`}>
                                         <p css={tw`text-yellow-900 text-sm text-center`}>
                                             This directory is too large to display in the browser, limiting the output
                                             to the first 250 files.
                                         </p>
                                     </div>
                                 )}
-                                {sortFiles(files.slice(0, 250)).map((file) => (
-                                    <FileObjectRow key={file.key} file={file} />
-                                ))}
+                                <FileList>
+                                    {sortFiles(files.slice(0, 250)).map((file) => (
+                                        <FileObjectRow key={file.key} file={file} />
+                                    ))}
+                                </FileList>
                                 <MassActionsBar />
                             </div>
                         </CSSTransition>

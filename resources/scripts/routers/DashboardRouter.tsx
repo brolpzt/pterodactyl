@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavLink, Route, Switch } from 'react-router-dom';
-import { useStoreState } from 'easy-peasy';
+import { useStoreState, useStoreActions } from '@/state/hooks';
 import NavigationBar from '@/components/NavigationBar';
 import DashboardContainer from '@/components/dashboard/DashboardContainer';
 import { NotFound } from '@/components/elements/ScreenBlock';
@@ -19,8 +19,13 @@ import tw from 'twin.macro';
 export default () => {
     const location = useLocation();
     useScrollToTopOnRouteChange();
-    const sidebarCollapsed = useStoreState((state: any) => state.sidebarCollapsed);
-    const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
+    const sidebarCollapsed = useStoreState((state) => state.sidebarCollapsed);
+    const setSidebarCollapsed = useStoreActions((actions) => actions.setSidebarCollapsed);
+    const rootAdmin = useStoreState((state) => state.user.data!.rootAdmin);
+
+    useEffect(() => {
+        setSidebarCollapsed(true);
+    }, [location.pathname, setSidebarCollapsed]);
 
     return (
         <>

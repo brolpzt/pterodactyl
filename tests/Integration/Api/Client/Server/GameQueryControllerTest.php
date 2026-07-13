@@ -36,6 +36,14 @@ class GameQueryControllerTest extends ClientApiIntegrationTestCase
             'player_list' => [
                 ['name' => 'Player1', 'score' => 10, 'time' => 120],
             ],
+            'slots' => [
+                'configured' => null,
+                'reported' => 32,
+                'env_variable' => null,
+                'mismatch' => false,
+                'warn_enabled' => false,
+                'show_warning' => false,
+            ],
         ]);
 
         $response = $this->actingAs($user)->getJson("/api/client/servers/$server->uuid/query");

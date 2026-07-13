@@ -1,0 +1,122 @@
+{
+    "_comment": "Import via Admin → Nests → Import Egg. Adjust docker image for your Windows Wings node.",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-07-13T02:15:00+00:00",
+    "name": "Plutonium T6",
+    "author": "CALDAS",
+    "description": "Call of Duty: Black Ops II (Plutonium T6). Downloads via plutonium-updater; bin/games/storage/launcher na raiz do volume; dedicated.cfg em storage/t6.",
+    "features": null,
+    "docker_images": {
+        "Windows": "windows"
+    },
+    "file_denylist": [],
+    "startup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$d=$PWD.Path; & (Join-Path $d 'bin\\plutonium-bootstrapper-win32.exe') {{PLUTONIUM_MODE}} $d -dedicated +set key {{PLUTONIUM_KEY}} +set fs_game '{{FS_GAME}}' +exec '{{DEDICATED_CFG}}' +set net_port {{SERVER_PORT}} +set sv_maxclients {{MAX_CLIENTS}} +map_rotate\"",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"Server restarts\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "# Plutonium T6 — install script (Windows Wings / PowerShell)\r\n# Uses plutonium-updater: https://github.com/mxve/plutonium-updater.rs\r\n$ErrorActionPreference = 'Stop'\r\n\r\n$ServerDir = if ($env:SERVER_DIR) { $env:SERVER_DIR } else { 'C:\\mnt\\server' }\r\n$ConfigUrl = if ($env:T6_CONFIG_URL) { $env:T6_CONFIG_URL } else { 'https://github.com/xerxes-at/T6ServerConfigs/archive/refs/heads/master.zip' }\r\n$UpdaterUrl = if ($env:PLUTONIUM_UPDATER_URL) {\r\n    $env:PLUTONIUM_UPDATER_URL\r\n} else {\r\n    'https://github.com/mxve/plutonium-updater.rs/releases/download/v0.4.5/plutonium-updater-x86_64-pc-windows-msvc.zip'\r\n}\r\n\r\n$WorkDir = Join-Path $env:TEMP (\"ptero-t6-install-\" + [guid]::NewGuid().ToString())\r\n$UpdaterZip = Join-Path $WorkDir 'plutonium-updater.zip'\r\n$UpdaterDir = Join-Path $WorkDir 'updater'\r\n$ConfigZip = Join-Path $WorkDir 'T6ServerConfigs.zip'\r\n$ConfigExtractDir = Join-Path $WorkDir 'config-extract'\r\n$Bootstrapper = Join-Path $ServerDir 'bin\\plutonium-bootstrapper-win32.exe'\r\n$StorageT6 = Join-Path $ServerDir 'storage\\t6'\r\n\r\nfunction Invoke-Robocopy {\r\n    param(\r\n        [string]$Source,\r\n        [string]$Destination\r\n    )\r\n\r\n    robocopy $Source $Destination /E /COPY:DAT /DCOPY:DAT /R:2 /W:2 /NFL /NDL /NJH /NJS /NC /NS /NP | Out-Host\r\n    if ($LASTEXITCODE -ge 8) {\r\n        throw \"Robocopy failed (exit code $LASTEXITCODE) from $Source to $Destination\"\r\n    }\r\n}\r\n\r\nWrite-Host '[1/8] Cleaning server directory contents:' $ServerDir\r\nSet-Location $env:TEMP\r\n\r\nif (Test-Path -LiteralPath $ServerDir) {\r\n    Get-ChildItem -LiteralPath $ServerDir -Force | Where-Object {\r\n        $_.Name -notlike '.wings-install*'\r\n    } | ForEach-Object {\r\n        Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop\r\n    }\r\n} else {\r\n    New-Item -ItemType Directory -Path $ServerDir -Force | Out-Null\r\n}\r\n\r\nSet-Location $ServerDir\r\nNew-Item -ItemType Directory -Path $WorkDir -Force | Out-Null\r\n\r\nWrite-Host '[2/8] Downloading plutonium-updater'\r\nInvoke-WebRequest -Uri $UpdaterUrl -OutFile $UpdaterZip\r\n\r\nWrite-Host '[3/8] Extracting plutonium-updater'\r\nNew-Item -ItemType Directory -Path $UpdaterDir -Force | Out-Null\r\nExpand-Archive -LiteralPath $UpdaterZip -DestinationPath $UpdaterDir -Force\r\n\r\n$UpdaterExe = Get-ChildItem -Path $UpdaterDir -Filter 'plutonium-updater.exe' -Recurse -File |\r\n    Select-Object -First 1\r\nif (-not $UpdaterExe) {\r\n    throw \"plutonium-updater.exe not found in $UpdaterDir\"\r\n}\r\n\r\nWrite-Host '[4/8] Downloading Plutonium files from CDN'\r\n# Layout at server root: bin/, games/, storage/, launcher/\r\n& $UpdaterExe.FullName -d $ServerDir -l -q --no-color\r\nif ($LASTEXITCODE -ne 0) {\r\n    throw \"plutonium-updater failed (exit code $LASTEXITCODE)\"\r\n}\r\n\r\nif (-not (Test-Path -LiteralPath $Bootstrapper)) {\r\n    throw \"Bootstrapper not found after update: $Bootstrapper\"\r\n}\r\n\r\nWrite-Host '[5/8] Downloading T6ServerConfigs'\r\nInvoke-WebRequest -Uri $ConfigUrl -OutFile $ConfigZip\r\n\r\nWrite-Host '[6/8] Extracting T6ServerConfigs'\r\nStart-Sleep -Seconds 2\r\nNew-Item -ItemType Directory -Path $ConfigExtractDir -Force | Out-Null\r\nExpand-Archive -LiteralPath $ConfigZip -DestinationPath $ConfigExtractDir -Force\r\n\r\n# GitHub zip: localappdata/Plutonium/storage/t6/dedicated.cfg\r\n# Target:       storage/t6/dedicated.cfg (server root)\r\n$ConfigRoot = Get-ChildItem -Path $ConfigExtractDir -Directory |\r\n    Where-Object { Test-Path (Join-Path $_.FullName 'localappdata\\Plutonium\\storage\\t6') } |\r\n    Select-Object -First 1\r\n\r\nif (-not $ConfigRoot) {\r\n    throw \"T6ServerConfigs storage/t6 folder not found in $ConfigExtractDir\"\r\n}\r\n\r\n$ConfigStorageT6 = Join-Path $ConfigRoot.FullName 'localappdata\\Plutonium\\storage\\t6'\r\nWrite-Host \"       Config source:\" $ConfigStorageT6\r\nWrite-Host \"       Config target:\" $StorageT6\r\n\r\nNew-Item -ItemType Directory -Path $StorageT6 -Force | Out-Null\r\nInvoke-Robocopy -Source $ConfigStorageT6 -Destination $StorageT6\r\n\r\nWrite-Host '[7/8] Removing .ps1 and .json from server root'\r\nGet-ChildItem -LiteralPath $ServerDir -File -Force |\r\n    Where-Object { $_.Extension -in @('.ps1', '.json') } |\r\n    ForEach-Object {\r\n        Remove-Item -LiteralPath $_.FullName -Force\r\n        Write-Host \"       Removed $($_.Name)\"\r\n    }\r\n\r\nWrite-Host '[8/8] Removing temporary files'\r\nRemove-Item $WorkDir -Recurse -Force -ErrorAction SilentlyContinue\r\n\r\nWrite-Host '[DONE] Plutonium T6 installation completed successfully'\r\nWrite-Host '       Game path :' $ServerDir\r\nWrite-Host '       Games     :' (Join-Path $ServerDir 'games')\r\nWrite-Host '       Bootstrap :' $Bootstrapper\r\nWrite-Host '       Configs   :' $StorageT6\r\n",
+            "container": "windows",
+            "entrypoint": "powershell.exe"
+        }
+    },
+    "variables": [
+        {
+            "name": "T6 Config URL",
+            "description": "URL do zip T6ServerConfigs (GitHub).",
+            "env_variable": "T6_CONFIG_URL",
+            "default_value": "https://github.com/xerxes-at/T6ServerConfigs/archive/refs/heads/master.zip",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:512",
+            "field_type": "text"
+        },
+        {
+            "name": "Plutonium Updater URL",
+            "description": "URL do zip do plutonium-updater para Windows (GitHub releases).",
+            "env_variable": "PLUTONIUM_UPDATER_URL",
+            "default_value": "https://github.com/mxve/plutonium-updater.rs/releases/download/v0.4.5/plutonium-updater-x86_64-pc-windows-msvc.zip",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:512",
+            "field_type": "text"
+        },
+        {
+            "name": "Plutonium Server Key",
+            "description": "Server key de https://platform.plutonium.pw/serverkeys",
+            "env_variable": "PLUTONIUM_KEY",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:128",
+            "field_type": "text"
+        },
+        {
+            "name": "Plutonium Mode",
+            "description": "t6mp = multiplayer, t6zm = zombies",
+            "env_variable": "PLUTONIUM_MODE",
+            "default_value": "t6mp",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:t6mp,t6zm",
+            "field_type": "text"
+        },
+        {
+            "name": "Dedicated Config",
+            "description": "Ficheiro cfg em storage\\t6 (raiz do servidor). Use dedicated_zm.cfg para zombies.",
+            "env_variable": "DEDICATED_CFG",
+            "default_value": "dedicated.cfg",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Max Clients",
+            "description": "Máximo de jogadores (MP: 1-18, ZM: 1-8)",
+            "env_variable": "MAX_CLIENTS",
+            "default_value": "18",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:1,64",
+            "field_type": "text"
+        },
+        {
+            "name": "Slots Env Variable",
+            "description": "Variável de ambiente com o limite de slots no painel (apenas admin).",
+            "env_variable": "SLOTS_ENV_VARIABLE",
+            "default_value": "MAX_CLIENTS",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Warn Slot Mismatch",
+            "description": "Exibir aviso quando a query reportar mais slots que o limite do painel (apenas admin).",
+            "env_variable": "WARN_SLOT_MISMATCH",
+            "default_value": "1",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Mod Directory",
+            "description": "Pasta do mod (fs_game). Deixe vazio se não usar mod.",
+            "env_variable": "FS_GAME",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:128",
+            "field_type": "text"
+        }
+    ]
+}

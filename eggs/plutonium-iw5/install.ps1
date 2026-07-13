@@ -1,22 +1,22 @@
-# Plutonium T5 — install script (Windows Wings / PowerShell)
+# Plutonium IW5 — install script (Windows Wings / PowerShell)
 # Uses plutonium-updater: https://github.com/mxve/plutonium-updater.rs
 $ErrorActionPreference = 'Stop'
 
 $ServerDir = if ($env:SERVER_DIR) { $env:SERVER_DIR } else { 'C:\mnt\server' }
-$ConfigUrl = if ($env:T5_CONFIG_URL) { $env:T5_CONFIG_URL } else { 'https://github.com/xerxes-at/T5ServerConfig/archive/refs/heads/master.zip' }
+$ConfigUrl = if ($env:IW5_CONFIG_URL) { $env:IW5_CONFIG_URL } else { 'https://github.com/xerxes-at/IW5ServerConfig/archive/refs/heads/master.zip' }
 $UpdaterUrl = if ($env:PLUTONIUM_UPDATER_URL) {
     $env:PLUTONIUM_UPDATER_URL
 } else {
     'https://github.com/mxve/plutonium-updater.rs/releases/download/v0.4.5/plutonium-updater-x86_64-pc-windows-msvc.zip'
 }
 
-$WorkDir = Join-Path $env:TEMP ("ptero-t5-install-" + [guid]::NewGuid().ToString())
+$WorkDir = Join-Path $env:TEMP ("ptero-iw5-install-" + [guid]::NewGuid().ToString())
 $UpdaterZip = Join-Path $WorkDir 'plutonium-updater.zip'
 $UpdaterDir = Join-Path $WorkDir 'updater'
-$ConfigZip = Join-Path $WorkDir 'T5ServerConfig.zip'
+$ConfigZip = Join-Path $WorkDir 'IW5ServerConfig.zip'
 $ConfigExtractDir = Join-Path $WorkDir 'config-extract'
 $Bootstrapper = Join-Path $ServerDir 'bin\plutonium-bootstrapper-win32.exe'
-$StorageT5 = Join-Path $ServerDir 'storage\t5'
+$AdminDir = Join-Path $ServerDir 'admin'
 
 function Invoke-Robocopy {
     param(
@@ -70,30 +70,30 @@ if (-not (Test-Path -LiteralPath $Bootstrapper)) {
     throw "Bootstrapper not found after update: $Bootstrapper"
 }
 
-Write-Host '[5/8] Downloading T5ServerConfig'
+Write-Host '[5/8] Downloading IW5ServerConfig'
 Invoke-WebRequest -Uri $ConfigUrl -OutFile $ConfigZip
 
-Write-Host '[6/8] Extracting T5ServerConfig'
+Write-Host '[6/8] Extracting IW5ServerConfig'
 Start-Sleep -Seconds 2
 New-Item -ItemType Directory -Path $ConfigExtractDir -Force | Out-Null
 Expand-Archive -LiteralPath $ConfigZip -DestinationPath $ConfigExtractDir -Force
 
-# GitHub zip: localappdata/Plutonium/storage/t5/dedicated.cfg
-# Target:       storage/t5/dedicated.cfg (server root)
+# GitHub zip: admin/server.cfg
+# Target:       admin/server.cfg (server root)
 $ConfigRoot = Get-ChildItem -Path $ConfigExtractDir -Directory |
-    Where-Object { Test-Path (Join-Path $_.FullName 'localappdata\Plutonium\storage\t5') } |
+    Where-Object { Test-Path (Join-Path $_.FullName 'admin\server.cfg') } |
     Select-Object -First 1
 
 if (-not $ConfigRoot) {
-    throw "T5ServerConfig storage/t5 folder not found in $ConfigExtractDir"
+    throw "IW5ServerConfig admin folder not found in $ConfigExtractDir"
 }
 
-$ConfigStorageT5 = Join-Path $ConfigRoot.FullName 'localappdata\Plutonium\storage\t5'
-Write-Host "       Config source:" $ConfigStorageT5
-Write-Host "       Config target:" $StorageT5
+$ConfigAdmin = Join-Path $ConfigRoot.FullName 'admin'
+Write-Host "       Config source:" $ConfigAdmin
+Write-Host "       Config target:" $AdminDir
 
-New-Item -ItemType Directory -Path $StorageT5 -Force | Out-Null
-Invoke-Robocopy -Source $ConfigStorageT5 -Destination $StorageT5
+New-Item -ItemType Directory -Path $AdminDir -Force | Out-Null
+Invoke-Robocopy -Source $ConfigAdmin -Destination $AdminDir
 
 Write-Host '[7/8] Removing .ps1 and .json from server root'
 Get-ChildItem -LiteralPath $ServerDir -File -Force |
@@ -106,8 +106,8 @@ Get-ChildItem -LiteralPath $ServerDir -File -Force |
 Write-Host '[8/8] Removing temporary files'
 Remove-Item $WorkDir -Recurse -Force -ErrorAction SilentlyContinue
 
-Write-Host '[DONE] Plutonium T5 installation completed successfully'
+Write-Host '[DONE] Plutonium IW5 installation completed successfully'
 Write-Host '       Game path :' $ServerDir
 Write-Host '       Games     :' (Join-Path $ServerDir 'games')
 Write-Host '       Bootstrap :' $Bootstrapper
-Write-Host '       Configs   :' $StorageT5
+Write-Host '       Configs   :' $AdminDir

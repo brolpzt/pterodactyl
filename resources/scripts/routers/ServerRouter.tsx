@@ -28,6 +28,7 @@ import useFlash from '@/plugins/useFlash';
 import ServerBackground from '@/components/server/ServerBackground';
 import { getServerBackgroundUrl } from '@/lib/serverBackgrounds';
 import ServerStatusBar from '@/components/server/ServerStatusBar';
+import SlotMismatchAlert from '@/components/server/SlotMismatchAlert';
 import useScrollToTopOnRouteChange from '@/plugins/useScrollToTopOnRouteChange';
 
 export default () => {
@@ -148,6 +149,7 @@ export default () => {
                                 onCopyText={onCopyText}
                                 formatIp={ip}
                             />
+                            <SlotMismatchAlert />
                             <div tw="mt-0">
                                 <InstallListener />
                                 <TransferListener />

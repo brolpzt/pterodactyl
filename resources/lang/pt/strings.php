@@ -144,6 +144,7 @@ return [
             'viewer' => 'Visualizador TS3',
             'query' => 'Terminal Query',
         ],
+        'slots_mismatch_warning' => 'O servidor reporta :reported slots na query, acima do limite configurado no painel (:configured em :env). Usar menos ou igual slots é permitido; reduza os slots no jogo ou contacte o suporte.',
     ],
     'server_overview' => [
         'title' => 'Início',

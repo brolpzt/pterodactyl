@@ -5,6 +5,15 @@ export interface GameQueryPlayer {
     ping?: number;
 }
 
+export interface GameQuerySlots {
+    configured: number | null;
+    reported: number;
+    env_variable: string | null;
+    mismatch: boolean;
+    warn_enabled: boolean;
+    show_warning: boolean;
+}
+
 export interface GameQueryResult {
     online: boolean;
     type: string;
@@ -19,4 +28,5 @@ export interface GameQueryResult {
     password_protected: boolean;
     version: string | null;
     player_list: GameQueryPlayer[];
+    slots?: GameQuerySlots;
 }

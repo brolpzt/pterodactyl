@@ -6,6 +6,7 @@ use Illuminate\Http\Response;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Support\GameDigTypeResolver;
 use Pterodactyl\Support\ServerType;
+use Pterodactyl\Support\SlotMismatchResolver;
 use Pterodactyl\Repositories\Wings\DaemonGameQueryRepository;
 use Pterodactyl\Exceptions\Service\GameQuery\GameQueryException;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
@@ -60,7 +61,7 @@ class GameQueryService
             );
         }
 
-        return $this->formatResponse($gameType, $allocation->ip, $port, $queryPort, $result);
+        return $this->formatResponse($server, $gameType, $allocation->ip, $port, $queryPort, $result);
     }
 
     private function resolveQueryPort(Server $server, int $defaultPort): int
@@ -79,7 +80,7 @@ class GameQueryService
         return $defaultPort;
     }
 
-    private function formatResponse(string $gameType, string $address, int $port, int $queryPort, array $result): array
+    private function formatResponse(Server $server, string $gameType, string $address, int $port, int $queryPort, array $result): array
     {
         $players = [];
 
@@ -96,8 +97,11 @@ class GameQueryService
             ], static fn ($value) => $value !== null);
         }
 
+        $online = (bool) ($result['online'] ?? false);
+        $maxPlayers = (int) ($result['max_players'] ?? 0);
+
         return [
-            'online' => (bool) ($result['online'] ?? false),
+            'online' => $online,
             'type' => $gameType,
             'address' => $result['address'] ?? $address,
             'port' => (int) ($result['port'] ?? $port),
@@ -106,11 +110,12 @@ class GameQueryService
             'map' => $result['map'] ?? null,
             'game' => $result['game'] ?? null,
             'players' => max((int) ($result['players'] ?? 0), count($players)),
-            'max_players' => (int) ($result['max_players'] ?? 0),
+            'max_players' => $maxPlayers,
             'password_protected' => (bool) ($result['password_protected'] ?? false),
             'version' => $result['version'] ?? null,
             'player_list' => $players,
             'queried_at' => $result['queried_at'] ?? now()->toAtomString(),
+            'slots' => SlotMismatchResolver::resolve($server, $online, $maxPlayers),
         ];
     }
 }

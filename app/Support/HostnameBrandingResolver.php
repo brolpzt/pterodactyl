@@ -93,14 +93,23 @@ class HostnameBrandingResolver
         $value = str_replace("\u{E000}", '^', $value);
         $value = preg_replace('/&[0-9a-z]/i', '', $value) ?? '';
         $value = preg_replace('/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value) ?? '';
-        $value = preg_replace('/\s+/u', ' ', $value) ?? '';
+        $normalized = preg_replace('/\s+/u', ' ', $value);
+        if ($normalized === null) {
+            $normalized = preg_replace('/\s+/', ' ', $value) ?? $value;
+        }
+        $value = $normalized;
 
         return trim($value);
     }
 
     private static function candidateContainsBranding(string $candidate): bool
     {
-        $compact = strtolower(preg_replace('/[^a-z0-9]/', '', $candidate) ?? '');
+        $normalized = mb_strtolower($candidate, 'UTF-8');
+        $compact = preg_replace('/[^a-z0-9]/u', '', $normalized) ?? '';
+        if ($compact === '') {
+            $compact = strtolower(preg_replace('/[^a-z0-9]/', '', $candidate) ?? '');
+        }
+
         if (str_contains($compact, 'hostgamer')) {
             return true;
         }

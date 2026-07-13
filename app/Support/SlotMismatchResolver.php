@@ -2,8 +2,8 @@
 
 namespace Pterodactyl\Support;
 
+use Pterodactyl\Models\EggVariable;
 use Pterodactyl\Models\Server;
-use Pterodactyl\Services\Servers\EnvironmentService;
 
 class SlotMismatchResolver
 {
@@ -32,7 +32,7 @@ class SlotMismatchResolver
      */
     public static function resolve(Server $server, bool $online, int $reportedMaxPlayers): array
     {
-        $server->loadMissing('egg');
+        $server->loadMissing(['egg', 'variables']);
 
         $warnEnabled = self::resolveWarnEnabled($server);
         $configured = self::resolveConfiguredSlots($server);
@@ -66,21 +66,45 @@ class SlotMismatchResolver
 
     public static function resolveConfiguredSlots(Server $server): ?int
     {
-        return self::parseSlotsFromEnvironment(app(EnvironmentService::class)->handle($server));
-    }
+        $server->loadMissing('variables');
 
-    /**
-     * @param array<string, mixed> $environment
-     */
-    public static function parseSlotsFromEnvironment(array $environment): ?int
-    {
-        foreach (self::SLOTS_ENV_FALLBACKS as $key) {
-            $value = trim((string) ($environment[$key] ?? ''));
-            if ($value !== '' && ctype_digit($value)) {
-                return (int) $value;
+        foreach (self::SLOTS_ENV_FALLBACKS as $env) {
+            $variable = self::pickSlotVariable($server, $env);
+            if ($variable === null) {
+                continue;
+            }
+
+            $value = self::resolveVariableEffectiveValue($variable);
+            if ($value !== null) {
+                return $value;
             }
         }
 
         return null;
+    }
+
+    public static function pickSlotVariable(Server $server, string $env): ?EggVariable
+    {
+        $matches = $server->variables
+            ->filter(static fn (EggVariable $variable) => $variable->env_variable === $env)
+            ->sortByDesc('id')
+            ->values();
+
+        if ($matches->isEmpty()) {
+            return null;
+        }
+
+        return $matches->first(static fn (EggVariable $variable) => $variable->user_viewable)
+            ?? $matches->first();
+    }
+
+    public static function resolveVariableEffectiveValue(EggVariable $variable): ?int
+    {
+        $value = trim((string) ($variable->server_value ?? $variable->default_value));
+        if ($value === '' || !ctype_digit($value)) {
+            return null;
+        }
+
+        return (int) $value;
     }
 }

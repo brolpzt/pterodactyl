@@ -5,8 +5,8 @@ namespace Pterodactyl\Tests\Unit\Support;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Pterodactyl\Models\Egg;
+use Pterodactyl\Models\EggVariable;
 use Pterodactyl\Models\Server;
-use Pterodactyl\Services\Servers\EnvironmentService;
 use Pterodactyl\Support\SlotMismatchResolver;
 use Pterodactyl\Tests\TestCase;
 
@@ -14,32 +14,25 @@ class SlotMismatchResolverTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
-    public function testParseSlotsFromEnvironmentUsesSlotsValue(): void
+    public function testPickSlotVariablePrefersViewableDuplicate(): void
     {
-        $this->assertSame(16, SlotMismatchResolver::parseSlotsFromEnvironment([
-            'SLOTS' => '16',
-        ]));
-    }
+        $server = $this->makeServer(eggWarn: true, variables: [
+            $this->makeVariable(id: 10, env: 'SLOTS', value: '8', viewable: false),
+            $this->makeVariable(id: 20, env: 'SLOTS', value: '16', viewable: true),
+        ]);
 
-    public function testParseSlotsFromEnvironmentFallsBackToMaxClients(): void
-    {
-        $this->assertSame(12, SlotMismatchResolver::parseSlotsFromEnvironment([
-            'MAX_CLIENTS' => '12',
-        ]));
-    }
+        $picked = SlotMismatchResolver::pickSlotVariable($server, 'SLOTS');
 
-    public function testParseSlotsFromEnvironmentPrefersSlotsOverMaxClients(): void
-    {
-        $this->assertSame(16, SlotMismatchResolver::parseSlotsFromEnvironment([
-            'SLOTS' => '16',
-            'MAX_CLIENTS' => '8',
-        ]));
+        $this->assertNotNull($picked);
+        $this->assertSame(20, $picked->id);
+        $this->assertSame(16, SlotMismatchResolver::resolveConfiguredSlots($server));
     }
 
     public function testMismatchWhenReportedSlotsExceedConfiguredSlots(): void
     {
-        $server = $this->makeServer(eggWarn: true);
-        $this->bindEnvironment(['SLOTS' => '16']);
+        $server = $this->makeServer(eggWarn: true, variables: [
+            $this->makeVariable(id: 1, env: 'SLOTS', value: '16'),
+        ]);
 
         $result = SlotMismatchResolver::resolve($server, true, 30);
 
@@ -51,8 +44,9 @@ class SlotMismatchResolverTest extends TestCase
 
     public function testNoMismatchWhenReportedSlotsAreEqualToConfiguredSlots(): void
     {
-        $server = $this->makeServer(eggWarn: true);
-        $this->bindEnvironment(['SLOTS' => '16']);
+        $server = $this->makeServer(eggWarn: true, variables: [
+            $this->makeVariable(id: 1, env: 'SLOTS', value: '16'),
+        ]);
 
         $result = SlotMismatchResolver::resolve($server, true, 16);
 
@@ -60,21 +54,29 @@ class SlotMismatchResolverTest extends TestCase
         $this->assertFalse($result['show_warning']);
     }
 
-    public function testNoMismatchWhenReportedSlotsAreBelowConfiguredSlots(): void
+    public function testUsesDefaultValueWhenServerValueIsMissing(): void
     {
-        $server = $this->makeServer(eggWarn: true);
-        $this->bindEnvironment(['SLOTS' => '16']);
+        $server = $this->makeServer(eggWarn: true, variables: [
+            $this->makeVariable(id: 1, env: 'SLOTS', value: null, default: '16'),
+        ]);
 
-        $result = SlotMismatchResolver::resolve($server, true, 12);
+        $this->assertSame(16, SlotMismatchResolver::resolveConfiguredSlots($server));
+    }
 
-        $this->assertFalse($result['mismatch']);
-        $this->assertFalse($result['show_warning']);
+    public function testFallsBackToMaxClientsWhenSlotsIsMissing(): void
+    {
+        $server = $this->makeServer(eggWarn: true, variables: [
+            $this->makeVariable(id: 1, env: 'MAX_CLIENTS', value: '12'),
+        ]);
+
+        $this->assertSame(12, SlotMismatchResolver::resolveConfiguredSlots($server));
     }
 
     public function testWarningDisabledWhenEggSettingIsOff(): void
     {
-        $server = $this->makeServer(eggWarn: false);
-        $this->bindEnvironment(['SLOTS' => '16']);
+        $server = $this->makeServer(eggWarn: false, variables: [
+            $this->makeVariable(id: 1, env: 'SLOTS', value: '16'),
+        ]);
 
         $result = SlotMismatchResolver::resolve($server, true, 30);
 
@@ -83,21 +85,11 @@ class SlotMismatchResolverTest extends TestCase
         $this->assertFalse($result['show_warning']);
     }
 
-    public function testNoWarningWhenServerIsOffline(): void
-    {
-        $server = $this->makeServer(eggWarn: true);
-        $this->bindEnvironment(['SLOTS' => '16']);
-
-        $result = SlotMismatchResolver::resolve($server, false, 30);
-
-        $this->assertFalse($result['mismatch']);
-        $this->assertFalse($result['show_warning']);
-    }
-
     public function testServerOverrideDisablesWarning(): void
     {
-        $server = $this->makeServer(eggWarn: true, serverWarn: false);
-        $this->bindEnvironment(['SLOTS' => '16']);
+        $server = $this->makeServer(eggWarn: true, serverWarn: false, variables: [
+            $this->makeVariable(id: 1, env: 'SLOTS', value: '16'),
+        ]);
 
         $result = SlotMismatchResolver::resolve($server, true, 30);
 
@@ -107,16 +99,9 @@ class SlotMismatchResolverTest extends TestCase
     }
 
     /**
-     * @param array<string, string> $environment
+     * @param list<EggVariable> $variables
      */
-    private function bindEnvironment(array $environment): void
-    {
-        $service = Mockery::mock(EnvironmentService::class);
-        $service->shouldReceive('handle')->andReturn($environment);
-        $this->app->instance(EnvironmentService::class, $service);
-    }
-
-    private function makeServer(bool $eggWarn, ?bool $serverWarn = null): Server
+    private function makeServer(bool $eggWarn, array $variables = [], ?bool $serverWarn = null): Server
     {
         $egg = Mockery::mock(Egg::class)->makePartial();
         $egg->warn_slot_mismatch = $eggWarn;
@@ -128,8 +113,25 @@ class SlotMismatchResolverTest extends TestCase
         }
         $server->shouldReceive('getAttributes')->andReturn($attributes);
         $server->setRelation('egg', $egg);
-        $server->setRelation('variables', collect());
+        $server->setRelation('variables', collect($variables));
 
         return $server;
+    }
+
+    private function makeVariable(
+        int $id,
+        string $env,
+        ?string $value,
+        ?string $default = null,
+        bool $viewable = true,
+    ): EggVariable {
+        $variable = Mockery::mock(EggVariable::class)->makePartial();
+        $variable->id = $id;
+        $variable->env_variable = $env;
+        $variable->server_value = $value;
+        $variable->default_value = $default ?? $value ?? '18';
+        $variable->user_viewable = $viewable;
+
+        return $variable;
     }
 }

@@ -32,7 +32,7 @@ class SlotMismatchResolver
      */
     public static function resolve(Server $server, bool $online, int $reportedMaxPlayers): array
     {
-        $server->loadMissing(['egg', 'variables']);
+        $server->loadMissing('egg');
 
         $warnEnabled = self::resolveWarnEnabled($server);
         $configured = self::resolveConfiguredSlots($server);
@@ -66,8 +66,6 @@ class SlotMismatchResolver
 
     public static function resolveConfiguredSlots(Server $server): ?int
     {
-        $server->loadMissing('variables');
-
         foreach (self::SLOTS_ENV_FALLBACKS as $env) {
             $variable = self::pickSlotVariable($server, $env);
             if ($variable === null) {
@@ -83,19 +81,20 @@ class SlotMismatchResolver
         return null;
     }
 
+    /**
+     * Uses the same source as the client Startup page: only user-viewable variables.
+     */
     public static function pickSlotVariable(Server $server, string $env): ?EggVariable
     {
-        $matches = $server->variables
-            ->filter(static fn (EggVariable $variable) => $variable->env_variable === $env)
-            ->sortByDesc('id')
-            ->values();
-
-        if ($matches->isEmpty()) {
-            return null;
+        if ($server->relationLoaded('variables')) {
+            $server->unsetRelation('variables');
         }
 
-        return $matches->first(static fn (EggVariable $variable) => $variable->user_viewable)
-            ?? $matches->first();
+        return $server->variables()
+            ->where('egg_variables.env_variable', $env)
+            ->where('user_viewable', true)
+            ->orderByDesc('egg_variables.id')
+            ->first();
     }
 
     public static function resolveVariableEffectiveValue(EggVariable $variable): ?int

@@ -32,7 +32,12 @@ class StartupController extends ClientApiController
         $startup = $this->startupCommandService->handle($server);
 
         return $this->fractal->collection(
-            $server->variables()->where('user_viewable', true)->get()
+            $server->variables()
+                ->where('user_viewable', true)
+                ->orderByDesc('egg_variables.id')
+                ->get()
+                ->unique('env_variable')
+                ->values()
         )
             ->transformWith($this->getTransformer(EggVariableTransformer::class))
             ->addMeta([

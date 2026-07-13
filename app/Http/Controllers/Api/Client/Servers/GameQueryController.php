@@ -5,6 +5,7 @@ namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 use Carbon\Carbon;
 use Illuminate\Cache\Repository;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Support\SlotMismatchResolver;
 use Pterodactyl\Services\GameQuery\GameQueryService;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
 use Pterodactyl\Http\Requests\Api\Client\Servers\GetServerRequest;
@@ -32,6 +33,12 @@ class GameQueryController extends ClientApiController
         if (!($attributes['online'] ?? false)) {
             $this->cache->put($key, $attributes, Carbon::now()->addSeconds(15));
         }
+
+        $attributes['slots'] = SlotMismatchResolver::resolve(
+            $server,
+            (bool) ($attributes['online'] ?? false),
+            (int) ($attributes['max_players'] ?? 0),
+        );
 
         return [
             'object' => 'game_query',

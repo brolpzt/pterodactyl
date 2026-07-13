@@ -44,6 +44,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property array|null $inherit_features
  * @property string|null $gamedig
  * @property bool $warn_slot_mismatch
+ * @property bool $warn_hostname_branding
  * @property Nest $nest
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\Server[] $servers
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\EggVariable[] $variables
@@ -116,6 +117,7 @@ class Egg extends Model
         'copy_script_from',
         'gamedig',
         'warn_slot_mismatch',
+        'warn_hostname_branding',
         'workshop_app_id',
         'workshop_sync_driver',
     ];
@@ -129,6 +131,7 @@ class Egg extends Model
         'script_is_privileged' => 'boolean',
         'force_outgoing_ip' => 'boolean',
         'warn_slot_mismatch' => 'boolean',
+        'warn_hostname_branding' => 'boolean',
         'copy_script_from' => 'integer',
         'features' => 'array',
         'docker_images' => 'array',

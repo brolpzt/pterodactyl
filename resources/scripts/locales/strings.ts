@@ -55,6 +55,8 @@ export const stringsEn = {
         },
         slots_mismatch_warning:
             'The server is advertising a maximum of {{reported}} players, above your contracted limit. Exceeding your plan limit is not allowed and your server may be shut down. Maximum allowed: {{configured}} slots. To upgrade your slot limit, contact support.',
+        hostname_branding_warning:
+            'The server hostname ("{{hostname}}") does not include the HostGamer brand. The name must contain HOSTGAMER or both HOST and GAMER (e.g. @HostGamer, HOST GAMER). Your server may be shut down. Contact support for help.',
     },
     server_overview: {
         title: 'Home',
@@ -344,6 +346,8 @@ export const stringsPt = {
         },
         slots_mismatch_warning:
             'O servidor está anunciando {{reported}} vagas, acima do contratado. Não é permitido exceder o limite do seu plano — o servidor poderá ser desligado. Máximo permitido: {{configured}} slots. Para contratar mais slots, contacte o suporte.',
+        hostname_branding_warning:
+            'O hostname do servidor (“{{hostname}}”) não inclui a marca HostGamer. O nome deve conter HOSTGAMER ou HOST e GAMER (ex.: @HostGamer, HOST GAMER). O servidor poderá ser desligado. Para suporte, contacte-nos.',
     },
     server_overview: {
         title: 'Início',
@@ -633,6 +637,8 @@ export const stringsEs = {
         },
         slots_mismatch_warning:
             'El servidor está anunciando un máximo de {{reported}} jugadores, por encima del contratado. No está permitido superar el límite de su plan — el servidor podría ser apagado. Máximo permitido: {{configured}} slots. Para contratar más slots, contacte con soporte.',
+        hostname_branding_warning:
+            'El hostname del servidor ("{{hostname}}") no incluye la marca HostGamer. El nombre debe contener HOSTGAMER o HOST y GAMER (ej.: @HostGamer, HOST GAMER). El servidor podría ser apagado. Contacte con soporte.',
     },
     server_overview: {
         title: 'Inicio',

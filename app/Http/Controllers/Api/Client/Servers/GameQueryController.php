@@ -5,6 +5,7 @@ namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 use Carbon\Carbon;
 use Illuminate\Cache\Repository;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Support\HostnameBrandingResolver;
 use Pterodactyl\Support\SlotMismatchResolver;
 use Pterodactyl\Services\GameQuery\GameQueryService;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
@@ -38,6 +39,12 @@ class GameQueryController extends ClientApiController
             $server,
             (bool) ($attributes['online'] ?? false),
             (int) ($attributes['max_players'] ?? 0),
+        );
+
+        $attributes['branding'] = HostnameBrandingResolver::resolve(
+            $server,
+            (bool) ($attributes['online'] ?? false),
+            $attributes['hostname'] ?? null,
         );
 
         return [

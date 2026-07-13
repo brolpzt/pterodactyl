@@ -24,6 +24,7 @@ class EggFormRequest extends AdminFormRequest
             'config_files' => 'required_without:config_from|nullable|json',
             'gamedig' => 'nullable|string|max:191',
             'warn_slot_mismatch' => 'sometimes|boolean',
+            'warn_hostname_branding' => 'sometimes|boolean',
         ];
 
         if ($this->method() === 'POST') {
@@ -61,6 +62,7 @@ class EggFormRequest extends AdminFormRequest
         return array_merge($data, [
             'force_outgoing_ip' => array_get($data, 'force_outgoing_ip', false),
             'warn_slot_mismatch' => array_get($data, 'warn_slot_mismatch', false),
+            'warn_hostname_branding' => array_get($data, 'warn_hostname_branding', false),
             'features' => $features,
         ]);
     }

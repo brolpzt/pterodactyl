@@ -145,6 +145,7 @@ return [
             'query' => 'Query Terminal',
         ],
         'slots_mismatch_warning' => 'The server is advertising a maximum of :reported players, above your contracted limit. Exceeding your plan limit is not allowed and your server may be shut down. Maximum allowed: :configured slots. To upgrade your slot limit, contact support.',
+        'hostname_branding_warning' => 'The server hostname (":hostname") does not include the HostGamer brand. The name must contain HOSTGAMER or both HOST and GAMER (e.g. @HostGamer, HOST GAMER). Your server may be shut down. Contact support for help.',
     ],
     'server_overview' => [
         'title' => 'Home',

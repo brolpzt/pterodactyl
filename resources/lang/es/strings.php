@@ -145,6 +145,7 @@ return [
             'query' => 'Terminal Query',
         ],
         'slots_mismatch_warning' => 'El servidor está anunciando un máximo de :reported jugadores, por encima del contratado. No está permitido superar el límite de su plan — el servidor podría ser apagado. Máximo permitido: :configured slots. Para contratar más slots, contacte con soporte.',
+        'hostname_branding_warning' => 'El hostname del servidor (":hostname") no incluye la marca HostGamer. El nombre debe contener HOSTGAMER o HOST y GAMER (ej.: @HostGamer, HOST GAMER). El servidor podría ser apagado. Contacte con soporte.',
     ],
     'server_overview' => [
         'title' => 'Inicio',

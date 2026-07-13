@@ -14,6 +14,14 @@ export interface GameQuerySlots {
     show_warning: boolean;
 }
 
+export interface GameQueryBranding {
+    hostname: string | null;
+    compliant: boolean;
+    mismatch: boolean;
+    warn_enabled: boolean;
+    show_warning: boolean;
+}
+
 export interface GameQueryResult {
     online: boolean;
     type: string;
@@ -29,4 +37,5 @@ export interface GameQueryResult {
     version: string | null;
     player_list: GameQueryPlayer[];
     slots?: GameQuerySlots;
+    branding?: GameQueryBranding;
 }

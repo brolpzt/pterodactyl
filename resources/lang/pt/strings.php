@@ -145,6 +145,7 @@ return [
             'query' => 'Terminal Query',
         ],
         'slots_mismatch_warning' => 'O servidor está anunciando :reported vagas, acima do contratado. Não é permitido exceder o limite do seu plano — o servidor poderá ser desligado. Máximo permitido: :configured slots. Para contratar mais slots, contacte o suporte.',
+        'hostname_branding_warning' => 'O hostname do servidor (“:hostname”) não inclui a marca HostGamer. O nome deve conter HOSTGAMER ou HOST e GAMER (ex.: @HostGamer, HOST GAMER). O servidor poderá ser desligado. Para suporte, contacte-nos.',
     ],
     'server_overview' => [
         'title' => 'Início',

@@ -2,10 +2,13 @@
 
 namespace Pterodactyl\Support;
 
+use Pterodactyl\Models\EggVariable;
 use Pterodactyl\Models\Server;
 
 class HostnameBrandingResolver
 {
+    public const BRANDING_ENV = 'BRANDING';
+
     /**
      * @return array{
      *     hostname: string|null,
@@ -17,8 +20,6 @@ class HostnameBrandingResolver
      */
     public static function resolve(Server $server, bool $online, ?string $hostname): array
     {
-        $server->loadMissing('egg');
-
         $warnEnabled = self::resolveWarnEnabled($server);
         $cleanHostname = self::stripHostnameColors($hostname);
         $compliant = self::hostnameContainsBranding($cleanHostname);
@@ -34,16 +35,31 @@ class HostnameBrandingResolver
         ];
     }
 
+    /**
+     * Enabled only when the egg defines BRANDING and the server value is 1.
+     */
     public static function resolveWarnEnabled(Server $server): bool
     {
-        $server->loadMissing('egg');
-
-        $override = $server->getAttributes()['warn_hostname_branding'] ?? null;
-        if ($override !== null) {
-            return (bool) $override;
+        $variable = self::pickBrandingVariable($server);
+        if ($variable === null) {
+            return false;
         }
 
-        return (bool) ($server->egg->warn_hostname_branding ?? false);
+        $value = trim((string) ($variable->server_value ?? $variable->default_value));
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    public static function pickBrandingVariable(Server $server): ?EggVariable
+    {
+        if ($server->relationLoaded('variables')) {
+            $server->unsetRelation('variables');
+        }
+
+        return $server->variables()
+            ->where('egg_variables.env_variable', self::BRANDING_ENV)
+            ->orderByDesc('egg_variables.id')
+            ->first();
     }
 
     public static function hostnameContainsBranding(?string $hostname): bool

@@ -151,7 +151,7 @@ class ServersController extends Controller
                 'allocation_id', 'add_allocations', 'remove_allocations',
                 'memory', 'swap', 'io', 'cpu', 'threads', 'disk',
                 'database_limit', 'allocation_limit', 'backup_limit', 'oom_disabled',
-                'fastdl_enabled', 'warn_slot_mismatch', 'warn_hostname_branding',
+                'fastdl_enabled', 'warn_slot_mismatch',
             ]);
             // Checkboxes are not submitted when unchecked; default to false explicitly.
             $buildData['fastdl_enabled'] = $request->boolean('fastdl_enabled');
@@ -159,11 +159,6 @@ class ServersController extends Controller
             if ($request->has('warn_slot_mismatch')) {
                 $warnSlotMismatch = $request->input('warn_slot_mismatch');
                 $buildData['warn_slot_mismatch'] = $warnSlotMismatch === '' ? null : $request->boolean('warn_slot_mismatch');
-            }
-
-            if ($request->has('warn_hostname_branding')) {
-                $warnHostnameBranding = $request->input('warn_hostname_branding');
-                $buildData['warn_hostname_branding'] = $warnHostnameBranding === '' ? null : $request->boolean('warn_hostname_branding');
             }
 
             $this->buildModificationService->handle($server, $buildData);

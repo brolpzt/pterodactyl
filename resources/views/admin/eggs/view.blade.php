@@ -119,17 +119,6 @@
                                     </p>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <div class="checkbox checkbox-primary no-margin-bottom">
-                                    <input id="pWarnHostnameBranding" name="warn_hostname_branding" type="checkbox" value="1" @if($egg->warn_hostname_branding) checked @endif />
-                                    <label for="pWarnHostnameBranding" class="strong">Aviso de branding no hostname</label>
-                                    <p class="text-muted small">
-                                        Exibe um alerta quando o hostname da query não incluir <code>HOSTGAMER</code>
-                                        ou <code>HOST</code> e <code>GAMER</code> (em qualquer formato, ex.: @HostGamer).
-                                    </p>
-                                </div>
-                            </div>
-
                         </div>
                         <div class="col-sm-6">
                             <div class="form-group">

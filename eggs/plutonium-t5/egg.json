@@ -89,6 +89,16 @@
             "field_type": "text"
         },
         {
+            "name": "Branding Check",
+            "description": "Ativar verificação de branding HostGamer no hostname (1=sim, 0=não). Apenas admin.",
+            "env_variable": "BRANDING",
+            "default_value": "0",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
             "name": "Mod Directory",
             "description": "Pasta do mod (fs_game). Deixe vazio se não usar mod.",
             "env_variable": "FS_GAME",

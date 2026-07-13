@@ -135,15 +135,6 @@
                                     </select>
                                     <p class="text-muted small">Compara a query do jogo com a variável <code>SLOTS</code>. Só alerta quando o servidor reportar <strong>mais</strong> slots que o painel.</p>
                                 </div>
-                                <div class="form-group col-xs-12">
-                                    <label for="pWarnHostnameBranding" class="control-label">Aviso de branding no hostname</label>
-                                    <select id="pWarnHostnameBranding" name="warn_hostname_branding" class="form-control">
-                                        <option value="" @if(is_null($server->getAttributes()['warn_hostname_branding'] ?? null)) selected @endif>Padrão do egg</option>
-                                        <option value="1" @if(($server->getAttributes()['warn_hostname_branding'] ?? null) === 1) selected @endif>Ativar aviso</option>
-                                        <option value="0" @if(($server->getAttributes()['warn_hostname_branding'] ?? null) === 0) selected @endif>Desativar aviso</option>
-                                    </select>
-                                    <p class="text-muted small">Alerta quando o hostname da query não contiver <code>HOSTGAMER</code> ou <code>HOST</code> + <code>GAMER</code>.</p>
-                                </div>
                             </div>
                         </div>
                     </div>

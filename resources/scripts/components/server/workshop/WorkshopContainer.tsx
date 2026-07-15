@@ -110,6 +110,7 @@ export default () => {
     const [cursorStack, setCursorStack] = useState<string[]>([]);
     const [installingId, setInstallingId] = useState<string | null>(null);
     const [detailItem, setDetailItem] = useState<WorkshopItem | null>(null);
+    const [installIdInput, setInstallIdInput] = useState('');
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -181,6 +182,43 @@ export default () => {
             .finally(() => setInstallingId(null));
     };
 
+    const handleInstallById = (e: React.FormEvent) => {
+        e.preventDefault();
+        let id = installIdInput.trim();
+        if (id.includes('id=')) {
+            const match = id.match(/[?&]id=(\d+)/);
+            if (match) {
+                id = match[1];
+            }
+        }
+
+        if (!id || isNaN(Number(id))) {
+            addFlash({
+                key: 'server:workshop',
+                type: 'danger',
+                message: 'Por favor, insira um ID de Workshop válido.',
+            });
+            return;
+        }
+
+        setInstallingId(id);
+        clearFlashes('server:workshop');
+        installWorkshopItem(uuid, id)
+            .then(() => {
+                mutateInstalled();
+                setInstallIdInput('');
+                const messageKey =
+                    syncInfo?.id === 'l4d2_vpk' ? 'server_workshop.install_success_l4d2' : 'server_workshop.install_success';
+                addFlash({
+                    key: 'server:workshop',
+                    type: 'success',
+                    message: t(messageKey),
+                });
+            })
+            .catch((error) => clearAndAddHttpError({ key: 'server:workshop', error }))
+            .finally(() => setInstallingId(null));
+    };
+
     const goNext = () => {
         if (!browseData?.nextCursor) return;
         setCursorStack((stack) => [...stack, cursor || '*']);
@@ -239,7 +277,7 @@ export default () => {
             </TitledGreyBox>
 
             <TitledGreyBox title={t('server_workshop.browse_title')}>
-                <div css={tw`grid gap-4 md:grid-cols-3 mb-4`}>
+                <div css={tw`grid gap-4 md:grid-cols-4 mb-4`}>
                     <div>
                         <Label htmlFor={'workshop-search'}>{t('server_workshop.search')}</Label>
                         <div css={tw`relative`}>
@@ -281,6 +319,20 @@ export default () => {
                             <option value={'popular'}>{t('server_workshop.sort_popular')}</option>
                             <option value={'recent'}>{t('server_workshop.sort_recent')}</option>
                         </Select>
+                    </div>
+                    <div>
+                        <Label htmlFor={'install-by-id'}>{t('server_workshop.install_by_id')}</Label>
+                        <form onSubmit={handleInstallById} css={tw`flex gap-2`}>
+                            <Input
+                                id={'install-by-id'}
+                                value={installIdInput}
+                                onChange={(e) => setInstallIdInput(e.currentTarget.value)}
+                                placeholder={t('server_workshop.install_by_id_placeholder')}
+                            />
+                            <Button type={'submit'} disabled={!installIdInput.trim() || !!installingId}>
+                                <FontAwesomeIcon icon={faPlus} />
+                            </Button>
+                        </form>
                     </div>
                     <div css={tw`flex items-end`}>
                         {browseData?.appId ? (

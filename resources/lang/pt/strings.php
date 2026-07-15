@@ -226,6 +226,8 @@ return [
         'install_success_l4d2' => 'Item Workshop enfileirado para download. O servidor foi parado para sincronizar os VPKs — acompanhe o console e reinicie quando terminar.',
         'remove_success' => 'Item Workshop removido. Reinicie o servidor para aplicar.',
         'restart_hint' => 'Reinicie o servidor após adicionar ou remover mods para aplicar as alterações. Configure o Steam Account Token (GSLT) em Startup se o conteúdo não montar.',
+        'install_by_id' => 'Instalar por ID',
+        'install_by_id_placeholder' => 'Ex: 2845878432',
     ],
     'server_network' => [
         'dns_cloudflare_title' => 'DNS',

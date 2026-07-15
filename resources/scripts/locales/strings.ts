@@ -138,6 +138,8 @@ export const stringsEn = {
         install_success_l4d2: 'Workshop item queued for download. The server was stopped to sync VPK files — check the console, then restart when finished.',
         remove_success: 'Workshop item removed. Restart the server to apply changes.',
         restart_hint: 'Restart the server after adding or removing mods to apply changes. Configure Steam Account Token (GSLT) in Startup if content does not mount.',
+        install_by_id: 'Install by ID',
+        install_by_id_placeholder: 'e.g. 2845878432',
     },
     server_network: {
         dns_cloudflare_title: 'DNS',
@@ -490,6 +492,8 @@ export const stringsPt = {
         install_success_l4d2: 'Item Workshop enfileirado para download. O servidor foi parado para sincronizar os VPKs — acompanhe o console e reinicie quando terminar.',
         remove_success: 'Item Workshop removido. Reinicie o servidor para aplicar.',
         restart_hint: 'Reinicie o servidor após adicionar ou remover mods para aplicar as alterações. Configure o Steam Account Token (GSLT) em Startup se o conteúdo não montar.',
+        install_by_id: 'Instalar por ID',
+        install_by_id_placeholder: 'Ex: 2845878432',
     },
     server_network: {
         dns_cloudflare_title: 'DNS',
@@ -842,6 +846,8 @@ export const stringsEs = {
         install_success_l4d2: 'Item Workshop en cola para descarga. El servidor se detuvo para sincronizar los VPK — revisa la consola y reinicia al terminar.',
         remove_success: 'Item Workshop eliminado. Reinicia el servidor para aplicar.',
         restart_hint: 'Reinicia el servidor después de añadir o quitar mods para aplicar los cambios. Configura el Steam Account Token (GSLT) en Startup si el contenido no se monta.',
+        install_by_id: 'Instalar por ID',
+        install_by_id_placeholder: 'Ej: 2845878432',
     },
     server_network: {
         dns_cloudflare_title: 'DNS',

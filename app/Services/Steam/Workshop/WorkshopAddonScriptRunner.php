@@ -32,6 +32,7 @@ class WorkshopAddonScriptRunner
             $this->serverRepository->setServer($server)->executeAddon([
                 'script' => $script,
                 'container_image' => self::CONTAINER_IMAGE,
+                'entrypoint' => 'bash',
             ], 60 * 30);
         } catch (DaemonConnectionException $exception) {
             throw new DisplayException(

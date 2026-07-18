@@ -7,7 +7,7 @@
     "exported_at": "2026-07-11T00:00:00+00:00",
     "name": "Left 4 Dead 2",
     "author": "support@pterodactyl.io",
-    "description": "Left 4 Dead 2 dedicated server. Configure Workshop App ID 550 and driver l4d2_vpk no admin do egg após importar. STEAM_USER deve ser uma conta subscrita aos mods Workshop.",
+    "description": "Left 4 Dead 2 dedicated server. Configure Workshop App ID 550 and driver l4d2_vpk no admin do egg após importar. Mods são descarregados via URL pública da Workshop; STEAM_USER só é necessário como fallback SteamCMD.",
     "features": [
         "gsl_token",
         "steam_disk_space",
@@ -70,7 +70,7 @@
         },
         {
             "name": "Steam Username",
-            "description": "Fallback Steam account for Workshop downloads if Admin → Steam Workshop credentials are not set.",
+            "description": "Optional Steam account used only as SteamCMD fallback when a Workshop item has no public download URL.",
             "env_variable": "STEAM_USER",
             "default_value": "",
             "user_viewable": true,

@@ -20,6 +20,9 @@ class SteamWorkshopService
 
     private const DETAILS_URL = 'https://api.steampowered.com/IPublishedFileService/GetDetails/v1/';
 
+    /** Public Remote Storage details endpoint — returns direct file_url for downloadable Workshop content (e.g. L4D2 VPKs). */
+    private const REMOTE_STORAGE_DETAILS_URL = 'https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/';
+
     /**
      * Browse workshop items for a given Steam app.
      *
@@ -168,6 +171,66 @@ class SteamWorkshopService
     }
 
     /**
+     * Resolve direct download URLs for Workshop items via ISteamRemoteStorage.
+     * Used by games (notably L4D2) whose dedicated servers cannot mount Workshop natively.
+     *
+     * @param  int[]  $fileIds
+     * @return array<int, array{published_file_id: int, title: string, file_url: string|null, filename: string|null, time_updated: int|null, file_size: int}>
+     */
+    public function getDownloadDetails(array $fileIds): array
+    {
+        $fileIds = array_values(array_unique(array_filter(array_map('intval', $fileIds))));
+        if ($fileIds === []) {
+            return [];
+        }
+
+        $byId = [];
+        foreach (array_chunk($fileIds, 50) as $chunk) {
+            $payload = ['itemcount' => count($chunk)];
+            foreach ($chunk as $index => $fileId) {
+                $payload["publishedfileids[{$index}]"] = $fileId;
+            }
+
+            $response = Http::asForm()->timeout(30)->post(self::REMOTE_STORAGE_DETAILS_URL, $payload);
+            if (!$response->successful()) {
+                throw new DisplayException('Não foi possível obter URLs de download dos itens Workshop.');
+            }
+
+            foreach ($response->json('response.publishedfiledetails') ?? [] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $id = (int) ($item['publishedfileid'] ?? 0);
+                if ($id <= 0 || (int) ($item['result'] ?? 0) !== 1) {
+                    continue;
+                }
+
+                $fileUrl = trim((string) ($item['file_url'] ?? ''));
+                $byId[$id] = [
+                    'published_file_id' => $id,
+                    'title' => (string) ($item['title'] ?? 'Sem título'),
+                    'file_url' => $fileUrl !== '' ? $fileUrl : null,
+                    'filename' => isset($item['filename']) && $item['filename'] !== ''
+                        ? (string) $item['filename']
+                        : null,
+                    'time_updated' => isset($item['time_updated']) ? (int) $item['time_updated'] : null,
+                    'file_size' => (int) ($item['file_size'] ?? 0),
+                ];
+            }
+        }
+
+        $ordered = [];
+        foreach ($fileIds as $fileId) {
+            if (isset($byId[$fileId])) {
+                $ordered[] = $byId[$fileId];
+            }
+        }
+
+        return $ordered;
+    }
+
+    /**
      * @param  array<string, mixed>  $item
      * @return array<string, mixed>
      */
@@ -190,12 +253,14 @@ class SteamWorkshopService
         }
 
         $fileType = (int) ($item['file_type'] ?? $item['filetype'] ?? 0);
+        $fileUrl = trim((string) ($item['file_url'] ?? ''));
 
         return [
             'published_file_id' => (string) ($item['publishedfileid'] ?? ''),
             'title' => (string) ($item['title'] ?? 'Sem título'),
             'description' => (string) ($item['short_description'] ?? $item['file_description'] ?? ''),
             'preview_url' => $preview,
+            'file_url' => $fileUrl !== '' ? $fileUrl : null,
             'file_size' => (int) ($item['file_size'] ?? 0),
             'votes_up' => (int) ($item['votes_up'] ?? 0),
             'time_updated' => isset($item['time_updated']) ? (int) $item['time_updated'] : null,

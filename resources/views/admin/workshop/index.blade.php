@@ -22,8 +22,9 @@
             <form action="{{ route('admin.workshop') }}" method="POST">
                 <div class="box-body">
                     <p class="text-muted">
-                        Usada pelos drivers que descarregam conteúdo Workshop (ex.: L4D2). A conta deve estar
-                        <strong>subscrita</strong> aos mods que os utilizadores instalam. Se deixar em branco, cada servidor usa
+                        Usada como <strong>fallback SteamCMD</strong> quando um item Workshop não tem URL pública de download
+                        (o driver L4D2 descarrega via HTTP na maioria dos casos). A conta deve estar
+                        <strong>subscrita</strong> aos mods usados no fallback. Se deixar em branco, cada servidor usa
                         <code>STEAM_USER</code> / <code>STEAM_PASS</code> definidos no Startup do egg.
                     </p>
                     <div class="row">

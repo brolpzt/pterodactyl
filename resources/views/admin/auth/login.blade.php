@@ -17,18 +17,107 @@
         {!! Theme::css('vendor/adminlte/colors/skin-blue.min.css?t={cache-version}') !!}
         {!! Theme::css('css/pterodactyl.css?t={cache-version}') !!}
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <style>
+            /* Layout only — colors match AdminLTE / pterodactyl.css admin theme */
+            html, body.admin-login-page {
+                height: 100%;
+                margin: 0;
+                background-color: #181f27 !important;
+            }
+
+            .admin-login-wrap {
+                display: flex;
+                min-height: 100vh;
+                width: 100%;
+            }
+
+            .admin-login-brand {
+                flex: 0 0 50%;
+                max-width: 50%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                padding: 40px;
+                background-color: #1f2933;
+                color: #9aa5b1;
+            }
+
+            .admin-login-logo {
+                display: block;
+                max-width: 220px;
+                height: auto;
+            }
+
+            .admin-login-copyright {
+                margin: 0;
+                font-size: 12px;
+                color: #797979;
+            }
+
+            .admin-login-panel {
+                flex: 0 0 50%;
+                max-width: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 40px;
+                background-color: #181f27;
+            }
+
+            .admin-login-box {
+                width: 100%;
+                max-width: 420px;
+                margin: 0;
+            }
+
+            .admin-login-box .form-control {
+                background-color: #1f2933;
+                border-color: #4d5b69;
+                color: #cad1d8;
+            }
+
+            .admin-login-box .form-control:focus {
+                border-color: #0967d3;
+                box-shadow: none;
+            }
+
+            .admin-login-box .form-control-feedback {
+                color: #9aa5b1;
+            }
+
+            @media (max-width: 767px) {
+                .admin-login-wrap {
+                    flex-direction: column;
+                }
+
+                .admin-login-brand,
+                .admin-login-panel {
+                    flex: 1 1 auto;
+                    max-width: 100%;
+                    width: 100%;
+                }
+
+                .admin-login-brand {
+                    min-height: 220px;
+                    padding: 30px 20px;
+                }
+
+                .admin-login-panel {
+                    padding: 20px;
+                    align-items: flex-start;
+                }
+            }
+        </style>
     </head>
     <body class="hold-transition skin-blue admin-login-page">
-        <div class="admin-login-split">
+        <div class="admin-login-wrap">
             <aside class="admin-login-brand">
-                <div class="admin-login-brand-inner">
+                <div>
                     <img
                         src="/images/branding/logo-branca.svg"
                         alt="{{ config('app.name', 'Pterodactyl') }}"
                         class="admin-login-logo"
                     >
-                    <h1>{{ config('app.name', 'Pterodactyl') }}</h1>
-                    <p>Área administrativa do painel</p>
                 </div>
                 <p class="admin-login-copyright">
                     &copy; {{ date('Y') }} {{ config('app.name', 'Pterodactyl') }}

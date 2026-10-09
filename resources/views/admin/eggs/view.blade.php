@@ -225,7 +225,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="box-header with-border" style="border-top:1px solid #f4f4f4">
+            </div>
+        </div>
+        <div class="col-xs-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
                     <h3 class="box-title">Port slots + Gcore ACL</h3>
                 </div>
                 <div class="box-body">
@@ -259,7 +263,7 @@
                             <tbody>
                             @foreach($portSlots as $i => $slot)
                                 @php $isPrimary = strtoupper((string) ($slot['env_variable'] ?? '')) === 'SERVER_PORT'; @endphp
-                                <tr class="{{ $isPrimary ? 'active' : '' }}">
+                                <tr>
                                     <td>
                                         @if($isPrimary)
                                             <input type="hidden" name="port_slots[{{ $i }}][env_variable]" value="SERVER_PORT">

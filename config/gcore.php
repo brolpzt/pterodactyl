@@ -14,7 +14,8 @@ return [
 
     /*
     | Fallback ACL policy when a protected allocation has no server/egg yet,
-    | or the egg has no gcore_policy set. Prefer configuring it on the Egg.
+    | or the egg has no gcore_policy set. Prefer configuring it on the Egg
+    | (gcore_policy + gcore_proto).
     */
     'default_policy' => env('GCORE_DEFAULT_POLICY', 'allowlist'),
 ];

@@ -115,7 +115,11 @@ class GcoreFirewallSyncService
         }
 
         // If the IP is no longer marked Gcore, clear panel-managed ports only.
-        $portsByPolicy = $ipIsGcore ? $this->collectPortsByPolicy($node, $ip) : [];
+        $desired = $ipIsGcore
+            ? $this->collectDesiredByPolicy($node, $ip)
+            : ['ports' => [], 'protos' => []];
+        $portsByPolicy = $desired['ports'];
+        $protoByEgg = $desired['protos'];
 
         try {
             $client = GcoreClient::fromConfig();
@@ -125,7 +129,7 @@ class GcoreFirewallSyncService
             }
 
             $form = GcoreAclHelper::extractProfileFormData($profile);
-            $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicy);
+            $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicy, $protoByEgg);
 
             // No ACL delta — skip the PUT to avoid pointless Pending Update on Gcore.
             if ($merge['added'] === [] && $merge['removed'] === []) {
@@ -152,21 +156,26 @@ class GcoreFirewallSyncService
     }
 
     /**
-     * @return array<string, list<int>> policy => sorted unique ports
+     * @return array{
+     *   ports: array<string, list<int>>,
+     *   protos: array<string, list<string>>,
+     * }
      */
-    private function collectPortsByPolicy(Node $node, string $ip): array
+    private function collectDesiredByPolicy(Node $node, string $ip): array
     {
         $allocations = Allocation::query()
             ->where('node_id', $node->id)
             ->where('ip', $ip)
             ->where('gcore_protected', true)
             ->whereNotNull('server_id')
-            ->with(['server.egg:id,gcore_policy'])
+            ->with(['server.egg:id,gcore_policy,gcore_proto'])
             ->orderBy('port')
             ->get();
 
         /** @var array<string, array<int, true>> $map */
         $map = [];
+        /** @var array<string, list<string>> $protos */
+        $protos = [];
         foreach ($allocations as $allocation) {
             $port = (int) $allocation->port;
             if ($port < 1 || $port > 65535) {
@@ -178,13 +187,21 @@ class GcoreFirewallSyncService
                 continue;
             }
 
-            $rawPolicy = trim((string) ($allocation->server->egg?->gcore_policy ?? ''));
+            $egg = $allocation->server->egg;
+            $rawPolicy = trim((string) ($egg?->gcore_policy ?? ''));
             if ($rawPolicy === '' || !in_array($rawPolicy, GcoreClient::POLICIES, true)) {
                 // No explicit egg policy — skip instead of inventing allowlist.
                 continue;
             }
 
             $map[$rawPolicy][$port] = true;
+
+            if (!isset($protos[$rawPolicy])) {
+                $proto = strtolower(trim((string) ($egg?->gcore_proto ?? '')));
+                if ($proto !== '' && in_array($proto, GcoreClient::PROTOCOLS, true)) {
+                    $protos[$rawPolicy] = [$proto];
+                }
+            }
         }
 
         $out = [];
@@ -196,18 +213,18 @@ class GcoreFirewallSyncService
 
         ksort($out);
 
-        return $out;
+        return ['ports' => $out, 'protos' => $protos];
     }
 
     /**
      * Rebuild ACL:
-     * - preserve non-groupable (manual) rules
-     * - group panel-managed rules by ACL policy (one rule per policy)
-     * - never duplicate a port that already exists in a preserved rule of the same policy
-     * - never duplicate a port inside the same grouped rule
+     * - collapse rules with the same policy + empty sip/sport into ONE rule
+     * - add/remove panel ports on that existing rule (never spawn a duplicate policy rule)
+     * - preserve rules with sip/sport filters (manual allowlists, etc.)
      *
      * @param list<array<string, mixed>> $acl
      * @param array<string, list<int>> $desiredByPolicy ports the panel wants open
+     * @param array<string, list<string>> $protoByEgg proto from egg when creating a new rule
      * @return array{
      *   acl: list<array<string, mixed>>,
      *   added: array<string, list<int>>,
@@ -215,13 +232,15 @@ class GcoreFirewallSyncService
      *   skipped_existing: array<string, list<int>>,
      * }
      */
-    private function mergeGroupedAcl(array $acl, array $desiredByPolicy): array
+    private function mergeGroupedAcl(array $acl, array $desiredByPolicy, array $protoByEgg = []): array
     {
         $preserved = [];
-        /** @var array<string, array<int, true>> $existingInPreserved policy => port set */
+        /** @var array<string, array<int, true>> $existingInPreserved */
         $existingInPreserved = [];
-        /** @var array<string, array<int, true>> $existingInGroupable previous grouped/managed ports */
+        /** @var array<string, array<int, true>> $existingInGroupable */
         $existingInGroupable = [];
+        /** @var array<string, list<string>> $protoByPolicy keep proto from the first mergeable rule */
+        $protoByPolicy = [];
 
         foreach ($acl as $rule) {
             if (!is_array($rule)) {
@@ -229,7 +248,15 @@ class GcoreFirewallSyncService
             }
 
             if ($this->isGroupableRule($rule)) {
-                $policy = $this->normalizePolicy((string) ($rule['policy'] ?? ''));
+                $policy = trim((string) ($rule['policy'] ?? ''));
+                if ($policy === '' || !in_array($policy, GcoreClient::POLICIES, true)) {
+                    $preserved[] = $this->normalizeRuleShape($rule, $policy !== '' ? $policy : null);
+                    continue;
+                }
+
+                if (!isset($protoByPolicy[$policy])) {
+                    $protoByPolicy[$policy] = $this->ruleProtoList($rule);
+                }
                 foreach ($this->rulePorts($rule) as $port) {
                     $existingInGroupable[$policy][$port] = true;
                 }
@@ -266,7 +293,7 @@ class GcoreFirewallSyncService
 
             $portsForRule = [];
             foreach ($desired as $port) {
-                // Already open in a manual/preserved rule of the same ACL policy - do not duplicate.
+                // Already open in a restricted (sip/sport) rule of the same policy.
                 if (isset($existingInPreserved[$policy][$port])) {
                     $skipped[$policy][] = $port;
                     continue;
@@ -280,26 +307,31 @@ class GcoreFirewallSyncService
             $added[$policy] = array_values(array_diff($finalPorts, $previous));
             $removed[$policy] = array_values(array_diff($previous, $finalPorts));
 
+            // Keep a single rule for this policy when it still has ports.
+            // Prefer existing Gcore rule proto; else egg proto; else any.
             if ($finalPorts === []) {
                 continue;
+            }
+
+            $proto = $protoByPolicy[$policy] ?? $protoByEgg[$policy] ?? ['any'];
+            if ($proto === []) {
+                $proto = ['any'];
             }
 
             $grouped[] = [
                 'policy' => $policy,
                 'sip_list' => [],
                 'dport_list' => $finalPorts,
-                'proto_list' => ['any'],
+                'proto_list' => $proto,
                 'sport_list' => [],
             ];
         }
 
-        // Drop empty policy keys from report arrays.
         $added = array_filter($added, fn ($ports) => $ports !== []);
         $removed = array_filter($removed, fn ($ports) => $ports !== []);
         $skipped = array_filter($skipped, fn ($ports) => $ports !== []);
 
-        // Gcore evaluates ACL top→bottom (first match wins). Specific game rules
-        // must sit above catch-all / default rules, otherwise they never apply.
+        // Specific game rules above catch-alls / restricted rules.
         return [
             'acl' => array_values(array_merge($grouped, $preserved)),
             'added' => $added,
@@ -419,40 +451,70 @@ class GcoreFirewallSyncService
     }
 
     /**
-     * Rules the panel owns/groups: empty sip/sport and proto "any".
-     * Multiple such rules of the same policy are collapsed into one.
+     * Mergeable rules: same ACL policy, no sip/sport filters.
+     * Proto may be any/udp/tcp/… — we still collapse into one rule per policy.
      *
      * @param array<string, mixed> $rule
      */
     private function isGroupableRule(array $rule): bool
     {
-        $policy = (string) ($rule['policy'] ?? '');
-        if (!in_array($policy, GcoreClient::POLICIES, true)) {
+        $policy = trim((string) ($rule['policy'] ?? ''));
+        if ($policy === '' || !in_array($policy, GcoreClient::POLICIES, true)) {
             return false;
         }
 
-        $sip = $rule['sip_list'] ?? [];
-        $sport = $rule['sport_list'] ?? [];
-        $proto = $rule['proto_list'] ?? [];
-
-        if (!is_array($sip) || !is_array($sport) || !is_array($proto)) {
+        // Catch-all / default template rules must stay preserved (order matters).
+        if (str_starts_with(strtolower($policy), 'default')) {
             return false;
         }
 
-        if ($sip !== [] || $sport !== []) {
-            return false;
+        $sip = $this->ruleStringList($rule['sip_list'] ?? []);
+        $sport = $this->rulePorts(['dport_list' => $rule['sport_list'] ?? []]);
+
+        return $sip === [] && $sport === [];
+    }
+
+    /**
+     * @param mixed $value
+     * @return list<string>
+     */
+    private function ruleStringList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
         }
 
-        if ($proto === []) {
-            return true;
+        $out = [];
+        foreach ($value as $item) {
+            $item = trim((string) $item);
+            if ($item !== '') {
+                $out[] = $item;
+            }
         }
 
-        $normalized = array_values(array_map(
-            static fn ($p) => strtolower((string) $p),
-            $proto
-        ));
+        return array_values($out);
+    }
 
-        return $normalized === ['any'];
+    /**
+     * @param array<string, mixed> $rule
+     * @return list<string>
+     */
+    private function ruleProtoList(array $rule): array
+    {
+        $raw = $rule['proto_list'] ?? [];
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($raw as $proto) {
+            $proto = strtolower(trim((string) $proto));
+            if ($proto !== '') {
+                $out[] = $proto;
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 
     /**

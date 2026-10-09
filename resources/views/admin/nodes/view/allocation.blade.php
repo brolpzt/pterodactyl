@@ -160,7 +160,9 @@
                                            {{ isset($gcoreIpSet[$allocation->ip]) ? '' : 'disabled' }}
                                            title="{{ isset($gcoreIpSet[$allocation->ip]) ? 'Abrir esta porta no ACL Gcore' : 'Marque o IP como Gcore primeiro' }}" />
                                     @if($allocation->gcore_protected && $allocation->server && $allocation->server->egg && $allocation->server->egg->gcore_policy)
-                                        <div class="text-muted" style="font-size:11px;margin-top:2px">{{ $allocation->server->egg->gcore_policy }}</div>
+                                        <div class="text-muted" style="font-size:11px;margin-top:2px">
+                                            {{ $allocation->server->egg->gcore_policy }}{{ $allocation->server->egg->gcore_proto ? ' / ' . $allocation->server->egg->gcore_proto : '' }}
+                                        </div>
                                     @endif
                                 </td>
                             @endif

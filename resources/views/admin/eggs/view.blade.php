@@ -112,7 +112,7 @@
                             <div class="form-group">
                                 <label for="pGcorePolicy" class="control-label">Gcore ACL Policy</label>
                                 <select id="pGcorePolicy" name="gcore_policy" class="form-control">
-                                    <option value="">— nenhuma / fallback —</option>
+                                    <option value="">- nenhuma / fallback -</option>
                                     @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
                                         <option value="{{ $policy }}" {{ old('gcore_policy', $egg->gcore_policy) === $policy ? 'selected' : '' }}>{{ $policy }}</option>
                                     @endforeach
@@ -120,6 +120,20 @@
                                 <p class="text-muted small">
                                     Política usada no DDoS Protection da Gcore ao abrir portas de allocations protegidas
                                     deste jogo (ex.: <code>minecraft</code>, <code>counter-strike-2</code>, <code>rust</code>).
+                                </p>
+                            </div>
+                            <div class="form-group">
+                                <label for="pGcoreProto" class="control-label">Gcore ACL Proto</label>
+                                <select id="pGcoreProto" name="gcore_proto" class="form-control">
+                                    <option value="">- any (padrão) -</option>
+                                    @foreach(\Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS as $proto)
+                                        @continue($proto === 'any')
+                                        <option value="{{ $proto }}" {{ old('gcore_proto', $egg->gcore_proto) === $proto ? 'selected' : '' }}>{{ $proto }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-muted small">
+                                    Protocolo da regra ACL ao criar a primeira regra desta política
+                                    (ex.: CS → <code>udp</code>, TeamSpeak → <code>udp</code>). Se a regra já existir na Gcore, o proto dela é mantido.
                                 </p>
                             </div>
                             <div class="form-group">
@@ -310,7 +324,7 @@
                     <h3 class="box-title">Configuração DNS (Cloudflare)</h3>
                 </div>
                 <div class="box-body">
-                    <p class="text-muted">Configure quais tipos de registro DNS os usuários podem criar para servidores deste egg. Marque <strong>Habilitar DNS</strong> abaixo e clique em <strong>Salvar DNS</strong> — a feature <code>dns</code> será adicionada automaticamente ao egg.</p>
+                    <p class="text-muted">Configure quais tipos de registro DNS os usuários podem criar para servidores deste egg. Marque <strong>Habilitar DNS</strong> abaixo e clique em <strong>Salvar DNS</strong> - a feature <code>dns</code> será adicionada automaticamente ao egg.</p>
                     <div class="row">
                         <div class="col-sm-6">
                             <div class="form-group">

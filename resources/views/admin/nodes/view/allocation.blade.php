@@ -33,38 +33,40 @@
 </div>
 <div class="row">
     <div class="col-sm-8">
-        <div class="box box-primary">
-            <div class="box-header with-border">
-                <h3 class="box-title">Existing Allocations</h3>
-                @if($node->gcore_enabled)
-                    <form action="{{ route('admin.nodes.view.allocation.gcoreSync', $node->id) }}" method="POST" class="pull-right" style="margin-top:-3px">
-                        {!! csrf_field() !!}
-                        <button type="submit" class="btn btn-xs btn-info">
-                            <i class="fa fa-shield"></i> Sync portas Gcore
-                        </button>
-                    </form>
-                @endif
-            </div>
-            @if($node->gcore_enabled)
-                <div class="box-body" style="padding-bottom:8px">
-                    <p class="text-muted small" style="margin:0 0 10px">
-                        1) Marque o <strong>IP</strong> que tem perfil no Gcore.
-                        2) Marque as <strong>portas</strong> que devem abrir no ACL.
-                        Política vem do Egg do servidor.
+        @if($node->gcore_enabled)
+            <div class="box box-info">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-shield"></i> Gcore DDoS — IPs protegidos</h3>
+                    <div class="box-tools">
+                        <form action="{{ route('admin.nodes.view.allocation.gcoreSync', $node->id) }}" method="POST" style="display:inline">
+                            {!! csrf_field() !!}
+                            <button type="submit" class="btn btn-box-tool btn-sm" style="color:#fff;background:#00c0ef;border-radius:3px;padding:3px 10px;margin-top:3px">
+                                <i class="fa fa-refresh"></i> Sync portas
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <p class="text-muted" style="margin-top:0">
+                        Marque quais IPs deste node têm perfil no Gcore. Depois, na tabela abaixo, abra só as portas necessárias no ACL.
+                        A política vem do Egg do servidor.
                     </p>
-                    @if($allocations->isNotEmpty())
-                        <div class="table-responsive" style="margin-bottom:8px">
-                            <table class="table table-condensed" style="margin-bottom:0;background:#fafafa;border:1px solid #eee">
+                    @if($allocations->isEmpty())
+                        <p class="text-muted" style="margin-bottom:0">Nenhum IP alocado neste node ainda.</p>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" style="margin-bottom:0">
                                 <thead>
                                 <tr>
-                                    <th style="width:40px">IP Gcore</th>
-                                    <th>Endereço</th>
+                                    <th style="width:90px">Gcore</th>
+                                    <th>Endereço IP</th>
+                                    <th style="width:120px">Estado</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach($allocations as $ipRow)
                                     <tr>
-                                        <td class="middle">
+                                        <td class="middle text-center">
                                             <input type="checkbox"
                                                    data-action="set-gcore-ip"
                                                    data-ip="{{ $ipRow->ip }}"
@@ -73,8 +75,12 @@
                                         </td>
                                         <td class="middle">
                                             <code>{{ $ipRow->ip }}</code>
+                                        </td>
+                                        <td class="middle">
                                             @if(isset($gcoreIpSet[$ipRow->ip]))
-                                                <span class="label label-info" style="margin-left:6px">protegido</span>
+                                                <span class="label label-info">protegido</span>
+                                            @else
+                                                <span class="text-muted">—</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -84,7 +90,12 @@
                         </div>
                     @endif
                 </div>
-            @endif
+            </div>
+        @endif
+        <div class="box box-primary">
+            <div class="box-header with-border">
+                <h3 class="box-title">Existing Allocations</h3>
+            </div>
             <div class="box-body table-responsive no-padding" style="overflow-x: visible">
                 <table class="table table-hover" style="margin-bottom:0;">
                     <tr>

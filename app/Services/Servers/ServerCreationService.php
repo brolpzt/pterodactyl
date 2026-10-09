@@ -230,7 +230,7 @@ class ServerCreationService
             'database_limit' => Arr::get($data, 'database_limit') ?? 0,
             'allocation_limit' => $allocationLimit,
             'backup_limit' => Arr::get($data, 'backup_limit') ?? 0,
-            'fastdl_enabled' => Arr::get($data, 'fastdl_enabled') ?? false,
+            'fastdl_enabled' => Arr::get($data, 'fastdl_enabled', true),
         ]);
 
         return $model;

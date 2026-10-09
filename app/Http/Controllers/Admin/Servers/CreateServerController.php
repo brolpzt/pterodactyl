@@ -79,6 +79,8 @@ class CreateServerController extends Controller
             $data['image'] = $data['custom_image'];
             unset($data['custom_image']);
         }
+        // Checkbox omitted when unchecked; keep explicit boolean so default-on in creation still respects uncheck.
+        $data['fastdl_enabled'] = $request->boolean('fastdl_enabled');
 
         $server = $this->creationService->handle($data);
 

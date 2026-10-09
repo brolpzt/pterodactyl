@@ -99,7 +99,7 @@ class StoreServerRequest extends ApplicationApiRequest
             'database_limit' => array_get($data, 'feature_limits.databases'),
             'allocation_limit' => array_get($data, 'feature_limits.allocations'),
             'backup_limit' => array_get($data, 'feature_limits.backups'),
-            'fastdl_enabled' => array_get($data, 'feature_limits.fastdl_enabled', false),
+            'fastdl_enabled' => array_get($data, 'feature_limits.fastdl_enabled', true),
             'oom_disabled' => array_get($data, 'oom_disabled'),
             'mounts' => array_get($data, 'mounts'),
             'addons' => array_get($data, 'addons'),

@@ -132,7 +132,7 @@
                     </div>
                     <div class="form-group col-xs-6">
                         <div class="checkbox checkbox-primary no-margin-bottom">
-                            <input type="checkbox" id="pFastDlEnabled" name="fastdl_enabled" value="1" {{ \Pterodactyl\Helpers\Utilities::checked('fastdl_enabled', 0) }} />
+                            <input type="checkbox" id="pFastDlEnabled" name="fastdl_enabled" value="1" {{ \Pterodactyl\Helpers\Utilities::checked('fastdl_enabled', 1) }} />
                             <label for="pFastDlEnabled" class="strong">Enable FastDL</label>
                         </div>
                         <p class="text-muted small">If enabled, this server will be able to synchronize its files to a FastDL node.</p>

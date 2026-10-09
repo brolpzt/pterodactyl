@@ -165,6 +165,7 @@ Route::group(['prefix' => 'nodes'], function () {
     Route::post('/view/{node:id}/allocation/remove', [Admin\NodesController::class, 'allocationRemoveBlock'])->name('admin.nodes.view.allocation.removeBlock');
     Route::post('/view/{node:id}/allocation/alias', [Admin\NodesController::class, 'allocationSetAlias'])->name('admin.nodes.view.allocation.setAlias');
     Route::post('/view/{node:id}/allocation/gcore', [Admin\NodesController::class, 'allocationSetGcoreProtected'])->name('admin.nodes.view.allocation.setGcore');
+    Route::post('/view/{node:id}/allocation/gcore-ip', [Admin\NodesController::class, 'allocationSetGcoreIp'])->name('admin.nodes.view.allocation.setGcoreIp');
     Route::post('/view/{node:id}/allocation/gcore-sync', [Admin\NodesController::class, 'syncGcoreFirewall'])->name('admin.nodes.view.allocation.gcoreSync');
     Route::post('/view/{node:id}/settings/token', Admin\NodeAutoDeployController::class)->name('admin.nodes.view.configuration.token');
 

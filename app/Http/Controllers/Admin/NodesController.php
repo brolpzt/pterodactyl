@@ -25,6 +25,7 @@ use Pterodactyl\Services\Allocations\AllocationDeletionService;
 use Pterodactyl\Contracts\Repository\LocationRepositoryInterface;
 use Pterodactyl\Contracts\Repository\AllocationRepositoryInterface;
 use Pterodactyl\Http\Requests\Admin\Node\AllocationAliasFormRequest;
+use Pterodactyl\Models\NodeGcoreIp;
 use Pterodactyl\Services\Gcore\GcoreFirewallSyncService;
 use Pterodactyl\Exceptions\DisplayException;
 
@@ -195,22 +196,80 @@ class NodesController extends Controller
     public function createAllocation(AllocationFormRequest $request, Node $node): RedirectResponse
     {
         $data = $request->normalize();
-        $data['gcore_protected'] = $node->gcore_enabled && $request->boolean('gcore_protected');
+        $markIp = $node->gcore_enabled && $request->boolean('gcore_ip');
+        $data['gcore_protected'] = $markIp && $request->boolean('gcore_protected');
 
         $this->assignmentService->handle($node, $data);
         $this->alert->success(trans('admin/node.notices.allocations_added'))->flash();
 
-        if (!empty($data['gcore_protected'])) {
-            try {
-                $resolvedIp = gethostbyname((string) $data['allocation_ip']);
-                $msg = $this->gcoreFirewallSync->syncIp($node, $resolvedIp);
-                $this->alert->info('Gcore: ' . $msg)->flash();
-            } catch (DisplayException $e) {
-                $this->alert->warning('Allocations criadas, mas sync Gcore falhou: ' . $e->getMessage())->flash();
+        if ($markIp) {
+            $resolvedIp = gethostbyname((string) $data['allocation_ip']);
+            NodeGcoreIp::query()->firstOrCreate([
+                'node_id' => $node->id,
+                'ip' => $resolvedIp,
+            ]);
+
+            if (!empty($data['gcore_protected'])) {
+                try {
+                    $msg = $this->gcoreFirewallSync->syncIp($node->fresh(['gcoreIps']), $resolvedIp);
+                    $this->alert->info('Gcore: ' . $msg)->flash();
+                } catch (DisplayException $e) {
+                    $this->alert->warning('Allocations criadas, mas sync Gcore falhou: ' . $e->getMessage())->flash();
+                }
             }
         }
 
         return redirect()->route('admin.nodes.view.allocation', $node->id);
+    }
+
+    /**
+     * Mark/unmark an IP on this node as sitting behind a Gcore DDoS profile.
+     */
+    public function allocationSetGcoreIp(Request $request, Node $node): Response
+    {
+        if (!$node->gcore_enabled) {
+            return response(['error' => 'Este node não está marcado como Gcore.'], 422);
+        }
+
+        $ip = trim((string) $request->input('ip'));
+        if ($ip === '' || filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            return response(['error' => 'IP inválido.'], 422);
+        }
+
+        $enabled = $request->boolean('gcore_ip');
+
+        if ($enabled) {
+            NodeGcoreIp::query()->firstOrCreate([
+                'node_id' => $node->id,
+                'ip' => $ip,
+            ]);
+        } else {
+            NodeGcoreIp::query()
+                ->where('node_id', $node->id)
+                ->where('ip', $ip)
+                ->delete();
+
+            // Ports on this IP should not stay marked for ACL once the IP leaves Gcore.
+            Allocation::query()
+                ->where('node_id', $node->id)
+                ->where('ip', $ip)
+                ->where('gcore_protected', true)
+                ->update(['gcore_protected' => false]);
+        }
+
+        try {
+            // When disabling, clear managed ACL rules; when enabling, sync current ports.
+            $msg = $this->gcoreFirewallSync->syncIp($node->fresh(['gcoreIps']), $ip, force: true);
+
+            return response(['message' => $msg], 200);
+        } catch (DisplayException $e) {
+            // Enabling the IP without a Gcore profile yet is still useful locally.
+            if ($enabled) {
+                return response(['message' => 'IP marcado como Gcore. Sync: ' . $e->getMessage()], 200);
+            }
+
+            return response(['error' => $e->getMessage()], 422);
+        }
     }
 
     /**
@@ -225,6 +284,10 @@ class NodesController extends Controller
 
         if (!$node->gcore_enabled) {
             return response(['error' => 'Este node não está marcado como Gcore.'], 422);
+        }
+
+        if (!$node->hasGcoreIp($allocation->ip)) {
+            return response(['error' => 'Marque primeiro o IP como protegido no Gcore.'], 422);
         }
 
         $allocation->gcore_protected = $request->boolean('gcore_protected');
@@ -257,7 +320,7 @@ class NodesController extends Controller
     private function syncGcoreIpQuietly(int|Node $node, string $ip): void
     {
         $model = $node instanceof Node ? $node : Node::query()->find($node);
-        if (!$model || !$model->gcore_enabled) {
+        if (!$model || !$model->gcore_enabled || !$model->hasGcoreIp($ip)) {
             return;
         }
 

@@ -110,6 +110,19 @@
                                 </p>
                             </div>
                             <div class="form-group">
+                                <label for="pGcorePolicy" class="control-label">Gcore ACL Policy</label>
+                                <select id="pGcorePolicy" name="gcore_policy" class="form-control">
+                                    <option value="">— nenhuma / fallback —</option>
+                                    @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
+                                        <option value="{{ $policy }}" {{ old('gcore_policy', $egg->gcore_policy) === $policy ? 'selected' : '' }}>{{ $policy }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-muted small">
+                                    Política usada no DDoS Protection da Gcore ao abrir portas de allocations protegidas
+                                    deste jogo (ex.: <code>minecraft</code>, <code>counter-strike-2</code>, <code>rust</code>).
+                                </p>
+                            </div>
+                            <div class="form-group">
                                 <div class="checkbox checkbox-primary no-margin-bottom">
                                     <input id="pWarnSlotMismatch" name="warn_slot_mismatch" type="checkbox" value="1" @if($egg->warn_slot_mismatch) checked @endif />
                                     <label for="pWarnSlotMismatch" class="strong">Aviso de slots acima do limite</label>

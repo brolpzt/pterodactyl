@@ -23,6 +23,7 @@ class EggFormRequest extends AdminFormRequest
             'config_logs' => 'required_without:config_from|nullable|json',
             'config_files' => 'required_without:config_from|nullable|json',
             'gamedig' => 'nullable|string|max:191',
+            'gcore_policy' => 'nullable|string|max:64',
             'warn_slot_mismatch' => 'sometimes|boolean',
             'command_transmission_type' => 'required|string|in:stdin,rcon',
             'rcon_protocol' => 'required_if:command_transmission_type,rcon|nullable|string|in:source,quake3,webrcon',
@@ -60,10 +61,13 @@ class EggFormRequest extends AdminFormRequest
             }
         }
 
+        $gcorePolicy = trim((string) array_get($data, 'gcore_policy', ''));
+
         return array_merge($data, [
             'force_outgoing_ip' => array_get($data, 'force_outgoing_ip', false),
             'warn_slot_mismatch' => array_get($data, 'warn_slot_mismatch', false),
             'features' => $features,
+            'gcore_policy' => $gcorePolicy === '' ? null : $gcorePolicy,
         ]);
     }
 }

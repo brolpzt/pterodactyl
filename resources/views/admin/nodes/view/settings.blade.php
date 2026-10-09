@@ -129,18 +129,7 @@
                                 <label for="pGcoreTrue"> Sim — node atrás do Gcore</label>
                             </div>
                         </div>
-                        <p class="text-muted small">Se ativo, allocations marcadas como protegidas abrem portas no ACL do perfil Gcore correspondente ao IP.</p>
-                    </div>
-                    <div class="form-group col-xs-12">
-                        <label for="gcore_policy" class="control-label">Política ACL Gcore (padrão)</label>
-                        <div>
-                            <select name="gcore_policy" id="gcore_policy" class="form-control">
-                                @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
-                                    <option value="{{ $policy }}" {{ old('gcore_policy', $node->gcore_policy ?: 'allowlist') === $policy ? 'selected' : '' }}>{{ $policy }}</option>
-                                @endforeach
-                            </select>
-                            <p class="text-muted small">Usada na regra gerenciada pelo painel ao sincronizar portas protegidas.</p>
-                        </div>
+                        <p class="text-muted small">Se ativo, allocations marcadas como protegidas abrem portas no ACL Gcore. A política ACL vem do <strong>Egg</strong> do servidor.</p>
                     </div>
                 </div>
             </div>

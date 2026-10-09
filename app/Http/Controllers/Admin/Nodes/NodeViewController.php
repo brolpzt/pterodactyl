@@ -68,15 +68,19 @@ class NodeViewController extends Controller
     public function allocations(Request $request, Node $node): View
     {
         $node = $this->repository->loadNodeAllocations($node);
+        $node->load('gcoreIps');
 
         $this->plainInject(['node' => Collection::make([$node])->only(['id'])]);
 
+        $ipRows = Allocation::query()->where('node_id', $node->id)
+            ->groupBy('ip')
+            ->orderByRaw('INET_ATON(ip) ASC')
+            ->get(['ip']);
+
         return view('admin.nodes.view.allocation', [
             'node' => $node,
-            'allocations' => Allocation::query()->where('node_id', $node->id)
-                ->groupBy('ip')
-                ->orderByRaw('INET_ATON(ip) ASC')
-                ->get(['ip']),
+            'allocations' => $ipRows,
+            'gcoreIpSet' => $node->gcoreIps->pluck('ip')->flip()->all(),
         ]);
     }
 

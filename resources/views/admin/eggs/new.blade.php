@@ -68,6 +68,16 @@
                                     (use o slug da pasta em <code>public/bg/</code>, ex.: <code>cod4</code>, <code>bo1</code>, <code>cs16</code>).
                                 </p>
                             </div>
+                            <div class="form-group">
+                                <label for="pGcorePolicy" class="control-label">Gcore ACL Policy</label>
+                                <select id="pGcorePolicy" name="gcore_policy" class="form-control">
+                                    <option value="">— nenhuma / fallback —</option>
+                                    @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
+                                        <option value="{{ $policy }}" {{ old('gcore_policy') === $policy ? 'selected' : '' }}>{{ $policy }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-muted small">Política ACL no DDoS Gcore para servers deste egg.</p>
+                            </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="form-group">

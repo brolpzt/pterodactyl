@@ -13,8 +13,8 @@ return [
     'api_key' => env('GCORE_API_KEY', ''),
 
     /*
-    | Default ACL policy applied when syncing protected allocation ports
-    | for a Gcore-enabled node (overridable per node via gcore_policy).
+    | Fallback ACL policy when a protected allocation has no server/egg yet,
+    | or the egg has no gcore_policy set. Prefer configuring it on the Egg.
     */
     'default_policy' => env('GCORE_DEFAULT_POLICY', 'allowlist'),
 ];

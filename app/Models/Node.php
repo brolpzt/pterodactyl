@@ -26,7 +26,6 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property bool $behind_proxy
  * @property bool $maintenance_mode
  * @property bool $gcore_enabled
- * @property string $gcore_policy
  * @property int $memory
  * @property int $memory_overallocate
  * @property int $disk
@@ -43,6 +42,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property \Pterodactyl\Models\Mount[]|\Illuminate\Database\Eloquent\Collection $mounts
  * @property \Pterodactyl\Models\Server[]|\Illuminate\Database\Eloquent\Collection $servers
  * @property \Pterodactyl\Models\Allocation[]|\Illuminate\Database\Eloquent\Collection $allocations
+ * @property \Pterodactyl\Models\NodeGcoreIp[]|\Illuminate\Database\Eloquent\Collection $gcoreIps
  */
 #[Attributes\Identifiable('node')]
 class Node extends Model implements Identifiable
@@ -96,7 +96,7 @@ class Node extends Model implements Identifiable
         'disk_overallocate', 'upload_size', 'daemonBase',
         'daemonSFTP', 'daemonListen',
         'description', 'maintenance_mode',
-        'gcore_enabled', 'gcore_policy',
+        'gcore_enabled',
     ];
 
     public static array $validationRules = [
@@ -116,7 +116,6 @@ class Node extends Model implements Identifiable
         'daemonListen' => 'required|numeric|between:1,65535',
         'maintenance_mode' => 'boolean',
         'gcore_enabled' => 'boolean',
-        'gcore_policy' => 'sometimes|string|max:64',
         'upload_size' => 'int|min:1',
     ];
 
@@ -133,7 +132,6 @@ class Node extends Model implements Identifiable
         'daemonListen' => 8080,
         'maintenance_mode' => false,
         'gcore_enabled' => false,
-        'gcore_policy' => 'allowlist',
     ];
 
     /**
@@ -242,6 +240,25 @@ class Node extends Model implements Identifiable
     public function allocations(): HasMany
     {
         return $this->hasMany(Allocation::class);
+    }
+
+    /**
+     * IPs on this node that have a Gcore DDoS profile (behind protection).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Pterodactyl\Models\NodeGcoreIp, $this>
+     */
+    public function gcoreIps(): HasMany
+    {
+        return $this->hasMany(NodeGcoreIp::class);
+    }
+
+    public function hasGcoreIp(string $ip): bool
+    {
+        if ($this->relationLoaded('gcoreIps')) {
+            return $this->gcoreIps->contains('ip', $ip);
+        }
+
+        return $this->gcoreIps()->where('ip', $ip)->exists();
     }
 
     /**

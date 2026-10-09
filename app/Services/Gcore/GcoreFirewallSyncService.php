@@ -4,13 +4,13 @@ namespace Pterodactyl\Services\Gcore;
 
 use Pterodactyl\Models\Node;
 use Pterodactyl\Models\Allocation;
+use Pterodactyl\Models\NodeGcoreIp;
 use Pterodactyl\Exceptions\DisplayException;
 
 class GcoreFirewallSyncService
 {
     /**
-     * Sync ACL ports on Gcore for every distinct IP on the node that has (or had)
-     * protected allocations — clears the managed rule when no ports remain.
+     * Sync ACL ports on Gcore for every IP marked as Gcore-protected on the node.
      *
      * @return list<string> human-readable result lines
      *
@@ -22,15 +22,13 @@ class GcoreFirewallSyncService
             throw new DisplayException('Este node não está marcado como Gcore.');
         }
 
-        $targets = Allocation::query()
+        $targets = NodeGcoreIp::query()
             ->where('node_id', $node->id)
-            ->where('gcore_protected', true)
-            ->distinct()
             ->pluck('ip')
             ->all();
 
         if ($targets === []) {
-            return ['Nenhuma allocation protegida para sincronizar.'];
+            return ['Nenhum IP marcado como Gcore neste node.'];
         }
 
         $lines = [];
@@ -42,12 +40,12 @@ class GcoreFirewallSyncService
     }
 
     /**
-     * Ensure the Gcore profile for $ip has a managed ACL rule with exactly the
-     * protected allocation ports of this node (other ACL rules are preserved).
+     * Ensure the Gcore profile for $ip has managed ACL rules grouped by egg policy.
+     * Other ACL rules (manual) are preserved.
      *
      * @throws DisplayException
      */
-    public function syncIp(Node $node, string $ip): string
+    public function syncIp(Node $node, string $ip, bool $force = false): string
     {
         if (!$node->gcore_enabled) {
             throw new DisplayException('Este node não está marcado como Gcore.');
@@ -57,16 +55,13 @@ class GcoreFirewallSyncService
             throw new DisplayException('Configure GCORE_API_KEY no .env.');
         }
 
-        $ports = Allocation::query()
-            ->where('node_id', $node->id)
-            ->where('ip', $ip)
-            ->where('gcore_protected', true)
-            ->orderBy('port')
-            ->pluck('port')
-            ->map(fn ($p) => (int) $p)
-            ->unique()
-            ->values()
-            ->all();
+        $ipIsGcore = $node->hasGcoreIp($ip);
+        if (!$ipIsGcore && !$force) {
+            throw new DisplayException("O IP {$ip} não está marcado como protegido no Gcore.");
+        }
+
+        // If the IP is no longer marked Gcore, push an empty port set to clear managed rules.
+        $portsByPolicy = $ipIsGcore ? $this->collectPortsByPolicy($node, $ip) : [];
 
         try {
             $client = GcoreClient::fromConfig();
@@ -76,21 +71,62 @@ class GcoreFirewallSyncService
             }
 
             $form = GcoreAclHelper::extractProfileFormData($profile);
-            $policy = $this->resolvePolicy($node);
-            $acl = $this->mergeManagedRule($form['acl'], $policy, $ports);
+            $acl = $this->mergeManagedRules($form['acl'], $portsByPolicy);
 
             $payload = $client->buildUpdatePayload($profile, $form['rate'], $form['geoip'], $acl);
             $updated = $client->updateProfile((int) $profile['id'], $payload);
             $status = (string) ($updated['status']['status'] ?? 'OK');
 
-            $portLabel = $ports === [] ? 'nenhuma porta' : implode(', ', $ports);
+            if ($portsByPolicy === []) {
+                $summary = $ipIsGcore ? 'nenhuma porta' : 'IP fora do Gcore (regras gerenciadas limpas)';
+            } else {
+                $parts = [];
+                foreach ($portsByPolicy as $policy => $ports) {
+                    $parts[] = $policy . '[' . implode(',', $ports) . ']';
+                }
+                $summary = implode(' · ', $parts);
+            }
 
-            return "IP {$ip} · perfil {$profile['id']} · {$portLabel} · {$status}";
+            return "IP {$ip} · perfil {$profile['id']} · {$summary} · {$status}";
         } catch (DisplayException $e) {
             throw $e;
         } catch (\Throwable $e) {
             throw new DisplayException('Gcore sync falhou para ' . $ip . ': ' . $e->getMessage(), $e);
         }
+    }
+
+    /**
+     * @return array<string, list<int>> policy => sorted unique ports
+     */
+    private function collectPortsByPolicy(Node $node, string $ip): array
+    {
+        $allocations = Allocation::query()
+            ->where('node_id', $node->id)
+            ->where('ip', $ip)
+            ->where('gcore_protected', true)
+            ->with(['server.egg:id,gcore_policy'])
+            ->orderBy('port')
+            ->get();
+
+        /** @var array<string, array<int, true>> $map */
+        $map = [];
+        foreach ($allocations as $allocation) {
+            $policy = $this->normalizePolicy(
+                $allocation->server?->egg?->gcore_policy
+            );
+            $map[$policy][(int) $allocation->port] = true;
+        }
+
+        $out = [];
+        foreach ($map as $policy => $ports) {
+            $list = array_map('intval', array_keys($ports));
+            sort($list);
+            $out[$policy] = $list;
+        }
+
+        ksort($out);
+
+        return $out;
     }
 
     /**
@@ -110,9 +146,9 @@ class GcoreFirewallSyncService
         return null;
     }
 
-    private function resolvePolicy(Node $node): string
+    private function normalizePolicy(?string $policy): string
     {
-        $policy = trim((string) ($node->gcore_policy ?: config('gcore.default_policy', 'allowlist')));
+        $policy = trim((string) ($policy ?: config('gcore.default_policy', 'allowlist')));
         if (!in_array($policy, GcoreClient::POLICIES, true)) {
             return 'allowlist';
         }
@@ -121,26 +157,30 @@ class GcoreFirewallSyncService
     }
 
     /**
-     * Replace or create the single panel-managed ACL rule; keep all other rules.
+     * Drop previous panel-managed rules (empty sip/sport, proto any, known policy)
+     * and recreate one rule per egg policy that still has ports.
      *
      * @param list<array<string, mixed>> $acl
-     * @param list<int> $ports
+     * @param array<string, list<int>> $portsByPolicy
      * @return list<array<string, mixed>>
      */
-    private function mergeManagedRule(array $acl, string $policy, array $ports): array
+    private function mergeManagedRules(array $acl, array $portsByPolicy): array
     {
         $kept = [];
         foreach ($acl as $rule) {
             if (!is_array($rule)) {
                 continue;
             }
-            if ($this->isManagedRule($rule, $policy)) {
+            if ($this->isManagedRule($rule)) {
                 continue;
             }
             $kept[] = $rule;
         }
 
-        if ($ports !== []) {
+        foreach ($portsByPolicy as $policy => $ports) {
+            if ($ports === []) {
+                continue;
+            }
             $kept[] = [
                 'policy' => $policy,
                 'sip_list' => [],
@@ -156,9 +196,10 @@ class GcoreFirewallSyncService
     /**
      * @param array<string, mixed> $rule
      */
-    private function isManagedRule(array $rule, string $policy): bool
+    private function isManagedRule(array $rule): bool
     {
-        if ((string) ($rule['policy'] ?? '') !== $policy) {
+        $policy = (string) ($rule['policy'] ?? '');
+        if (!in_array($policy, GcoreClient::POLICIES, true)) {
             return false;
         }
 
@@ -174,7 +215,6 @@ class GcoreFirewallSyncService
             return false;
         }
 
-        // Panel-managed rules always use proto "any" only.
         return $proto === ['any'] || $proto === ['ANY'];
     }
 }

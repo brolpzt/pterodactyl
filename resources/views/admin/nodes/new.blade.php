@@ -103,15 +103,7 @@
                                 <label for="pGcoreTrue"> Sim — node atrás do Gcore</label>
                             </div>
                         </div>
-                        <p class="text-muted small">Permite marcar allocations como protegidas e abrir portas no ACL Gcore.</p>
-                    </div>
-                    <div class="form-group">
-                        <label for="gcore_policy" class="control-label">Política ACL Gcore (padrão)</label>
-                        <select name="gcore_policy" id="gcore_policy" class="form-control">
-                            @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
-                                <option value="{{ $policy }}" {{ $policy === 'allowlist' ? 'selected' : '' }}>{{ $policy }}</option>
-                            @endforeach
-                        </select>
+                        <p class="text-muted small">Permite marcar allocations como protegidas. A política ACL é definida no Egg de cada jogo.</p>
                     </div>
                 </div>
             </div>

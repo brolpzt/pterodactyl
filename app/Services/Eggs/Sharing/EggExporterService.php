@@ -43,6 +43,9 @@ class EggExporterService
             }),
             'startup' => $egg->startup,
             'port_slots' => $egg->port_slots ?? [],
+            'port_range_start' => $egg->port_range_start,
+            'port_range_end' => $egg->port_range_end,
+            'port_step' => $egg->port_step ?: 1,
             'config' => [
                 'files' => $egg->inherit_config_files,
                 'startup' => $egg->inherit_config_startup,

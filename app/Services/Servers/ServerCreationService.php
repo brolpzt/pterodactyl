@@ -152,9 +152,36 @@ class ServerCreationService
             ->setMemory(Arr::get($data, 'memory'))
             ->handle();
 
+        $ports = $deployment->getPorts();
+
+        // Egg port pool (range + step) for automatic primary selection.
+        $egg = !empty($data['egg_id']) ? Egg::query()->find($data['egg_id']) : null;
+        $pool = $this->portSlotSync->primaryPoolPorts($egg);
+        if ($pool !== null) {
+            if ($ports === []) {
+                $ports = array_map('strval', $pool);
+            } else {
+                // Keep only deployment ports that also sit on the egg stepped pool.
+                $allowed = array_flip($pool);
+                $ports = array_values(array_filter(
+                    $ports,
+                    function ($port) use ($allowed) {
+                        if (is_digit($port)) {
+                            return isset($allowed[(int) $port]);
+                        }
+
+                        return true;
+                    }
+                ));
+                if ($ports === []) {
+                    $ports = array_map('strval', $pool);
+                }
+            }
+        }
+
         return $this->allocationSelectionService->setDedicated($deployment->isDedicated())
             ->setNodes($nodes->pluck('id')->toArray())
-            ->setPorts($deployment->getPorts())
+            ->setPorts($ports)
             ->handle();
     }
 

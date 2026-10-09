@@ -472,22 +472,158 @@ class PortSlotSyncService
     }
 
     /**
+     * Whether the egg defines a usable port pool (range).
+     */
+    public function hasPortRange(?Egg $egg): bool
+    {
+        if (!$egg) {
+            return false;
+        }
+
+        $start = (int) ($egg->port_range_start ?? 0);
+        $end = (int) ($egg->port_range_end ?? 0);
+
+        return $start >= 1 && $end >= $start && $end <= 65535;
+    }
+
+    public function portStep(?Egg $egg): int
+    {
+        $step = (int) ($egg?->port_step ?? 1);
+
+        return max(1, min(100, $step));
+    }
+
+    /**
+     * Primary pool: ports in [start, end] with (port - start) % step == 0.
+     *
+     * @return list<int>|null null = no egg range constraint
+     */
+    public function primaryPoolPorts(?Egg $egg): ?array
+    {
+        if (!$this->hasPortRange($egg)) {
+            return null;
+        }
+
+        $start = (int) $egg->port_range_start;
+        $end = (int) $egg->port_range_end;
+        $step = $this->portStep($egg);
+        $ports = [];
+        for ($port = $start; $port <= $end; $port += $step) {
+            $ports[] = $port;
+        }
+
+        return $ports;
+    }
+
+    /**
+     * Extra slot candidates relative to primary: same range, (port - primary) % step == 0, port != primary.
+     */
+    public function isValidExtraPort(?Egg $egg, int $primaryPort, int $port): bool
+    {
+        if ($port === $primaryPort || $port < 1 || $port > 65535) {
+            return false;
+        }
+
+        if ($this->hasPortRange($egg)) {
+            $start = (int) $egg->port_range_start;
+            $end = (int) $egg->port_range_end;
+            if ($port < $start || $port > $end) {
+                return false;
+            }
+        }
+
+        $step = $this->portStep($egg);
+        if ($step <= 1) {
+            return true;
+        }
+
+        return (($port - $primaryPort) % $step) === 0;
+    }
+
+    public function isValidPrimaryPort(?Egg $egg, int $port): bool
+    {
+        $pool = $this->primaryPoolPorts($egg);
+        if ($pool === null) {
+            return $port >= 1 && $port <= 65535;
+        }
+
+        return in_array($port, $pool, true);
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation>
+     */
+    public function constrainQueryToExtraSlot($query, ?Egg $egg, int $primaryPort)
+    {
+        if ($this->hasPortRange($egg)) {
+            $query->whereBetween('port', [(int) $egg->port_range_start, (int) $egg->port_range_end]);
+        }
+
+        $query->where('port', '!=', $primaryPort);
+
+        $step = $this->portStep($egg);
+        if ($step > 1) {
+            // MySQL: (port - primary) % step = 0
+            $query->whereRaw('MOD(port - ?, ?) = 0', [$primaryPort, $step]);
+        }
+
+        return $query;
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation>
+     */
+    public function constrainQueryToPrimaryPool($query, ?Egg $egg)
+    {
+        $pool = $this->primaryPoolPorts($egg);
+        if ($pool === null) {
+            return $query;
+        }
+
+        if ($pool === []) {
+            // Impossible match — force empty result.
+            return $query->whereRaw('0 = 1');
+        }
+
+        return $query->whereIn('port', $pool);
+    }
+
+    /**
      * @throws DisplayException
      */
     private function claimFreeAllocation(Server $server, string $ip): Allocation
     {
-        /** @var Allocation|null $allocation */
-        $allocation = Allocation::query()
+        $server->loadMissing(['egg', 'allocation']);
+        $primaryPort = (int) ($server->allocation?->port ?? 0);
+
+        $query = Allocation::query()
             ->where('node_id', $server->node_id)
             ->where('ip', $ip)
             ->whereNull('server_id')
-            ->orderBy('port')
-            ->lockForUpdate()
-            ->first();
+            ->orderBy('port');
+
+        if ($primaryPort > 0) {
+            $this->constrainQueryToExtraSlot($query, $server->egg, $primaryPort);
+        }
+
+        /** @var Allocation|null $allocation */
+        $allocation = $query->lockForUpdate()->first();
 
         if (!$allocation) {
+            $hint = $this->hasPortRange($server->egg)
+                ? sprintf(
+                    ' Range do egg: %d–%d step %d (a partir da primary %d).',
+                    (int) $server->egg->port_range_start,
+                    (int) $server->egg->port_range_end,
+                    $this->portStep($server->egg),
+                    $primaryPort
+                )
+                : '';
+
             throw new DisplayException(
-                "Sem allocation livre no IP {$ip} para o port slot obrigatório. Crie portas extras no node."
+                "Sem allocation livre no IP {$ip} para o port slot obrigatório.{$hint}"
             );
         }
 

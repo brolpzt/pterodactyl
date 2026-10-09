@@ -246,7 +246,35 @@
                         }
                         $gcorePolicies = \Pterodactyl\Services\Gcore\GcoreClient::POLICIES;
                         $gcoreProtos = \Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS;
+                        $portStep = (int) old('port_step', $egg->port_step ?: 1);
                     @endphp
+                    <div class="row" style="margin-bottom:15px">
+                        <div class="col-sm-3">
+                            <label class="control-label">Range início</label>
+                            <input type="number" name="port_range_start" class="form-control input-sm" min="1" max="65535"
+                                   value="{{ old('port_range_start', $egg->port_range_start) }}" placeholder="27015">
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="control-label">Range fim</label>
+                            <input type="number" name="port_range_end" class="form-control input-sm" min="1" max="65535"
+                                   value="{{ old('port_range_end', $egg->port_range_end) }}" placeholder="27030">
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="control-label">Step</label>
+                            <input type="number" name="port_step" id="pPortStep" class="form-control input-sm" min="1" max="100"
+                                   value="{{ $portStep }}" placeholder="1">
+                            <p class="text-muted small no-margin-bottom">1 = sequencial; 2 = 27015, 27017, 27019…</p>
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="control-label">&nbsp;</label>
+                            <div class="checkbox" style="margin-top:0">
+                                <label>
+                                    <input type="checkbox" id="pPortSkipOne" {{ $portStep === 2 ? 'checked' : '' }}>
+                                    Sempre pular uma porta (step 2)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-condensed" id="portSlotsTable">
                             <thead>
@@ -532,6 +560,17 @@
         $('#portSlotsTable').on('click', '.port-slot-remove', function () {
             $(this).closest('tr').remove();
             reindex();
+        });
+
+        $('#pPortSkipOne').on('change', function () {
+            if ($(this).is(':checked')) {
+                $('#pPortStep').val(2);
+            } else if (parseInt($('#pPortStep').val(), 10) === 2) {
+                $('#pPortStep').val(1);
+            }
+        });
+        $('#pPortStep').on('change input', function () {
+            $('#pPortSkipOne').prop('checked', parseInt($(this).val(), 10) === 2);
         });
     })();
     </script>

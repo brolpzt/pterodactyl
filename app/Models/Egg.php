@@ -48,6 +48,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string|null $gcore_policy
  * @property string|null $gcore_proto
  * @property array|null $port_slots
+ * @property int|null $port_range_start
+ * @property int|null $port_range_end
+ * @property int $port_step
  * @property bool $warn_slot_mismatch
  * @property Nest $nest
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\Server[] $servers
@@ -126,6 +129,9 @@ class Egg extends Model implements Identifiable
         'gcore_policy',
         'gcore_proto',
         'port_slots',
+        'port_range_start',
+        'port_range_end',
+        'port_step',
         'warn_slot_mismatch',
         'workshop_app_id',
         'workshop_sync_driver',
@@ -147,6 +153,9 @@ class Egg extends Model implements Identifiable
         'docker_images' => 'array',
         'file_denylist' => 'array',
         'port_slots' => 'array',
+        'port_range_start' => 'integer',
+        'port_range_end' => 'integer',
+        'port_step' => 'integer',
         'workshop_app_id' => 'integer',
     ];
 
@@ -172,6 +181,9 @@ class Egg extends Model implements Identifiable
         'gcore_policy' => 'sometimes|nullable|string|max:64',
         'gcore_proto' => 'sometimes|nullable|string|max:16',
         'port_slots' => 'sometimes|nullable|array',
+        'port_range_start' => 'sometimes|nullable|integer|between:1,65535',
+        'port_range_end' => 'sometimes|nullable|integer|between:1,65535',
+        'port_step' => 'sometimes|integer|between:1,100',
         'command_transmission_type' => 'sometimes|string|in:stdin,rcon',
         'rcon_protocol' => 'sometimes|nullable|string|in:source,quake3,webrcon',
     ];
@@ -184,6 +196,7 @@ class Egg extends Model implements Identifiable
         'config_logs' => null,
         'config_files' => null,
         'update_url' => null,
+        'port_step' => 1,
     ];
 
     /**

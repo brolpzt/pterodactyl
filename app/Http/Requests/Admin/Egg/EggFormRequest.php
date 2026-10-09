@@ -33,6 +33,9 @@ class EggFormRequest extends AdminFormRequest
             'port_slots.*.required' => 'sometimes|boolean',
             'port_slots.*.gcore_policy' => 'nullable|string|max:64',
             'port_slots.*.gcore_proto' => 'nullable|string|in:' . implode(',', GcoreClient::PROTOCOLS),
+            'port_range_start' => 'nullable|integer|between:1,65535',
+            'port_range_end' => 'nullable|integer|between:1,65535',
+            'port_step' => 'nullable|integer|between:1,100',
             'warn_slot_mismatch' => 'sometimes|boolean',
             'command_transmission_type' => 'required|string|in:stdin,rcon',
             'rcon_protocol' => 'required_if:command_transmission_type,rcon|nullable|string|in:source,quake3,webrcon',
@@ -56,6 +59,15 @@ class EggFormRequest extends AdminFormRequest
                 app(PortSlotSyncService::class)->normalizeSlots($this->input('port_slots', []));
             } catch (DisplayException $e) {
                 $validator->errors()->add('port_slots', $e->getMessage());
+            }
+
+            $start = $this->input('port_range_start');
+            $end = $this->input('port_range_end');
+            if ($start !== null && $start !== '' && $end !== null && $end !== '' && (int) $end < (int) $start) {
+                $validator->errors()->add('port_range_end', 'O fim do range deve ser >= início.');
+            }
+            if (($start !== null && $start !== '') xor ($end !== null && $end !== '')) {
+                $validator->errors()->add('port_range_start', 'Informe início e fim do range (ou deixe ambos vazios).');
             }
         });
     }
@@ -83,6 +95,13 @@ class EggFormRequest extends AdminFormRequest
             array_get($data, 'port_slots', $this->input('port_slots', []))
         );
 
+        $rangeStart = array_get($data, 'port_range_start');
+        $rangeEnd = array_get($data, 'port_range_end');
+        $portStep = (int) (array_get($data, 'port_step') ?? 1);
+        if ($portStep < 1) {
+            $portStep = 1;
+        }
+
         // ACL Gcore vive nos port slots; limpa campos legados no egg.
         return array_merge($data, [
             'force_outgoing_ip' => array_get($data, 'force_outgoing_ip', false),
@@ -91,6 +110,9 @@ class EggFormRequest extends AdminFormRequest
             'gcore_policy' => null,
             'gcore_proto' => null,
             'port_slots' => $portSlots === [] ? null : $portSlots,
+            'port_range_start' => $rangeStart !== null && $rangeStart !== '' ? (int) $rangeStart : null,
+            'port_range_end' => $rangeEnd !== null && $rangeEnd !== '' ? (int) $rangeEnd : null,
+            'port_step' => $portStep,
         ]);
     }
 }

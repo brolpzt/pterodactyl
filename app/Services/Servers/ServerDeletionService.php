@@ -10,6 +10,7 @@ use Pterodactyl\Repositories\Wings\DaemonServerRepository;
 use Pterodactyl\Repositories\Wings\DaemonFirewallRepository;
 use Pterodactyl\Services\Databases\DatabaseManagementService;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
+use Pterodactyl\Services\Gcore\GcoreFirewallSyncService;
 
 class ServerDeletionService
 {
@@ -23,6 +24,7 @@ class ServerDeletionService
         private DaemonServerRepository $daemonServerRepository,
         private DaemonFirewallRepository $daemonFirewallRepository,
         private DatabaseManagementService $databaseManagementService,
+        private GcoreFirewallSyncService $gcoreFirewallSync,
     ) {
     }
 
@@ -70,6 +72,10 @@ class ServerDeletionService
 
             Log::warning($exception);
         }
+
+        // Capture Gcore state before allocations lose their server_id / egg policy.
+        $server->loadMissing(['node.gcoreIps', 'allocations', 'egg']);
+        $this->gcoreFirewallSync->syncForServerLifecycle($server, opening: false);
 
         $this->connection->transaction(function () use ($server) {
             foreach ($server->databases as $database) {

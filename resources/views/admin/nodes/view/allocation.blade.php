@@ -36,7 +36,7 @@
         @if($node->gcore_enabled)
             <div class="box box-info">
                 <div class="box-header with-border">
-                    <h3 class="box-title"><i class="fa fa-shield"></i> Gcore DDoS — IPs protegidos</h3>
+                    <h3 class="box-title"><i class="fa fa-shield"></i> Gcore DDoS - IPs protegidos</h3>
                     <div class="box-tools">
                         <form action="{{ route('admin.nodes.view.allocation.gcoreSync', $node->id) }}" method="POST" style="display:inline">
                             {!! csrf_field() !!}
@@ -46,50 +46,52 @@
                         </form>
                     </div>
                 </div>
-                <div class="box-body">
-                    <p class="text-muted" style="margin-top:0">
-                        Marque quais IPs deste node têm perfil no Gcore. Depois, na tabela abaixo, abra só as portas necessárias no ACL.
-                        A política vem do Egg do servidor.
+                <div class="box-body" style="padding-bottom:0">
+                    <p class="text-muted" style="margin-top:0;margin-bottom:12px">
+                        Marque quais IPs deste node têm perfil no Gcore. Depois, na tabela abaixo, marque as portas e use
+                        <strong>Sync portas</strong> para enviar à API. Na criação/remoção de servidor o sync é automático.
                     </p>
-                    @if($allocations->isEmpty())
-                        <p class="text-muted" style="margin-bottom:0">Nenhum IP alocado neste node ainda.</p>
-                    @else
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover" style="margin-bottom:0">
-                                <thead>
-                                <tr>
-                                    <th style="width:90px">Gcore</th>
-                                    <th>Endereço IP</th>
-                                    <th style="width:120px">Estado</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @foreach($allocations as $ipRow)
-                                    <tr>
-                                        <td class="middle text-center">
-                                            <input type="checkbox"
-                                                   data-action="set-gcore-ip"
-                                                   data-ip="{{ $ipRow->ip }}"
-                                                   {{ isset($gcoreIpSet[$ipRow->ip]) ? 'checked' : '' }}
-                                                   title="Este IP tem perfil no Gcore DDoS" />
-                                        </td>
-                                        <td class="middle">
-                                            <code>{{ $ipRow->ip }}</code>
-                                        </td>
-                                        <td class="middle">
-                                            @if(isset($gcoreIpSet[$ipRow->ip]))
-                                                <span class="label label-info">protegido</span>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
                 </div>
+                @if($allocations->isEmpty())
+                    <div class="box-body">
+                        <p class="text-muted" style="margin-bottom:0">Nenhum IP alocado neste node ainda.</p>
+                    </div>
+                @else
+                    <div class="box-body table-responsive no-padding">
+                        <table class="table table-hover" style="margin-bottom:0">
+                            <thead>
+                            <tr>
+                                <th style="width:90px">Gcore</th>
+                                <th>Endereço IP</th>
+                                <th style="width:120px">Estado</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($allocations as $ipRow)
+                                <tr>
+                                    <td class="middle text-center">
+                                        <input type="checkbox"
+                                               data-action="set-gcore-ip"
+                                               data-ip="{{ $ipRow->ip }}"
+                                               {{ isset($gcoreIpSet[$ipRow->ip]) ? 'checked' : '' }}
+                                               title="Este IP tem perfil no Gcore DDoS" />
+                                    </td>
+                                    <td class="middle">
+                                        <code>{{ $ipRow->ip }}</code>
+                                    </td>
+                                    <td class="middle">
+                                        @if(isset($gcoreIpSet[$ipRow->ip]))
+                                            <span class="label label-info">protegido</span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
         @endif
         <div class="box box-primary">
@@ -106,7 +108,10 @@
                         <th>IP Alias</th>
                         <th>Port</th>
                         @if($node->gcore_enabled)
-                            <th>Abrir porta</th>
+                            <th class="text-center" style="width:110px">
+                                Abrir porta<br>
+                                <input type="checkbox" id="gcore-ports-select-all" title="Selecionar/desmarcar todas as portas Gcore desta página" />
+                            </th>
                         @endif
                         <th>Assigned To</th>
                         <th>
@@ -115,6 +120,11 @@
                                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Mass Actions <span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-massactions">
+                                    @if($node->gcore_enabled)
+                                        <li><a href="#" data-action="mass-gcore-open">Abrir portas Gcore <i class="fa fa-fw fa-shield"></i></a></li>
+                                        <li><a href="#" data-action="mass-gcore-close">Fechar portas Gcore <i class="fa fa-fw fa-ban"></i></a></li>
+                                        <li role="separator" class="divider"></li>
+                                    @endif
                                     <li><a href="#" id="selective-deletion" data-action="selective-deletion">Delete <i class="fa fa-fw fa-trash-o"></i></a></li>
                                 </ul>
                             </div>
@@ -335,6 +345,46 @@
         typingTimer = setTimeout(sendAlias, 250, $(this));
     });
 
+    function saveGcorePorts(ids, protectedFlag, $inputs) {
+        if (!ids.length) {
+            return;
+        }
+        $inputs.prop('disabled', true);
+        $.ajax({
+            method: 'POST',
+            url: '/admin/nodes/view/' + {{ $node->id }} + '/allocation/gcore',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content') },
+            data: {
+                allocation_ids: ids,
+                gcore_protected: protectedFlag ? 1 : 0,
+            }
+        }).done(function () {
+            // DB only — API sync happens via Sync portas / server create-delete.
+        }).fail(function (jqXHR) {
+            $inputs.each(function () {
+                $(this).prop('checked', !protectedFlag);
+            });
+            var err = (jqXHR.responseJSON && jqXHR.responseJSON.error)
+                ? jqXHR.responseJSON.error
+                : 'Falha ao salvar portas Gcore.';
+            swal({ type: 'error', title: 'Gcore', text: err });
+        }).always(function () {
+            $inputs.prop('disabled', false);
+            syncGcoreHeaderCheckbox();
+        });
+    }
+
+    function syncGcoreHeaderCheckbox() {
+        var $all = $('input[data-action="set-gcore"]:not(:disabled)');
+        var $checked = $all.filter(':checked');
+        var $header = $('#gcore-ports-select-all');
+        if (!$header.length || !$all.length) {
+            return;
+        }
+        $header.prop('checked', $all.length > 0 && $checked.length === $all.length);
+        $header.prop('indeterminate', $checked.length > 0 && $checked.length < $all.length);
+    }
+
     $('input[data-action="set-gcore-ip"]').on('change', function () {
         var $el = $(this);
         var ip = $el.data('ip');
@@ -348,15 +398,8 @@
                 ip: ip,
                 gcore_ip: enabled,
             }
-        }).done(function (data) {
-            var msg = (data && data.message) ? data.message : 'IP Gcore atualizado.';
-            swal({
-                type: 'success',
-                title: 'Gcore IP',
-                text: msg
-            }, function () {
-                window.location.reload();
-            });
+        }).done(function () {
+            window.location.reload();
         }).fail(function (jqXHR) {
             $el.prop('checked', !enabled);
             var err = (jqXHR.responseJSON && jqXHR.responseJSON.error)
@@ -370,29 +413,42 @@
 
     $('input[data-action="set-gcore"]').on('change', function () {
         var $el = $(this);
-        var protectedFlag = $el.is(':checked') ? 1 : 0;
-        $el.prop('disabled', true);
-        $.ajax({
-            method: 'POST',
-            url: '/admin/nodes/view/' + {{ $node->id }} + '/allocation/gcore',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content') },
-            data: {
-                allocation_id: $el.data('id'),
-                gcore_protected: protectedFlag,
-            }
-        }).done(function (data) {
-            var msg = (data && data.message) ? data.message : 'Gcore atualizado.';
-            swal({ type: 'success', title: 'Gcore', text: msg });
-        }).fail(function (jqXHR) {
-            $el.prop('checked', !protectedFlag);
-            var err = (jqXHR.responseJSON && jqXHR.responseJSON.error)
-                ? jqXHR.responseJSON.error
-                : 'Falha ao sincronizar com a Gcore.';
-            swal({ type: 'error', title: 'Gcore', text: err });
-        }).always(function () {
-            $el.prop('disabled', false);
-        });
+        saveGcorePorts([$el.data('id')], $el.is(':checked'), $el);
     });
+
+    $('#gcore-ports-select-all').on('change', function () {
+        var enabled = $(this).is(':checked');
+        var $inputs = $('input[data-action="set-gcore"]:not(:disabled)');
+        var ids = [];
+        $inputs.each(function () {
+            $(this).prop('checked', enabled);
+            ids.push($(this).data('id'));
+        });
+        saveGcorePorts(ids, enabled, $inputs);
+    });
+
+    $('[data-action="mass-gcore-open"], [data-action="mass-gcore-close"]').on('mousedown', function (e) {
+        e.preventDefault();
+        var open = $(this).data('action') === 'mass-gcore-open';
+        var ids = [];
+        var $inputs = $();
+        $('input.select-file:checked').each(function () {
+            var $row = $(this).closest('tr');
+            var $gcore = $row.find('input[data-action="set-gcore"]:not(:disabled)');
+            if ($gcore.length) {
+                ids.push($gcore.data('id'));
+                $inputs = $inputs.add($gcore);
+                $gcore.prop('checked', open);
+            }
+        });
+        if (!ids.length) {
+            swal({ type: 'warning', title: '', text: 'Selecione allocations com IP Gcore.' });
+            return;
+        }
+        saveGcorePorts(ids, open, $inputs);
+    });
+
+    syncGcoreHeaderCheckbox();
 
     var fadeTimers = [];
     function sendAlias(element) {

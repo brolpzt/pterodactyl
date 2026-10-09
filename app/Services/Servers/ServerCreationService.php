@@ -18,6 +18,7 @@ use Pterodactyl\Repositories\Eloquent\ServerVariableRepository;
 use Pterodactyl\Services\Deployment\FindViableNodesService;
 use Pterodactyl\Services\Deployment\AllocationSelectionService;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
+use Pterodactyl\Services\Gcore\GcoreFirewallSyncService;
 
 class ServerCreationService
 {
@@ -33,6 +34,7 @@ class ServerCreationService
         private ServerDeletionService $serverDeletionService,
         private ServerVariableRepository $serverVariableRepository,
         private VariableValidatorService $validatorService,
+        private GcoreFirewallSyncService $gcoreFirewallSync,
     ) {
     }
 
@@ -118,6 +120,12 @@ class ServerCreationService
 
             throw $exception;
         }
+
+        // Open Gcore ACL ports for this server immediately (egg policy applies).
+        $this->gcoreFirewallSync->syncForServerLifecycle(
+            $server->fresh(['node.gcoreIps', 'allocations', 'egg']),
+            opening: true
+        );
 
         return $server;
     }

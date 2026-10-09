@@ -3,12 +3,66 @@
 namespace Pterodactyl\Services\Gcore;
 
 use Pterodactyl\Models\Node;
+use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\NodeGcoreIp;
 use Pterodactyl\Exceptions\DisplayException;
+use Illuminate\Support\Facades\Log;
 
 class GcoreFirewallSyncService
 {
+    /**
+     * On server create: mark allocations on Gcore IPs as protected and sync immediately.
+     * On server delete: unmark those allocations and sync immediately.
+     *
+     * @return list<string>
+     */
+    public function syncForServerLifecycle(Server $server, bool $opening): array
+    {
+        $server->loadMissing(['node.gcoreIps', 'allocations']);
+
+        $node = $server->node;
+        if (!$node || !$node->gcore_enabled) {
+            return [];
+        }
+
+        $gcoreIps = $node->gcoreIps->pluck('ip')->all();
+        if ($gcoreIps === []) {
+            return [];
+        }
+
+        $allocations = $server->allocations
+            ->where('node_id', $node->id)
+            ->filter(fn (Allocation $a) => in_array($a->ip, $gcoreIps, true));
+
+        if ($allocations->isEmpty()) {
+            return [];
+        }
+
+        $ips = $allocations->pluck('ip')->unique()->values()->all();
+
+        Allocation::query()
+            ->whereIn('id', $allocations->pluck('id')->all())
+            ->update(['gcore_protected' => $opening]);
+
+        $lines = [];
+        foreach ($ips as $ip) {
+            try {
+                $lines[] = $this->syncIp($node->fresh(['gcoreIps']), (string) $ip, force: !$opening);
+            } catch (\Throwable $e) {
+                Log::warning('Gcore sync during server lifecycle failed.', [
+                    'server_id' => $server->id,
+                    'ip' => $ip,
+                    'opening' => $opening,
+                    'error' => $e->getMessage(),
+                ]);
+                $lines[] = "IP {$ip}: falha — {$e->getMessage()}";
+            }
+        }
+
+        return $lines;
+    }
+
     /**
      * Sync ACL ports on Gcore for every IP marked as Gcore-protected on the node.
      *
@@ -191,7 +245,7 @@ class GcoreFirewallSyncService
 
             $portsForRule = [];
             foreach ($desired as $port) {
-                // Already open in a manual/preserved rule of the same ACL policy — do not duplicate.
+                // Already open in a manual/preserved rule of the same ACL policy - do not duplicate.
                 if (isset($existingInPreserved[$policy][$port])) {
                     $skipped[$policy][] = $port;
                     continue;
@@ -223,8 +277,10 @@ class GcoreFirewallSyncService
         $removed = array_filter($removed, fn ($ports) => $ports !== []);
         $skipped = array_filter($skipped, fn ($ports) => $ports !== []);
 
+        // Gcore evaluates ACL top→bottom (first match wins). Specific game rules
+        // must sit above catch-all / default rules, otherwise they never apply.
         return [
-            'acl' => array_values(array_merge($preserved, $grouped)),
+            'acl' => array_values(array_merge($grouped, $preserved)),
             'added' => $added,
             'removed' => $removed,
             'skipped_existing' => $skipped,

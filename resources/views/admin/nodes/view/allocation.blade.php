@@ -15,7 +15,9 @@
 @endsection
 
 @section('content')
-@php($gcoreIpSet = $gcoreIpSet ?? [])
+@php
+    $gcoreIpSet = $gcoreIpSet ?? [];
+@endphp
 <div class="row">
     <div class="col-xs-12">
         <div class="nav-tabs-custom nav-tabs-floating">
@@ -61,18 +63,17 @@
                                 </thead>
                                 <tbody>
                                 @foreach($allocations as $ipRow)
-                                    @php $ipProtected = isset($gcoreIpSet[$ipRow->ip]); @endphp
                                     <tr>
                                         <td class="middle">
                                             <input type="checkbox"
                                                    data-action="set-gcore-ip"
                                                    data-ip="{{ $ipRow->ip }}"
-                                                   {{ $ipProtected ? 'checked' : '' }}
+                                                   {{ isset($gcoreIpSet[$ipRow->ip]) ? 'checked' : '' }}
                                                    title="Este IP tem perfil no Gcore DDoS" />
                                         </td>
                                         <td class="middle">
                                             <code>{{ $ipRow->ip }}</code>
-                                            @if($ipProtected)
+                                            @if(isset($gcoreIpSet[$ipRow->ip]))
                                                 <span class="label label-info" style="margin-left:6px">protegido</span>
                                             @endif
                                         </td>
@@ -109,7 +110,6 @@
                         </th>
                     </tr>
                     @foreach($node->allocations as $allocation)
-                        @php $ipIsGcore = isset($gcoreIpSet[$allocation->ip]); @endphp
                         <tr>
                             <td class="middle min-size" data-identifier="type">
                                 @if(is_null($allocation->server_id))
@@ -120,7 +120,7 @@
                             </td>
                             <td class="col-sm-3 middle" data-identifier="ip">
                                 {{ $allocation->ip }}
-                                @if($node->gcore_enabled && $ipIsGcore)
+                                @if($node->gcore_enabled && isset($gcoreIpSet[$allocation->ip]))
                                     <span class="label label-info" style="margin-left:4px">Gcore</span>
                                 @endif
                             </td>
@@ -136,8 +136,8 @@
                                            data-id="{{ $allocation->id }}"
                                            data-ip="{{ $allocation->ip }}"
                                            {{ $allocation->gcore_protected ? 'checked' : '' }}
-                                           {{ $ipIsGcore ? '' : 'disabled' }}
-                                           title="{{ $ipIsGcore ? 'Abrir esta porta no ACL Gcore' : 'Marque o IP como Gcore primeiro' }}" />
+                                           {{ isset($gcoreIpSet[$allocation->ip]) ? '' : 'disabled' }}
+                                           title="{{ isset($gcoreIpSet[$allocation->ip]) ? 'Abrir esta porta no ACL Gcore' : 'Marque o IP como Gcore primeiro' }}" />
                                     @if($allocation->gcore_protected && $allocation->server && $allocation->server->egg && $allocation->server->egg->gcore_policy)
                                         <div class="text-muted" style="font-size:11px;margin-top:2px">{{ $allocation->server->egg->gcore_policy }}</div>
                                     @endif

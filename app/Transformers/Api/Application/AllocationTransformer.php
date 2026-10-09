@@ -35,6 +35,7 @@ class AllocationTransformer extends BaseTransformer
             'alias' => $allocation->ip_alias,
             'port' => $allocation->port,
             'notes' => $allocation->notes,
+            'port_env' => $allocation->port_env,
             'assigned' => !is_null($allocation->server_id),
         ];
     }

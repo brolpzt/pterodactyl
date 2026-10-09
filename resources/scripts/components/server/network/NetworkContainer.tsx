@@ -25,6 +25,7 @@ const NetworkContainer = () => {
     const [loading, setLoading] = useState(false);
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures);
+    const portSlots = ServerContext.useStoreState((state) => state.server.data!.portSlots || []);
     const dnsEnabled = ServerContext.useStoreState((state) => state.server.data!.dnsEnabled);
     const allocationLimit = ServerContext.useStoreState((state) => state.server.data!.featureLimits.allocations);
     const allocations = ServerContext.useStoreState((state) => state.server.data!.allocations, isEqual);
@@ -50,11 +51,14 @@ const NetworkContainer = () => {
         setServerFromState((state) => ({ ...state, allocations: data }));
     }, [data]);
 
-    const onCreateAllocation = () => {
+    const boundEnvs = new Set((data || allocations).map((a) => a.portEnv).filter(Boolean) as string[]);
+    const unfilledSlots = portSlots.filter((slot) => !boundEnvs.has(slot.envVariable));
+
+    const onCreateAllocation = (portEnv?: string | null) => {
         clearFlashes();
 
         setLoading(true);
-        createServerAllocation(uuid)
+        createServerAllocation(uuid, portEnv)
             .then((allocation) => {
                 setServerFromState((s) => ({ ...s, allocations: s.allocations.concat(allocation) }));
                 return mutate(data?.concat(allocation), false);
@@ -96,25 +100,43 @@ const NetworkContainer = () => {
                             </TitledGreyBox>
                         </Can>
                     )}
+                    {unfilledSlots.length > 0 && (
+                        <p css={[emptyStateText, tw`text-sm mb-3`]}>
+                            Port slots sem allocation:{' '}
+                            {unfilledSlots.map((s) => `${s.name} (${s.envVariable}${s.required ? '*' : ''})`).join(', ')}
+                        </p>
+                    )}
                     {data.map((allocation) => (
                         <AllocationRow key={`${allocation.ip}:${allocation.port}`} allocation={allocation} />
                     ))}
                     {allocationLimit > 0 && (
                         <Can action={'allocation.create'}>
                             <SpinnerOverlay visible={loading} />
-                            <div css={tw`mt-6 sm:flex items-center justify-end`}>
+                            <div css={tw`mt-6 sm:flex items-center justify-end flex-wrap gap-2`}>
                                 <p css={[navText, tw`text-sm mb-4 sm:mr-6 sm:mb-0`]}>
                                     You are currently using {data.length} of {allocationLimit} allowed allocations for
                                     this server.
                                 </p>
                                 {allocationLimit > data.length && (
-                                    <Button
-                                        className={'w-full sm:w-auto'}
-                                        variant={Button.Variants.Secondary}
-                                        onClick={onCreateAllocation}
-                                    >
-                                        Create Allocation
-                                    </Button>
+                                    <>
+                                        {unfilledSlots.map((slot) => (
+                                            <Button
+                                                key={slot.envVariable}
+                                                className={'w-full sm:w-auto'}
+                                                variant={Button.Variants.Secondary}
+                                                onClick={() => onCreateAllocation(slot.envVariable)}
+                                            >
+                                                Assign {slot.name}
+                                            </Button>
+                                        ))}
+                                        <Button
+                                            className={'w-full sm:w-auto'}
+                                            variant={Button.Variants.Secondary}
+                                            onClick={() => onCreateAllocation()}
+                                        >
+                                            Create Allocation
+                                        </Button>
+                                    </>
                                 )}
                             </div>
                         </Can>

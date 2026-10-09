@@ -42,6 +42,9 @@ class EggExporterService
                 return !empty($value);
             }),
             'startup' => $egg->startup,
+            'port_slots' => $egg->port_slots ?? [],
+            'gcore_policy' => $egg->gcore_policy,
+            'gcore_proto' => $egg->gcore_proto,
             'config' => [
                 'files' => $egg->inherit_config_files,
                 'startup' => $egg->inherit_config_startup,

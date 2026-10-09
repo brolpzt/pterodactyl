@@ -11,4 +11,11 @@ class NewAllocationRequest extends ClientApiRequest
     {
         return Permission::ACTION_ALLOCATION_CREATE;
     }
+
+    public function rules(): array
+    {
+        return [
+            'port_env' => 'nullable|string|max:191',
+        ];
+    }
 }

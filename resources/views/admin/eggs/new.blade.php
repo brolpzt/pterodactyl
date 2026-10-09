@@ -89,6 +89,25 @@
                                 </select>
                                 <p class="text-muted small">Protocolo da regra ACL (ex.: <code>udp</code> para CS).</p>
                             </div>
+                            <div class="form-group">
+                                <label class="control-label">Port slots (opcional)</label>
+                                <p class="text-muted small">Portas extras além de SERVER_PORT. Pode editar com mais detalhes após criar o egg.</p>
+                                <div class="row">
+                                    <div class="col-xs-4">
+                                        <input type="text" name="port_slots[0][env_variable]" class="form-control" value="{{ old('port_slots.0.env_variable') }}" placeholder="QUERY_PORT">
+                                    </div>
+                                    <div class="col-xs-4">
+                                        <input type="text" name="port_slots[0][name]" class="form-control" value="{{ old('port_slots.0.name') }}" placeholder="Query Port">
+                                    </div>
+                                    <div class="col-xs-4">
+                                        <label class="checkbox-inline" style="margin-top:6px">
+                                            <input type="hidden" name="port_slots[0][required]" value="0">
+                                            <input type="checkbox" name="port_slots[0][required]" value="1" {{ old('port_slots.0.required') ? 'checked' : '' }}> Required
+                                        </label>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="port_slots[0][description]" value="{{ old('port_slots.0.description', '') }}">
+                            </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="form-group">

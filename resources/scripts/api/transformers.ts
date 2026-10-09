@@ -9,6 +9,8 @@ export const rawDataToServerAllocation = (data: FractalResponseData): Allocation
     alias: data.attributes.ip_alias,
     port: data.attributes.port,
     notes: data.attributes.notes,
+    portEnv: data.attributes.port_env || null,
+    portSlotName: data.attributes.port_slot_name || null,
     isDefault: data.attributes.is_default,
 });
 

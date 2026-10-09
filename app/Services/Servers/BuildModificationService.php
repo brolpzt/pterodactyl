@@ -11,6 +11,7 @@ use Pterodactyl\Exceptions\DisplayException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 
 class BuildModificationService
 {
@@ -21,6 +22,7 @@ class BuildModificationService
         private ConnectionInterface $connection,
         private DaemonServerRepository $daemonServerRepository,
         private ServerConfigurationStructureService $structureService,
+        private PortSlotSyncService $portSlotSync,
     ) {
     }
 
@@ -42,6 +44,9 @@ class BuildModificationService
                 } catch (ModelNotFoundException) {
                     throw new DisplayException('The requested default allocation is not currently assigned to this server.');
                 }
+
+                // Primary is always SERVER_PORT — clear any port slot on the new default.
+                Allocation::query()->where('id', $data['allocation_id'])->update(['port_env' => null]);
             }
 
             // If any of these values are passed through in the data array go ahead and set
@@ -53,6 +58,24 @@ class BuildModificationService
                 'allocation_limit' => Arr::get($data, 'allocation_limit', 0) ?? null,
                 'backup_limit' => Arr::get($data, 'backup_limit', 0) ?? 0,
             ]))->saveOrFail();
+
+            // Optional: map freshly added / existing allocations to egg port slots.
+            if (!empty($data['allocation_port_env']) && is_array($data['allocation_port_env'])) {
+                $server = $server->fresh(['egg', 'allocations']);
+                foreach ($data['allocation_port_env'] as $allocationId => $portEnv) {
+                    $allocation = $server->allocations->firstWhere('id', (int) $allocationId);
+                    if (!$allocation) {
+                        continue;
+                    }
+                    $this->portSlotSync->bindAllocation(
+                        $server,
+                        $allocation,
+                        $portEnv !== '' && $portEnv !== null ? (string) $portEnv : null
+                    );
+                }
+            } else {
+                $this->portSlotSync->syncServerVariables($server->fresh(['allocations', 'egg.variables']));
+            }
 
             return $server->refresh();
         });
@@ -118,12 +141,14 @@ class BuildModificationService
             // Remove any of the allocations we got that are currently assigned to this server on
             // this node. Also set the notes to null, otherwise when re-allocated to a new server those
             // notes will be carried over.
+            $removeIds = array_values(array_diff($data['remove_allocations'], $data['add_allocations'] ?? []));
             Allocation::query()->where('node_id', $server->node_id)
                 ->where('server_id', $server->id)
                 // Only remove the allocations that we didn't also attempt to add to the server...
-                ->whereIn('id', array_diff($data['remove_allocations'], $data['add_allocations'] ?? []))
+                ->whereIn('id', $removeIds)
                 ->update([
                     'notes' => null,
+                    'port_env' => null,
                     'server_id' => null,
                 ]);
         }

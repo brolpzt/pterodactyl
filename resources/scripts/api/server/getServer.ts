@@ -9,7 +9,16 @@ export interface Allocation {
     alias: string | null;
     port: number;
     notes: string | null;
+    portEnv: string | null;
+    portSlotName: string | null;
     isDefault: boolean;
+}
+
+export interface PortSlot {
+    envVariable: string;
+    name: string;
+    description: string;
+    required: boolean;
 }
 
 export interface Server {
@@ -58,6 +67,7 @@ export interface Server {
         threads: string;
     };
     eggFeatures: string[];
+    portSlots: PortSlot[];
     dnsEnabled: boolean;
     featureLimits: {
         databases: number;
@@ -97,6 +107,12 @@ export const rawDataToServerObject = ({ attributes: data }: FractalResponseData)
     description: data.description ? (data.description.length > 0 ? data.description : null) : null,
     limits: { ...data.limits },
     eggFeatures: data.egg_features || [],
+    portSlots: (data.port_slots || []).map((slot: any) => ({
+        envVariable: slot.env_variable,
+        name: slot.name,
+        description: slot.description || '',
+        required: !!slot.required,
+    })),
     dnsEnabled: data.dns_enabled || false,
     featureLimits: { ...data.feature_limits },
     isTransferring: data.is_transferring,

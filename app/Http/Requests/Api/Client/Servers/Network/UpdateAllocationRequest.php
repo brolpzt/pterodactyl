@@ -18,7 +18,8 @@ class UpdateAllocationRequest extends ClientApiRequest
         $rules = Allocation::getRules();
 
         return [
-            'notes' => array_merge($rules['notes'], ['present']),
+            'notes' => array_merge($rules['notes'], ['sometimes']),
+            'port_env' => 'sometimes|nullable|string|max:191',
         ];
     }
 }

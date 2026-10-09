@@ -18,6 +18,7 @@ use Pterodactyl\Repositories\Eloquent\ServerVariableRepository;
 use Pterodactyl\Services\Deployment\FindViableNodesService;
 use Pterodactyl\Services\Deployment\AllocationSelectionService;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Pterodactyl\Services\Gcore\GcoreFirewallSyncService;
 
 class ServerCreationService
@@ -35,6 +36,7 @@ class ServerCreationService
         private ServerVariableRepository $serverVariableRepository,
         private VariableValidatorService $validatorService,
         private GcoreFirewallSyncService $gcoreFirewallSync,
+        private PortSlotSyncService $portSlotSync,
     ) {
     }
 
@@ -92,6 +94,11 @@ class ServerCreationService
             $this->storeAssignedAllocations($server, $data);
             $this->storeEggVariables($server, $eggVariableData);
 
+            // Required egg port slots → free allocations on the same IP + ENV sync.
+            $this->portSlotSync->assignRequiredSlots(
+                $server->fresh(['egg', 'allocation', 'allocations', 'node'])
+            );
+
             if (isset($data['mounts']) && is_array($data['mounts'])) {
                 foreach ($data['mounts'] as $mountId) {
                     (new \Pterodactyl\Models\MountServer())->forceFill([
@@ -107,7 +114,7 @@ class ServerCreationService
                 }
             }
 
-            return $server;
+            return $server->fresh(['allocations', 'egg']);
         }, 5);
 
 
@@ -160,6 +167,16 @@ class ServerCreationService
     {
         $uuid = $this->generateUniqueUuidCombo();
 
+        $egg = Egg::query()->find(Arr::get($data, 'egg_id'));
+        $slotCount = is_array($egg?->port_slots) ? count($egg->port_slots) : 0;
+        $allocationLimit = (int) (Arr::get($data, 'allocation_limit') ?? 0);
+        $minimumLimit = 1 + $slotCount;
+        if ($allocationLimit > 0 && $allocationLimit < $minimumLimit) {
+            $allocationLimit = $minimumLimit;
+        } elseif ($allocationLimit === 0 && $slotCount > 0) {
+            $allocationLimit = $minimumLimit;
+        }
+
         /** @var Server $model */
         $model = $this->repository->create([
             'external_id' => Arr::get($data, 'external_id'),
@@ -184,7 +201,7 @@ class ServerCreationService
             'startup' => Arr::get($data, 'startup'),
             'image' => Arr::get($data, 'image'),
             'database_limit' => Arr::get($data, 'database_limit') ?? 0,
-            'allocation_limit' => Arr::get($data, 'allocation_limit') ?? 0,
+            'allocation_limit' => $allocationLimit,
             'backup_limit' => Arr::get($data, 'backup_limit') ?? 0,
             'fastdl_enabled' => Arr::get($data, 'fastdl_enabled') ?? false,
         ]);

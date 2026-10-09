@@ -67,6 +67,16 @@ class EnvironmentService
             }
         }
 
+        // Port slots: allocation.port_env is the source of truth for extra ports.
+        $server->loadMissing('allocations');
+        foreach ($server->allocations as $allocation) {
+            $env = strtoupper(trim((string) ($allocation->port_env ?? '')));
+            if ($env === '' || (int) $allocation->id === (int) $server->allocation_id) {
+                continue;
+            }
+            $variables->put($env, (string) $allocation->port);
+        }
+
         return $variables->toArray();
     }
 

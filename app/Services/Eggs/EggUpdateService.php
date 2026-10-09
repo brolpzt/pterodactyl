@@ -11,8 +11,10 @@ class EggUpdateService
     /**
      * EggUpdateService constructor.
      */
-    public function __construct(protected EggRepositoryInterface $repository)
-    {
+    public function __construct(
+        protected EggRepositoryInterface $repository,
+        protected PortSlotSyncService $portSlotSync,
+    ) {
     }
 
     /**
@@ -39,6 +41,13 @@ class EggUpdateService
         //  in said UI, remove this so that you can actually update the denylist.
         unset($data['file_denylist']);
 
+        $previousSlots = $egg->port_slots;
+
         $this->repository->withoutFreshModel()->update($egg->id, $data);
+
+        if (array_key_exists('port_slots', $data)) {
+            $egg->refresh();
+            $this->portSlotSync->syncEggVariables($egg, is_array($previousSlots) ? $previousSlots : []);
+        }
     }
 }

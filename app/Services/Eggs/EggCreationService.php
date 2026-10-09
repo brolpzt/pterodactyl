@@ -14,8 +14,11 @@ class EggCreationService
     /**
      * EggCreationService constructor.
      */
-    public function __construct(private ConfigRepository $config, private EggRepositoryInterface $repository)
-    {
+    public function __construct(
+        private ConfigRepository $config,
+        private EggRepositoryInterface $repository,
+        private PortSlotSyncService $portSlotSync,
+    ) {
     }
 
     /**
@@ -38,9 +41,15 @@ class EggCreationService
             }
         }
 
-        return $this->repository->create(array_merge($data, [
+        $egg = $this->repository->create(array_merge($data, [
             'uuid' => Uuid::uuid4()->toString(),
             'author' => $this->config->get('pterodactyl.service.author'),
         ]), true, true);
+
+        if (!empty($data['port_slots'])) {
+            $this->portSlotSync->syncEggVariables($egg, []);
+        }
+
+        return $egg;
     }
 }

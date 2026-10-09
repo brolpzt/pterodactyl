@@ -10,11 +10,15 @@ use Illuminate\Http\UploadedFile;
 use Pterodactyl\Models\EggVariable;
 use Illuminate\Database\ConnectionInterface;
 use Pterodactyl\Services\Eggs\EggParserService;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 
 class EggImporterService
 {
-    public function __construct(protected ConnectionInterface $connection, protected EggParserService $parser)
-    {
+    public function __construct(
+        protected ConnectionInterface $connection,
+        protected EggParserService $parser,
+        protected PortSlotSyncService $portSlotSync,
+    ) {
     }
 
     /**
@@ -38,11 +42,15 @@ class EggImporterService
             ]);
 
             $egg = $this->parser->fillFromParsed($egg, $parsed);
+            $slots = $this->portSlotSync->normalizeSlots(Arr::get($parsed, 'port_slots', []));
+            $egg->port_slots = $slots === [] ? null : $slots;
             $egg->save();
 
             foreach ($parsed['variables'] ?? [] as $variable) {
                 EggVariable::query()->forceCreate(array_merge($variable, ['egg_id' => $egg->id]));
             }
+
+            $this->portSlotSync->syncEggVariables($egg, []);
 
             return $egg;
         });

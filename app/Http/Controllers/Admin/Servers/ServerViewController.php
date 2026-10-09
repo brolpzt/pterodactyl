@@ -54,6 +54,7 @@ class ServerViewController extends Controller
      */
     public function build(Request $request, Server $server): View
     {
+        $server->loadMissing('egg');
         $allocations = $server->node->allocations->toBase();
 
         return view('admin.servers.view.build', [

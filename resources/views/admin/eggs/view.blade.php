@@ -252,6 +252,53 @@
                         </div>
                     </div>
                 </div>
+                <div class="box-header with-border" style="border-top:1px solid #f4f4f4">
+                    <h3 class="box-title">Port slots (portas extras)</h3>
+                </div>
+                <div class="box-body">
+                    <p class="text-muted">
+                        Além de <code>SERVER_PORT</code> (allocation primária), declare portas extras que viram ENV
+                        (ex.: <code>QUERY_PORT</code>). <strong>Required</strong> = auto na criação do servidor (mesmo IP).
+                        <strong>Optional</strong> = assign manual depois. Cada slot gera uma egg variable não editável.
+                    </p>
+                    @php
+                        $portSlots = old('port_slots', $egg->port_slots ?? []);
+                        if (!is_array($portSlots)) {
+                            $portSlots = [];
+                        }
+                        if ($portSlots === []) {
+                            $portSlots = [['env_variable' => '', 'name' => '', 'description' => '', 'required' => false]];
+                        }
+                    @endphp
+                    <div class="table-responsive">
+                        <table class="table table-condensed" id="portSlotsTable">
+                            <thead>
+                            <tr>
+                                <th style="width:18%">ENV</th>
+                                <th style="width:18%">Nome</th>
+                                <th>Descrição</th>
+                                <th style="width:100px">Required</th>
+                                <th style="width:50px"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($portSlots as $i => $slot)
+                                <tr>
+                                    <td><input type="text" name="port_slots[{{ $i }}][env_variable]" class="form-control input-sm" value="{{ $slot['env_variable'] ?? '' }}" placeholder="QUERY_PORT"></td>
+                                    <td><input type="text" name="port_slots[{{ $i }}][name]" class="form-control input-sm" value="{{ $slot['name'] ?? '' }}" placeholder="Query Port"></td>
+                                    <td><input type="text" name="port_slots[{{ $i }}][description]" class="form-control input-sm" value="{{ $slot['description'] ?? '' }}" placeholder="Porta de query Steam"></td>
+                                    <td class="text-center">
+                                        <input type="hidden" name="port_slots[{{ $i }}][required]" value="0">
+                                        <input type="checkbox" name="port_slots[{{ $i }}][required]" value="1" {{ !empty($slot['required']) ? 'checked' : '' }}>
+                                    </td>
+                                    <td><button type="button" class="btn btn-xs btn-danger port-slot-remove">&times;</button></td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-xs btn-default" id="portSlotAdd">+ slot</button>
+                </div>
                 <div class="box-footer">
                     {!! csrf_field() !!}
                     <button type="submit" name="_method" value="PATCH" class="btn btn-primary btn-sm pull-right">Save</button>
@@ -430,5 +477,41 @@
             $('#rconProtocolGroup').slideUp();
         }
     });
+
+    (function () {
+        var idx = $('#portSlotsTable tbody tr').length;
+        function reindex() {
+            $('#portSlotsTable tbody tr').each(function (i) {
+                $(this).find('input').each(function () {
+                    var name = $(this).attr('name');
+                    if (!name) return;
+                    $(this).attr('name', name.replace(/port_slots\[\d+]/, 'port_slots[' + i + ']'));
+                });
+            });
+            idx = $('#portSlotsTable tbody tr').length;
+        }
+        $('#portSlotAdd').on('click', function () {
+            var row = '<tr>' +
+                '<td><input type="text" name="port_slots[' + idx + '][env_variable]" class="form-control input-sm" placeholder="QUERY_PORT"></td>' +
+                '<td><input type="text" name="port_slots[' + idx + '][name]" class="form-control input-sm" placeholder="Query Port"></td>' +
+                '<td><input type="text" name="port_slots[' + idx + '][description]" class="form-control input-sm" placeholder="Porta de query Steam"></td>' +
+                '<td class="text-center"><input type="hidden" name="port_slots[' + idx + '][required]" value="0">' +
+                '<input type="checkbox" name="port_slots[' + idx + '][required]" value="1"></td>' +
+                '<td><button type="button" class="btn btn-xs btn-danger port-slot-remove">&times;</button></td>' +
+                '</tr>';
+            $('#portSlotsTable tbody').append(row);
+            idx++;
+        });
+        $('#portSlotsTable').on('click', '.port-slot-remove', function () {
+            var $tbody = $('#portSlotsTable tbody');
+            if ($tbody.find('tr').length <= 1) {
+                $(this).closest('tr').find('input[type=text]').val('');
+                $(this).closest('tr').find('input[type=checkbox]').prop('checked', false);
+                return;
+            }
+            $(this).closest('tr').remove();
+            reindex();
+        });
+    })();
     </script>
 @endsection

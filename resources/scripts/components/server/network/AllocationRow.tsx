@@ -13,6 +13,7 @@ import { Allocation } from '@/api/server/getServer';
 import styled from 'styled-components/macro';
 import { debounce } from 'debounce';
 import setServerAllocationNotes from '@/api/server/network/setServerAllocationNotes';
+import setServerAllocationPortEnv from '@/api/server/network/setServerAllocationPortEnv';
 import { useFlashKey } from '@/plugins/useFlash';
 import { ServerContext } from '@/state/server';
 import CopyOnClick from '@/components/elements/CopyOnClick';
@@ -39,10 +40,19 @@ const AllocationRow = ({ allocation }: Props) => {
     const { clearFlashes, clearAndAddHttpError } = useFlashKey('server:network');
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data!.eggFeatures);
+    const portSlots = ServerContext.useStoreState((state) => state.server.data!.portSlots || []);
     const dnsEnabled = ServerContext.useStoreState((state) => state.server.data!.dnsEnabled);
+    const allocations = ServerContext.useStoreState((state) => state.server.data!.allocations);
     const { mutate } = getServerAllocations();
     const match = useRouteMatch<{ id: string }>('/server/:id');
     const hasDnsFeature = dnsEnabled || eggFeatures.includes('dns');
+
+    const boundEnvs = new Set(
+        allocations.filter((a) => a.portEnv && a.id !== allocation.id).map((a) => a.portEnv as string)
+    );
+    const availableSlots = portSlots.filter(
+        (slot) => slot.envVariable === allocation.portEnv || !boundEnvs.has(slot.envVariable)
+    );
 
     const onNotesChanged = useCallback((id: number, notes: string) => {
         mutate((data) => data?.map((a) => (a.id === id ? { ...a, notes } : a)), false);
@@ -66,6 +76,21 @@ const AllocationRow = ({ allocation }: Props) => {
             clearAndAddHttpError(error);
             mutate();
         });
+    };
+
+    const onPortEnvChange = (value: string) => {
+        clearFlashes();
+        setLoading(true);
+        const portEnv = value || null;
+        setServerAllocationPortEnv(uuid, allocation.id, portEnv)
+            .then((updated) => {
+                mutate((data) => data?.map((a) => (a.id === allocation.id ? updated : a)), false);
+            })
+            .catch((error) => {
+                clearAndAddHttpError(error);
+                mutate();
+            })
+            .then(() => setLoading(false));
     };
 
     return (
@@ -92,6 +117,40 @@ const AllocationRow = ({ allocation }: Props) => {
                     <Code dark>{allocation.port}</Code>
                     <Label>Port</Label>
                 </div>
+                {(allocation.isDefault || allocation.portEnv || availableSlots.length > 0) && (
+                    <div className={'w-28 md:w-36 overflow-hidden ml-2'}>
+                        {allocation.isDefault ? (
+                            <>
+                                <Code dark>SERVER_PORT</Code>
+                                <Label>Slot</Label>
+                            </>
+                        ) : availableSlots.length > 0 ? (
+                            <>
+                                <select
+                                    className={
+                                        'bg-neutral-800 border border-neutral-700 rounded text-sm px-2 py-1 w-full'
+                                    }
+                                    value={allocation.portEnv || ''}
+                                    disabled={loading}
+                                    onChange={(e) => onPortEnvChange(e.currentTarget.value)}
+                                >
+                                    <option value={''}>—</option>
+                                    {availableSlots.map((slot) => (
+                                        <option key={slot.envVariable} value={slot.envVariable}>
+                                            {slot.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <Label>Slot</Label>
+                            </>
+                        ) : allocation.portSlotName || allocation.portEnv ? (
+                            <>
+                                <Code dark>{allocation.portSlotName || allocation.portEnv}</Code>
+                                <Label>Slot</Label>
+                            </>
+                        ) : null}
+                    </div>
+                )}
             </div>
             <div className={'mt-4 w-full md:mt-0 md:flex-1 md:w-auto'}>
                 <InputSpinner visible={loading}>

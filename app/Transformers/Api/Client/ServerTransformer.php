@@ -55,7 +55,7 @@ class ServerTransformer extends BaseClientTransformer
             'node' => $server->node->name,
             'egg' => $server->egg->name,
             'gamedig' => $server->egg->gamedig,
-            'location' => $server->node->location?->short ?? '—',
+            'location' => $server->node->location?->short ?? '-',
             'location_long' => $server->node->location?->long ?? null,
             'created_at' => $server->created_at?->toIso8601String(),
             'is_node_under_maintenance' => $server->node->isUnderMaintenance(),
@@ -76,6 +76,14 @@ class ServerTransformer extends BaseClientTransformer
             'invocation' => $service->handle($server, !$user->can(Permission::ACTION_STARTUP_READ, $server)),
             'docker_image' => $server->image,
             'egg_features' => $server->egg->inherit_features,
+            'port_slots' => array_values(array_map(static function (array $slot): array {
+                return [
+                    'env_variable' => $slot['env_variable'],
+                    'name' => $slot['name'],
+                    'description' => $slot['description'] ?? '',
+                    'required' => (bool) ($slot['required'] ?? false),
+                ];
+            }, is_array($server->egg->port_slots) ? $server->egg->port_slots : [])),
             'dns_enabled' => $this->resolveDnsEnabled($server),
             'feature_limits' => [
                 'databases' => $server->database_limit,

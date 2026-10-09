@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property int $port
  * @property int|null $server_id
  * @property string|null $notes
+ * @property string|null $port_env
  * @property bool $gcore_protected
  * @property \Carbon\Carbon|null $created_at
  * @property \Carbon\Carbon|null $updated_at
@@ -82,6 +83,7 @@ class Allocation extends Model
         'ip_alias' => 'nullable|string',
         'server_id' => 'nullable|exists:servers,id',
         'notes' => 'nullable|string|max:256',
+        'port_env' => 'nullable|string|max:191',
         'gcore_protected' => 'boolean',
     ];
 

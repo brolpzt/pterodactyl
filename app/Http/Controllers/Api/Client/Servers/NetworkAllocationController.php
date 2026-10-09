@@ -8,6 +8,7 @@ use Pterodactyl\Facades\Activity;
 use Pterodactyl\Models\Allocation;
 use Illuminate\Database\ConnectionInterface;
 use Pterodactyl\Exceptions\DisplayException;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Pterodactyl\Repositories\Eloquent\ServerRepository;
 use Pterodactyl\Transformers\Api\Client\AllocationTransformer;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
@@ -28,6 +29,7 @@ class NetworkAllocationController extends ClientApiController
         private FindAssignableAllocationService $assignableAllocationService,
         private ServerRepository $serverRepository,
         private \Pterodactyl\Services\Cloudflare\CloudflareDnsSyncService $dnsSyncService,
+        private PortSlotSyncService $portSlotSync,
     ) {
         parent::__construct();
     }
@@ -53,16 +55,27 @@ class NetworkAllocationController extends ClientApiController
     {
         $original = $allocation->notes;
 
-        $allocation->forceFill(['notes' => $request->input('notes')])->save();
+        if ($request->exists('notes')) {
+            $allocation->forceFill(['notes' => $request->input('notes')])->save();
 
-        if ($original !== $allocation->notes) {
-            Activity::event('server:allocation.notes')
-                ->subject($allocation)
-                ->property(['allocation' => $allocation->toString(), 'old' => $original, 'new' => $allocation->notes])
-                ->log();
+            if ($original !== $allocation->notes) {
+                Activity::event('server:allocation.notes')
+                    ->subject($allocation)
+                    ->property(['allocation' => $allocation->toString(), 'old' => $original, 'new' => $allocation->notes])
+                    ->log();
+            }
         }
 
-        return $this->fractal->item($allocation)
+        if ($request->exists('port_env')) {
+            $this->portSlotSync->bindAllocation(
+                $server->loadMissing(['egg', 'allocations']),
+                $allocation,
+                $request->input('port_env')
+            );
+            $allocation->refresh();
+        }
+
+        return $this->fractal->item($allocation->load('server.egg'))
             ->transformWith($this->getTransformer(AllocationTransformer::class))
             ->toArray();
     }
@@ -77,7 +90,10 @@ class NetworkAllocationController extends ClientApiController
     {
         $this->serverRepository->update($server->id, ['allocation_id' => $allocation->id]);
 
-        $server->refresh()->load('allocation');
+        Allocation::query()->where('id', $allocation->id)->update(['port_env' => null]);
+
+        $server->refresh()->load(['allocation', 'allocations', 'egg']);
+        $this->portSlotSync->syncServerVariables($server);
         $this->dnsSyncService->syncForServer($server);
 
         Activity::event('server:allocation.primary')
@@ -85,32 +101,41 @@ class NetworkAllocationController extends ClientApiController
             ->property('allocation', $allocation->toString())
             ->log();
 
-        return $this->fractal->item($allocation)
+        return $this->fractal->item($allocation->fresh()->load('server.egg'))
             ->transformWith($this->getTransformer(AllocationTransformer::class))
             ->toArray();
     }
 
     /**
      * Set the notes for the allocation for a server.
-     *s.
      *
      * @throws DisplayException
      */
     public function store(NewAllocationRequest $request, Server $server): array
     {
-        $allocation = Activity::event('server:allocation.create')->transaction(function ($log) use ($server) {
+        $allocation = Activity::event('server:allocation.create')->transaction(function ($log) use ($server, $request) {
             if ($server->allocations()->lockForUpdate()->count() >= $server->allocation_limit) {
                 throw new DisplayException('Cannot assign additional allocations to this server: limit has been reached.');
             }
 
             $allocation = $this->assignableAllocationService->handle($server);
 
+            $portEnv = $request->input('port_env');
+            if ($portEnv !== null && $portEnv !== '') {
+                $this->portSlotSync->bindAllocation(
+                    $server->fresh(['egg', 'allocations']),
+                    $allocation,
+                    (string) $portEnv
+                );
+                $allocation->refresh();
+            }
+
             $log->subject($allocation)->property('allocation', $allocation->toString());
 
             return $allocation;
         });
 
-        return $this->fractal->item($allocation)
+        return $this->fractal->item($allocation->load('server.egg'))
             ->transformWith($this->getTransformer(AllocationTransformer::class))
             ->toArray();
     }
@@ -134,8 +159,11 @@ class NetworkAllocationController extends ClientApiController
 
         Allocation::query()->where('id', $allocation->id)->update([
             'notes' => null,
+            'port_env' => null,
             'server_id' => null,
         ]);
+
+        $this->portSlotSync->syncServerVariables($server->fresh(['allocations', 'egg.variables']));
 
         Activity::event('server:allocation.delete')
             ->subject($allocation)

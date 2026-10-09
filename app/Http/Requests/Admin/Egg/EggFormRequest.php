@@ -3,6 +3,8 @@
 namespace Pterodactyl\Http\Requests\Admin\Egg;
 
 use Pterodactyl\Services\Gcore\GcoreClient;
+use Pterodactyl\Exceptions\DisplayException;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Pterodactyl\Http\Requests\Admin\AdminFormRequest;
 
 class EggFormRequest extends AdminFormRequest
@@ -26,6 +28,11 @@ class EggFormRequest extends AdminFormRequest
             'gamedig' => 'nullable|string|max:191',
             'gcore_policy' => 'nullable|string|max:64',
             'gcore_proto' => 'nullable|string|in:' . implode(',', GcoreClient::PROTOCOLS),
+            'port_slots' => 'nullable|array',
+            'port_slots.*.env_variable' => 'nullable|string|max:191',
+            'port_slots.*.name' => 'nullable|string|max:191',
+            'port_slots.*.description' => 'nullable|string|max:1000',
+            'port_slots.*.required' => 'sometimes|boolean',
             'warn_slot_mismatch' => 'sometimes|boolean',
             'command_transmission_type' => 'required|string|in:stdin,rcon',
             'rcon_protocol' => 'required_if:command_transmission_type,rcon|nullable|string|in:source,quake3,webrcon',
@@ -42,6 +49,14 @@ class EggFormRequest extends AdminFormRequest
     {
         $validator->sometimes('config_from', 'exists:eggs,id', function () {
             return (int) $this->input('config_from') !== 0;
+        });
+
+        $validator->after(function ($validator) {
+            try {
+                app(PortSlotSyncService::class)->normalizeSlots($this->input('port_slots', []));
+            } catch (DisplayException $e) {
+                $validator->errors()->add('port_slots', $e->getMessage());
+            }
         });
     }
 
@@ -66,12 +81,17 @@ class EggFormRequest extends AdminFormRequest
         $gcorePolicy = trim((string) array_get($data, 'gcore_policy', ''));
         $gcoreProto = strtolower(trim((string) array_get($data, 'gcore_proto', '')));
 
+        $portSlots = app(PortSlotSyncService::class)->normalizeSlots(
+            array_get($data, 'port_slots', $this->input('port_slots', []))
+        );
+
         return array_merge($data, [
             'force_outgoing_ip' => array_get($data, 'force_outgoing_ip', false),
             'warn_slot_mismatch' => array_get($data, 'warn_slot_mismatch', false),
             'features' => $features,
             'gcore_policy' => $gcorePolicy === '' ? null : $gcorePolicy,
             'gcore_proto' => $gcoreProto === '' ? null : $gcoreProto,
+            'port_slots' => $portSlots === [] ? null : $portSlots,
         ]);
     }
 }

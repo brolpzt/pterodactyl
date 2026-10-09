@@ -47,6 +47,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string|null $gamedig
  * @property string|null $gcore_policy
  * @property string|null $gcore_proto
+ * @property array|null $port_slots
  * @property bool $warn_slot_mismatch
  * @property Nest $nest
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\Server[] $servers
@@ -124,6 +125,7 @@ class Egg extends Model implements Identifiable
         'gamedig',
         'gcore_policy',
         'gcore_proto',
+        'port_slots',
         'warn_slot_mismatch',
         'workshop_app_id',
         'workshop_sync_driver',
@@ -144,6 +146,7 @@ class Egg extends Model implements Identifiable
         'features' => 'array',
         'docker_images' => 'array',
         'file_denylist' => 'array',
+        'port_slots' => 'array',
         'workshop_app_id' => 'integer',
     ];
 
@@ -168,6 +171,7 @@ class Egg extends Model implements Identifiable
         'force_outgoing_ip' => 'sometimes|boolean',
         'gcore_policy' => 'sometimes|nullable|string|max:64',
         'gcore_proto' => 'sometimes|nullable|string|max:16',
+        'port_slots' => 'sometimes|nullable|array',
         'command_transmission_type' => 'sometimes|string|in:stdin,rcon',
         'rcon_protocol' => 'sometimes|nullable|string|in:source,quake3,webrcon',
     ];

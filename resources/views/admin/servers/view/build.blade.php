@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title')
-    Server — {{ $server->name }}: Build Details
+    Server - {{ $server->name }}: Build Details
 @endsection
 
 @section('content-header')
@@ -180,6 +180,43 @@
                                 </div>
                                 <p class="text-muted small">Simply select which ports you would like to remove from the list above. If you want to assign a port on a different IP that is already in use you can select it from the left and delete it here.</p>
                             </div>
+                            @php
+                                $eggPortSlots = is_array($server->egg->port_slots ?? null) ? $server->egg->port_slots : [];
+                            @endphp
+                            @if(count($eggPortSlots) > 0)
+                                <div class="form-group">
+                                    <label class="control-label">Port slots (ENV)</label>
+                                    <p class="text-muted small">Liga cada allocation extra a um slot do egg (ex.: QUERY_PORT). A primary é sempre SERVER_PORT.</p>
+                                    <div class="table-responsive">
+                                        <table class="table table-condensed">
+                                            <thead>
+                                            <tr>
+                                                <th>Porta</th>
+                                                <th>Slot ENV</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach($assigned as $assignment)
+                                                @continue($assignment->id === $server->allocation_id)
+                                                <tr>
+                                                    <td>{{ $assignment->alias }}:{{ $assignment->port }}</td>
+                                                    <td>
+                                                        <select name="allocation_port_env[{{ $assignment->id }}]" class="form-control input-sm">
+                                                            <option value="">— nenhum —</option>
+                                                            @foreach($eggPortSlots as $slot)
+                                                                <option value="{{ $slot['env_variable'] }}" {{ strtoupper((string) $assignment->port_env) === strtoupper((string) $slot['env_variable']) ? 'selected' : '' }}>
+                                                                    {{ $slot['name'] ?? $slot['env_variable'] }} ({{ $slot['env_variable'] }}){{ !empty($slot['required']) ? ' *' : '' }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                         <div class="box-footer">
                             {!! csrf_field() !!}

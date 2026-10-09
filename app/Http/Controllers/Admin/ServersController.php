@@ -150,6 +150,7 @@ class ServersController extends Controller
         try {
             $buildData = $request->only([
                 'allocation_id', 'add_allocations', 'remove_allocations',
+                'allocation_port_env',
                 'memory', 'swap', 'io', 'cpu', 'threads', 'disk',
                 'database_limit', 'allocation_limit', 'backup_limit', 'oom_disabled',
                 'fastdl_enabled', 'warn_slot_mismatch',

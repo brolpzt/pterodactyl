@@ -8,14 +8,18 @@ use Illuminate\Support\Collection;
 use Pterodactyl\Models\EggVariable;
 use Illuminate\Database\ConnectionInterface;
 use Pterodactyl\Services\Eggs\EggParserService;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 
 class EggUpdateImporterService
 {
     /**
      * EggUpdateImporterService constructor.
      */
-    public function __construct(protected ConnectionInterface $connection, protected EggParserService $parser)
-    {
+    public function __construct(
+        protected ConnectionInterface $connection,
+        protected EggParserService $parser,
+        protected PortSlotSyncService $portSlotSync,
+    ) {
     }
 
     /**
@@ -28,7 +32,10 @@ class EggUpdateImporterService
         $parsed = $this->parser->handle($file);
 
         return $this->connection->transaction(function () use ($egg, $parsed) {
+            $previousSlots = $egg->port_slots;
             $egg = $this->parser->fillFromParsed($egg, $parsed);
+            $slots = $this->portSlotSync->normalizeSlots($parsed['port_slots'] ?? []);
+            $egg->port_slots = $slots === [] ? null : $slots;
             $egg->save();
 
             // Update existing variables or create new ones.
@@ -43,6 +50,11 @@ class EggUpdateImporterService
             $imported = array_map(fn ($value) => $value['env_variable'], $parsed['variables'] ?? []);
 
             $egg->variables()->whereNotIn('env_variable', $imported)->delete();
+
+            $this->portSlotSync->syncEggVariables(
+                $egg->refresh(),
+                is_array($previousSlots) ? $previousSlots : []
+            );
 
             return $egg->refresh();
         });

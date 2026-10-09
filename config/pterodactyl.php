@@ -217,4 +217,8 @@ return [
         'workshop_pass' => env('STEAM_WORKSHOP_PASS', ''),
         'workshop_auth' => env('STEAM_WORKSHOP_AUTH', ''),
     ],
+
+    'features' => [
+        'new_server_identifiers' => (bool) env('PTERODACTYL_USE_SERVER_IDENTIFIERS', false),
+    ],
 ];

@@ -12,6 +12,7 @@ import { Dialog } from '@/components/elements/dialog';
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const isInstallRestricted = ServerContext.useStoreState((state) => state.server.isInstallRestricted);
+    const skipScripts = ServerContext.useStoreState((state) => state.server.data!.skipScripts);
     const [modalVisible, setModalVisible] = useState(false);
     const { addFlash, clearFlashes } = useStoreActions((actions: Actions<ApplicationStore>) => actions.flashes);
 
@@ -36,6 +37,17 @@ export default () => {
     useEffect(() => {
         clearFlashes();
     }, []);
+
+    if (skipScripts) {
+        return (
+            <TitledGreyBox title={'Reinstall Server'}>
+                <p css={tw`text-sm`}>
+                    Reinstalling this server has been disabled because it is configured to skip its egg&apos;s install
+                    script. If you would like to reinstall this server, contact a server administrator.
+                </p>
+            </TitledGreyBox>
+        );
+    }
 
     return (
         <TitledGreyBox title={'Reinstall Server'} css={tw`relative`}>

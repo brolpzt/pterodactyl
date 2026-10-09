@@ -140,7 +140,9 @@ export default ({ server, className }: { server: Server; className?: string }) =
     }, [stats?.isSuspended, server.status]);
 
     useEffect(() => {
-        if (isSuspended) return;
+        // Don't waste a HTTP request if there is nothing important to show to the user because
+        // the server is suspended or the node is under maintenance.
+        if (isSuspended || server.isNodeUnderMaintenance) return;
 
         getStats().then(() => {
             interval.current = setInterval(() => getStats(), 30000);
@@ -149,7 +151,7 @@ export default ({ server, className }: { server: Server; className?: string }) =
         return () => {
             interval.current && clearInterval(interval.current);
         };
-    }, [isSuspended]);
+    }, [isSuspended, server.isNodeUnderMaintenance]);
 
     const alarms = { cpu: false, memory: false, disk: false };
     if (stats) {
@@ -191,7 +193,7 @@ export default ({ server, className }: { server: Server; className?: string }) =
                 </span>
             </Cell>
 
-            {!stats || isSuspended ? (
+            {!stats || isSuspended || server.isNodeUnderMaintenance ? (
                 <Cell
                     css={css`
                         ${tw`flex justify-start lg:justify-end`};
@@ -203,6 +205,10 @@ export default ({ server, className }: { server: Server; className?: string }) =
                     {isSuspended ? (
                         <span css={tw`bg-red-500 rounded px-2 py-0.5 text-red-100 text-xs`}>
                             {server.status === 'suspended' ? 'Suspended' : 'Connection Error'}
+                        </span>
+                    ) : server.isNodeUnderMaintenance ? (
+                        <span css={tw`bg-yellow-500 rounded px-2 py-0.5 text-yellow-100 text-xs`}>
+                            Under Maintenance
                         </span>
                     ) : server.isTransferring || server.status ? (
                         <span css={tw`bg-neutral-500 rounded px-2 py-0.5 text-neutral-100 text-xs`}>

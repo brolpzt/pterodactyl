@@ -5,8 +5,10 @@ namespace Pterodactyl\Models;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Query\JoinClause;
 use Znck\Eloquent\Traits\BelongsToThrough;
+use Pterodactyl\Contracts\Models\Identifiable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Pterodactyl\Models\Traits\HasRealtimeIdentifier;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -105,19 +107,20 @@ use Pterodactyl\Exceptions\Http\Server\ServerStateConflictException;
  *
  * @mixin \Eloquent
  */
-class Server extends Model
+#[Attributes\Identifiable('serv')]
+class Server extends Model implements Identifiable
 {
     /** @use HasFactory<\Database\Factories\ServerFactory> */
     use HasFactory;
     use BelongsToThrough;
     use Notifiable;
+    use HasRealtimeIdentifier;
 
     /**
      * The resource name for this model when it is transformed into an
      * API representation using fractal.
      */
     public const RESOURCE_NAME = 'server';
-
     public const STATUS_INSTALLING = 'installing';
     public const STATUS_INSTALL_FAILED = 'install_failed';
     public const STATUS_REINSTALL_FAILED = 'reinstall_failed';
@@ -220,6 +223,19 @@ class Server extends Model
     public function isSuspended(): bool
     {
         return $this->status === self::STATUS_SUSPENDED;
+    }
+
+    /**
+     * A server that skips its egg's install script gains nothing from a reinstall. The one
+     * exception is a server sitting in a failed state, where that report is the way back out.
+     */
+    public function canBeReinstalled(): bool
+    {
+        return !$this->skip_scripts || in_array($this->status, [
+            self::STATUS_INSTALLING,
+            self::STATUS_INSTALL_FAILED,
+            self::STATUS_REINSTALL_FAILED,
+        ], true);
     }
 
     /**

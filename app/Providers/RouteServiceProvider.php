@@ -82,7 +82,7 @@ class RouteServiceProvider extends ServiceProvider
                 return Limit::perMinute(2)->by($request->ip());
             }
 
-            return Limit::perMinute(10);
+            return Limit::perMinute(10)->by($request->ip());
         });
 
         RateLimiter::for('sso', function (Request $request) {

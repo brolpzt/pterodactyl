@@ -10,6 +10,7 @@ use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Pterodactyl\Facades\Activity;
 use Pterodactyl\Models\Permission;
+use Pterodactyl\Models\UserSSHKey;
 use phpseclib3\Crypt\PublicKeyLoader;
 use Pterodactyl\Http\Controllers\Controller;
 use phpseclib3\Exception\NoKeyLoadedException;
@@ -59,10 +60,14 @@ class SftpAuthenticationController extends Controller
             }
         } else {
             $key = null;
-            try {
-                $key = PublicKeyLoader::loadPublicKey(trim($request->input('password')));
-            } catch (NoKeyLoadedException) {
-                // do nothing
+            $publicKey = trim($request->input('password'));
+
+            if (UserSSHKey::isSupportedPublicKeyMaterial($publicKey)) {
+                try {
+                    $key = PublicKeyLoader::loadPublicKey($publicKey);
+                } catch (NoKeyLoadedException) {
+                    // do nothing
+                }
             }
 
             if (!$key || !$user->sshKeys()->where('fingerprint', $key->getFingerprint('sha256'))->exists()) {

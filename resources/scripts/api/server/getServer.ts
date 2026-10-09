@@ -19,6 +19,8 @@ export interface PortSlot {
     name: string;
     description: string;
     required: boolean;
+    gcorePolicy: string | null;
+    gcoreProto: string | null;
 }
 
 export interface Server {
@@ -112,6 +114,8 @@ export const rawDataToServerObject = ({ attributes: data }: FractalResponseData)
         name: slot.name,
         description: slot.description || '',
         required: !!slot.required,
+        gcorePolicy: slot.gcore_policy || null,
+        gcoreProto: slot.gcore_proto || null,
     })),
     dnsEnabled: data.dns_enabled || false,
     featureLimits: { ...data.feature_limits },

@@ -13,9 +13,8 @@ return [
     'api_key' => env('GCORE_API_KEY', ''),
 
     /*
-    | Fallback ACL policy when a protected allocation has no server/egg yet,
-    | or the egg has no gcore_policy set. Prefer configuring it on the Egg
-    | (gcore_policy + gcore_proto).
+    | Legacy fallback only. Prefer gcore_policy / gcore_proto on each egg port_slot
+    | (including the SERVER_PORT primary slot).
     */
     'default_policy' => env('GCORE_DEFAULT_POLICY', 'allowlist'),
 ];

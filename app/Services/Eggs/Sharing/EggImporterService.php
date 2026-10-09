@@ -42,8 +42,14 @@ class EggImporterService
             ]);
 
             $egg = $this->parser->fillFromParsed($egg, $parsed);
-            $slots = $this->portSlotSync->normalizeSlots(Arr::get($parsed, 'port_slots', []));
+            // Legacy egg JSON may still carry top-level gcore_* — fold into SERVER_PORT slot.
+            $slots = $this->portSlotSync->withLegacyPrimarySlot(
+                Arr::get($parsed, 'port_slots', []),
+                $egg
+            );
             $egg->port_slots = $slots === [] ? null : $slots;
+            $egg->gcore_policy = null;
+            $egg->gcore_proto = null;
             $egg->save();
 
             foreach ($parsed['variables'] ?? [] as $variable) {

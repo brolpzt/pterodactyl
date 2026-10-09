@@ -168,7 +168,8 @@ class ServerCreationService
         $uuid = $this->generateUniqueUuidCombo();
 
         $egg = Egg::query()->find(Arr::get($data, 'egg_id'));
-        $slotCount = is_array($egg?->port_slots) ? count($egg->port_slots) : 0;
+        $extraSlots = $this->portSlotSync->extraSlots(is_array($egg?->port_slots) ? $egg->port_slots : []);
+        $slotCount = count($extraSlots);
         $allocationLimit = (int) (Arr::get($data, 'allocation_limit') ?? 0);
         $minimumLimit = 1 + $slotCount;
         if ($allocationLimit > 0 && $allocationLimit < $minimumLimit) {

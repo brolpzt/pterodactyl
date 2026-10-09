@@ -82,8 +82,13 @@ class ServerTransformer extends BaseClientTransformer
                     'name' => $slot['name'],
                     'description' => $slot['description'] ?? '',
                     'required' => (bool) ($slot['required'] ?? false),
+                    'gcore_policy' => $slot['gcore_policy'] ?? null,
+                    'gcore_proto' => $slot['gcore_proto'] ?? null,
                 ];
-            }, is_array($server->egg->port_slots) ? $server->egg->port_slots : [])),
+            }, array_values(array_filter(
+                is_array($server->egg->port_slots) ? $server->egg->port_slots : [],
+                static fn (array $slot): bool => strtoupper((string) ($slot['env_variable'] ?? '')) !== 'SERVER_PORT'
+            )))),
             'dns_enabled' => $this->resolveDnsEnabled($server),
             'feature_limits' => [
                 'databases' => $server->database_limit,

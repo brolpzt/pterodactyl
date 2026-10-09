@@ -34,8 +34,10 @@ class EggUpdateImporterService
         return $this->connection->transaction(function () use ($egg, $parsed) {
             $previousSlots = $egg->port_slots;
             $egg = $this->parser->fillFromParsed($egg, $parsed);
-            $slots = $this->portSlotSync->normalizeSlots($parsed['port_slots'] ?? []);
+            $slots = $this->portSlotSync->withLegacyPrimarySlot($parsed['port_slots'] ?? [], $egg);
             $egg->port_slots = $slots === [] ? null : $slots;
+            $egg->gcore_policy = null;
+            $egg->gcore_proto = null;
             $egg->save();
 
             // Update existing variables or create new ones.

@@ -69,44 +69,34 @@
                                 </p>
                             </div>
                             <div class="form-group">
-                                <label for="pGcorePolicy" class="control-label">Gcore ACL Policy</label>
-                                <select id="pGcorePolicy" name="gcore_policy" class="form-control">
-                                    <option value="">- nenhuma / fallback -</option>
-                                    @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
-                                        <option value="{{ $policy }}" {{ old('gcore_policy') === $policy ? 'selected' : '' }}>{{ $policy }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="text-muted small">Política ACL no DDoS Gcore para servers deste egg.</p>
-                            </div>
-                            <div class="form-group">
-                                <label for="pGcoreProto" class="control-label">Gcore ACL Proto</label>
-                                <select id="pGcoreProto" name="gcore_proto" class="form-control">
-                                    <option value="">- any (padrão) -</option>
-                                    @foreach(\Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS as $proto)
-                                        @continue($proto === 'any')
-                                        <option value="{{ $proto }}" {{ old('gcore_proto') === $proto ? 'selected' : '' }}>{{ $proto }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="text-muted small">Protocolo da regra ACL (ex.: <code>udp</code> para CS).</p>
-                            </div>
-                            <div class="form-group">
-                                <label class="control-label">Port slots (opcional)</label>
-                                <p class="text-muted small">Portas extras além de SERVER_PORT. Pode editar com mais detalhes após criar o egg.</p>
+                                <label class="control-label">Port slots + Gcore</label>
+                                <p class="text-muted small">
+                                    Configure ACL e portas extras na edição do egg. Já inclui
+                                    <code>SERVER_PORT</code> (primary).
+                                </p>
+                                <input type="hidden" name="port_slots[0][env_variable]" value="SERVER_PORT">
+                                <input type="hidden" name="port_slots[0][name]" value="Game Port">
+                                <input type="hidden" name="port_slots[0][description]" value="Allocation primária (SERVER_PORT).">
+                                <input type="hidden" name="port_slots[0][required]" value="1">
                                 <div class="row">
-                                    <div class="col-xs-4">
-                                        <input type="text" name="port_slots[0][env_variable]" class="form-control" value="{{ old('port_slots.0.env_variable') }}" placeholder="QUERY_PORT">
+                                    <div class="col-xs-7">
+                                        <select name="port_slots[0][gcore_policy]" class="form-control">
+                                            <option value="">SERVER_PORT — sem ACL</option>
+                                            @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
+                                                <option value="{{ $policy }}" {{ old('port_slots.0.gcore_policy') === $policy ? 'selected' : '' }}>{{ $policy }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
-                                    <div class="col-xs-4">
-                                        <input type="text" name="port_slots[0][name]" class="form-control" value="{{ old('port_slots.0.name') }}" placeholder="Query Port">
-                                    </div>
-                                    <div class="col-xs-4">
-                                        <label class="checkbox-inline" style="margin-top:6px">
-                                            <input type="hidden" name="port_slots[0][required]" value="0">
-                                            <input type="checkbox" name="port_slots[0][required]" value="1" {{ old('port_slots.0.required') ? 'checked' : '' }}> Required
-                                        </label>
+                                    <div class="col-xs-5">
+                                        <select name="port_slots[0][gcore_proto]" class="form-control">
+                                            <option value="">any</option>
+                                            @foreach(\Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS as $proto)
+                                                @continue($proto === 'any')
+                                                <option value="{{ $proto }}" {{ old('port_slots.0.gcore_proto') === $proto ? 'selected' : '' }}>{{ $proto }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                 </div>
-                                <input type="hidden" name="port_slots[0][description]" value="{{ old('port_slots.0.description', '') }}">
                             </div>
                         </div>
                         <div class="col-sm-6">

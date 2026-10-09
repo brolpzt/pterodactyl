@@ -7,10 +7,15 @@ use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\NodeGcoreIp;
 use Pterodactyl\Exceptions\DisplayException;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Illuminate\Support\Facades\Log;
 
 class GcoreFirewallSyncService
 {
+    public function __construct(private PortSlotSyncService $portSlotSync)
+    {
+    }
+
     /**
      * On server create: mark allocations on Gcore IPs as protected and sync immediately.
      * On server delete: unmark those allocations and sync immediately.
@@ -168,7 +173,7 @@ class GcoreFirewallSyncService
             ->where('ip', $ip)
             ->where('gcore_protected', true)
             ->whereNotNull('server_id')
-            ->with(['server.egg:id,gcore_policy,gcore_proto'])
+            ->with(['server:id,egg_id,allocation_id', 'server.egg:id,port_slots,gcore_policy,gcore_proto'])
             ->orderBy('port')
             ->get();
 
@@ -183,24 +188,25 @@ class GcoreFirewallSyncService
             }
 
             // Free allocations must never open ACL rules (would fall back to allowlist).
-            if (!$allocation->server_id || !$allocation->server) {
+            if (!$allocation->server_id || !$allocation->server || !$allocation->server->egg) {
                 continue;
             }
 
-            $egg = $allocation->server->egg;
-            $rawPolicy = trim((string) ($egg?->gcore_policy ?? ''));
-            if ($rawPolicy === '' || !in_array($rawPolicy, GcoreClient::POLICIES, true)) {
-                // No explicit egg policy — skip instead of inventing allowlist.
+            $resolved = $this->portSlotSync->resolveGcoreForAllocation(
+                $allocation->server->egg,
+                $allocation,
+                (int) $allocation->server->allocation_id
+            );
+            if ($resolved === null) {
+                // No ACL configured for this port slot — skip.
                 continue;
             }
 
-            $map[$rawPolicy][$port] = true;
+            $policy = $resolved['policy'];
+            $map[$policy][$port] = true;
 
-            if (!isset($protos[$rawPolicy])) {
-                $proto = strtolower(trim((string) ($egg?->gcore_proto ?? '')));
-                if ($proto !== '' && in_array($proto, GcoreClient::PROTOCOLS, true)) {
-                    $protos[$rawPolicy] = [$proto];
-                }
+            if (!isset($protos[$policy]) && !empty($resolved['proto'])) {
+                $protos[$policy] = [$resolved['proto']];
             }
         }
 

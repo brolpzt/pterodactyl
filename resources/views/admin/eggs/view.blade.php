@@ -110,33 +110,6 @@
                                 </p>
                             </div>
                             <div class="form-group">
-                                <label for="pGcorePolicy" class="control-label">Gcore ACL Policy</label>
-                                <select id="pGcorePolicy" name="gcore_policy" class="form-control">
-                                    <option value="">- nenhuma / fallback -</option>
-                                    @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
-                                        <option value="{{ $policy }}" {{ old('gcore_policy', $egg->gcore_policy) === $policy ? 'selected' : '' }}>{{ $policy }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="text-muted small">
-                                    Política usada no DDoS Protection da Gcore ao abrir portas de allocations protegidas
-                                    deste jogo (ex.: <code>minecraft</code>, <code>counter-strike-2</code>, <code>rust</code>).
-                                </p>
-                            </div>
-                            <div class="form-group">
-                                <label for="pGcoreProto" class="control-label">Gcore ACL Proto</label>
-                                <select id="pGcoreProto" name="gcore_proto" class="form-control">
-                                    <option value="">- any (padrão) -</option>
-                                    @foreach(\Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS as $proto)
-                                        @continue($proto === 'any')
-                                        <option value="{{ $proto }}" {{ old('gcore_proto', $egg->gcore_proto) === $proto ? 'selected' : '' }}>{{ $proto }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="text-muted small">
-                                    Protocolo da regra ACL ao criar a primeira regra desta política
-                                    (ex.: CS → <code>udp</code>, TeamSpeak → <code>udp</code>). Se a regra já existir na Gcore, o proto dela é mantido.
-                                </p>
-                            </div>
-                            <div class="form-group">
                                 <div class="checkbox checkbox-primary no-margin-bottom">
                                     <input id="pWarnSlotMismatch" name="warn_slot_mismatch" type="checkbox" value="1" @if($egg->warn_slot_mismatch) checked @endif />
                                     <label for="pWarnSlotMismatch" class="strong">Aviso de slots acima do limite</label>
@@ -253,51 +226,87 @@
                     </div>
                 </div>
                 <div class="box-header with-border" style="border-top:1px solid #f4f4f4">
-                    <h3 class="box-title">Port slots (portas extras)</h3>
+                    <h3 class="box-title">Port slots + Gcore ACL</h3>
                 </div>
                 <div class="box-body">
                     <p class="text-muted">
-                        Além de <code>SERVER_PORT</code> (allocation primária), declare portas extras que viram ENV
-                        (ex.: <code>QUERY_PORT</code>). <strong>Required</strong> = auto na criação do servidor (mesmo IP).
-                        <strong>Optional</strong> = assign manual depois. Cada slot gera uma egg variable não editável.
+                        Centraliza portas e ACL Gcore. <code>SERVER_PORT</code> = allocation primária (obrigatório na lista).
+                        Portas extras viram ENV; <strong>Required</strong> = auto na criação (mesmo IP).
+                        Defina <strong>Gcore policy/proto por porta</strong> — só entram no sync ACL se a allocation estiver marcada como protegida.
                     </p>
                     @php
-                        $portSlots = old('port_slots', $egg->port_slots ?? []);
+                        $portSlotSync = app(\Pterodactyl\Services\Eggs\PortSlotSyncService::class);
+                        $portSlots = old('port_slots');
                         if (!is_array($portSlots)) {
-                            $portSlots = [];
+                            $portSlots = $portSlotSync->slotsForEdit($egg);
                         }
-                        if ($portSlots === []) {
-                            $portSlots = [['env_variable' => '', 'name' => '', 'description' => '', 'required' => false]];
-                        }
+                        $gcorePolicies = \Pterodactyl\Services\Gcore\GcoreClient::POLICIES;
+                        $gcoreProtos = \Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS;
                     @endphp
                     <div class="table-responsive">
                         <table class="table table-condensed" id="portSlotsTable">
                             <thead>
                             <tr>
-                                <th style="width:18%">ENV</th>
-                                <th style="width:18%">Nome</th>
+                                <th style="width:14%">ENV</th>
+                                <th style="width:12%">Nome</th>
                                 <th>Descrição</th>
-                                <th style="width:100px">Required</th>
-                                <th style="width:50px"></th>
+                                <th style="width:16%">Gcore policy</th>
+                                <th style="width:10%">Proto</th>
+                                <th style="width:70px">Required</th>
+                                <th style="width:40px"></th>
                             </tr>
                             </thead>
                             <tbody>
                             @foreach($portSlots as $i => $slot)
-                                <tr>
-                                    <td><input type="text" name="port_slots[{{ $i }}][env_variable]" class="form-control input-sm" value="{{ $slot['env_variable'] ?? '' }}" placeholder="QUERY_PORT"></td>
-                                    <td><input type="text" name="port_slots[{{ $i }}][name]" class="form-control input-sm" value="{{ $slot['name'] ?? '' }}" placeholder="Query Port"></td>
-                                    <td><input type="text" name="port_slots[{{ $i }}][description]" class="form-control input-sm" value="{{ $slot['description'] ?? '' }}" placeholder="Porta de query Steam"></td>
-                                    <td class="text-center">
-                                        <input type="hidden" name="port_slots[{{ $i }}][required]" value="0">
-                                        <input type="checkbox" name="port_slots[{{ $i }}][required]" value="1" {{ !empty($slot['required']) ? 'checked' : '' }}>
+                                @php $isPrimary = strtoupper((string) ($slot['env_variable'] ?? '')) === 'SERVER_PORT'; @endphp
+                                <tr class="{{ $isPrimary ? 'active' : '' }}">
+                                    <td>
+                                        @if($isPrimary)
+                                            <input type="hidden" name="port_slots[{{ $i }}][env_variable]" value="SERVER_PORT">
+                                            <code>SERVER_PORT</code>
+                                        @else
+                                            <input type="text" name="port_slots[{{ $i }}][env_variable]" class="form-control input-sm" value="{{ $slot['env_variable'] ?? '' }}" placeholder="QUERY_PORT">
+                                        @endif
                                     </td>
-                                    <td><button type="button" class="btn btn-xs btn-danger port-slot-remove">&times;</button></td>
+                                    <td><input type="text" name="port_slots[{{ $i }}][name]" class="form-control input-sm" value="{{ $slot['name'] ?? '' }}" placeholder="{{ $isPrimary ? 'Game Port' : 'Query Port' }}"></td>
+                                    <td><input type="text" name="port_slots[{{ $i }}][description]" class="form-control input-sm" value="{{ $slot['description'] ?? '' }}" placeholder="{{ $isPrimary ? 'Allocation primária' : 'Porta de query' }}"></td>
+                                    <td>
+                                        <select name="port_slots[{{ $i }}][gcore_policy]" class="form-control input-sm">
+                                            <option value="">— sem ACL —</option>
+                                            @foreach($gcorePolicies as $policy)
+                                                <option value="{{ $policy }}" {{ ($slot['gcore_policy'] ?? '') === $policy ? 'selected' : '' }}>{{ $policy }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="port_slots[{{ $i }}][gcore_proto]" class="form-control input-sm">
+                                            <option value="">any</option>
+                                            @foreach($gcoreProtos as $proto)
+                                                @continue($proto === 'any')
+                                                <option value="{{ $proto }}" {{ ($slot['gcore_proto'] ?? '') === $proto ? 'selected' : '' }}>{{ $proto }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td class="text-center">
+                                        @if($isPrimary)
+                                            <input type="hidden" name="port_slots[{{ $i }}][required]" value="1">
+                                            <span class="text-muted" title="Sempre a primary">primary</span>
+                                        @else
+                                            <input type="hidden" name="port_slots[{{ $i }}][required]" value="0">
+                                            <input type="checkbox" name="port_slots[{{ $i }}][required]" value="1" {{ !empty($slot['required']) ? 'checked' : '' }}>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(!$isPrimary)
+                                            <button type="button" class="btn btn-xs btn-danger port-slot-remove">&times;</button>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                             </tbody>
                         </table>
                     </div>
-                    <button type="button" class="btn btn-xs btn-default" id="portSlotAdd">+ slot</button>
+                    <button type="button" class="btn btn-xs btn-default" id="portSlotAdd">+ porta extra</button>
                 </div>
                 <div class="box-footer">
                     {!! csrf_field() !!}
@@ -480,9 +489,21 @@
 
     (function () {
         var idx = $('#portSlotsTable tbody tr').length;
+        var policyOpts = @json($gcorePolicies ?? \Pterodactyl\Services\Gcore\GcoreClient::POLICIES);
+        var protoOpts = @json(array_values(array_filter(\Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS, fn ($p) => $p !== 'any')));
+        function policySelect(i) {
+            var h = '<select name="port_slots[' + i + '][gcore_policy]" class="form-control input-sm"><option value="">— sem ACL —</option>';
+            policyOpts.forEach(function (p) { h += '<option value="' + p + '">' + p + '</option>'; });
+            return h + '</select>';
+        }
+        function protoSelect(i) {
+            var h = '<select name="port_slots[' + i + '][gcore_proto]" class="form-control input-sm"><option value="">any</option>';
+            protoOpts.forEach(function (p) { h += '<option value="' + p + '">' + p + '</option>'; });
+            return h + '</select>';
+        }
         function reindex() {
             $('#portSlotsTable tbody tr').each(function (i) {
-                $(this).find('input').each(function () {
+                $(this).find('input, select').each(function () {
                     var name = $(this).attr('name');
                     if (!name) return;
                     $(this).attr('name', name.replace(/port_slots\[\d+]/, 'port_slots[' + i + ']'));
@@ -495,6 +516,8 @@
                 '<td><input type="text" name="port_slots[' + idx + '][env_variable]" class="form-control input-sm" placeholder="QUERY_PORT"></td>' +
                 '<td><input type="text" name="port_slots[' + idx + '][name]" class="form-control input-sm" placeholder="Query Port"></td>' +
                 '<td><input type="text" name="port_slots[' + idx + '][description]" class="form-control input-sm" placeholder="Porta de query Steam"></td>' +
+                '<td>' + policySelect(idx) + '</td>' +
+                '<td>' + protoSelect(idx) + '</td>' +
                 '<td class="text-center"><input type="hidden" name="port_slots[' + idx + '][required]" value="0">' +
                 '<input type="checkbox" name="port_slots[' + idx + '][required]" value="1"></td>' +
                 '<td><button type="button" class="btn btn-xs btn-danger port-slot-remove">&times;</button></td>' +
@@ -503,12 +526,6 @@
             idx++;
         });
         $('#portSlotsTable').on('click', '.port-slot-remove', function () {
-            var $tbody = $('#portSlotsTable tbody');
-            if ($tbody.find('tr').length <= 1) {
-                $(this).closest('tr').find('input[type=text]').val('');
-                $(this).closest('tr').find('input[type=checkbox]').prop('checked', false);
-                return;
-            }
             $(this).closest('tr').remove();
             reindex();
         });

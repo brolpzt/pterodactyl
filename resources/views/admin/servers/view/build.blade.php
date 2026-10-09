@@ -181,7 +181,8 @@
                                 <p class="text-muted small">Simply select which ports you would like to remove from the list above. If you want to assign a port on a different IP that is already in use you can select it from the left and delete it here.</p>
                             </div>
                             @php
-                                $eggPortSlots = is_array($server->egg->port_slots ?? null) ? $server->egg->port_slots : [];
+                                $eggPortSlots = app(\Pterodactyl\Services\Eggs\PortSlotSyncService::class)
+                                    ->extraSlots(is_array($server->egg->port_slots ?? null) ? $server->egg->port_slots : []);
                             @endphp
                             @if(count($eggPortSlots) > 0)
                                 <div class="form-group">

@@ -26,13 +26,13 @@ class EggFormRequest extends AdminFormRequest
             'config_logs' => 'required_without:config_from|nullable|json',
             'config_files' => 'required_without:config_from|nullable|json',
             'gamedig' => 'nullable|string|max:191',
-            'gcore_policy' => 'nullable|string|max:64',
-            'gcore_proto' => 'nullable|string|in:' . implode(',', GcoreClient::PROTOCOLS),
             'port_slots' => 'nullable|array',
             'port_slots.*.env_variable' => 'nullable|string|max:191',
             'port_slots.*.name' => 'nullable|string|max:191',
             'port_slots.*.description' => 'nullable|string|max:1000',
             'port_slots.*.required' => 'sometimes|boolean',
+            'port_slots.*.gcore_policy' => 'nullable|string|max:64',
+            'port_slots.*.gcore_proto' => 'nullable|string|in:' . implode(',', GcoreClient::PROTOCOLS),
             'warn_slot_mismatch' => 'sometimes|boolean',
             'command_transmission_type' => 'required|string|in:stdin,rcon',
             'rcon_protocol' => 'required_if:command_transmission_type,rcon|nullable|string|in:source,quake3,webrcon',
@@ -78,19 +78,18 @@ class EggFormRequest extends AdminFormRequest
             }
         }
 
-        $gcorePolicy = trim((string) array_get($data, 'gcore_policy', ''));
-        $gcoreProto = strtolower(trim((string) array_get($data, 'gcore_proto', '')));
-
-        $portSlots = app(PortSlotSyncService::class)->normalizeSlots(
+        $portSlotSync = app(PortSlotSyncService::class);
+        $portSlots = $portSlotSync->normalizeSlots(
             array_get($data, 'port_slots', $this->input('port_slots', []))
         );
 
+        // ACL Gcore vive nos port slots; limpa campos legados no egg.
         return array_merge($data, [
             'force_outgoing_ip' => array_get($data, 'force_outgoing_ip', false),
             'warn_slot_mismatch' => array_get($data, 'warn_slot_mismatch', false),
             'features' => $features,
-            'gcore_policy' => $gcorePolicy === '' ? null : $gcorePolicy,
-            'gcore_proto' => $gcoreProto === '' ? null : $gcoreProto,
+            'gcore_policy' => null,
+            'gcore_proto' => null,
             'port_slots' => $portSlots === [] ? null : $portSlots,
         ]);
     }

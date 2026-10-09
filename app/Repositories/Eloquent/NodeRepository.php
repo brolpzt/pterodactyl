@@ -104,7 +104,7 @@ class NodeRepository extends EloquentRepository implements NodeRepositoryInterfa
                 ->orderByRaw('server_id IS NOT NULL DESC, server_id IS NULL')
                 ->orderByRaw('INET_ATON(ip) ASC')
                 ->orderBy('port')
-                ->with(['server:id,name,egg_id', 'server.egg:id,gcore_policy,gcore_proto'])
+                ->with(['server:id,name,egg_id,allocation_id', 'server.egg:id,port_slots,gcore_policy,gcore_proto'])
                 ->paginate(50)
         );
 

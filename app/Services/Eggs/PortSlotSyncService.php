@@ -8,11 +8,14 @@ use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\EggVariable;
 use Pterodactyl\Models\ServerVariable;
+use Pterodactyl\Services\Gcore\GcoreClient;
 use Pterodactyl\Exceptions\DisplayException;
 use Illuminate\Database\ConnectionInterface;
 
 class PortSlotSyncService
 {
+    public const PRIMARY_ENV = 'SERVER_PORT';
+
     public function __construct(private ConnectionInterface $connection)
     {
     }
@@ -20,8 +23,10 @@ class PortSlotSyncService
     /**
      * Normalize and validate raw port slot definitions from the admin form / import.
      *
+     * SERVER_PORT is allowed as the special primary slot (ACL only; not an egg variable).
+     *
      * @param  mixed  $raw
-     * @return list<array{env_variable: string, name: string, description: string, required: bool}>
+     * @return list<array{env_variable: string, name: string, description: string, required: bool, gcore_policy: string|null, gcore_proto: string|null}>
      *
      * @throws DisplayException
      */
@@ -61,7 +66,10 @@ class PortSlotSyncService
             }
             $required = filter_var($requiredRaw, FILTER_VALIDATE_BOOLEAN);
 
-            if ($env === '' && $name === '') {
+            $gcorePolicy = trim((string) Arr::get($row, 'gcore_policy', ''));
+            $gcoreProto = strtolower(trim((string) Arr::get($row, 'gcore_proto', '')));
+
+            if ($env === '' && $name === '' && $gcorePolicy === '') {
                 continue;
             }
 
@@ -69,7 +77,8 @@ class PortSlotSyncService
                 throw new DisplayException("port_slots[{$index}]: env_variable inválido.");
             }
 
-            if (in_array($env, $reserved, true)) {
+            $isPrimary = $env === self::PRIMARY_ENV;
+            if (!$isPrimary && in_array($env, $reserved, true)) {
                 throw new DisplayException("port_slots[{$index}]: {$env} é um nome reservado.");
             }
 
@@ -78,8 +87,21 @@ class PortSlotSyncService
             }
             $seen[$env] = true;
 
+            if ($gcorePolicy !== '' && !in_array($gcorePolicy, GcoreClient::POLICIES, true)) {
+                throw new DisplayException("port_slots[{$index}]: gcore_policy inválida ({$gcorePolicy}).");
+            }
+
+            if ($gcoreProto !== '' && !in_array($gcoreProto, GcoreClient::PROTOCOLS, true)) {
+                throw new DisplayException("port_slots[{$index}]: gcore_proto inválido ({$gcoreProto}).");
+            }
+
             if ($name === '') {
-                $name = $env;
+                $name = $isPrimary ? 'Game Port' : $env;
+            }
+
+            // Primary is always the allocation default — never "optional auto-assign".
+            if ($isPrimary) {
+                $required = true;
             }
 
             $out[] = [
@@ -87,6 +109,8 @@ class PortSlotSyncService
                 'name' => $name,
                 'description' => $description,
                 'required' => $required,
+                'gcore_policy' => $gcorePolicy === '' ? null : $gcorePolicy,
+                'gcore_proto' => $gcoreProto === '' || $gcoreProto === 'any' ? null : $gcoreProto,
             ];
         }
 
@@ -94,13 +118,135 @@ class PortSlotSyncService
     }
 
     /**
-     * Mirror port_slots into egg_variables (non-editable) so {{ENV}} works in startup.
+     * Merge legacy egg.gcore_policy / gcore_proto into a SERVER_PORT slot when missing.
+     *
+     * @param  list<array<string, mixed>>  $slots
+     * @return list<array{env_variable: string, name: string, description: string, required: bool, gcore_policy: string|null, gcore_proto: string|null}>
+     */
+    public function withLegacyPrimarySlot(array $slots, ?Egg $egg): array
+    {
+        $slots = $this->normalizeSlots($slots);
+        $hasPrimary = false;
+        foreach ($slots as $slot) {
+            if ($slot['env_variable'] === self::PRIMARY_ENV) {
+                $hasPrimary = true;
+                break;
+            }
+        }
+
+        if ($hasPrimary || !$egg) {
+            return $slots;
+        }
+
+        $policy = trim((string) ($egg->gcore_policy ?? ''));
+        $proto = strtolower(trim((string) ($egg->gcore_proto ?? '')));
+        if ($policy === '' && $proto === '') {
+            return $slots;
+        }
+
+        array_unshift($slots, [
+            'env_variable' => self::PRIMARY_ENV,
+            'name' => 'Game Port',
+            'description' => 'Allocation primária (SERVER_PORT).',
+            'required' => true,
+            'gcore_policy' => $policy !== '' && in_array($policy, GcoreClient::POLICIES, true) ? $policy : null,
+            'gcore_proto' => $proto !== '' && $proto !== 'any' && in_array($proto, GcoreClient::PROTOCOLS, true) ? $proto : null,
+        ]);
+
+        return $slots;
+    }
+
+    /**
+     * Slots shown in admin UI (always include SERVER_PORT row).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function slotsForEdit(Egg $egg): array
+    {
+        $slots = $this->withLegacyPrimarySlot(
+            is_array($egg->port_slots) ? $egg->port_slots : [],
+            $egg
+        );
+
+        if ($slots === []) {
+            return [[
+                'env_variable' => self::PRIMARY_ENV,
+                'name' => 'Game Port',
+                'description' => 'Allocation primária (SERVER_PORT).',
+                'required' => true,
+                'gcore_policy' => null,
+                'gcore_proto' => null,
+            ]];
+        }
+
+        return $slots;
+    }
+
+    /**
+     * Extra (non-primary) port slots.
+     *
+     * @param  list<array<string, mixed>>|null  $slots
+     * @return list<array{env_variable: string, name: string, description: string, required: bool, gcore_policy: string|null, gcore_proto: string|null}>
+     */
+    public function extraSlots(?array $slots): array
+    {
+        return array_values(array_filter(
+            $this->normalizeSlots($slots ?? []),
+            fn (array $s) => $s['env_variable'] !== self::PRIMARY_ENV
+        ));
+    }
+
+    /**
+     * Resolve Gcore ACL policy/proto for an allocation via its port slot.
+     *
+     * @return array{policy: string, proto: string|null}|null
+     */
+    public function resolveGcoreForAllocation(Egg $egg, Allocation $allocation, int $primaryAllocationId): ?array
+    {
+        $slots = $this->withLegacyPrimarySlot(
+            is_array($egg->port_slots) ? $egg->port_slots : [],
+            $egg
+        );
+        $byEnv = [];
+        foreach ($slots as $slot) {
+            $byEnv[$slot['env_variable']] = $slot;
+        }
+
+        $isPrimary = (int) $allocation->id === (int) $primaryAllocationId;
+        $env = $isPrimary
+            ? self::PRIMARY_ENV
+            : strtoupper(trim((string) ($allocation->port_env ?? '')));
+
+        if ($env === '') {
+            return null;
+        }
+
+        $slot = $byEnv[$env] ?? null;
+        if ($slot === null) {
+            return null;
+        }
+
+        $policy = trim((string) ($slot['gcore_policy'] ?? ''));
+        if ($policy === '' || !in_array($policy, GcoreClient::POLICIES, true)) {
+            return null;
+        }
+
+        $proto = strtolower(trim((string) ($slot['gcore_proto'] ?? '')));
+        if ($proto === '' || $proto === 'any' || !in_array($proto, GcoreClient::PROTOCOLS, true)) {
+            $proto = null;
+        }
+
+        return ['policy' => $policy, 'proto' => $proto];
+    }
+
+    /**
+     * Mirror extra port_slots into egg_variables (non-editable). SERVER_PORT is never mirrored.
      */
     public function syncEggVariables(Egg $egg, ?array $previousSlots = null): void
     {
-        $slots = $this->normalizeSlots($egg->port_slots ?? []);
+        $slots = $this->extraSlots($egg->port_slots ?? []);
         $currentEnvs = array_column($slots, 'env_variable');
-        $previousEnvs = array_column($this->normalizeSlots($previousSlots ?? []), 'env_variable');
+        $previousEnvs = array_column($this->extraSlots($previousSlots ?? []), 'env_variable');
 
         $this->connection->transaction(function () use ($egg, $slots, $currentEnvs, $previousEnvs) {
             foreach ($slots as $slot) {
@@ -135,7 +281,7 @@ class PortSlotSyncService
     }
 
     /**
-     * Auto-assign free allocations on the same IP for required slots still unbound.
+     * Auto-assign free allocations on the same IP for required extra slots still unbound.
      *
      * @throws DisplayException
      */
@@ -143,7 +289,7 @@ class PortSlotSyncService
     {
         $server->loadMissing(['egg', 'allocation', 'allocations', 'node']);
 
-        $slots = $this->normalizeSlots($server->egg?->port_slots ?? []);
+        $slots = $this->extraSlots($server->egg?->port_slots ?? []);
         $required = array_values(array_filter($slots, fn (array $s) => $s['required']));
         if ($required === []) {
             return;
@@ -211,8 +357,12 @@ class PortSlotSyncService
             $portEnv = null;
         }
 
+        if ($portEnv === self::PRIMARY_ENV) {
+            throw new DisplayException('SERVER_PORT é reservado à allocation primária.');
+        }
+
         if ($portEnv !== null) {
-            $slots = $this->normalizeSlots($server->egg?->port_slots ?? []);
+            $slots = $this->extraSlots($server->egg?->port_slots ?? []);
             $valid = array_column($slots, 'env_variable');
             if (!in_array($portEnv, $valid, true)) {
                 throw new DisplayException("Port slot {$portEnv} não existe neste egg.");
@@ -249,13 +399,13 @@ class PortSlotSyncService
     }
 
     /**
-     * Write allocation ports into server_variables for each bound port slot.
+     * Write allocation ports into server_variables for each bound extra port slot.
      */
     public function syncServerVariables(Server $server): void
     {
         $server->loadMissing(['allocations', 'egg.variables']);
 
-        $slots = $this->normalizeSlots($server->egg?->port_slots ?? []);
+        $slots = $this->extraSlots($server->egg?->port_slots ?? []);
         if ($slots === []) {
             return;
         }
@@ -289,12 +439,12 @@ class PortSlotSyncService
     }
 
     /**
-     * @return list<array{env_variable: string, name: string, description: string, required: bool}>
+     * @return list<array{env_variable: string, name: string, description: string, required: bool, gcore_policy: string|null, gcore_proto: string|null}>
      */
     public function unfilledSlots(Server $server): array
     {
         $server->loadMissing(['egg', 'allocations']);
-        $slots = $this->normalizeSlots($server->egg?->port_slots ?? []);
+        $slots = $this->extraSlots($server->egg?->port_slots ?? []);
         $bound = $server->allocations
             ->pluck('port_env')
             ->filter()
@@ -308,12 +458,12 @@ class PortSlotSyncService
     }
 
     /**
-     * Raise allocation_limit so required (+ optional room) can fit with primary.
+     * Raise allocation_limit so extra slots can fit with primary.
      */
-    public function ensureAllocationLimit(Server $server, ?int $slotCount = null): void
+    public function ensureAllocationLimit(Server $server, ?int $extraSlotCount = null): void
     {
-        $slotCount ??= count($this->normalizeSlots($server->egg?->port_slots ?? []));
-        $minimum = 1 + max(0, $slotCount);
+        $extraSlotCount ??= count($this->extraSlots($server->egg?->port_slots ?? []));
+        $minimum = 1 + max(0, $extraSlotCount);
         $current = (int) ($server->allocation_limit ?? 0);
 
         if ($current < $minimum) {

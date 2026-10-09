@@ -219,19 +219,15 @@
                     </div>
                     @if($node->gcore_enabled)
                         <div class="form-group">
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" name="gcore_ip" value="1" id="pGcoreIp">
-                                    Este IP está no Gcore (tem perfil DDoS)
-                                </label>
+                            <div class="checkbox checkbox-primary">
+                                <input type="checkbox" name="gcore_ip" value="1" id="pGcoreIp">
+                                <label for="pGcoreIp">Este IP está no Gcore (tem perfil DDoS)</label>
                             </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" name="gcore_protected" value="1" id="pGcorePorts">
-                                    Abrir estas portas no ACL do DDoS
-                                </label>
+                            <div class="checkbox checkbox-primary" style="margin-top:8px">
+                                <input type="checkbox" name="gcore_protected" value="1" id="pGcorePorts" disabled>
+                                <label for="pGcorePorts">Abrir estas portas no ACL do DDoS</label>
                             </div>
-                            <p class="text-muted small">Só IPs com perfil Gcore. Portas usam a política ACL do Egg do servidor.</p>
+                            <p class="text-muted small">Só IPs com perfil Gcore. Portas só entram na ACL depois de ligadas a um servidor (política do Egg).</p>
                         </div>
                     @endif
                 </div>
@@ -303,6 +299,14 @@
         tags: true,
         selectOnClose: true,
         tokenSeparators: [',', ' '],
+    });
+
+    $('#pGcoreIp').on('change', function () {
+        var on = $(this).is(':checked');
+        $('#pGcorePorts').prop('disabled', !on);
+        if (!on) {
+            $('#pGcorePorts').prop('checked', false);
+        }
     });
 
     $('button[data-action="deallocate"]').click(function (event) {

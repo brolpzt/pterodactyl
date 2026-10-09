@@ -12,6 +12,7 @@ class AllocationFormRequest extends AdminFormRequest
             'allocation_ip' => 'required|string',
             'allocation_alias' => 'sometimes|nullable|string|max:191',
             'allocation_ports' => 'required|array',
+            'gcore_protected' => 'sometimes|boolean',
         ];
     }
 }

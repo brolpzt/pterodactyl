@@ -84,6 +84,7 @@ class AssignmentService
                             'port' => (int) $unit,
                             'ip_alias' => array_get($data, 'allocation_alias'),
                             'server_id' => null,
+                            'gcore_protected' => !empty($data['gcore_protected']),
                         ];
                     }
                 } else {
@@ -97,6 +98,7 @@ class AssignmentService
                         'port' => (int) $port,
                         'ip_alias' => array_get($data, 'allocation_alias'),
                         'server_id' => null,
+                        'gcore_protected' => !empty($data['gcore_protected']),
                     ];
                 }
 

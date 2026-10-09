@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property int $port
  * @property int|null $server_id
  * @property string|null $notes
+ * @property bool $gcore_protected
  * @property \Carbon\Carbon|null $created_at
  * @property \Carbon\Carbon|null $updated_at
  * @property string $alias
@@ -67,6 +68,11 @@ class Allocation extends Model
         'node_id' => 'integer',
         'port' => 'integer',
         'server_id' => 'integer',
+        'gcore_protected' => 'boolean',
+    ];
+
+    protected $attributes = [
+        'gcore_protected' => false,
     ];
 
     public static array $validationRules = [
@@ -76,6 +82,7 @@ class Allocation extends Model
         'ip_alias' => 'nullable|string',
         'server_id' => 'nullable|exists:servers,id',
         'notes' => 'nullable|string|max:256',
+        'gcore_protected' => 'boolean',
     ];
 
     public function getRouteKeyName(): string

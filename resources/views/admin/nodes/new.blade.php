@@ -91,6 +91,28 @@
                         </div>
                         <p class="text-muted small">If you are running the daemon behind a proxy such as Cloudflare, select this to have the daemon skip looking for certificates on boot.</p>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Gcore DDoS</label>
+                        <div>
+                            <div class="radio radio-success radio-inline">
+                                <input type="radio" id="pGcoreFalse" value="0" name="gcore_enabled" checked>
+                                <label for="pGcoreFalse"> Não</label>
+                            </div>
+                            <div class="radio radio-info radio-inline">
+                                <input type="radio" id="pGcoreTrue" value="1" name="gcore_enabled">
+                                <label for="pGcoreTrue"> Sim — node atrás do Gcore</label>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Permite marcar allocations como protegidas e abrir portas no ACL Gcore.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="gcore_policy" class="control-label">Política ACL Gcore (padrão)</label>
+                        <select name="gcore_policy" id="gcore_policy" class="form-control">
+                            @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
+                                <option value="{{ $policy }}" {{ $policy === 'allowlist' ? 'selected' : '' }}>{{ $policy }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>

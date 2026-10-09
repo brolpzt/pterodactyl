@@ -33,7 +33,23 @@
         <div class="box box-primary">
             <div class="box-header with-border">
                 <h3 class="box-title">Existing Allocations</h3>
+                @if($node->gcore_enabled)
+                    <form action="{{ route('admin.nodes.view.allocation.gcoreSync', $node->id) }}" method="POST" class="pull-right" style="margin-top:-3px">
+                        {!! csrf_field() !!}
+                        <button type="submit" class="btn btn-xs btn-info">
+                            <i class="fa fa-shield"></i> Sync portas Gcore
+                        </button>
+                    </form>
+                @endif
             </div>
+            @if($node->gcore_enabled)
+                <div class="box-body" style="padding-bottom:0">
+                    <p class="text-muted small" style="margin:0 0 8px">
+                        Node Gcore ativo (política <code>{{ $node->gcore_policy ?: 'allowlist' }}</code>).
+                        Marque só as allocations que devem abrir porta no DDoS Protection.
+                    </p>
+                </div>
+            @endif
             <div class="box-body table-responsive no-padding" style="overflow-x: visible">
                 <table class="table table-hover" style="margin-bottom:0;">
                     <tr>
@@ -43,6 +59,9 @@
                         <th>IP Address <i class="fa fa-fw fa-minus-square" style="font-weight:normal;color:#d9534f;cursor:pointer;" data-toggle="modal" data-target="#allocationModal"></i></th>
                         <th>IP Alias</th>
                         <th>Port</th>
+                        @if($node->gcore_enabled)
+                            <th>Gcore</th>
+                        @endif
                         <th>Assigned To</th>
                         <th>
                             <div class="btn-group hidden-xs">
@@ -70,6 +89,11 @@
                                 <span class="input-loader"><i class="fa fa-refresh fa-spin fa-fw"></i></span>
                             </td>
                             <td class="col-sm-2 middle" data-identifier="port">{{ $allocation->port }}</td>
+                            @if($node->gcore_enabled)
+                                <td class="middle">
+                                    <input type="checkbox" data-action="set-gcore" data-id="{{ $allocation->id }}" {{ $allocation->gcore_protected ? 'checked' : '' }} title="Abrir porta no ACL Gcore" />
+                                </td>
+                            @endif
                             <td class="col-sm-3 middle">
                                 @if(! is_null($allocation->server))
                                     <a href="{{ route('admin.servers.view', $allocation->server_id) }}">{{ $allocation->server->name }}</a>
@@ -123,6 +147,17 @@
                             <p class="text-muted small">Enter individual ports or port ranges here separated by commas or spaces.</p>
                         </div>
                     </div>
+                    @if($node->gcore_enabled)
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="gcore_protected" value="1">
+                                    Proteger no Gcore (abrir portas no ACL do DDoS)
+                                </label>
+                            </div>
+                            <p class="text-muted small">Só marque se este IP/porta estiver atrás do perfil Gcore. Política: <code>{{ $node->gcore_policy ?: 'allowlist' }}</code>.</p>
+                        </div>
+                    @endif
                 </div>
                 <div class="box-footer">
                     {!! csrf_field() !!}
@@ -232,6 +267,32 @@
         clearTimeout(typingTimer);
         $(this).parent().removeClass('has-error has-success');
         typingTimer = setTimeout(sendAlias, 250, $(this));
+    });
+
+    $('input[data-action="set-gcore"]').on('change', function () {
+        var $el = $(this);
+        var protectedFlag = $el.is(':checked') ? 1 : 0;
+        $el.prop('disabled', true);
+        $.ajax({
+            method: 'POST',
+            url: '/admin/nodes/view/' + {{ $node->id }} + '/allocation/gcore',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content') },
+            data: {
+                allocation_id: $el.data('id'),
+                gcore_protected: protectedFlag,
+            }
+        }).done(function (data) {
+            var msg = (data && data.message) ? data.message : 'Gcore atualizado.';
+            swal({ type: 'success', title: 'Gcore', text: msg });
+        }).fail(function (jqXHR) {
+            $el.prop('checked', !protectedFlag);
+            var err = (jqXHR.responseJSON && jqXHR.responseJSON.error)
+                ? jqXHR.responseJSON.error
+                : 'Falha ao sincronizar com a Gcore.';
+            swal({ type: 'error', title: 'Gcore', text: err });
+        }).always(function () {
+            $el.prop('disabled', false);
+        });
     });
 
     var fadeTimers = [];

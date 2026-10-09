@@ -116,6 +116,11 @@
                                 <i class="fa fa-cloud"></i> <span>Cloudflare DNS</span>
                             </a>
                         </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.gcore') ?: 'active' }}">
+                            <a href="{{ route('admin.gcore') }}">
+                                <i class="fa fa-shield"></i> <span>Gcore DDoS</span>
+                            </a>
+                        </li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.servers') ?: 'active' }}">
                             <a href="{{ route('admin.servers') }}">
                                 <i class="fa fa-server"></i> <span>Servers</span>

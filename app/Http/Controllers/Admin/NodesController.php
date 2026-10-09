@@ -25,6 +25,8 @@ use Pterodactyl\Services\Allocations\AllocationDeletionService;
 use Pterodactyl\Contracts\Repository\LocationRepositoryInterface;
 use Pterodactyl\Contracts\Repository\AllocationRepositoryInterface;
 use Pterodactyl\Http\Requests\Admin\Node\AllocationAliasFormRequest;
+use Pterodactyl\Services\Gcore\GcoreFirewallSyncService;
+use Pterodactyl\Exceptions\DisplayException;
 
 class NodesController extends Controller
 {
@@ -45,6 +47,7 @@ class NodesController extends Controller
         protected NodeUpdateService $updateService,
         protected SoftwareVersionService $versionService,
         protected ViewFactory $view,
+        protected GcoreFirewallSyncService $gcoreFirewallSync,
     ) {
     }
 
@@ -98,7 +101,15 @@ class NodesController extends Controller
      */
     public function allocationRemoveSingle(int $node, Allocation $allocation): Response
     {
-        $this->allocationDeletionService->handle($allocation);
+        $model = Allocation::query()->find($allocation->id) ?? $allocation;
+        $ip = $model->ip;
+        $wasProtected = (bool) $model->gcore_protected;
+
+        $this->allocationDeletionService->handle($model);
+
+        if ($wasProtected && $ip) {
+            $this->syncGcoreIpQuietly($node, $ip);
+        }
 
         return response('', 204);
     }
@@ -111,10 +122,20 @@ class NodesController extends Controller
     public function allocationRemoveMultiple(Request $request, int $node): Response
     {
         $allocations = $request->input('allocations');
+        $ipsToSync = [];
         foreach ($allocations as $rawAllocation) {
-            $allocation = new Allocation();
-            $allocation->id = $rawAllocation['id'];
-            $this->allocationRemoveSingle($node, $allocation);
+            $model = Allocation::query()->find($rawAllocation['id']);
+            if (!$model) {
+                continue;
+            }
+            if ($model->gcore_protected) {
+                $ipsToSync[$model->ip] = true;
+            }
+            $this->allocationDeletionService->handle($model);
+        }
+
+        foreach (array_keys($ipsToSync) as $ip) {
+            $this->syncGcoreIpQuietly($node, (string) $ip);
         }
 
         return response('', 204);
@@ -125,13 +146,24 @@ class NodesController extends Controller
      */
     public function allocationRemoveBlock(Request $request, int $node): RedirectResponse
     {
+        $ip = (string) $request->input('ip');
+        $hadProtected = Allocation::query()
+            ->where('node_id', $node)
+            ->where('ip', $ip)
+            ->where('gcore_protected', true)
+            ->exists();
+
         $this->allocationRepository->deleteWhere([
             ['node_id', '=', $node],
             ['server_id', '=', null],
-            ['ip', '=', $request->input('ip')],
+            ['ip', '=', $ip],
         ]);
 
-        $this->alert->success(trans('admin/node.notices.unallocated_deleted', ['ip' => htmlspecialchars($request->input('ip'))]))
+        if ($hadProtected) {
+            $this->syncGcoreIpQuietly($node, $ip);
+        }
+
+        $this->alert->success(trans('admin/node.notices.unallocated_deleted', ['ip' => htmlspecialchars($ip)]))
             ->flash();
 
         return redirect()->route('admin.nodes.view.allocation', $node);
@@ -162,10 +194,78 @@ class NodesController extends Controller
      */
     public function createAllocation(AllocationFormRequest $request, Node $node): RedirectResponse
     {
-        $this->assignmentService->handle($node, $request->normalize());
+        $data = $request->normalize();
+        $data['gcore_protected'] = $node->gcore_enabled && $request->boolean('gcore_protected');
+
+        $this->assignmentService->handle($node, $data);
         $this->alert->success(trans('admin/node.notices.allocations_added'))->flash();
 
+        if (!empty($data['gcore_protected'])) {
+            try {
+                $resolvedIp = gethostbyname((string) $data['allocation_ip']);
+                $msg = $this->gcoreFirewallSync->syncIp($node, $resolvedIp);
+                $this->alert->info('Gcore: ' . $msg)->flash();
+            } catch (DisplayException $e) {
+                $this->alert->warning('Allocations criadas, mas sync Gcore falhou: ' . $e->getMessage())->flash();
+            }
+        }
+
         return redirect()->route('admin.nodes.view.allocation', $node->id);
+    }
+
+    /**
+     * Toggle whether an allocation should open its port on the Gcore ACL.
+     */
+    public function allocationSetGcoreProtected(Request $request, Node $node): Response
+    {
+        $allocation = Allocation::query()
+            ->where('node_id', $node->id)
+            ->where('id', (int) $request->input('allocation_id'))
+            ->firstOrFail();
+
+        if (!$node->gcore_enabled) {
+            return response(['error' => 'Este node não está marcado como Gcore.'], 422);
+        }
+
+        $allocation->gcore_protected = $request->boolean('gcore_protected');
+        $allocation->save();
+
+        try {
+            $msg = $this->gcoreFirewallSync->syncIp($node, $allocation->ip);
+
+            return response(['message' => $msg], 200);
+        } catch (DisplayException $e) {
+            return response(['error' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Push all protected allocation ports for this node to Gcore ACL profiles.
+     */
+    public function syncGcoreFirewall(Node $node): RedirectResponse
+    {
+        try {
+            $lines = $this->gcoreFirewallSync->syncNode($node);
+            $this->alert->success('Gcore sync: ' . implode(' · ', $lines))->flash();
+        } catch (DisplayException $e) {
+            $this->alert->danger($e->getMessage())->flash();
+        }
+
+        return redirect()->route('admin.nodes.view.allocation', $node->id);
+    }
+
+    private function syncGcoreIpQuietly(int|Node $node, string $ip): void
+    {
+        $model = $node instanceof Node ? $node : Node::query()->find($node);
+        if (!$model || !$model->gcore_enabled) {
+            return;
+        }
+
+        try {
+            $this->gcoreFirewallSync->syncIp($model, $ip);
+        } catch (\Throwable) {
+            // Deletion must succeed even if Gcore is temporarily unreachable.
+        }
     }
 
     /**

@@ -117,6 +117,31 @@
                         </div>
                         <p class="text-muted small">If the node is marked as 'Under Maintenance' users won't be able to access servers that are on this node.</p>
                     </div>
+                    <div class="form-group col-xs-12">
+                        <label class="form-label"><span class="label label-info"><i class="fa fa-shield"></i></span> Gcore DDoS</label>
+                        <div>
+                            <div class="radio radio-success radio-inline">
+                                <input type="radio" id="pGcoreFalse" value="0" name="gcore_enabled" {{ (old('gcore_enabled', $node->gcore_enabled) == false) ? 'checked' : '' }}>
+                                <label for="pGcoreFalse"> Não</label>
+                            </div>
+                            <div class="radio radio-info radio-inline">
+                                <input type="radio" id="pGcoreTrue" value="1" name="gcore_enabled" {{ (old('gcore_enabled', $node->gcore_enabled) == true) ? 'checked' : '' }}>
+                                <label for="pGcoreTrue"> Sim — node atrás do Gcore</label>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Se ativo, allocations marcadas como protegidas abrem portas no ACL do perfil Gcore correspondente ao IP.</p>
+                    </div>
+                    <div class="form-group col-xs-12">
+                        <label for="gcore_policy" class="control-label">Política ACL Gcore (padrão)</label>
+                        <div>
+                            <select name="gcore_policy" id="gcore_policy" class="form-control">
+                                @foreach(\Pterodactyl\Services\Gcore\GcoreClient::POLICIES as $policy)
+                                    <option value="{{ $policy }}" {{ old('gcore_policy', $node->gcore_policy ?: 'allowlist') === $policy ? 'selected' : '' }}>{{ $policy }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-muted small">Usada na regra gerenciada pelo painel ao sincronizar portas protegidas.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

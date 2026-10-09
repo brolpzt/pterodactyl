@@ -25,6 +25,8 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property string $scheme
  * @property bool $behind_proxy
  * @property bool $maintenance_mode
+ * @property bool $gcore_enabled
+ * @property string $gcore_policy
  * @property int $memory
  * @property int $memory_overallocate
  * @property int $disk
@@ -81,6 +83,7 @@ class Node extends Model implements Identifiable
         'behind_proxy' => 'boolean',
         'public' => 'boolean',
         'maintenance_mode' => 'boolean',
+        'gcore_enabled' => 'boolean',
     ];
 
     /**
@@ -93,6 +96,7 @@ class Node extends Model implements Identifiable
         'disk_overallocate', 'upload_size', 'daemonBase',
         'daemonSFTP', 'daemonListen',
         'description', 'maintenance_mode',
+        'gcore_enabled', 'gcore_policy',
     ];
 
     public static array $validationRules = [
@@ -111,6 +115,8 @@ class Node extends Model implements Identifiable
         'daemonSFTP' => 'required|numeric|between:1,65535',
         'daemonListen' => 'required|numeric|between:1,65535',
         'maintenance_mode' => 'boolean',
+        'gcore_enabled' => 'boolean',
+        'gcore_policy' => 'sometimes|string|max:64',
         'upload_size' => 'int|min:1',
     ];
 
@@ -126,6 +132,8 @@ class Node extends Model implements Identifiable
         'daemonSFTP' => 2022,
         'daemonListen' => 8080,
         'maintenance_mode' => false,
+        'gcore_enabled' => false,
+        'gcore_policy' => 'allowlist',
     ];
 
     /**

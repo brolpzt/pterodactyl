@@ -2,6 +2,7 @@
 
 namespace Pterodactyl\Services\Deployment;
 
+use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Services\Allocations\AssignmentService;
@@ -15,6 +16,8 @@ class AllocationSelectionService
     protected array $nodes = [];
 
     protected array $ports = [];
+
+    protected ?Egg $egg = null;
 
     /**
      * AllocationSelectionService constructor.
@@ -78,13 +81,29 @@ class AllocationSelectionService
     }
 
     /**
+     * Optional egg port pool (start / end / step) applied when no explicit ports are set,
+     * or used as an additional filter via the repository.
+     */
+    public function setEgg(?Egg $egg): self
+    {
+        $this->egg = $egg;
+
+        return $this;
+    }
+
+    /**
      * Return a single allocation that should be used as the default allocation for a server.
      *
      * @throws NoViableAllocationException
      */
     public function handle(): Allocation
     {
-        $allocation = $this->repository->getRandomAllocation($this->nodes, $this->ports, $this->dedicated);
+        $allocation = $this->repository->getRandomAllocation(
+            $this->nodes,
+            $this->ports,
+            $this->dedicated,
+            $this->egg
+        );
 
         if (is_null($allocation)) {
             throw new NoViableAllocationException(trans('exceptions.deployment.no_viable_allocations'));

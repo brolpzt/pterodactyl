@@ -250,28 +250,27 @@
                     @endphp
                     <div class="row" style="margin-bottom:15px">
                         <div class="col-sm-3">
-                            <label class="control-label">Range início</label>
-                            <input type="number" name="port_range_start" class="form-control input-sm" min="1" max="65535"
+                            <label class="control-label" for="pPortRangeStart">Range início</label>
+                            <input type="number" id="pPortRangeStart" name="port_range_start" class="form-control input-sm" min="1" max="65535"
                                    value="{{ old('port_range_start', $egg->port_range_start) }}" placeholder="27015">
                         </div>
                         <div class="col-sm-3">
-                            <label class="control-label">Range fim</label>
-                            <input type="number" name="port_range_end" class="form-control input-sm" min="1" max="65535"
-                                   value="{{ old('port_range_end', $egg->port_range_end) }}" placeholder="27030">
+                            <label class="control-label" for="pPortRangeEnd">Range fim <span class="text-muted">(opcional)</span></label>
+                            <input type="number" id="pPortRangeEnd" name="port_range_end" class="form-control input-sm" min="1" max="65535"
+                                   value="{{ old('port_range_end', $egg->port_range_end) }}" placeholder="vazio = sem limite">
+                            <p class="text-muted small no-margin-bottom">Vazio = parte do início sem teto.</p>
                         </div>
-                        <div class="col-sm-3">
-                            <label class="control-label">Step</label>
+                        <div class="col-sm-2">
+                            <label class="control-label" for="pPortStep">Step</label>
                             <input type="number" name="port_step" id="pPortStep" class="form-control input-sm" min="1" max="100"
                                    value="{{ $portStep }}" placeholder="1">
-                            <p class="text-muted small no-margin-bottom">1 = sequencial; 2 = 27015, 27017, 27019…</p>
+                            <p class="text-muted small no-margin-bottom">2 = 27015, 27017…</p>
                         </div>
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <label class="control-label">&nbsp;</label>
-                            <div class="checkbox" style="margin-top:0">
-                                <label>
-                                    <input type="checkbox" id="pPortSkipOne" {{ $portStep === 2 ? 'checked' : '' }}>
-                                    Sempre pular uma porta (step 2)
-                                </label>
+                            <div class="checkbox checkbox-primary" style="margin-top:5px">
+                                <input type="checkbox" id="pPortSkipOne" {{ $portStep === 2 ? 'checked' : '' }}>
+                                <label for="pPortSkipOne">Sempre pular uma porta (step 2)</label>
                             </div>
                         </div>
                     </div>

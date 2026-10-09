@@ -77,7 +77,7 @@ class FindAssignableAllocationService
 
         if ($this->portSlotSync->hasPortRange($server->egg)) {
             $start = (int) $server->egg->port_range_start;
-            $end = (int) $server->egg->port_range_end;
+            $end = $this->portSlotSync->effectiveRangeEnd($server->egg);
         } else {
             $start = config('pterodactyl.client_features.allocations.range_start', null);
             $end = config('pterodactyl.client_features.allocations.range_end', null);
@@ -90,12 +90,19 @@ class FindAssignableAllocationService
         Assert::integerish($start);
         Assert::integerish($end);
 
+        // Cap candidate generation when end is open (65535) — only scan existing gaps near start
+        // via step, up to a reasonable window for new ports.
+        $scanEnd = (int) $end;
+        if ($this->portSlotSync->hasPortRange($server->egg) && $this->portSlotSync->portRangeEnd($server->egg) === null) {
+            $scanEnd = min(65535, (int) $start + (200 * $this->portSlotSync->portStep($server->egg)));
+        }
+
         $ports = $server->node->allocations()
             ->where('ip', $server->allocation->ip)
-            ->whereBetween('port', [$start, $end])
+            ->whereBetween('port', [$start, $scanEnd])
             ->pluck('port');
 
-        $available = array_values(array_diff(range((int) $start, (int) $end), $ports->toArray()));
+        $available = array_values(array_diff(range((int) $start, $scanEnd), $ports->toArray()));
 
         if ($primaryPort > 0) {
             $available = array_values(array_filter(
@@ -103,8 +110,10 @@ class FindAssignableAllocationService
                 fn (int $port) => $this->portSlotSync->isValidExtraPort($server->egg, $primaryPort, $port)
             ));
         } elseif ($this->portSlotSync->hasPortRange($server->egg)) {
-            $pool = $this->portSlotSync->primaryPoolPorts($server->egg) ?? [];
-            $available = array_values(array_intersect($available, $pool));
+            $available = array_values(array_filter(
+                $available,
+                fn (int $port) => $this->portSlotSync->isValidPrimaryPort($server->egg, $port)
+            ));
         }
 
         if (empty($available)) {

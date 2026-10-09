@@ -2,8 +2,10 @@
 
 namespace Pterodactyl\Repositories\Eloquent;
 
+use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\Allocation;
 use Illuminate\Database\Eloquent\Builder;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Pterodactyl\Contracts\Repository\AllocationRepositoryInterface;
 
 class AllocationRepository extends EloquentRepository implements AllocationRepositoryInterface
@@ -56,7 +58,7 @@ class AllocationRepository extends EloquentRepository implements AllocationRepos
     /**
      * Return a single allocation from those meeting the requirements.
      */
-    public function getRandomAllocation(array $nodes, array $ports, bool $dedicated = false): ?Allocation
+    public function getRandomAllocation(array $nodes, array $ports, bool $dedicated = false, ?Egg $egg = null): ?Allocation
     {
         $query = Allocation::query()->whereNull('server_id');
 
@@ -80,6 +82,9 @@ class AllocationRepository extends EloquentRepository implements AllocationRepos
                     $inner->orWhereIn('port', $whereIn);
                 }
             });
+        } elseif ($egg !== null) {
+            // Open-ended egg pool (start + optional end + step) without expanding port lists.
+            app(PortSlotSyncService::class)->constrainQueryToPrimaryPool($query, $egg);
         }
 
         // If this allocation should not be shared with any other servers get

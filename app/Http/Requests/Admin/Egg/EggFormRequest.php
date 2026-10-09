@@ -64,10 +64,7 @@ class EggFormRequest extends AdminFormRequest
             $start = $this->input('port_range_start');
             $end = $this->input('port_range_end');
             if ($start !== null && $start !== '' && $end !== null && $end !== '' && (int) $end < (int) $start) {
-                $validator->errors()->add('port_range_end', 'O fim do range deve ser >= início.');
-            }
-            if (($start !== null && $start !== '') xor ($end !== null && $end !== '')) {
-                $validator->errors()->add('port_range_start', 'Informe início e fim do range (ou deixe ambos vazios).');
+                $validator->errors()->add('port_range_end', 'O fim do range deve ser >= início (ou deixe vazio).');
             }
         });
     }

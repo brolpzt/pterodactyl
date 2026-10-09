@@ -472,7 +472,7 @@ class PortSlotSyncService
     }
 
     /**
-     * Whether the egg defines a usable port pool (range).
+     * Whether the egg defines a port base (start). End is optional.
      */
     public function hasPortRange(?Egg $egg): bool
     {
@@ -481,9 +481,8 @@ class PortSlotSyncService
         }
 
         $start = (int) ($egg->port_range_start ?? 0);
-        $end = (int) ($egg->port_range_end ?? 0);
 
-        return $start >= 1 && $end >= $start && $end <= 65535;
+        return $start >= 1 && $start <= 65535;
     }
 
     public function portStep(?Egg $egg): int
@@ -494,9 +493,31 @@ class PortSlotSyncService
     }
 
     /**
-     * Primary pool: ports in [start, end] with (port - start) % step == 0.
+     * Optional upper bound; null means open-ended (only start + step matter).
+     */
+    public function portRangeEnd(?Egg $egg): ?int
+    {
+        if (!$egg) {
+            return null;
+        }
+
+        $start = (int) ($egg->port_range_start ?? 0);
+        $end = (int) ($egg->port_range_end ?? 0);
+        if ($end < 1) {
+            return null;
+        }
+        if ($start >= 1 && $end < $start) {
+            return null;
+        }
+
+        return min(65535, $end);
+    }
+
+    /**
+     * Primary pool as an explicit list when end is set.
+     * When end is empty, returns null — use constrainQueryToPrimaryPool instead.
      *
-     * @return list<int>|null null = no egg range constraint
+     * @return list<int>|null
      */
     public function primaryPoolPorts(?Egg $egg): ?array
     {
@@ -504,8 +525,13 @@ class PortSlotSyncService
             return null;
         }
 
+        $end = $this->portRangeEnd($egg);
+        if ($end === null) {
+            // Open-ended: do not expand to 65k ports.
+            return null;
+        }
+
         $start = (int) $egg->port_range_start;
-        $end = (int) $egg->port_range_end;
         $step = $this->portStep($egg);
         $ports = [];
         for ($port = $start; $port <= $end; $port += $step) {
@@ -516,7 +542,8 @@ class PortSlotSyncService
     }
 
     /**
-     * Extra slot candidates relative to primary: same range, (port - primary) % step == 0, port != primary.
+     * Extra slot candidates relative to primary: >= start, optional <= end,
+     * (port - primary) % step == 0, port != primary.
      */
     public function isValidExtraPort(?Egg $egg, int $primaryPort, int $port): bool
     {
@@ -526,8 +553,11 @@ class PortSlotSyncService
 
         if ($this->hasPortRange($egg)) {
             $start = (int) $egg->port_range_start;
-            $end = (int) $egg->port_range_end;
-            if ($port < $start || $port > $end) {
+            if ($port < $start) {
+                return false;
+            }
+            $end = $this->portRangeEnd($egg);
+            if ($end !== null && $port > $end) {
                 return false;
             }
         }
@@ -542,12 +572,30 @@ class PortSlotSyncService
 
     public function isValidPrimaryPort(?Egg $egg, int $port): bool
     {
-        $pool = $this->primaryPoolPorts($egg);
-        if ($pool === null) {
-            return $port >= 1 && $port <= 65535;
+        if ($port < 1 || $port > 65535) {
+            return false;
         }
 
-        return in_array($port, $pool, true);
+        if (!$this->hasPortRange($egg)) {
+            return true;
+        }
+
+        $start = (int) $egg->port_range_start;
+        if ($port < $start) {
+            return false;
+        }
+
+        $end = $this->portRangeEnd($egg);
+        if ($end !== null && $port > $end) {
+            return false;
+        }
+
+        $step = $this->portStep($egg);
+        if ($step <= 1) {
+            return true;
+        }
+
+        return (($port - $start) % $step) === 0;
     }
 
     /**
@@ -557,14 +605,17 @@ class PortSlotSyncService
     public function constrainQueryToExtraSlot($query, ?Egg $egg, int $primaryPort)
     {
         if ($this->hasPortRange($egg)) {
-            $query->whereBetween('port', [(int) $egg->port_range_start, (int) $egg->port_range_end]);
+            $query->where('port', '>=', (int) $egg->port_range_start);
+            $end = $this->portRangeEnd($egg);
+            if ($end !== null) {
+                $query->where('port', '<=', $end);
+            }
         }
 
         $query->where('port', '!=', $primaryPort);
 
         $step = $this->portStep($egg);
         if ($step > 1) {
-            // MySQL: (port - primary) % step = 0
             $query->whereRaw('MOD(port - ?, ?) = 0', [$primaryPort, $step]);
         }
 
@@ -577,17 +628,32 @@ class PortSlotSyncService
      */
     public function constrainQueryToPrimaryPool($query, ?Egg $egg)
     {
-        $pool = $this->primaryPoolPorts($egg);
-        if ($pool === null) {
+        if (!$this->hasPortRange($egg)) {
             return $query;
         }
 
-        if ($pool === []) {
-            // Impossible match — force empty result.
-            return $query->whereRaw('0 = 1');
+        $start = (int) $egg->port_range_start;
+        $query->where('port', '>=', $start);
+
+        $end = $this->portRangeEnd($egg);
+        if ($end !== null) {
+            $query->where('port', '<=', $end);
         }
 
-        return $query->whereIn('port', $pool);
+        $step = $this->portStep($egg);
+        if ($step > 1) {
+            $query->whereRaw('MOD(port - ?, ?) = 0', [$start, $step]);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Upper bound used when creating new allocation rows (open end → 65535).
+     */
+    public function effectiveRangeEnd(?Egg $egg): int
+    {
+        return $this->portRangeEnd($egg) ?? 65535;
     }
 
     /**
@@ -612,15 +678,17 @@ class PortSlotSyncService
         $allocation = $query->lockForUpdate()->first();
 
         if (!$allocation) {
-            $hint = $this->hasPortRange($server->egg)
-                ? sprintf(
-                    ' Range do egg: %d–%d step %d (a partir da primary %d).',
+            $hint = '';
+            if ($this->hasPortRange($server->egg)) {
+                $end = $this->portRangeEnd($server->egg);
+                $hint = sprintf(
+                    ' Range do egg: >= %d%s step %d (a partir da primary %d).',
                     (int) $server->egg->port_range_start,
-                    (int) $server->egg->port_range_end,
+                    $end !== null ? "–{$end}" : '',
                     $this->portStep($server->egg),
                     $primaryPort
-                )
-                : '';
+                );
+            }
 
             throw new DisplayException(
                 "Sem allocation livre no IP {$ip} para o port slot obrigatório.{$hint}"

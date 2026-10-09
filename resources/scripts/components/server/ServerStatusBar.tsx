@@ -35,7 +35,7 @@ const stickyShellStyles = css`
 
 const barInnerStyles = (scrolled: boolean) => css`
     ${glassHeaderInner};
-    overflow: hidden;
+    overflow: visible;
     transition: padding ${motionDurations.layout}ms ease;
     padding-top: ${scrolled ? '0.5rem' : '0.625rem'};
     padding-bottom: ${scrolled ? '0.5rem' : '0.625rem'};
@@ -46,18 +46,23 @@ const barInnerStyles = (scrolled: boolean) => css`
     }
 `;
 
-/** Limita a largura do nome; o fade/glow só activa quando há overflow. */
+/** Limita a largura do nome; o fade só activa quando há overflow. */
 const titleClampOuterStyles = css`
     ${tw`relative min-w-0 max-w-full`};
     width: fit-content;
-    max-width: min(100%, 16rem);
+    max-width: min(100%, 12rem);
 
     @media (min-width: 640px) {
-        max-width: min(100%, 22rem);
+        max-width: min(100%, 16rem);
     }
 
     @media (min-width: 1280px) {
-        max-width: min(100%, 28rem);
+        max-width: min(100%, 18rem);
+    }
+
+    &:hover .hg-server-name-reveal {
+        opacity: 1;
+        visibility: visible;
     }
 `;
 
@@ -66,36 +71,31 @@ const titleClampInnerStyles = (fading: boolean) => css`
 
     ${fading &&
     css`
-        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.75rem), transparent 100%);
-        mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.75rem), transparent 100%);
+        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2rem), transparent 100%);
+        mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2rem), transparent 100%);
     `};
 `;
 
-const titleFadeGlowStyles = css`
-    pointer-events: none;
-    position: absolute;
-    top: -0.15rem;
-    right: -0.35rem;
-    bottom: -0.15rem;
-    width: 3rem;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        color-mix(in srgb, var(--hg-primary) 22%, transparent) 45%,
-        color-mix(in srgb, var(--hg-primary) 55%, transparent) 100%
-    );
-    filter: blur(4px);
-    opacity: 0.9;
+/** Nome completo por cima do resto da barra — não altera o fluxo do layout. */
+const titleHoverRevealStyles = css`
+    ${tw`absolute left-0 top-1/2 z-50 whitespace-nowrap pointer-events-none`};
+    transform: translateY(-50%);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 120ms ease, visibility 120ms ease;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.375rem;
+    background: color-mix(in srgb, var(--hg-surface) 94%, #000);
+    border: 1px solid color-mix(in srgb, var(--hg-primary) 35%, transparent);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+    max-width: min(90vw, 36rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
 `;
 
-const titleStyles = (scrolled: boolean, fading: boolean) => css`
+const titleStyles = (scrolled: boolean) => css`
     ${tw`text-white font-header font-semibold uppercase m-0 transition-all duration-200 min-w-0 whitespace-nowrap`};
     font-size: ${scrolled ? '0.9375rem' : '1rem'};
-    ${fading &&
-    css`
-        text-shadow: 0 0 14px color-mix(in srgb, var(--hg-primary) 45%, transparent),
-            0 0 28px color-mix(in srgb, var(--hg-primary) 22%, transparent);
-    `};
 
     @media (min-width: 640px) {
         font-size: ${scrolled ? '1.0625rem' : '1.125rem'};
@@ -215,12 +215,16 @@ const ServerStatusBar = ({
                     <ContentContainer css={tw`w-full min-w-0`}>
                         <div tw="flex w-full min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:gap-6">
                             <div tw="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between xl:contents">
-                                <div tw="min-w-0 xl:max-w-[min(28rem,36%)] xl:flex-shrink xl:pr-6 xl:border-r xl:border-neutral-700/40">
-                                    <div css={titleClampOuterStyles} title={name || undefined}>
+                                <div tw="min-w-0 xl:max-w-[min(18rem,30%)] xl:flex-shrink xl:pr-6 xl:border-r xl:border-neutral-700/40">
+                                    <div css={titleClampOuterStyles}>
                                         <div ref={titleClampRef} css={titleClampInnerStyles(nameFading)}>
-                                            <h1 css={titleStyles(scrolled, nameFading)}>{name}</h1>
+                                            <h1 css={titleStyles(scrolled)}>{name}</h1>
                                         </div>
-                                        {nameFading && <span css={titleFadeGlowStyles} aria-hidden />}
+                                        {nameFading && name && (
+                                            <div className="hg-server-name-reveal" css={titleHoverRevealStyles} role="tooltip">
+                                                <span css={titleStyles(scrolled)}>{name}</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <p css={metaStyles(scrolled)}>
                                         <span

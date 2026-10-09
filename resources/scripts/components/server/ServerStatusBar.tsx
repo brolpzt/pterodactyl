@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import tw, { css } from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
@@ -46,9 +46,56 @@ const barInnerStyles = (scrolled: boolean) => css`
     }
 `;
 
-const titleStyles = (scrolled: boolean) => css`
-    ${tw`text-white font-header font-semibold uppercase truncate m-0 transition-all duration-200 min-w-0`};
+/** Limita a largura do nome; o fade/glow só activa quando há overflow. */
+const titleClampOuterStyles = css`
+    ${tw`relative min-w-0 max-w-full`};
+    width: fit-content;
+    max-width: min(100%, 16rem);
+
+    @media (min-width: 640px) {
+        max-width: min(100%, 22rem);
+    }
+
+    @media (min-width: 1280px) {
+        max-width: min(100%, 28rem);
+    }
+`;
+
+const titleClampInnerStyles = (fading: boolean) => css`
+    ${tw`min-w-0 max-w-full overflow-hidden`};
+
+    ${fading &&
+    css`
+        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.75rem), transparent 100%);
+        mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.75rem), transparent 100%);
+    `};
+`;
+
+const titleFadeGlowStyles = css`
+    pointer-events: none;
+    position: absolute;
+    top: -0.15rem;
+    right: -0.35rem;
+    bottom: -0.15rem;
+    width: 3rem;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        color-mix(in srgb, var(--hg-primary) 22%, transparent) 45%,
+        color-mix(in srgb, var(--hg-primary) 55%, transparent) 100%
+    );
+    filter: blur(4px);
+    opacity: 0.9;
+`;
+
+const titleStyles = (scrolled: boolean, fading: boolean) => css`
+    ${tw`text-white font-header font-semibold uppercase m-0 transition-all duration-200 min-w-0 whitespace-nowrap`};
     font-size: ${scrolled ? '0.9375rem' : '1rem'};
+    ${fading &&
+    css`
+        text-shadow: 0 0 14px color-mix(in srgb, var(--hg-primary) 45%, transparent),
+            0 0 28px color-mix(in srgb, var(--hg-primary) 22%, transparent);
+    `};
 
     @media (min-width: 640px) {
         font-size: ${scrolled ? '1.0625rem' : '1.125rem'};
@@ -118,6 +165,8 @@ const ServerStatusBar = ({
     formatIp,
 }: Props) => {
     const [scrolled, setScrolled] = useState(false);
+    const [nameFading, setNameFading] = useState(false);
+    const titleClampRef = useRef<HTMLDivElement>(null);
     const gamedig = ServerContext.useStoreState((state) => state.server.data?.gamedig);
     const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
     const queryEnabled = supportsGameQuery(gamedig, eggId);
@@ -129,6 +178,22 @@ const ServerStatusBar = ({
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
+
+    useEffect(() => {
+        const el = titleClampRef.current;
+        if (!el) {
+            return;
+        }
+
+        const checkOverflow = () => {
+            setNameFading(el.scrollWidth > el.clientWidth + 1);
+        };
+
+        checkOverflow();
+        const observer = new ResizeObserver(checkOverflow);
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [name, scrolled]);
 
     const address = allocation ? `${allocation.alias || formatIp(allocation.ip)}:${allocation.port}` : 'n/a';
     const rawQueryHostname = query?.online ? query.hostname : null;
@@ -150,8 +215,13 @@ const ServerStatusBar = ({
                     <ContentContainer css={tw`w-full min-w-0`}>
                         <div tw="flex w-full min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:gap-6">
                             <div tw="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between xl:contents">
-                                <div tw="min-w-0 xl:flex-shrink-0 xl:pr-6 xl:border-r xl:border-neutral-700/40">
-                                    <h1 css={titleStyles(scrolled)}>{name}</h1>
+                                <div tw="min-w-0 xl:max-w-[min(28rem,36%)] xl:flex-shrink xl:pr-6 xl:border-r xl:border-neutral-700/40">
+                                    <div css={titleClampOuterStyles} title={name || undefined}>
+                                        <div ref={titleClampRef} css={titleClampInnerStyles(nameFading)}>
+                                            <h1 css={titleStyles(scrolled, nameFading)}>{name}</h1>
+                                        </div>
+                                        {nameFading && <span css={titleFadeGlowStyles} aria-hidden />}
+                                    </div>
                                     <p css={metaStyles(scrolled)}>
                                         <span
                                             css={tw`font-mono bg-[var(--hg-primary)] text-white px-1.5 py-0.5 rounded text-[11px] sm:text-[12px] flex-shrink-0 font-semibold`}

@@ -134,7 +134,8 @@ class GcoreFirewallSyncService
             }
 
             $form = GcoreAclHelper::extractProfileFormData($profile);
-            $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicy, $protoByEgg);
+            $panelAllocationPorts = $this->collectAllocationPortsOnIp($node, $ip);
+            $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicy, $protoByEgg, $panelAllocationPorts);
 
             // No ACL delta — skip the PUT to avoid pointless Pending Update on Gcore.
             if ($merge['added'] === [] && $merge['removed'] === []) {
@@ -223,14 +224,39 @@ class GcoreFirewallSyncService
     }
 
     /**
-     * Rebuild ACL:
-     * - collapse rules with the same policy + empty sip/sport into ONE rule
-     * - add/remove panel ports on that existing rule (never spawn a duplicate policy rule)
-     * - preserve rules with sip/sport filters (manual allowlists, etc.)
+     * Every allocation port on this IP (panel-owned). Used so sync only adds/removes
+     * those ports and never strips unrelated manual ports on the same policy rule.
+     *
+     * @return list<int>
+     */
+    private function collectAllocationPortsOnIp(Node $node, string $ip): array
+    {
+        $ports = Allocation::query()
+            ->where('node_id', $node->id)
+            ->where('ip', $ip)
+            ->pluck('port')
+            ->map(fn ($port) => (int) $port)
+            ->filter(fn (int $port) => $port >= 1 && $port <= 65535)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        return array_values($ports);
+    }
+
+    /**
+     * Rebuild ACL without overwriting manual (non-panel) rules.
+     *
+     * - Rules for policies the panel is NOT managing stay 100% intact (The Isle, DROP, etc.).
+     * - Rules with sip/sport filters are always preserved.
+     * - For policies the panel manages (egg gcore_policy): only add/remove ports that exist
+     *   as allocations on this IP; any other ports already on that rule are kept.
      *
      * @param list<array<string, mixed>> $acl
      * @param array<string, list<int>> $desiredByPolicy ports the panel wants open
      * @param array<string, list<string>> $protoByEgg proto from egg when creating a new rule
+     * @param list<int> $panelAllocationPorts all allocation ports on this IP
      * @return array{
      *   acl: list<array<string, mixed>>,
      *   added: array<string, list<int>>,
@@ -238,8 +264,12 @@ class GcoreFirewallSyncService
      *   skipped_existing: array<string, list<int>>,
      * }
      */
-    private function mergeGroupedAcl(array $acl, array $desiredByPolicy, array $protoByEgg = []): array
-    {
+    private function mergeGroupedAcl(
+        array $acl,
+        array $desiredByPolicy,
+        array $protoByEgg = [],
+        array $panelAllocationPorts = [],
+    ): array {
         $preserved = [];
         /** @var array<string, array<int, true>> $existingInPreserved */
         $existingInPreserved = [];
@@ -247,6 +277,11 @@ class GcoreFirewallSyncService
         $existingInGroupable = [];
         /** @var array<string, list<string>> $protoByPolicy keep proto from the first mergeable rule */
         $protoByPolicy = [];
+
+        $panelPortSet = [];
+        foreach ($panelAllocationPorts as $port) {
+            $panelPortSet[(int) $port] = true;
+        }
 
         foreach ($acl as $rule) {
             if (!is_array($rule)) {
@@ -257,6 +292,12 @@ class GcoreFirewallSyncService
                 $policy = trim((string) ($rule['policy'] ?? ''));
                 if ($policy === '' || !in_array($policy, GcoreClient::POLICIES, true)) {
                     $preserved[] = $this->normalizeRuleShape($rule, $policy !== '' ? $policy : null);
+                    continue;
+                }
+
+                // Manual / infra policies (not driven by protected servers) — never rewrite.
+                if (!array_key_exists($policy, $desiredByPolicy)) {
+                    $preserved[] = $this->normalizeRuleShape($rule, $policy);
                     continue;
                 }
 
@@ -297,7 +338,15 @@ class GcoreFirewallSyncService
             $previous = array_map('intval', array_keys($existingInGroupable[$policy] ?? []));
             sort($previous);
 
-            $portsForRule = [];
+            // Keep ports that are not panel allocations (manual extras on the same policy).
+            $manualPorts = [];
+            foreach ($previous as $port) {
+                if (!isset($panelPortSet[$port])) {
+                    $manualPorts[$port] = true;
+                }
+            }
+
+            $portsForRule = $manualPorts;
             foreach ($desired as $port) {
                 // Already open in a restricted (sip/sport) rule of the same policy.
                 if (isset($existingInPreserved[$policy][$port])) {
@@ -311,7 +360,11 @@ class GcoreFirewallSyncService
             sort($finalPorts);
 
             $added[$policy] = array_values(array_diff($finalPorts, $previous));
-            $removed[$policy] = array_values(array_diff($previous, $finalPorts));
+            // Only report removal of panel allocation ports (never "manual" extras).
+            $removed[$policy] = array_values(array_filter(
+                array_diff($previous, $finalPorts),
+                fn (int $port) => isset($panelPortSet[$port]),
+            ));
 
             // Keep a single rule for this policy when it still has ports.
             // Prefer existing Gcore rule proto; else egg proto; else any.
@@ -337,7 +390,7 @@ class GcoreFirewallSyncService
         $removed = array_filter($removed, fn ($ports) => $ports !== []);
         $skipped = array_filter($skipped, fn ($ports) => $ports !== []);
 
-        // Specific game rules above catch-alls / restricted rules.
+        // Panel-managed game rules first; manual / restricted rules after.
         return [
             'acl' => array_values(array_merge($grouped, $preserved)),
             'added' => $added,

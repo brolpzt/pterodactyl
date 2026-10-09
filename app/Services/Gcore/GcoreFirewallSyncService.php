@@ -127,6 +127,18 @@ class GcoreFirewallSyncService
             $form = GcoreAclHelper::extractProfileFormData($profile);
             $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicy);
 
+            // No ACL delta — skip the PUT to avoid pointless Pending Update on Gcore.
+            if ($merge['added'] === [] && $merge['removed'] === []) {
+                return $this->formatSyncSummary(
+                    $ip,
+                    (int) $profile['id'],
+                    $portsByPolicy,
+                    $merge,
+                    'sem alterações (API não atualizada)',
+                    $ipIsGcore,
+                );
+            }
+
             $payload = $client->buildUpdatePayload($profile, $form['rate'], $form['geoip'], $merge['acl']);
             $updated = $client->updateProfile((int) $profile['id'], $payload);
             $status = (string) ($updated['status']['status'] ?? 'OK');

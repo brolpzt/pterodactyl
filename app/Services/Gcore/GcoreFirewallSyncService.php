@@ -148,6 +148,7 @@ class GcoreFirewallSyncService
             ->where('node_id', $node->id)
             ->where('ip', $ip)
             ->where('gcore_protected', true)
+            ->whereNotNull('server_id')
             ->with(['server.egg:id,gcore_policy'])
             ->orderBy('port')
             ->get();
@@ -160,10 +161,18 @@ class GcoreFirewallSyncService
                 continue;
             }
 
-            $policy = $this->normalizePolicy(
-                $allocation->server?->egg?->gcore_policy
-            );
-            $map[$policy][$port] = true;
+            // Free allocations must never open ACL rules (would fall back to allowlist).
+            if (!$allocation->server_id || !$allocation->server) {
+                continue;
+            }
+
+            $rawPolicy = trim((string) ($allocation->server->egg?->gcore_policy ?? ''));
+            if ($rawPolicy === '' || !in_array($rawPolicy, GcoreClient::POLICIES, true)) {
+                // No explicit egg policy — skip instead of inventing allowlist.
+                continue;
+            }
+
+            $map[$rawPolicy][$port] = true;
         }
 
         $out = [];

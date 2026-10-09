@@ -122,9 +122,9 @@ class GcoreFirewallSyncService
         // If the IP is no longer marked Gcore, clear panel-managed ports only.
         $desired = $ipIsGcore
             ? $this->collectDesiredByPolicy($node, $ip)
-            : ['ports' => [], 'protos' => []];
+            : ['ports' => [], 'by_proto' => []];
         $portsByPolicy = $desired['ports'];
-        $protoByEgg = $desired['protos'];
+        $portsByPolicyProto = $desired['by_proto'];
 
         try {
             $client = GcoreClient::fromConfig();
@@ -135,7 +135,7 @@ class GcoreFirewallSyncService
 
             $form = GcoreAclHelper::extractProfileFormData($profile);
             $panelAllocationPorts = $this->collectAllocationPortsOnIp($node, $ip);
-            $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicy, $protoByEgg, $panelAllocationPorts);
+            $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicyProto, $panelAllocationPorts);
 
             // No ACL delta — skip the PUT to avoid pointless Pending Update on Gcore.
             if ($merge['added'] === [] && $merge['removed'] === []) {
@@ -164,7 +164,7 @@ class GcoreFirewallSyncService
     /**
      * @return array{
      *   ports: array<string, list<int>>,
-     *   protos: array<string, list<string>>,
+     *   by_proto: array<string, array<string, list<int>>>,
      * }
      */
     private function collectDesiredByPolicy(Node $node, string $ip): array
@@ -178,10 +178,8 @@ class GcoreFirewallSyncService
             ->orderBy('port')
             ->get();
 
-        /** @var array<string, array<int, true>> $map */
-        $map = [];
-        /** @var array<string, list<string>> $protos */
-        $protos = [];
+        /** @var array<string, array<string, array<int, true>>> $byProto */
+        $byProto = [];
         foreach ($allocations as $allocation) {
             $port = (int) $allocation->port;
             if ($port < 1 || $port > 65535) {
@@ -204,23 +202,37 @@ class GcoreFirewallSyncService
             }
 
             $policy = $resolved['policy'];
-            $map[$policy][$port] = true;
-
-            if (!isset($protos[$policy]) && !empty($resolved['proto'])) {
-                $protos[$policy] = [$resolved['proto']];
+            $proto = strtolower(trim((string) ($resolved['proto'] ?? 'any')));
+            if ($proto === '') {
+                $proto = 'any';
             }
+            $byProto[$policy][$proto][$port] = true;
         }
 
-        $out = [];
-        foreach ($map as $policy => $ports) {
-            $list = array_map('intval', array_keys($ports));
-            sort($list);
-            $out[$policy] = $list;
+        /** @var array<string, array<string, list<int>>> $byProtoOut */
+        $byProtoOut = [];
+        /** @var array<string, list<int>> $flat */
+        $flat = [];
+        foreach ($byProto as $policy => $protos) {
+            $flatPorts = [];
+            foreach ($protos as $proto => $ports) {
+                $list = array_map('intval', array_keys($ports));
+                sort($list);
+                $byProtoOut[$policy][$proto] = $list;
+                foreach ($list as $port) {
+                    $flatPorts[$port] = true;
+                }
+            }
+            ksort($byProtoOut[$policy]);
+            $flatList = array_map('intval', array_keys($flatPorts));
+            sort($flatList);
+            $flat[$policy] = $flatList;
         }
 
-        ksort($out);
+        ksort($byProtoOut);
+        ksort($flat);
 
-        return ['ports' => $out, 'protos' => $protos];
+        return ['ports' => $flat, 'by_proto' => $byProtoOut];
     }
 
     /**
@@ -249,13 +261,13 @@ class GcoreFirewallSyncService
      * Rebuild ACL without overwriting manual (non-panel) rules, preserving order.
      *
      * - Manual / infra rules stay intact and keep relative order.
-     * - Panel-managed game policies are rebuilt (ports only) and placed after the
-     *   first N leading rules (config gcore.acl_game_rules_after, default 5).
+     * - Panel only rewrites (policy + proto) pairs it manages — never merges TCP into UDP.
+     * - Panel-managed rules are placed after the first N leading rules
+     *   (config gcore.acl_game_rules_after, default 5).
      * - Rules with sip/sport filters are always preserved in place.
      *
      * @param list<array<string, mixed>> $acl
-     * @param array<string, list<int>> $desiredByPolicy ports the panel wants open
-     * @param array<string, list<string>> $protoByEgg proto from egg when creating a new rule
+     * @param array<string, array<string, list<int>>> $desiredByPolicyProto policy => proto => ports
      * @param list<int> $panelAllocationPorts all allocation ports on this IP
      * @return array{
      *   acl: list<array<string, mixed>>,
@@ -266,18 +278,15 @@ class GcoreFirewallSyncService
      */
     private function mergeGroupedAcl(
         array $acl,
-        array $desiredByPolicy,
-        array $protoByEgg = [],
+        array $desiredByPolicyProto,
         array $panelAllocationPorts = [],
     ): array {
-        /** @var list<array<string, mixed>> $manualRules original order, excluding panel-managed policies */
+        /** @var list<array<string, mixed>> $manualRules */
         $manualRules = [];
         /** @var array<string, array<int, true>> $existingInPreserved */
         $existingInPreserved = [];
-        /** @var array<string, array<int, true>> $existingInGroupable */
-        $existingInGroupable = [];
-        /** @var array<string, list<string>> $protoByPolicy */
-        $protoByPolicy = [];
+        /** @var array<string, array<string, array<int, true>>> $existingByProto */
+        $existingByProto = [];
 
         $panelPortSet = [];
         foreach ($panelAllocationPorts as $port) {
@@ -296,13 +305,17 @@ class GcoreFirewallSyncService
                     continue;
                 }
 
-                // Panel-managed game policy: absorb ports, drop from manual order (re-inserted later).
-                if (array_key_exists($policy, $desiredByPolicy)) {
-                    if (!isset($protoByPolicy[$policy])) {
-                        $protoByPolicy[$policy] = $this->ruleProtoList($rule);
-                    }
+                $protoList = $this->ruleProtoList($rule);
+                if ($protoList === []) {
+                    $protoList = ['any'];
+                }
+                $protoKey = $this->protoKey($protoList);
+
+                // Only absorb this rule if the panel manages this exact policy+proto.
+                // Other proto variants of the same policy (e.g. tcp 80/443 vs udp 7707) stay manual.
+                if (isset($desiredByPolicyProto[$policy][$protoKey])) {
                     foreach ($this->rulePorts($rule) as $port) {
-                        $existingInGroupable[$policy][$port] = true;
+                        $existingByProto[$policy][$protoKey][$port] = true;
                     }
                     continue;
                 }
@@ -327,67 +340,79 @@ class GcoreFirewallSyncService
         $grouped = [];
 
         $policies = array_values(array_unique(array_merge(
-            array_keys($desiredByPolicy),
-            array_keys($existingInGroupable),
+            array_keys($desiredByPolicyProto),
+            array_keys($existingByProto),
         )));
         sort($policies);
 
         foreach ($policies as $policy) {
-            $desired = array_values(array_unique(array_map('intval', $desiredByPolicy[$policy] ?? [])));
-            sort($desired);
+            $protoKeys = array_values(array_unique(array_merge(
+                array_keys($desiredByPolicyProto[$policy] ?? []),
+                array_keys($existingByProto[$policy] ?? []),
+            )));
+            sort($protoKeys);
 
-            $previous = array_map('intval', array_keys($existingInGroupable[$policy] ?? []));
-            sort($previous);
+            foreach ($protoKeys as $protoKey) {
+                $desired = array_values(array_unique(array_map(
+                    'intval',
+                    $desiredByPolicyProto[$policy][$protoKey] ?? []
+                )));
+                sort($desired);
 
-            // Keep ports that are not panel allocations (manual extras on the same policy).
-            $manualPorts = [];
-            foreach ($previous as $port) {
-                if (!isset($panelPortSet[$port])) {
-                    $manualPorts[$port] = true;
+                $previous = array_map('intval', array_keys($existingByProto[$policy][$protoKey] ?? []));
+                sort($previous);
+
+                $manualPorts = [];
+                foreach ($previous as $port) {
+                    if (!isset($panelPortSet[$port])) {
+                        $manualPorts[$port] = true;
+                    }
                 }
-            }
 
-            $portsForRule = $manualPorts;
-            foreach ($desired as $port) {
-                if (isset($existingInPreserved[$policy][$port])) {
-                    $skipped[$policy][] = $port;
+                $portsForRule = $manualPorts;
+                foreach ($desired as $port) {
+                    if (isset($existingInPreserved[$policy][$port])) {
+                        $skipped[$policy][] = $port;
+                        continue;
+                    }
+                    $portsForRule[$port] = true;
+                }
+
+                $finalPorts = array_map('intval', array_keys($portsForRule));
+                sort($finalPorts);
+
+                $addedPorts = array_values(array_diff($finalPorts, $previous));
+                $removedPorts = array_values(array_filter(
+                    array_diff($previous, $finalPorts),
+                    fn (int $port) => isset($panelPortSet[$port]),
+                ));
+                if ($addedPorts !== []) {
+                    $added[$policy] = array_values(array_unique(array_merge($added[$policy] ?? [], $addedPorts)));
+                    sort($added[$policy]);
+                }
+                if ($removedPorts !== []) {
+                    $removed[$policy] = array_values(array_unique(array_merge($removed[$policy] ?? [], $removedPorts)));
+                    sort($removed[$policy]);
+                }
+
+                if ($finalPorts === []) {
                     continue;
                 }
-                $portsForRule[$port] = true;
+
+                $grouped[] = [
+                    'policy' => $policy,
+                    'sip_list' => [],
+                    'dport_list' => $finalPorts,
+                    'proto_list' => $protoKey === 'any' ? ['any'] : explode(',', $protoKey),
+                    'sport_list' => [],
+                ];
             }
-
-            $finalPorts = array_map('intval', array_keys($portsForRule));
-            sort($finalPorts);
-
-            $added[$policy] = array_values(array_diff($finalPorts, $previous));
-            $removed[$policy] = array_values(array_filter(
-                array_diff($previous, $finalPorts),
-                fn (int $port) => isset($panelPortSet[$port]),
-            ));
-
-            if ($finalPorts === []) {
-                continue;
-            }
-
-            $proto = $protoByPolicy[$policy] ?? $protoByEgg[$policy] ?? ['any'];
-            if ($proto === []) {
-                $proto = ['any'];
-            }
-
-            $grouped[] = [
-                'policy' => $policy,
-                'sip_list' => [],
-                'dport_list' => $finalPorts,
-                'proto_list' => $proto,
-                'sport_list' => [],
-            ];
         }
 
         $added = array_filter($added, fn ($ports) => $ports !== []);
         $removed = array_filter($removed, fn ($ports) => $ports !== []);
         $skipped = array_filter($skipped, fn ($ports) => $ports !== []);
 
-        // Keep first N manual/infra rules on top; panel game rules go below that block.
         $after = max(0, (int) config('gcore.acl_game_rules_after', 5));
         $head = array_slice($manualRules, 0, $after);
         $tail = array_slice($manualRules, $after);
@@ -398,6 +423,24 @@ class GcoreFirewallSyncService
             'removed' => $removed,
             'skipped_existing' => $skipped,
         ];
+    }
+
+    /**
+     * @param list<string> $protoList
+     */
+    private function protoKey(array $protoList): string
+    {
+        $normalized = [];
+        foreach ($protoList as $proto) {
+            $proto = strtolower(trim((string) $proto));
+            if ($proto !== '') {
+                $normalized[] = $proto;
+            }
+        }
+        $normalized = array_values(array_unique($normalized));
+        sort($normalized);
+
+        return $normalized === [] ? 'any' : implode(',', $normalized);
     }
 
     /**
@@ -511,8 +554,7 @@ class GcoreFirewallSyncService
     }
 
     /**
-     * Mergeable rules: same ACL policy, no sip/sport filters.
-     * Proto may be any/udp/tcp/… — we still collapse into one rule per policy.
+     * Mergeable rules: no sip/sport filters. Collapsed per policy+proto (never mix TCP/UDP).
      *
      * @param array<string, mixed> $rule
      */

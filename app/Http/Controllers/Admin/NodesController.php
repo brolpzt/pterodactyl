@@ -281,7 +281,10 @@ class NodesController extends Controller
     {
         try {
             $lines = $this->gcoreFirewallSync->syncNode($node);
-            $this->alert->success('Gcore sync: ' . implode(' · ', $lines))->flash();
+            $body = $lines === []
+                ? 'Nada para sincronizar.'
+                : implode("\n\n", $lines);
+            $this->alert->success("Gcore sync\n" . $body)->flash();
         } catch (DisplayException $e) {
             $this->alert->danger($e->getMessage())->flash();
         }

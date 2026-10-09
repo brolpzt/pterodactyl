@@ -313,49 +313,70 @@ class GcoreFirewallSyncService
         string $status,
         bool $ipIsGcore,
     ): string {
+        $lines = [
+            sprintf('IP %s · perfil %d · %s', $ip, $profileId, $status),
+        ];
+
         if (!$ipIsGcore) {
-            return "IP {$ip} · perfil {$profileId} · IP fora do Gcore (regras agrupadas limpas) · {$status}";
+            $lines[] = 'IP removido do Gcore — regras gerenciadas limpas na ACL.';
+
+            return implode("\n", $lines);
         }
 
-        if ($portsByPolicy === [] && $merge['removed'] === [] && $merge['added'] === []) {
-            return "IP {$ip} · perfil {$profileId} · nenhuma porta · {$status}";
+        $added = $merge['added'];
+        $removed = $merge['removed'];
+        $skipped = $merge['skipped_existing'];
+
+        if ($portsByPolicy === [] && $added === [] && $removed === []) {
+            $lines[] = 'Nenhuma porta com servidor + política ACL para sincronizar.';
+
+            return implode("\n", $lines);
         }
 
-        $parts = [];
-        foreach ($portsByPolicy as $policy => $ports) {
-            $parts[] = $policy . '[' . implode(',', $ports) . ']';
+        if ($portsByPolicy !== []) {
+            $lines[] = 'Portas no painel:';
+            foreach ($portsByPolicy as $policy => $ports) {
+                $count = count($ports);
+                $allSkipped = isset($skipped[$policy])
+                    && count($skipped[$policy]) === $count
+                    && array_values(array_diff($ports, $skipped[$policy])) === [];
+                $note = $allSkipped ? ' (já na ACL)' : '';
+                $lines[] = sprintf(
+                    '  • %s: %d porta%s%s',
+                    $policy,
+                    $count,
+                    $count === 1 ? '' : 's',
+                    $note
+                );
+            }
         }
 
-        $extra = [];
-        if ($merge['added'] !== []) {
-            $extra[] = 'add ' . $this->formatPolicyPorts($merge['added']);
-        }
-        if ($merge['removed'] !== []) {
-            $extra[] = 'rm ' . $this->formatPolicyPorts($merge['removed']);
-        }
-        if ($merge['skipped_existing'] !== []) {
-            $extra[] = 'já existiam ' . $this->formatPolicyPorts($merge['skipped_existing']);
+        $hasDelta = $added !== [] || $removed !== [];
+        if (!$hasDelta) {
+            $lines[] = 'Resultado: sem alterações (tudo já estava na ACL).';
+
+            return implode("\n", $lines);
         }
 
-        $summary = $parts === [] ? 'nenhuma porta' : implode(' · ', $parts);
-        if ($extra !== []) {
-            $summary .= ' · ' . implode(' · ', $extra);
+        $lines[] = 'Alterações enviadas:';
+        foreach ($added as $policy => $ports) {
+            $lines[] = sprintf('  • + %s: %s', $policy, implode(', ', $ports));
+        }
+        foreach ($removed as $policy => $ports) {
+            $lines[] = sprintf('  • − %s: %s', $policy, implode(', ', $ports));
         }
 
-        return "IP {$ip} · perfil {$profileId} · {$summary} · {$status}";
-    }
-
-    /**
-     * @param array<string, list<int>> $map
-     */
-    private function formatPolicyPorts(array $map): string
-    {
-        $bits = [];
-        foreach ($map as $policy => $ports) {
-            $bits[] = $policy . '[' . implode(',', $ports) . ']';
+        if ($skipped !== []) {
+            $skipCount = array_sum(array_map('count', $skipped));
+            $lines[] = sprintf(
+                '  • %d porta%s ignorada%s (já existiam na ACL).',
+                $skipCount,
+                $skipCount === 1 ? '' : 's',
+                $skipCount === 1 ? '' : 's'
+            );
         }
 
-        return implode(', ', $bits);
+        return implode("\n", $lines);
     }
 
     /**

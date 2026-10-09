@@ -174,8 +174,8 @@
                             @endif
                             @foreach (Alert::getMessages() as $type => $messages)
                                 @foreach ($messages as $message)
-                                    <div class="alert alert-{{ $type }} alert-dismissable" role="alert">
-                                        {{ $message }}
+                                    <div class="alert alert-{{ $type }} alert-dismissable" role="alert" style="white-space:pre-line">
+                                        {!! nl2br(e($message), false) !!}
                                     </div>
                                 @endforeach
                             @endforeach

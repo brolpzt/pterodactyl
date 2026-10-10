@@ -1,0 +1,18 @@
+services:
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: hostgamer-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_ABSOLUTE_URI: https://phpmyadmin-node050.hostgamer.net/
+      PMA_HOST: 10.8.0.6
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 256M
+      PHPMYADMIN_SSO_SECRET: ${PHPMYADMIN_SSO_SECRET}
+      PHPMYADMIN_REDEEM_URL: https://control.hostgamer.net/api/internal/phpmyadmin/redeem
+    ports:
+      - "127.0.0.1:8088:80"
+    volumes:
+      - ./config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:ro
+      - ./sso.php:/var/www/html/sso.php:ro
+      - ./login-required.php:/var/www/html/login-required.php:ro

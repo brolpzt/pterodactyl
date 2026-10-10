@@ -1,4 +1,4 @@
-# SSO — Integração com painel externo
+# SSO - Integração com painel externo
 
 Este documento descreve como integrar um painel de controle externo (ex.: `clientarea.hostgamer.net`) com o Pterodactyl (`control.hostgamer.net`) para que o cliente acesse diretamente a tela de um servidor **sem digitar senha**, de forma segura.
 
@@ -78,7 +78,7 @@ GET https://control.hostgamer.net/auth/sso
 - Rate limit: 30 requisições/minuto por IP
 - Eventos de auditoria: `auth:sso` e `auth:sso-fail`
 
-Usuários com 2FA (TOTP) **não precisam** do checkpoint ao entrar via SSO — o painel externo já autenticou o cliente.
+Usuários com 2FA (TOTP) **não precisam** do checkpoint ao entrar via SSO - o painel externo já autenticou o cliente.
 
 ---
 
@@ -154,7 +154,7 @@ function pterodactyl_sso_url(
 ### Rota no seu painel (exemplo Laravel)
 
 ```php
-// routes/web.php — usuário já autenticado no seu painel
+// routes/web.php - usuário já autenticado no seu painel
 Route::get('/servers/{service}/manage', function (Service $service) {
   abort_unless($service->user_id === auth()->id(), 403);
 
@@ -178,7 +178,7 @@ Route::get('/servers/{service}/manage', function (Service $service) {
 </a>
 ```
 
-O link aponta para **seu** backend, que gera o SSO e redireciona — nunca gere a assinatura no JavaScript.
+O link aponta para **seu** backend, que gera o SSO e redireciona - nunca gere a assinatura no JavaScript.
 
 ---
 
@@ -254,7 +254,7 @@ https://control.hostgamer.net/server/f42a054e
 | 403 sempre | Segredo diferente entre painéis, payload fora de ordem, ou `expires` no passado |
 | User not found | `external_id` não definido no Pterodactyl |
 | Server not found | `uuidShort` incorreto ou usuário não é dono/subusuário |
-| Link já usado | Cliente atualizou a página — gere um novo link |
+| Link já usado | Cliente atualizou a página - gere um novo link |
 | SSO disabled | `SSO_ENABLED=false` ou `config:cache` desatualizado |
 
 Consulte os activity logs do Pterodactyl (`auth:sso`, `auth:sso-fail`) para auditoria.
@@ -266,3 +266,9 @@ Consulte os activity logs do Pterodactyl (`auth:sso`, `auth:sso-fail`) para audi
 A lógica de assinatura no Pterodactyl está em `Pterodactyl\Services\Auth\SsoLoginService::buildPayload()` e `::sign()`.
 
 Use essas funções como referência para manter compatibilidade entre sistemas.
+
+---
+
+## Relacionado
+
+- **phpMyAdmin SSO (por node):** [`docs/phpmyadmin-sso.md`](phpmyadmin-sso.md) — bridge em `docker/hostgamer-phpmyadmin/`.

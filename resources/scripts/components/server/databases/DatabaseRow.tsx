@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDatabase, faEye, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faDatabase, faExternalLinkAlt, faEye, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import Modal from '@/components/elements/Modal';
 import { Form, Formik, FormikHelpers } from 'formik';
 import Field from '@/components/elements/Field';
@@ -8,6 +8,7 @@ import { object, string } from 'yup';
 import FlashMessageRender from '@/components/FlashMessageRender';
 import { ServerContext } from '@/state/server';
 import deleteServerDatabase from '@/api/server/databases/deleteServerDatabase';
+import getPhpMyAdminSsoUrl from '@/api/server/databases/getPhpMyAdminSsoUrl';
 import { httpErrorToHuman } from '@/api/http';
 import RotatePasswordButton from '@/components/server/databases/RotatePasswordButton';
 import Can from '@/components/elements/Can';
@@ -33,6 +34,7 @@ export default ({ database, className }: Props) => {
 
     const appendDatabase = ServerContext.useStoreActions((actions) => actions.databases.appendDatabase);
     const removeDatabase = ServerContext.useStoreActions((actions) => actions.databases.removeDatabase);
+    const [phpMyAdminLoading, setPhpMyAdminLoading] = useState(false);
 
     const jdbcConnectionString = `jdbc:mysql://${database.username}${
         database.password ? `:${encodeURIComponent(database.password)}` : ''
@@ -43,6 +45,20 @@ export default ({ database, className }: Props) => {
             .required('The database name must be provided.')
             .oneOf([database.name.split('_', 2)[1], database.name], 'The database name must be provided.'),
     });
+
+    const openPhpMyAdmin = () => {
+        clearFlashes('databases');
+        setPhpMyAdminLoading(true);
+        getPhpMyAdminSsoUrl(uuid, database.id)
+            .then((url) => {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            })
+            .catch((error) => {
+                console.error(error);
+                addError({ key: 'databases', message: httpErrorToHuman(error) });
+            })
+            .finally(() => setPhpMyAdminLoading(false));
+    };
 
     const submit = (values: { confirm: string }, { setSubmitting }: FormikHelpers<{ confirm: string }>) => {
         clearFlashes();
@@ -165,6 +181,17 @@ export default ({ database, className }: Props) => {
                     <p css={tw`mt-1 text-2xs text-neutral-500 uppercase select-none`}>Username</p>
                 </div>
                 <div css={tw`ml-8`}>
+                    <Can action={'database.view_password'}>
+                        <Button
+                            isSecondary
+                            css={tw`mr-2`}
+                            onClick={openPhpMyAdmin}
+                            disabled={phpMyAdminLoading}
+                            title={'phpMyAdmin'}
+                        >
+                            <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
+                        </Button>
+                    </Can>
                     <Button isSecondary css={tw`mr-2`} onClick={() => setConnectionVisible(true)}>
                         <FontAwesomeIcon icon={faEye} fixedWidth />
                     </Button>

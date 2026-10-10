@@ -24,7 +24,7 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->configureRateLimiting();
 
-        // Disable trimming string values when requesting file information — it isn't helpful
+        // Disable trimming string values when requesting file information - it isn't helpful
         // and messes up the ability to actually open a directory that ends with a space.
         TrimStrings::skipWhen(function (Request $request) {
             return preg_match(self::FILE_PATH_REGEX, $request->getPathInfo()) === 1;
@@ -65,6 +65,13 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('/api/remote')
                 ->scopeBindings()
                 ->group(base_path('routes/api-remote.php'));
+
+            // Internal redeem for phpMyAdmin SSO bridge (shared secret, no user session).
+            Route::middleware(['throttle:60,1'])
+                ->prefix('/api/internal')
+                ->group(function () {
+                    Route::post('/phpmyadmin/redeem', [\Pterodactyl\Http\Controllers\Api\Internal\PhpMyAdminSsoController::class, 'redeem']);
+                });
         });
     }
 

@@ -114,6 +114,7 @@ Route::group(['prefix' => 'servers'], function () {
         Route::get('/view/{server:id}/build', [Admin\Servers\ServerViewController::class, 'build'])->name('admin.servers.view.build');
         Route::get('/view/{server:id}/startup', [Admin\Servers\ServerViewController::class, 'startup'])->name('admin.servers.view.startup');
         Route::get('/view/{server:id}/database', [Admin\Servers\ServerViewController::class, 'database'])->name('admin.servers.view.database');
+        Route::get('/view/{server:id}/database/phpmyadmin', [Admin\ServersController::class, 'phpMyAdmin'])->name('admin.servers.view.database.phpmyadmin');
         Route::get('/view/{server:id}/mounts', [Admin\Servers\ServerViewController::class, 'mounts'])->name('admin.servers.view.mounts');
         Route::get('/view/{server:id}/firewall', [Admin\Servers\ServerViewController::class, 'firewall'])->name('admin.servers.view.firewall');
     });

@@ -24,6 +24,7 @@ use Pterodactyl\Repositories\Wings\DaemonServerRepository;
 use Pterodactyl\Repositories\Wings\DaemonFirewallRepository;
 use Pterodactyl\Services\Servers\BuildModificationService;
 use Pterodactyl\Services\Databases\DatabasePasswordService;
+use Pterodactyl\Services\Databases\PhpMyAdminSsoService;
 use Pterodactyl\Services\Servers\DetailsModificationService;
 use Pterodactyl\Services\Servers\StartupModificationService;
 use Pterodactyl\Contracts\Repository\NestRepositoryInterface;
@@ -51,6 +52,7 @@ class ServersController extends Controller
         protected DaemonServerRepository $daemonServerRepository,
         protected DatabaseManagementService $databaseManagementService,
         protected DatabasePasswordService $databasePasswordService,
+        protected PhpMyAdminSsoService $phpMyAdminSsoService,
         protected DatabaseRepositoryInterface $databaseRepository,
         protected DatabaseHostRepository $databaseHostRepository,
         protected ServerDeletionService $deletionService,
@@ -228,6 +230,18 @@ class ServersController extends Controller
         ]);
 
         return redirect()->route('admin.servers.view.database', $server->id)->withInput();
+    }
+
+    /**
+     * Open phpMyAdmin via SSO for all databases on this server.
+     *
+     * @throws DisplayException
+     */
+    public function phpMyAdmin(Server $server): RedirectResponse
+    {
+        $url = $this->phpMyAdminSsoService->urlForServerAdmin($server);
+
+        return redirect()->away($url);
     }
 
     /**

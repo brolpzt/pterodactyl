@@ -2,12 +2,14 @@
 
 namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Database;
 use Pterodactyl\Facades\Activity;
 use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Services\Databases\DatabasePasswordService;
+use Pterodactyl\Services\Databases\PhpMyAdminSsoService;
 use Pterodactyl\Transformers\Api\Client\DatabaseTransformer;
 use Pterodactyl\Services\Databases\DatabaseManagementService;
 use Pterodactyl\Services\Databases\DeployServerDatabaseService;
@@ -16,6 +18,7 @@ use Pterodactyl\Http\Requests\Api\Client\Servers\Databases\GetDatabasesRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Databases\StoreDatabaseRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Databases\DeleteDatabaseRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Databases\RotatePasswordRequest;
+use Pterodactyl\Http\Requests\Api\Client\Servers\Databases\PhpMyAdminSsoRequest;
 
 class DatabaseController extends ClientApiController
 {
@@ -26,6 +29,7 @@ class DatabaseController extends ClientApiController
         private DeployServerDatabaseService $deployDatabaseService,
         private DatabaseManagementService $managementService,
         private DatabasePasswordService $passwordService,
+        private PhpMyAdminSsoService $phpMyAdminSsoService,
     ) {
         parent::__construct();
     }
@@ -84,6 +88,28 @@ class DatabaseController extends ClientApiController
             ->parseIncludes(['password'])
             ->transformWith($this->getTransformer(DatabaseTransformer::class))
             ->toArray();
+    }
+
+    /**
+     * Create a short-lived phpMyAdmin SSO URL for the given database.
+     *
+     * @throws DisplayException
+     */
+    public function phpMyAdmin(PhpMyAdminSsoRequest $request, Server $server, Database $database): JsonResponse
+    {
+        $url = $this->phpMyAdminSsoService->urlForDatabase($database);
+
+        Activity::event('server:database.phpmyadmin')
+            ->subject($database)
+            ->property('name', $database->database)
+            ->log();
+
+        return new JsonResponse([
+            'object' => 'phpmyadmin_sso',
+            'attributes' => [
+                'url' => $url,
+            ],
+        ]);
     }
 
     /**

@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title')
-    Server — {{ $server->name }}: Databases
+    Server - {{ $server->name }}: Databases
 @endsection
 
 @section('content-header')
@@ -20,6 +20,11 @@
     <div class="col-sm-7">
         <div class="alert alert-info">
             Database passwords can be viewed when <a href="/server/{{ $server->uuidShort }}/databases">visiting this server</a> on the front-end.
+            @if($server->databases->count() > 0)
+                <a class="btn btn-xs btn-primary pull-right" href="{{ route('admin.servers.view.database.phpmyadmin', $server->id) }}" target="_blank" rel="noopener">
+                    <i class="fa fa-external-link"></i> Abrir phpMyAdmin (SSO)
+                </a>
+            @endif
         </div>
         <div class="box box-primary">
             <div class="box-header with-border">

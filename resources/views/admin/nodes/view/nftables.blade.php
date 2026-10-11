@@ -25,7 +25,7 @@
             <ul class="nav nav-tabs">
                 <li><a href="{{ route('admin.nodes.view', $node->id) }}">About</a></li>
                 <li><a href="{{ route('admin.nodes.view.settings', $node->id) }}">Settings</a></li>
-                <li><a href="{{ route('admin.nodes.view.configuration", $node->id) }}">Configuration</a></li>
+                <li><a href="{{ route('admin.nodes.view.configuration', $node->id) }}">Configuration</a></li>
                 <li><a href="{{ route('admin.nodes.view.allocation', $node->id) }}">Allocation</a></li>
                 <li class="active"><a href="{{ route('admin.nodes.view.nftables', $node->id) }}">Firewall Nftables</a></li>
                 <li><a href="{{ route('admin.nodes.view.servers', $node->id) }}">Servers</a></li>
@@ -76,7 +76,7 @@
                         </span>
                         <span class="text-muted">
                             {{ $lastSync['at'] ?? '' }}
-                            — {{ $lastSync['message'] ?? '' }}
+                            - {{ $lastSync['message'] ?? '' }}
                             @if(isset($lastSync['rules']))
                                 ({{ $lastSync['rules'] }} regra(s))
                             @endif
@@ -97,7 +97,7 @@
                     <div style="padding:15px">
                         <p class="text-muted" style="margin:0">
                             Nenhuma regra. Marque allocations em <a href="{{ route('admin.nodes.view.allocation', $node->id) }}">Allocation</a>
-                            com “Gerenciar via nftables” e associe a um servidor cujo egg tenha port_slots com proto/policy.
+                            com "Gerenciar via nftables" e associe a um servidor cujo egg tenha port_slots com proto/policy.
                         </p>
                     </div>
                 @else
@@ -120,7 +120,7 @@
                                     @if(!empty($rule['server_id']))
                                         <a href="{{ route('admin.servers.view', $rule['server_id']) }}">{{ $rule['server_name'] }}</a>
                                     @else
-                                        <span class="text-muted">—</span>
+                                        <span class="text-muted">-</span>
                                     @endif
                                 </td>
                             </tr>

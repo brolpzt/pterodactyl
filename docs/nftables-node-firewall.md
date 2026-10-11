@@ -14,7 +14,7 @@ table inet ptero {
 ```
 
 - `policy accept` mantém SSH/Wings acessíveis; o valor do sync é inventário idempotente das portas de jogo.
-- Comentário por rule: `ptero:<ip>:<port>:<proto>`.
+- Comentário por rule: `ptero_<ip>_<port>_<proto>` (sem `:` — o nft rejeita colons no comment sem quoting).
 
 ## Flags
 

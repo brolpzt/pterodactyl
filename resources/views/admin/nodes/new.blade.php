@@ -100,10 +100,24 @@
                             </div>
                             <div class="radio radio-info radio-inline">
                                 <input type="radio" id="pGcoreTrue" value="1" name="gcore_enabled">
-                                <label for="pGcoreTrue"> Sim — node atrás do Gcore</label>
+                                <label for="pGcoreTrue"> Sim - node atrás do Gcore</label>
                             </div>
                         </div>
                         <p class="text-muted small">Permite marcar allocations como protegidas. A política ACL é definida no Egg de cada jogo.</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Firewall Nftables</label>
+                        <div>
+                            <div class="radio radio-success radio-inline">
+                                <input type="radio" id="pNftablesFalse" value="0" name="nftables_enabled" checked>
+                                <label for="pNftablesFalse"> Não</label>
+                            </div>
+                            <div class="radio radio-info radio-inline">
+                                <input type="radio" id="pNftablesTrue" value="1" name="nftables_enabled">
+                                <label for="pNftablesTrue"> Sim - gerir portas na chain do node</label>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Abre portas via Wings (<code>inet ptero / ptero_ports</code>). Exclusivo com Gcore na mesma allocation.</p>
                     </div>
                 </div>
             </div>

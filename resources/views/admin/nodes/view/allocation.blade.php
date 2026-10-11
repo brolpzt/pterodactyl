@@ -26,6 +26,7 @@
                 <li><a href="{{ route('admin.nodes.view.settings', $node->id) }}">Settings</a></li>
                 <li><a href="{{ route('admin.nodes.view.configuration', $node->id) }}">Configuration</a></li>
                 <li class="active"><a href="{{ route('admin.nodes.view.allocation', $node->id) }}">Allocation</a></li>
+                <li><a href="{{ route('admin.nodes.view.nftables', $node->id) }}">Firewall Nftables</a></li>
                 <li><a href="{{ route('admin.nodes.view.servers', $node->id) }}">Servers</a></li>
             </ul>
         </div>
@@ -113,6 +114,12 @@
                                 <input type="checkbox" id="gcore-ports-select-all" title="Selecionar/desmarcar todas as portas Gcore desta página" />
                             </th>
                         @endif
+                        @if($node->nftables_enabled)
+                            <th class="text-center" style="width:110px">
+                                Nftables<br>
+                                <input type="checkbox" id="nftables-ports-select-all" title="Selecionar/desmarcar todas as portas nftables desta página" />
+                            </th>
+                        @endif
                         <th>Assigned To</th>
                         <th>
                             <div class="btn-group hidden-xs">
@@ -123,6 +130,11 @@
                                     @if($node->gcore_enabled)
                                         <li><a href="#" data-action="mass-gcore-open">Abrir portas Gcore <i class="fa fa-fw fa-shield"></i></a></li>
                                         <li><a href="#" data-action="mass-gcore-close">Fechar portas Gcore <i class="fa fa-fw fa-ban"></i></a></li>
+                                        <li role="separator" class="divider"></li>
+                                    @endif
+                                    @if($node->nftables_enabled)
+                                        <li><a href="#" data-action="mass-nftables-open">Marcar nftables <i class="fa fa-fw fa-fire"></i></a></li>
+                                        <li><a href="#" data-action="mass-nftables-close">Desmarcar nftables <i class="fa fa-fw fa-ban"></i></a></li>
                                         <li role="separator" class="divider"></li>
                                     @endif
                                     <li><a href="#" id="selective-deletion" data-action="selective-deletion">Delete <i class="fa fa-fw fa-trash-o"></i></a></li>
@@ -157,8 +169,8 @@
                                            data-id="{{ $allocation->id }}"
                                            data-ip="{{ $allocation->ip }}"
                                            {{ $allocation->gcore_protected ? 'checked' : '' }}
-                                           {{ isset($gcoreIpSet[$allocation->ip]) ? '' : 'disabled' }}
-                                           title="{{ isset($gcoreIpSet[$allocation->ip]) ? 'Abrir esta porta no ACL Gcore' : 'Marque o IP como Gcore primeiro' }}" />
+                                           {{ isset($gcoreIpSet[$allocation->ip]) && !$allocation->nftables_managed ? '' : 'disabled' }}
+                                           title="{{ $allocation->nftables_managed ? 'Desmarque nftables primeiro' : (isset($gcoreIpSet[$allocation->ip]) ? 'Abrir esta porta no ACL Gcore' : 'Marque o IP como Gcore primeiro') }}" />
                                     @if($allocation->gcore_protected && $allocation->server && $allocation->server->egg)
                                         @php
                                             $gcoreSlot = app(\Pterodactyl\Services\Eggs\PortSlotSyncService::class)
@@ -171,6 +183,31 @@
                                         @if($gcoreSlot)
                                             <div class="text-muted" style="font-size:11px;margin-top:2px">
                                                 {{ $gcoreSlot['policy'] }}{{ !empty($gcoreSlot['proto']) ? ' / ' . $gcoreSlot['proto'] : '' }}
+                                            </div>
+                                        @endif
+                                    @endif
+                                </td>
+                            @endif
+                            @if($node->nftables_enabled)
+                                <td class="middle text-center">
+                                    <input type="checkbox"
+                                           data-action="set-nftables"
+                                           data-id="{{ $allocation->id }}"
+                                           {{ $allocation->nftables_managed ? 'checked' : '' }}
+                                           {{ $allocation->gcore_protected ? 'disabled' : '' }}
+                                           title="{{ $allocation->gcore_protected ? 'Desmarque Gcore primeiro' : 'Gerenciar esta porta via nftables no node' }}" />
+                                    @if($allocation->nftables_managed && $allocation->server && $allocation->server->egg)
+                                        @php
+                                            $nftProtos = app(\Pterodactyl\Services\Eggs\PortSlotSyncService::class)
+                                                ->resolveNftablesProtosForAllocation(
+                                                    $allocation->server->egg,
+                                                    $allocation,
+                                                    (int) $allocation->server->allocation_id
+                                                );
+                                        @endphp
+                                        @if($nftProtos)
+                                            <div class="text-muted" style="font-size:11px;margin-top:2px">
+                                                {{ implode('/', $nftProtos) }}
                                             </div>
                                         @endif
                                     @endif
@@ -229,8 +266,17 @@
                             <p class="text-muted small">Enter individual ports or port ranges here separated by commas or spaces.</p>
                         </div>
                     </div>
-                    @if($node->gcore_enabled)
+                    @if($node->nftables_enabled)
                         <div class="form-group">
+                            <div class="checkbox checkbox-warning">
+                                <input type="checkbox" name="nftables_managed" value="1" id="pNftablesManaged">
+                                <label for="pNftablesManaged">Gerenciar via nftables</label>
+                            </div>
+                            <p class="text-muted small">Abre a porta na chain do node (proto do egg). Exclusivo com Gcore nesta allocation.</p>
+                        </div>
+                    @endif
+                    @if($node->gcore_enabled)
+                        <div class="form-group" id="gcoreAssignGroup">
                             <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="gcore_ip" value="1" id="pGcoreIp">
                                 <label for="pGcoreIp">Este IP está no Gcore (tem perfil DDoS)</label>
@@ -239,7 +285,7 @@
                                 <input type="checkbox" name="gcore_protected" value="1" id="pGcorePorts" disabled>
                                 <label for="pGcorePorts">Abrir estas portas no ACL do DDoS</label>
                             </div>
-                            <p class="text-muted small">Só IPs com perfil Gcore. Portas só entram na ACL depois de ligadas a um servidor (política do Egg).</p>
+                            <p class="text-muted small">Só IPs com perfil Gcore. Portas só entram na ACL depois de ligadas a um servidor (política do Egg). Não use junto com nftables.</p>
                         </div>
                     @endif
                 </div>
@@ -315,9 +361,21 @@
 
     $('#pGcoreIp').on('change', function () {
         var on = $(this).is(':checked');
-        $('#pGcorePorts').prop('disabled', !on);
+        $('#pGcorePorts').prop('disabled', !on || $('#pNftablesManaged').is(':checked'));
         if (!on) {
             $('#pGcorePorts').prop('checked', false);
+        }
+    });
+
+    $('#pNftablesManaged').on('change', function () {
+        var on = $(this).is(':checked');
+        if (on) {
+            $('#pGcoreIp').prop('checked', false);
+            $('#pGcorePorts').prop('checked', false).prop('disabled', true);
+            $('#gcoreAssignGroup').css('opacity', 0.45);
+        } else {
+            $('#gcoreAssignGroup').css('opacity', 1);
+            $('#pGcorePorts').prop('disabled', !$('#pGcoreIp').is(':checked'));
         }
     });
 
@@ -465,6 +523,93 @@
     });
 
     syncGcoreHeaderCheckbox();
+
+    function saveNftablesPorts(ids, managedFlag, $inputs) {
+        if (!ids.length) {
+            return;
+        }
+        $inputs.prop('disabled', true);
+        $.ajax({
+            method: 'POST',
+            url: '/admin/nodes/view/' + {{ $node->id }} + '/allocation/nftables',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content') },
+            data: {
+                allocation_ids: ids,
+                nftables_managed: managedFlag ? 1 : 0,
+            }
+        }).done(function () {
+            if (managedFlag) {
+                $inputs.each(function () {
+                    var $row = $(this).closest('tr');
+                    $row.find('input[data-action="set-gcore"]').prop('checked', false).prop('disabled', true);
+                });
+            } else {
+                window.location.reload();
+                return;
+            }
+        }).fail(function (jqXHR) {
+            $inputs.each(function () {
+                $(this).prop('checked', !managedFlag);
+            });
+            var err = (jqXHR.responseJSON && jqXHR.responseJSON.error)
+                ? jqXHR.responseJSON.error
+                : 'Falha ao salvar portas nftables.';
+            swal({ type: 'error', title: 'Nftables', text: err });
+        }).always(function () {
+            $inputs.prop('disabled', false);
+            syncNftablesHeaderCheckbox();
+        });
+    }
+
+    function syncNftablesHeaderCheckbox() {
+        var $all = $('input[data-action="set-nftables"]:not(:disabled)');
+        var $checked = $all.filter(':checked');
+        var $header = $('#nftables-ports-select-all');
+        if (!$header.length || !$all.length) {
+            return;
+        }
+        $header.prop('checked', $all.length > 0 && $checked.length === $all.length);
+        $header.prop('indeterminate', $checked.length > 0 && $checked.length < $all.length);
+    }
+
+    $('input[data-action="set-nftables"]').on('change', function () {
+        var $el = $(this);
+        saveNftablesPorts([$el.data('id')], $el.is(':checked'), $el);
+    });
+
+    $('#nftables-ports-select-all').on('change', function () {
+        var enabled = $(this).is(':checked');
+        var $inputs = $('input[data-action="set-nftables"]:not(:disabled)');
+        var ids = [];
+        $inputs.each(function () {
+            $(this).prop('checked', enabled);
+            ids.push($(this).data('id'));
+        });
+        saveNftablesPorts(ids, enabled, $inputs);
+    });
+
+    $('[data-action="mass-nftables-open"], [data-action="mass-nftables-close"]').on('mousedown', function (e) {
+        e.preventDefault();
+        var open = $(this).data('action') === 'mass-nftables-open';
+        var ids = [];
+        var $inputs = $();
+        $('input.select-file:checked').each(function () {
+            var $row = $(this).closest('tr');
+            var $nft = $row.find('input[data-action="set-nftables"]:not(:disabled)');
+            if ($nft.length) {
+                ids.push($nft.data('id'));
+                $inputs = $inputs.add($nft);
+                $nft.prop('checked', open);
+            }
+        });
+        if (!ids.length) {
+            swal({ type: 'warning', title: '', text: 'Selecione allocations disponíveis para nftables.' });
+            return;
+        }
+        saveNftablesPorts(ids, open, $inputs);
+    });
+
+    syncNftablesHeaderCheckbox();
 
     var fadeTimers = [];
     function sendAlias(element) {

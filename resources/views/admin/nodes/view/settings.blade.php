@@ -23,6 +23,7 @@
                 <li class="active"><a href="{{ route('admin.nodes.view.settings', $node->id) }}">Settings</a></li>
                 <li><a href="{{ route('admin.nodes.view.configuration', $node->id) }}">Configuration</a></li>
                 <li><a href="{{ route('admin.nodes.view.allocation', $node->id) }}">Allocation</a></li>
+                <li><a href="{{ route('admin.nodes.view.nftables', $node->id) }}">Firewall Nftables</a></li>
                 <li><a href="{{ route('admin.nodes.view.servers', $node->id) }}">Servers</a></li>
             </ul>
         </div>
@@ -126,10 +127,24 @@
                             </div>
                             <div class="radio radio-info radio-inline">
                                 <input type="radio" id="pGcoreTrue" value="1" name="gcore_enabled" {{ (old('gcore_enabled', $node->gcore_enabled) == true) ? 'checked' : '' }}>
-                                <label for="pGcoreTrue"> Sim — node atrás do Gcore</label>
+                                <label for="pGcoreTrue"> Sim - node atrás do Gcore</label>
                             </div>
                         </div>
                         <p class="text-muted small">Se ativo, allocations marcadas como protegidas abrem portas no ACL Gcore. A política ACL vem do <strong>Egg</strong> do servidor.</p>
+                    </div>
+                    <div class="form-group col-xs-12">
+                        <label class="form-label"><span class="label label-warning"><i class="fa fa-fire"></i></span> Firewall Nftables</label>
+                        <div>
+                            <div class="radio radio-success radio-inline">
+                                <input type="radio" id="pNftablesFalse" value="0" name="nftables_enabled" {{ (old('nftables_enabled', $node->nftables_enabled) == false) ? 'checked' : '' }}>
+                                <label for="pNftablesFalse"> Não</label>
+                            </div>
+                            <div class="radio radio-info radio-inline">
+                                <input type="radio" id="pNftablesTrue" value="1" name="nftables_enabled" {{ (old('nftables_enabled', $node->nftables_enabled) == true) ? 'checked' : '' }}>
+                                <label for="pNftablesTrue"> Sim - gerir portas na chain do node</label>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Se ativo, allocations marcadas abrem portas via Wings (<code>inet ptero / ptero_ports</code>). Exclusivo com Gcore na mesma allocation. Ver aba <a href="{{ route('admin.nodes.view.nftables', $node->id) }}">Firewall Nftables</a>.</p>
                     </div>
                 </div>
             </div>

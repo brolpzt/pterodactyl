@@ -240,6 +240,61 @@ class PortSlotSyncService
     }
 
     /**
+     * Resolve nftables protocols for an allocation via its port slot.
+     *
+     * Opens the port when the slot defines gcore_policy and/or gcore_proto (same
+     * egg port_slots model as Gcore). Empty/any proto expands to tcp+udp.
+     *
+     * @return list<string>|null list of "tcp" / "udp", or null to skip
+     */
+    public function resolveNftablesProtosForAllocation(Egg $egg, Allocation $allocation, int $primaryAllocationId): ?array
+    {
+        $slots = $this->withLegacyPrimarySlot(
+            is_array($egg->port_slots) ? $egg->port_slots : [],
+            $egg
+        );
+        $byEnv = [];
+        foreach ($slots as $slot) {
+            $byEnv[$slot['env_variable']] = $slot;
+        }
+
+        $isPrimary = (int) $allocation->id === (int) $primaryAllocationId;
+        $env = $isPrimary
+            ? self::PRIMARY_ENV
+            : strtoupper(trim((string) ($allocation->port_env ?? '')));
+
+        if ($env === '') {
+            return null;
+        }
+
+        $slot = $byEnv[$env] ?? null;
+        if ($slot === null) {
+            return null;
+        }
+
+        $policy = trim((string) ($slot['gcore_policy'] ?? ''));
+        $proto = strtolower(trim((string) ($slot['gcore_proto'] ?? '')));
+
+        $hasPolicy = $policy !== '' && in_array($policy, GcoreClient::POLICIES, true);
+
+        // Both empty → skip. Empty or "any" proto with a policy (or explicit any) → TCP+UDP.
+        if (!$hasPolicy && $proto === '') {
+            return null;
+        }
+
+        if ($proto === '' || $proto === 'any') {
+            return ['tcp', 'udp'];
+        }
+
+        if ($proto === 'tcp' || $proto === 'udp') {
+            return [$proto];
+        }
+
+        // icmp/gre/esp are not useful as dport ACCEPTs for game servers.
+        return null;
+    }
+
+    /**
      * Mirror extra port_slots into egg_variables (non-editable). SERVER_PORT is never mirrored.
      */
     public function syncEggVariables(Egg $egg, ?array $previousSlots = null): void

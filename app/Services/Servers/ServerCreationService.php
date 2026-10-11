@@ -20,6 +20,7 @@ use Pterodactyl\Services\Deployment\AllocationSelectionService;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Pterodactyl\Services\Gcore\GcoreFirewallSyncService;
+use Pterodactyl\Services\Nftables\NftablesFirewallSyncService;
 
 class ServerCreationService
 {
@@ -36,6 +37,7 @@ class ServerCreationService
         private ServerVariableRepository $serverVariableRepository,
         private VariableValidatorService $validatorService,
         private GcoreFirewallSyncService $gcoreFirewallSync,
+        private NftablesFirewallSyncService $nftablesFirewallSync,
         private PortSlotSyncService $portSlotSync,
     ) {
     }
@@ -128,11 +130,13 @@ class ServerCreationService
             throw $exception;
         }
 
+        $fresh = $server->fresh(['node.gcoreIps', 'allocations', 'egg']);
+
         // Open Gcore ACL ports for this server immediately (egg policy applies).
-        $this->gcoreFirewallSync->syncForServerLifecycle(
-            $server->fresh(['node.gcoreIps', 'allocations', 'egg']),
-            opening: true
-        );
+        $this->gcoreFirewallSync->syncForServerLifecycle($fresh, opening: true);
+
+        // Sync nftables chain for allocations marked nftables_managed.
+        $this->nftablesFirewallSync->syncForServerLifecycle($fresh, opening: true);
 
         return $server;
     }

@@ -27,6 +27,7 @@ use Pterodactyl\Contracts\Repository\AllocationRepositoryInterface;
 use Pterodactyl\Http\Requests\Admin\Node\AllocationAliasFormRequest;
 use Pterodactyl\Models\NodeGcoreIp;
 use Pterodactyl\Services\Gcore\GcoreFirewallSyncService;
+use Pterodactyl\Services\Nftables\NftablesFirewallSyncService;
 use Pterodactyl\Exceptions\DisplayException;
 
 class NodesController extends Controller
@@ -49,6 +50,7 @@ class NodesController extends Controller
         protected SoftwareVersionService $versionService,
         protected ViewFactory $view,
         protected GcoreFirewallSyncService $gcoreFirewallSync,
+        protected NftablesFirewallSyncService $nftablesFirewallSync,
     ) {
     }
 
@@ -173,8 +175,11 @@ class NodesController extends Controller
     public function createAllocation(AllocationFormRequest $request, Node $node): RedirectResponse
     {
         $data = $request->normalize();
-        $markIp = $node->gcore_enabled && $request->boolean('gcore_ip');
-        $data['gcore_protected'] = $markIp && $request->boolean('gcore_protected');
+        $nftables = $node->nftables_enabled && $request->boolean('nftables_managed');
+        $markIp = $node->gcore_enabled && $request->boolean('gcore_ip') && !$nftables;
+        $data['nftables_managed'] = $nftables;
+        // Mutual exclusion: nftables XOR gcore on the same allocation.
+        $data['gcore_protected'] = $markIp && $request->boolean('gcore_protected') && !$nftables;
 
         $this->assignmentService->handle($node, $data);
         $this->alert->success(trans('admin/node.notices.allocations_added'))->flash();
@@ -264,7 +269,12 @@ class NodesController extends Controller
             $query->whereIn('ip', $gcoreIps);
         }
 
-        $updated = $query->update(['gcore_protected' => $protected]);
+        $payload = ['gcore_protected' => $protected];
+        if ($protected) {
+            $payload['nftables_managed'] = false;
+        }
+
+        $updated = $query->update($payload);
 
         return response([
             'message' => $protected
@@ -272,6 +282,77 @@ class NodesController extends Controller
                 : "{$updated} porta(s) desmarcada(s). Use Sync portas para atualizar a API.",
             'updated' => $updated,
         ], 200);
+    }
+
+    /**
+     * Toggle whether an allocation is managed by the node's nftables chain (DB only).
+     */
+    public function allocationSetNftablesManaged(Request $request, Node $node): Response
+    {
+        $ids = $request->input('allocation_ids');
+        if (!is_array($ids) || $ids === []) {
+            $single = (int) $request->input('allocation_id');
+            $ids = $single > 0 ? [$single] : [];
+        }
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+
+        if ($ids === []) {
+            return response(['error' => 'Nenhuma allocation informada.'], 422);
+        }
+
+        if (!$node->nftables_enabled) {
+            return response(['error' => 'Este node não tem nftables habilitado.'], 422);
+        }
+
+        $managed = $request->boolean('nftables_managed');
+        $payload = ['nftables_managed' => $managed];
+        if ($managed) {
+            $payload['gcore_protected'] = false;
+        }
+
+        $updated = Allocation::query()
+            ->where('node_id', $node->id)
+            ->whereIn('id', $ids)
+            ->update($payload);
+
+        return response([
+            'message' => $managed
+                ? "{$updated} porta(s) marcada(s) para nftables. Use Sync agora na aba Firewall Nftables."
+                : "{$updated} porta(s) removida(s) do nftables. Use Sync agora para atualizar a chain.",
+            'updated' => $updated,
+        ], 200);
+    }
+
+    /**
+     * Enable/disable nftables management for this node.
+     */
+    public function setNftablesEnabled(Request $request, Node $node): RedirectResponse
+    {
+        $enabled = $request->boolean('nftables_enabled');
+        $node->update(['nftables_enabled' => $enabled]);
+
+        $this->alert->success(
+            $enabled
+                ? 'Nftables habilitado neste node. Marque allocations e use Sync agora.'
+                : 'Nftables desabilitado neste node (flags nas allocations permanecem até o próximo sync).'
+        )->flash();
+
+        return redirect()->route('admin.nodes.view.nftables', $node->id);
+    }
+
+    /**
+     * Push full desired nftables rule set for this node to Wings.
+     */
+    public function syncNftablesFirewall(Node $node): RedirectResponse
+    {
+        try {
+            $message = $this->nftablesFirewallSync->syncNode($node);
+            $this->alert->success($message)->flash();
+        } catch (DisplayException $e) {
+            $this->alert->danger($e->getMessage())->flash();
+        }
+
+        return redirect()->route('admin.nodes.view.nftables', $node->id);
     }
 
     /**

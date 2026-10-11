@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property bool $behind_proxy
  * @property bool $maintenance_mode
  * @property bool $gcore_enabled
+ * @property bool $nftables_enabled
  * @property int $memory
  * @property int $memory_overallocate
  * @property int $disk
@@ -84,6 +85,7 @@ class Node extends Model implements Identifiable
         'public' => 'boolean',
         'maintenance_mode' => 'boolean',
         'gcore_enabled' => 'boolean',
+        'nftables_enabled' => 'boolean',
     ];
 
     /**
@@ -97,6 +99,7 @@ class Node extends Model implements Identifiable
         'daemonSFTP', 'daemonListen',
         'description', 'maintenance_mode',
         'gcore_enabled',
+        'nftables_enabled',
     ];
 
     public static array $validationRules = [
@@ -116,6 +119,7 @@ class Node extends Model implements Identifiable
         'daemonListen' => 'required|numeric|between:1,65535',
         'maintenance_mode' => 'boolean',
         'gcore_enabled' => 'boolean',
+        'nftables_enabled' => 'boolean',
         'upload_size' => 'int|min:1',
     ];
 
@@ -132,6 +136,7 @@ class Node extends Model implements Identifiable
         'daemonListen' => 8080,
         'maintenance_mode' => false,
         'gcore_enabled' => false,
+        'nftables_enabled' => false,
     ];
 
     /**

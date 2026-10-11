@@ -14,6 +14,7 @@ class AllocationFormRequest extends AdminFormRequest
             'allocation_ports' => 'required|array',
             'gcore_ip' => 'sometimes|boolean',
             'gcore_protected' => 'sometimes|boolean',
+            'nftables_managed' => 'sometimes|boolean',
         ];
     }
 }

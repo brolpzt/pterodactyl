@@ -78,28 +78,14 @@ class AssignmentService
                     }
 
                     foreach ($block as $unit) {
-                        $insertData[] = [
-                            'node_id' => $node->id,
-                            'ip' => $ip->__toString(),
-                            'port' => (int) $unit,
-                            'ip_alias' => array_get($data, 'allocation_alias'),
-                            'server_id' => null,
-                            'gcore_protected' => !empty($data['gcore_protected']),
-                        ];
+                        $insertData[] = $this->allocationInsertRow($node, $ip, (int) $unit, $data);
                     }
                 } else {
                     if ((int) $port <= self::PORT_FLOOR || (int) $port > self::PORT_CEIL) {
                         throw new PortOutOfRangeException();
                     }
 
-                    $insertData[] = [
-                        'node_id' => $node->id,
-                        'ip' => $ip->__toString(),
-                        'port' => (int) $port,
-                        'ip_alias' => array_get($data, 'allocation_alias'),
-                        'server_id' => null,
-                        'gcore_protected' => !empty($data['gcore_protected']),
-                    ];
+                    $insertData[] = $this->allocationInsertRow($node, $ip, (int) $port, $data);
                 }
 
                 $this->repository->insertIgnore($insertData);
@@ -107,5 +93,24 @@ class AssignmentService
         }
 
         $this->connection->commit();
+    }
+
+    /**
+     * @return array{node_id: int, ip: string, port: int, ip_alias: mixed, server_id: null, gcore_protected: bool, nftables_managed: bool}
+     */
+    private function allocationInsertRow(Node $node, mixed $ip, int $port, array $data): array
+    {
+        $nftables = !empty($data['nftables_managed']);
+        $gcore = !empty($data['gcore_protected']) && !$nftables;
+
+        return [
+            'node_id' => $node->id,
+            'ip' => $ip->__toString(),
+            'port' => $port,
+            'ip_alias' => array_get($data, 'allocation_alias'),
+            'server_id' => null,
+            'gcore_protected' => $gcore,
+            'nftables_managed' => $nftables,
+        ];
     }
 }

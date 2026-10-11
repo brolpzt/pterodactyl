@@ -13,6 +13,7 @@ use Pterodactyl\Repositories\Eloquent\ServerRepository;
 use Pterodactyl\Traits\Controllers\JavascriptInjection;
 use Pterodactyl\Services\Helpers\SoftwareVersionService;
 use Pterodactyl\Repositories\Eloquent\LocationRepository;
+use Pterodactyl\Services\Nftables\NftablesFirewallSyncService;
 
 class NodeViewController extends Controller
 {
@@ -26,6 +27,7 @@ class NodeViewController extends Controller
         private NodeRepository $repository,
         private ServerRepository $serverRepository,
         private SoftwareVersionService $versionService,
+        private NftablesFirewallSyncService $nftablesFirewallSync,
     ) {
     }
 
@@ -97,6 +99,18 @@ class NodeViewController extends Controller
         return view('admin.nodes.view.servers', [
             'node' => $node,
             'servers' => $this->serverRepository->loadAllServersForNode($node->id, 25),
+        ]);
+    }
+
+    /**
+     * Nftables firewall management for this node.
+     */
+    public function nftables(Request $request, Node $node): View
+    {
+        return view('admin.nodes.view.nftables', [
+            'node' => $node,
+            'rules' => $this->nftablesFirewallSync->listDesiredRules($node),
+            'lastSync' => $this->nftablesFirewallSync->lastSyncStatus($node),
         ]);
     }
 }

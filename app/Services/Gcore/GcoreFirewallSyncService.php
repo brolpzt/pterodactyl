@@ -46,9 +46,15 @@ class GcoreFirewallSyncService
 
         $ips = $allocations->pluck('ip')->unique()->values()->all();
 
+        $payload = ['gcore_protected' => $opening];
+        if ($opening) {
+            // Mutual exclusion with local nftables management.
+            $payload['nftables_managed'] = false;
+        }
+
         Allocation::query()
             ->whereIn('id', $allocations->pluck('id')->all())
-            ->update(['gcore_protected' => $opening]);
+            ->update($payload);
 
         $lines = [];
         foreach ($ips as $ip) {

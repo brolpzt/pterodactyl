@@ -19,9 +19,9 @@ return [
     'default_policy' => env('GCORE_DEFAULT_POLICY', 'allowlist'),
 
     /*
-    | Panel-managed game ACL rules are inserted after this many leading rules
-    | (1-based UI: "below rule N"). Infra rules (allowlist, geo, tcp-server, …)
-    | should occupy the slots above this index.
+    | Deprecated / unused. Sync now patches game dports in place and never
+    | reorders ACL rules (DROP/allowlist/geo stay at their original indices).
+    | Kept so existing .env keys do not break config load.
     */
     'acl_game_rules_after' => (int) env('GCORE_ACL_GAME_RULES_AFTER', 5),
 ];

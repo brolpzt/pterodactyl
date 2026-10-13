@@ -268,7 +268,9 @@ class GcoreFirewallSyncService
      *
      * - Frozen infra (DROP, allowlist, geo, tcp-server, sip/sport, default-*, …) stays at the same index.
      * - Panel only adds/removes dports on editable game rules (same policy+proto).
-     * - Missing policy+proto pairs are appended before the first default-* rule (else at the end).
+     * - Missing policy+proto pairs are inserted before the trailing DROP block at the
+     *   end (else before trailing default-*, else at the end).
+     * - If a matching game rule already exists (same policy+proto), only dports change.
      * - Never invents DROP/allowlist/other infra rules.
      *
      * @param list<array<string, mixed>> $acl
@@ -417,15 +419,9 @@ class GcoreFirewallSyncService
             $out[] = $normalized;
         }
 
-        // Append missing desired rules before first default-* catch-all (else at end).
-        $insertAt = null;
-        foreach ($out as $idx => $rule) {
-            $p = strtolower(trim((string) ($rule['policy'] ?? '')));
-            if (str_starts_with($p, 'default')) {
-                $insertAt = $idx;
-                break;
-            }
-        }
+        // New game rules: before trailing DROP (last DROP block at end), else before
+        // trailing default-*, else at end. Never reorder existing rows.
+        $insertAt = $this->findNewGameRuleInsertIndex($out);
 
         $toInsert = [];
         foreach ($remainingDesired as $policy => $byProto) {
@@ -465,6 +461,57 @@ class GcoreFirewallSyncService
             'removed' => $removed,
             'skipped_existing' => $skipped,
         ];
+    }
+
+    /**
+     * Index where brand-new game rules should be spliced in without moving others.
+     *
+     * Prefers immediately before the trailing DROP block at the end of the table
+     * (skipping a trailing default-* suffix). Falls back to before trailing
+     * default-*, then null (= append).
+     *
+     * @param list<array<string, mixed>> $acl
+     */
+    private function findNewGameRuleInsertIndex(array $acl): ?int
+    {
+        $n = count($acl);
+        if ($n === 0) {
+            return null;
+        }
+
+        $i = $n - 1;
+
+        // Skip trailing default-* catch-alls.
+        while ($i >= 0) {
+            $policy = strtolower(trim((string) ($acl[$i]['policy'] ?? '')));
+            if (!str_starts_with($policy, 'default')) {
+                break;
+            }
+            $i--;
+        }
+
+        if ($i < 0) {
+            return 0;
+        }
+
+        // Trailing DROP block at the end (after games / before defaults).
+        if (strcasecmp(trim((string) ($acl[$i]['policy'] ?? '')), 'DROP') === 0) {
+            $dropStart = $i;
+            while ($dropStart > 0
+                && strcasecmp(trim((string) ($acl[$dropStart - 1]['policy'] ?? '')), 'DROP') === 0
+            ) {
+                $dropStart--;
+            }
+
+            return $dropStart;
+        }
+
+        // No trailing DROP: insert before the first trailing default (if we skipped any).
+        if ($i < $n - 1) {
+            return $i + 1;
+        }
+
+        return null;
     }
 
     /**

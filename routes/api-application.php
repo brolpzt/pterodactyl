@@ -69,6 +69,19 @@ Route::group(['prefix' => '/locations'], function () {
 
 /*
 |--------------------------------------------------------------------------
+| Monitor Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /api/application/monitor
+|
+*/
+Route::group(['prefix' => '/monitor'], function () {
+    Route::get('/servers', [Application\Monitor\MonitorServersController::class, 'index'])
+        ->name('api.application.monitor.servers');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Server Controller Routes
 |--------------------------------------------------------------------------
 |

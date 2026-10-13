@@ -49,6 +49,22 @@ class RouteServiceProvider extends ServiceProvider
                 Route::middleware('guest')->prefix('/auth')->group(base_path('routes/auth.php'));
             });
 
+            // Monitor listing: allow Application API key via ?key= / ?api_key= for tools
+            // that cannot send an Authorization header. PromoteApiKeyFromQuery must run
+            // before the `api` group (auth:sanctum).
+            Route::middleware([
+                'api.key.from.query',
+                'api',
+                RequireTwoFactorAuthentication::class,
+                'application-api',
+                'throttle:api.application',
+            ])
+                ->prefix('/api/application/monitor')
+                ->group(function () {
+                    Route::get('/servers', [\Pterodactyl\Http\Controllers\Api\Application\Monitor\MonitorServersController::class, 'index'])
+                        ->name('api.application.monitor.servers');
+                });
+
             Route::middleware(['api', RequireTwoFactorAuthentication::class])->group(function () {
                 Route::middleware(['application-api', 'throttle:api.application'])
                     ->prefix('/api/application')

@@ -21,6 +21,28 @@ class MonitorServersControllerTest extends ApplicationApiIntegrationTestCase
         );
     }
 
+    public function testAcceptsApplicationApiKeyViaQueryParameter(): void
+    {
+        $token = $this->getApiKey()->identifier . decrypt($this->getApiKey()->token);
+
+        // Simulate monitors that cannot send Authorization headers.
+        $this->flushHeaders();
+
+        $this->withHeader('Accept', 'application/vnd.pterodactyl.v1+json')
+            ->getJson('/api/application/monitor/servers?key=' . urlencode($token))
+            ->assertOk()
+            ->assertJsonStructure(['servers']);
+    }
+
+    public function testRejectsMissingKeyWhenNoAuthorizationHeader(): void
+    {
+        $this->flushHeaders();
+
+        $this->withHeader('Accept', 'application/vnd.pterodactyl.v1+json')
+            ->getJson('/api/application/monitor/servers')
+            ->assertUnauthorized();
+    }
+
     public function testListsServersInMonitorFormat(): void
     {
         $source = $this->createServerWithGamedig('cs16', [

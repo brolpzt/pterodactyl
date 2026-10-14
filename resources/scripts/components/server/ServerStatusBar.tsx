@@ -76,7 +76,7 @@ const titleClampInnerStyles = (fading: boolean) => css`
     `};
 `;
 
-/** Nome completo por cima do resto da barra — não altera o fluxo do layout. */
+/** Nome completo por cima do resto da barra - não altera o fluxo do layout. */
 const titleHoverRevealStyles = css`
     ${tw`absolute left-0 top-1/2 z-50 whitespace-nowrap pointer-events-none`};
     transform: translateY(-50%);
@@ -198,13 +198,13 @@ const ServerStatusBar = ({
     const address = allocation ? `${allocation.alias || formatIp(allocation.ip)}:${allocation.port}` : 'n/a';
     const rawQueryHostname = query?.online ? query.hostname : null;
     const queryHostname = query?.online
-        ? stripGameHostnameColors(rawQueryHostname) || '—'
+        ? stripGameHostnameColors(rawQueryHostname) || '-'
         : query
           ? 'Offline'
-          : '—';
-    const queryMap = query?.online ? query.map || '—' : '—';
+          : '-';
+    const queryMap = query?.online ? query.map || '-' : '-';
     const queryPlayers =
-        query && query.online ? `${query.players}/${query.max_players || '?'}` : query ? '0/0' : '—';
+        query && query.online ? `${query.players}/${query.max_players || '?'}` : query ? '0/0' : '-';
 
     const showStatsRow = Boolean(locationName) || queryEnabled;
 
@@ -283,7 +283,7 @@ const ServerStatusBar = ({
                                             <QueryStat
                                                 label="Hostname"
                                                 value={queryHostname}
-                                                title={queryHostname !== '—' ? queryHostname : undefined}
+                                                title={queryHostname !== '-' ? queryHostname : undefined}
                                             />
                                             <QueryStat label="Mapa" value={queryMap} title={query?.map || undefined} />
                                             <QueryStat label="Jogadores" value={queryPlayers} />

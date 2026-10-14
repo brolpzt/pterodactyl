@@ -63,7 +63,7 @@ class ServerConfigurationStructureService
             ],
             'container' => [
                 'image' => $server->image,
-                // This field is deprecated — use the value in the "build" block.
+                // This field is deprecated - use the value in the "build" block.
                 //
                 // TODO: remove this key in V2.
                 'oom_disabled' => $server->oom_disabled,
@@ -73,6 +73,9 @@ class ServerConfigurationStructureService
                 'force_outgoing_ip' => $server->egg->force_outgoing_ip,
                 'default' => [
                     'ip' => $server->allocation->ip,
+                    // Public hostname/IP shown to players (GCore/NAT). Used by EOS
+                    // session matching when the bind IP is private.
+                    'alias' => $server->allocation->ip_alias,
                     'port' => $server->allocation->port,
                 ],
                 'mappings' => $server->getAllocationMappings(),

@@ -231,7 +231,7 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
                                     <option value={''}>{t('server_amxx_web.select_player')}</option>
                                     {psayOptions.map((player) => (
                                         <option key={player.userid} value={String(player.userid)}>
-                                            #{player.userid} — {player.name}
+                                            #{player.userid} - {player.name}
                                         </option>
                                     ))}
                                 </Select>

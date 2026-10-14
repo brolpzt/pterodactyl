@@ -49,7 +49,7 @@ class GameQueryService
         }
 
         $port = (int) $allocation->port;
-        $queryPort = $this->resolveQueryPort($server, $port);
+        $queryPort = $this->resolveQueryPort($server, $gameType, $port);
 
         try {
             $result = $this->daemonGameQueryRepository->setServer($server)->query($gameType, $queryPort);
@@ -61,13 +61,21 @@ class GameQueryService
             );
         }
 
-        return $this->formatResponse($server, $gameType, $allocation->ip, $port, $queryPort, $result);
+        // Prefer alias (public/GCore IP) over the private bind address.
+        return $this->formatResponse($server, $gameType, $allocation->alias, $port, $queryPort, $result);
     }
 
-    private function resolveQueryPort(Server $server, int $defaultPort): int
+    private function resolveQueryPort(Server $server, string $gameType, int $defaultPort): int
     {
+        // 7DTD exposes A2S on the game port; SERVER_PORT+1 is not the query socket.
+        if ($this->usesGamePortForQuery($gameType)) {
+            return $defaultPort;
+        }
+
+        $server->loadMissing(['variables', 'allocations']);
+
         foreach ($server->variables as $variable) {
-            if (!in_array($variable->env_variable, ['QUERY_PORT', 'SERVER_QUERY_PORT'], true)) {
+            if (!in_array($variable->env_variable, ['QUERY_PORT', 'SERVER_QUERY_PORT', 'VR_QUERY_PORT'], true)) {
                 continue;
             }
 
@@ -77,7 +85,27 @@ class GameQueryService
             }
         }
 
+        // Fall back to the allocation bound to the query port slot.
+        foreach ($server->allocations as $allocation) {
+            $env = strtoupper(trim((string) ($allocation->port_env ?? '')));
+            if (!in_array($env, ['QUERY_PORT', 'SERVER_QUERY_PORT', 'VR_QUERY_PORT'], true)) {
+                continue;
+            }
+
+            $port = (int) $allocation->port;
+            if ($port >= 1 && $port <= 65535) {
+                return $port;
+            }
+        }
+
         return $defaultPort;
+    }
+
+    private function usesGamePortForQuery(string $gameType): bool
+    {
+        $normalized = strtolower(preg_replace('/[^a-z0-9]+/', '', $gameType) ?? '');
+
+        return in_array($normalized, ['7dtd', '7d2d', '7daystodie'], true);
     }
 
     private function formatResponse(Server $server, string $gameType, string $address, int $port, int $queryPort, array $result): array
@@ -103,7 +131,8 @@ class GameQueryService
         return [
             'online' => $online,
             'type' => $gameType,
-            'address' => $result['address'] ?? $address,
+            // Always the allocation alias (public/GCore IP), never the Docker bridge.
+            'address' => $address,
             'port' => (int) ($result['port'] ?? $port),
             'query_port' => (int) ($result['query_port'] ?? $queryPort),
             'hostname' => $result['hostname'] ?? null,

@@ -110,16 +110,16 @@ export default () => {
                         <tbody>
                             {bans.map((ban, index) => (
                                 <tr key={`${ban.banid || index}`} css={tw`border-b border-neutral-700`}>
-                                    <td css={tw`py-2`}>{ban.banid || '—'}</td>
-                                    <td css={tw`py-2 font-mono`}>{ban.ip || '—'}</td>
-                                    <td css={tw`py-2`}>{ban.reason || '—'}</td>
+                                    <td css={tw`py-2`}>{ban.banid || '-'}</td>
+                                    <td css={tw`py-2 font-mono`}>{ban.ip || '-'}</td>
+                                    <td css={tw`py-2`}>{ban.reason || '-'}</td>
                                     <td css={tw`py-2 text-right`}>
                                         {ban.banid ? (
                                             <Button.Danger disabled={busyId !== null} onClick={() => onDelete(ban.banid!)}>
                                                 {busyId === ban.banid ? <Spinner size={Spinner.Size.SMALL} /> : 'Remover'}
                                             </Button.Danger>
                                         ) : (
-                                            '—'
+                                            '-'
                                         )}
                                     </td>
                                 </tr>

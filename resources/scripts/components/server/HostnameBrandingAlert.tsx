@@ -19,7 +19,7 @@ const HostnameBrandingAlert = () => {
         return null;
     }
 
-    const hostname = stripGameHostnameColors(query.branding.hostname || query.hostname) || '—';
+    const hostname = stripGameHostnameColors(query.branding.hostname || query.hostname) || '-';
 
     return (
         <ContentContainer css={tw`w-full min-w-0 mt-4 mb-4`}>

@@ -1,7 +1,7 @@
 import { css } from 'styled-components/macro';
 import tw from 'twin.macro';
 
-/** Tipografia dos títulos de card — alinhada ao header do site. */
+/** Tipografia dos títulos de card - alinhada ao header do site. */
 export const cardTitleFont = css`
     ${tw`text-sm font-header font-semibold uppercase`};
 `;
@@ -10,7 +10,7 @@ export const cardSurface = css`
     background: var(--hg-card-surface);
 `;
 
-/** Cabeçalho do card — mesmo tom claro do sidebar (vidro + blur). */
+/** Cabeçalho do card - mesmo tom claro do sidebar (vidro + blur). */
 export const cardHeaderSurface = css`
     background: var(--hg-card-header);
     -webkit-backdrop-filter: blur(4px);
@@ -34,7 +34,7 @@ export const navText = css`
     color: var(--hg-nav-text);
 `;
 
-/** Tipografia e cor dos itens do sidebar — reutilizada em labels de formulário. */
+/** Tipografia e cor dos itens do sidebar - reutilizada em labels de formulário. */
 export const sidebarItemText = css`
     ${navText};
     ${cardTitleFont};
@@ -45,19 +45,19 @@ export const rowListText = css`
     ${tw`text-sm leading-snug`};
 `;
 
-/** Lista compacta (arquivos) — um passo abaixo de text-base, alinhada a text-sm. */
+/** Lista compacta (arquivos) - um passo abaixo de text-base, alinhada a text-sm. */
 export const rowListTextFiles = css`
     ${tw`text-sm leading-snug`};
 `;
 
-/** Texto dos itens de menu dropdown (⋯) — mesma escala da lista de arquivos. */
+/** Texto dos itens de menu dropdown (⋯) - mesma escala da lista de arquivos. */
 export const dropdownMenuItemText = css`
     ${rowListTextFiles};
     ${tw`font-semibold`};
     color: color-mix(in srgb, var(--color-white) 94%, var(--hg-nav-text) 6%);
 `;
 
-/** Painel flutuante dos menus dropdown — vidro opaco para legibilidade. */
+/** Painel flutuante dos menus dropdown - vidro opaco para legibilidade. */
 export const dropdownMenuShell = css`
     ${dropdownMenuItemText};
     ${tw`rounded p-1`};
@@ -109,7 +109,7 @@ export const dropdownMenuButtonRowStyles = (danger?: boolean) => css`
     ${dropdownMenuItemHover(danger)};
 `;
 
-/** Ícone dentro de item de dropdown — proporcional ao text-sm. */
+/** Ícone dentro de item de dropdown - proporcional ao text-sm. */
 export const dropdownMenuIcon = css`
     ${tw`text-xs flex-shrink-0`};
     width: 0.875rem;

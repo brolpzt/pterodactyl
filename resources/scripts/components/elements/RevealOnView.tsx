@@ -4,7 +4,7 @@ interface Props {
     children: React.ReactNode;
     /** Atraso da animação (ms), via --reveal-delay */
     delay?: number;
-    /** Sem animação — exibe imediatamente */
+    /** Sem animação - exibe imediatamente */
     immediate?: boolean;
     className?: string;
 }

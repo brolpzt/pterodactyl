@@ -21,7 +21,7 @@ interface Props {
     className?: string;
 }
 
-/** Lista de activity — mesmo vidro dos cards / sidebar. */
+/** Lista de activity - mesmo vidro dos cards / sidebar. */
 export default ({ children, className }: Props) => (
     <ListShell className={className}>
         <ListInner>{children}</ListInner>

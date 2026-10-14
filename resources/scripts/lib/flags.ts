@@ -1,4 +1,4 @@
-/** Bandeiras SVG — mesmo padrão hostgamer.net (/images/flags/*.svg) */
+/** Bandeiras SVG - mesmo padrão hostgamer.net (/images/flags/*.svg) */
 export const FLAG_SLUGS = ['us', 'br', 'es', 'globe'] as const;
 
 export type FlagSlug = (typeof FLAG_SLUGS)[number];

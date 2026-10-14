@@ -306,9 +306,9 @@ This project follows [Semantic Versioning](http://semver.org) guidelines.
 
 ### Changed
 * Updated how release assets are generated to perform more logical bundle splitting. This should help reduce the amount of data users have to download at once in order to render the UI.
-* Upgraded From TailwindCSS 2 to 3 — for most people this should have minimal if any impact.
+* Upgraded From TailwindCSS 2 to 3 - for most people this should have minimal if any impact.
 * Chart.js updated from v2 to v3.
-* Reduced the number of custom colors in use — by default we now use Tailwind's default color pallet, with the exception of a custom gray scheme.
+* Reduced the number of custom colors in use - by default we now use Tailwind's default color pallet, with the exception of a custom gray scheme.
 * **[deprecated]** The use of `neutral` and `primary` have been deprecated in class names, prefer `gray` and `blue` respectively.
 * Begins the process of dropping the use of Gravatars for user avatars and replaces them with dynamically generated SVG images.
 * Improved front-end route definitions to make it easier for external modifications to inject their routes and components into the codebase without having to modify as many core files.
@@ -337,13 +337,13 @@ This project follows [Semantic Versioning](http://semver.org) guidelines.
 should be completely seamless for most installations as the Panel is able to convert between the two. Custom solutions
 using these eggs should be updated to account for the new format.
 
-This release also changes API key behavior — "client" keys belonging to admin users can now be used to access
+This release also changes API key behavior - "client" keys belonging to admin users can now be used to access
 the `/api/application` endpoints in their entirety. Existing "application" keys generated in the admin area should
 be considered deprecated, but will continue to work. Application keys _will not_ work with the client API.
 
 ### Fixed
 * Schedules are no longer run when a server is suspended or marked as installing.
-* The remote field when creating a database is no longer limited to an IP address and `%` wildcard — all expected MySQL remote host values are allowed.
+* The remote field when creating a database is no longer limited to an IP address and `%` wildcard - all expected MySQL remote host values are allowed.
 * Allocations cannot be deleted from a server by a user if the server is configured with an `allocation_limit` set to `0`.
 * The Java Version modal no longer shows a dropdown and update option to users that do not have permission to make those changes.
 * The Java Version modal now correctly returns only the images available to the server's selected Egg.
@@ -369,7 +369,7 @@ be considered deprecated, but will continue to work. Application keys _will not_
 * Adds command to return a list of all nodes available on the Panel in both table and JSON format (`php artisan p:node:list`).
 * Adds server network (inbound/outbound) usage graphs to the console screen.
 * Adds support for configuring CORS on the API by setting the `APP_CORS_ALLOWED_ORIGINS=example.com,dashboard.example.com` environment variable. By default all instances are configured with this set to `*` which allows any origin.
-* Adds proper activity logging for the following areas of the Panel: authentication, user account modifications, server modification. This is an initial test implementation before further roll-out in the software. Events are logged into the database but are not currently exposed in the UI — they will be displayed in a future update.
+* Adds proper activity logging for the following areas of the Panel: authentication, user account modifications, server modification. This is an initial test implementation before further roll-out in the software. Events are logged into the database but are not currently exposed in the UI - they will be displayed in a future update.
 
 ### Removed
 * Removes Google Analytics from the front end code.
@@ -452,10 +452,10 @@ _This release should not be used, please use `1.6.5`. It has been pulled from ou
 * OOM killer can now be configured at the time of server creation.
 
 ### Changed
-* Server updates are not dependent on a successful call to Wings occurring — if the API call fails internally the error will be logged but the server update will still be persisted.
+* Server updates are not dependent on a successful call to Wings occurring - if the API call fails internally the error will be logged but the server update will still be persisted.
 
 ### Removed
-* Removed `WingsServerRepository::update()` function — if you were previously using this to modify server elements on Wings please replace calls to it with `::sync()` after updating Wings.
+* Removed `WingsServerRepository::update()` function - if you were previously using this to modify server elements on Wings please replace calls to it with `::sync()` after updating Wings.
 
 ## v1.5.1
 ### Fixed
@@ -1039,14 +1039,14 @@ the response from the server `GET` endpoint.
 
 ## v0.7.0 (Derelict Dermodactylus)
 ### Fixed
-* `[rc.2]` — Fixes bad API behavior on `/user` routes.
-* `[rc.2]` — Fixes Admin CP user editing resetting a password on users unintentionally.
-* `[rc.2]` — Fixes bug with server creation API endpoint that would fail to validate `allocation.default` correctly.
-* `[rc.2]` — Fix data integrity exception occurring due to invalid data being passed to server creation service on the API.
-* `[rc.2]` — Fix data integrity exception that could occur when an email containing non-username characters was passed.
-* `[rc.2]` — Fix data integrity exception occurring when no default value is provided for an egg variable.
-* `[rc.2]` — Fixes a bug that would cause non-editable variables on the front-end to throw a validation error.
-* `[rc.2]` — Fixes a data integrity exception occurring when saving egg variables with no value.
+* `[rc.2]` - Fixes bad API behavior on `/user` routes.
+* `[rc.2]` - Fixes Admin CP user editing resetting a password on users unintentionally.
+* `[rc.2]` - Fixes bug with server creation API endpoint that would fail to validate `allocation.default` correctly.
+* `[rc.2]` - Fix data integrity exception occurring due to invalid data being passed to server creation service on the API.
+* `[rc.2]` - Fix data integrity exception that could occur when an email containing non-username characters was passed.
+* `[rc.2]` - Fix data integrity exception occurring when no default value is provided for an egg variable.
+* `[rc.2]` - Fixes a bug that would cause non-editable variables on the front-end to throw a validation error.
+* `[rc.2]` - Fixes a data integrity exception occurring when saving egg variables with no value.
 * Fixes a design bug in the database that prevented the storage of negative numbers, thus preventing a server from being assigned unlimited swap.
 * Fixes a bug where the 'Assign New Allocations' box would only show IPs that were present in the current pagination block.
 * Unable to change the daemon secret for a server via the Admin CP.
@@ -1113,13 +1113,13 @@ the response from the server `GET` endpoint.
 
 ## v0.7.0-rc.2 (Derelict Dermodactylus)
 ### Fixed
-* `[rc.1]` — Fixes exception thrown when revoking user sessions.
-* `[rc.1]` — Fixes exception that would occur when trying to delete allocations from a node.
-* `[rc.1]` — Fixes exception thrown when attempting to adjust mail settings as well as a validation error thrown afterwards.
-* `[rc.1]` — Fixes bug preventing modification of the default value for an Egg variable.
-* `[rc.1]` — Fixed a bug that would occur when attempting to reset the daemon secret for a node.
-* `[rc.1]` — Fix exception thrown when attempting to modify an existing database host.
-* `[rc.1]` — Fix an auto deployment bug causing a node to be ignored if it had no servers already attached to it.
+* `[rc.1]` - Fixes exception thrown when revoking user sessions.
+* `[rc.1]` - Fixes exception that would occur when trying to delete allocations from a node.
+* `[rc.1]` - Fixes exception thrown when attempting to adjust mail settings as well as a validation error thrown afterwards.
+* `[rc.1]` - Fixes bug preventing modification of the default value for an Egg variable.
+* `[rc.1]` - Fixed a bug that would occur when attempting to reset the daemon secret for a node.
+* `[rc.1]` - Fix exception thrown when attempting to modify an existing database host.
+* `[rc.1]` - Fix an auto deployment bug causing a node to be ignored if it had no servers already attached to it.
 
 ### Changed
 * Changed logger to skip reporting stack-traces on PDO exceptions due to sensitive information being contained within.
@@ -1129,9 +1129,9 @@ the response from the server `GET` endpoint.
 
 ## v0.7.0-rc.1 (Derelict Dermodactylus)
 ### Fixed
-* `[beta.4]` — Fixes some bad search and replace action that happened previously and was throwing errors when validating user permissions.
-* `[beta.4]` — Fixes behavior of variable validation to not break the page when no rules are provided.
-* `[beta.4]` — Fix bug preventing the editing of files in the file manager.
+* `[beta.4]` - Fixes some bad search and replace action that happened previously and was throwing errors when validating user permissions.
+* `[beta.4]` - Fixes behavior of variable validation to not break the page when no rules are provided.
+* `[beta.4]` - Fix bug preventing the editing of files in the file manager.
 
 ### Added
 * Added support for editing symlinked files on the Panel.
@@ -1139,11 +1139,11 @@ the response from the server `GET` endpoint.
 
 ## v0.7.0-beta.4 (Derelict Dermodactylus)
 ### Fixed
-* `[beta.3]` — Fixes a bug with the default environment file that was causing an inability to perform a fresh install when running package discovery.
-* `[beta.3]` — Fixes an edge case caused by the Laravel 5.5 upgrade that would try to perform an in_array check against a null value.
-* `[beta.3]` — Fixes a bug that would cause an error when attempting to create a new user on the Panel.
-* `[beta.3]` — Fixes error handling of the settings service provider when no migrations have been run.
-* `[beta.3]` — Fixes validation error when trying to use 'None' as the 'Copy Script From' option for an egg script.
+* `[beta.3]` - Fixes a bug with the default environment file that was causing an inability to perform a fresh install when running package discovery.
+* `[beta.3]` - Fixes an edge case caused by the Laravel 5.5 upgrade that would try to perform an in_array check against a null value.
+* `[beta.3]` - Fixes a bug that would cause an error when attempting to create a new user on the Panel.
+* `[beta.3]` - Fixes error handling of the settings service provider when no migrations have been run.
+* `[beta.3]` - Fixes validation error when trying to use 'None' as the 'Copy Script From' option for an egg script.
 * Fixes a design bug in the database that prevented the storage of negative numbers, thus preventing a server from being assigned unlimited swap.
 * Fixes a bug where the 'Assign New Allocations' box would only show IPs that were present in the current pagination block.
 
@@ -1159,14 +1159,14 @@ the response from the server `GET` endpoint.
 
 ## v0.7.0-beta.3 (Derelict Dermodactylus)
 ### Fixed
-* `[beta.2]` — Fixes a bug that would cause an endless exception message stream in the console when attempting to setup environment settings in certain instances.
-* `[beta.2]` — Fixes a bug causing the dropdown menu for a server's egg to display the wrong selected value.
-* `[beta.2]` — Fixes a bug that would throw a red page of death when submitting an invalid egg variable value for a server in the Admin CP.
-* `[beta.2]` — Someone found a `@todo` that I never `@todid` and thus database hosts could not be created without being linked to a node. This is fixed...
-* `[beta.2]` — Fixes bug that caused incorrect rendering of CPU usage on server graphs due to missing variable.
-* `[beta.2]` — Fixes bug causing schedules to be un-deletable.
-* `[beta.2]` — Fixes bug that prevented the deletion of nodes due to an allocation deletion cascade issue with the SQL schema.
-* `[beta.2]` — Fixes a bug causing eggs not extending other eggs to fail validation.
+* `[beta.2]` - Fixes a bug that would cause an endless exception message stream in the console when attempting to setup environment settings in certain instances.
+* `[beta.2]` - Fixes a bug causing the dropdown menu for a server's egg to display the wrong selected value.
+* `[beta.2]` - Fixes a bug that would throw a red page of death when submitting an invalid egg variable value for a server in the Admin CP.
+* `[beta.2]` - Someone found a `@todo` that I never `@todid` and thus database hosts could not be created without being linked to a node. This is fixed...
+* `[beta.2]` - Fixes bug that caused incorrect rendering of CPU usage on server graphs due to missing variable.
+* `[beta.2]` - Fixes bug causing schedules to be un-deletable.
+* `[beta.2]` - Fixes bug that prevented the deletion of nodes due to an allocation deletion cascade issue with the SQL schema.
+* `[beta.2]` - Fixes a bug causing eggs not extending other eggs to fail validation.
 
 ### Changed
 * Revoking the administrative status for an admin will revoke all authentication tokens currently assigned to their account.
@@ -1180,16 +1180,16 @@ the response from the server `GET` endpoint.
 
 ## v0.7.0-beta.2 (Derelict Dermodactylus)
 ### Fixed
-* `[beta.1]` — Fixes a CORS header issue due to a wrong API endpoint being provided in the administrative node listing.
-* `[beta.1]` — Fixes bug that would prevent root admins from accessing servers they were not set as the owner of.
-* `[beta.1]` — Fixes wrong URL redirect being provided when creating a subuser.
-* `[beta.1]` — Fixes missing check in environment setup that would leave the Hashids salt empty.
-* `[beta.1]` — Fixes bug preventing loading of allocations when trying to create a new server.
-* `[beta.1]` — Fixes bug causing inability to create new servers on the Panel.
-* `[beta.1]` — Fixes bug causing inability to delete an allocation due to misconfigured JS.
-* `[beta.1]` — Fixes bug causing inability to set the IP alias for an allocation to an empty value.
-* `[beta.1]` — Fixes bug that caused startup changes to not propagate to the server correctly on the first save.
-* `[beta.1]` — Fixes bug that prevented subusers from accessing anything over socketio due to a missing permission.
+* `[beta.1]` - Fixes a CORS header issue due to a wrong API endpoint being provided in the administrative node listing.
+* `[beta.1]` - Fixes bug that would prevent root admins from accessing servers they were not set as the owner of.
+* `[beta.1]` - Fixes wrong URL redirect being provided when creating a subuser.
+* `[beta.1]` - Fixes missing check in environment setup that would leave the Hashids salt empty.
+* `[beta.1]` - Fixes bug preventing loading of allocations when trying to create a new server.
+* `[beta.1]` - Fixes bug causing inability to create new servers on the Panel.
+* `[beta.1]` - Fixes bug causing inability to delete an allocation due to misconfigured JS.
+* `[beta.1]` - Fixes bug causing inability to set the IP alias for an allocation to an empty value.
+* `[beta.1]` - Fixes bug that caused startup changes to not propagate to the server correctly on the first save.
+* `[beta.1]` - Fixes bug that prevented subusers from accessing anything over socketio due to a missing permission.
 
 ### Changed
 * Moved Docker image setting to be on the startup management page for a server rather than the details page. This value changes based on the Nest and Egg that are selected.
@@ -1252,7 +1252,7 @@ the response from the server `GET` endpoint.
 
 ## v0.6.3 (Courageous Carniadactylus)
 ### Fixed
-* **[Security]** — Addresses an oversight in how the terminal rendered information sent from the server feed which allowed a malicious user to execute arbitrary commands on the game-server process itself by using a specifically crafted in-game command.
+* **[Security]** - Addresses an oversight in how the terminal rendered information sent from the server feed which allowed a malicious user to execute arbitrary commands on the game-server process itself by using a specifically crafted in-game command.
 
 ### Changed
 * Removed `jquery.terminal` and replaced it with an in-house developed terminal with less potential for security issues.
@@ -1307,9 +1307,9 @@ spatie/laravel-fractal (4.0.0 => 4.0.1)
 * Fixes bug where daemon was unable to register that certain games had fully booted and were ready to play on.
 * Fixes bug causing MySQL user accounts to be corrupted when resetting a password via the panel.
 * Fixes remote timing attack vulnerability due to hmac comparison in API middleware.
-* `[rc.1]` — Server deletion is fixed, caused by removed download table.
-* `[rc.1]` — Server status indication on front-end no longer shows `Error` when server is marked as installing or suspended.
-* `[rc.1]` — Fixes issues with SteamCMD not registering and installing games properly.
+* `[rc.1]` - Server deletion is fixed, caused by removed download table.
+* `[rc.1]` - Server status indication on front-end no longer shows `Error` when server is marked as installing or suspended.
+* `[rc.1]` - Fixes issues with SteamCMD not registering and installing games properly.
 
 ### Changed
 * Admin API and base routes for user management now define the fields that should be passed to repositories rather than passing all fields.
@@ -1377,12 +1377,12 @@ spatie/laravel-fractal (4.0.0 => 4.0.1)
 
 ## v0.6.0-rc.1
 ### Fixed
-* `[beta.2.1]` — Fixed a bug preventing the deletion of a server.
+* `[beta.2.1]` - Fixed a bug preventing the deletion of a server.
 * It is now possible to modify a server's disk limits after the server is created.
-* `[beta.2.1]` — Fixes a bug causing login issues and password reset failures when reCAPTCHA is enabled.
+* `[beta.2.1]` - Fixes a bug causing login issues and password reset failures when reCAPTCHA is enabled.
 * Fixes remote timing attack vulnerability due to hmac comparison in API middleware.
-* `[beta.2.1]` — Fixes bug requiring docker image field to be filled out when adding a service option.
-* `[beta.2.1]` — Fixes inability to mark a user as a non-admin once they were assigned the role.
+* `[beta.2.1]` - Fixes bug requiring docker image field to be filled out when adding a service option.
+* `[beta.2.1]` - Fixes inability to mark a user as a non-admin once they were assigned the role.
 
 ### Added
 * Added new scripts for service options that allows installation of software in a privileged Docker container on the node prior to marking a server as installed.
@@ -1400,17 +1400,17 @@ spatie/laravel-fractal (4.0.0 => 4.0.1)
 
 ## v0.6.0-beta.2.1
 ### Fixed
-* `[beta.2]` — Suspended servers now show as suspended.
-* `[beta.2]` — Corrected the information when a task has not run yet.
-* `[beta.2]` — Fixes filemanager 404 when editing a file within a directory.
-* `[beta.2]` — Fixes exception in tasks when deleting a server.
-* `[beta.2]` — Fixes bug with Terarria and Voice servers reporting a `TypeError: Service is not a constructor` in the daemon due to a missing service configuration.
-* `[beta.2]` — Fixes password reset form throwing a MethodNotAllowed error when accessed.
-* `[beta.2]` — Fixes invalid password bug when attempting to change account email address.
-* `[beta.2]` — New attempt at fixing the issues when rendering files in the browser file editor on certain browsers.
-* `[beta.2]` — Fixes broken auto-deploy time checking causing no tokens to work.
-* `[beta.2]` — Fixes display of subusers after creation.
-* `[beta.2]` — Fixes bug throwing model not found exception when editing an existing subuser.
+* `[beta.2]` - Suspended servers now show as suspended.
+* `[beta.2]` - Corrected the information when a task has not run yet.
+* `[beta.2]` - Fixes filemanager 404 when editing a file within a directory.
+* `[beta.2]` - Fixes exception in tasks when deleting a server.
+* `[beta.2]` - Fixes bug with Terarria and Voice servers reporting a `TypeError: Service is not a constructor` in the daemon due to a missing service configuration.
+* `[beta.2]` - Fixes password reset form throwing a MethodNotAllowed error when accessed.
+* `[beta.2]` - Fixes invalid password bug when attempting to change account email address.
+* `[beta.2]` - New attempt at fixing the issues when rendering files in the browser file editor on certain browsers.
+* `[beta.2]` - Fixes broken auto-deploy time checking causing no tokens to work.
+* `[beta.2]` - Fixes display of subusers after creation.
+* `[beta.2]` - Fixes bug throwing model not found exception when editing an existing subuser.
 
 ### Changed
 * Deleting a server safely now continues even if the daemon reports a `HTTP/404` missing server error (requires `Daemon@0.4.0-beta.2.1`)
@@ -1422,21 +1422,21 @@ spatie/laravel-fractal (4.0.0 => 4.0.1)
 
 ## v0.6.0-beta.2
 ### Fixed
-* `[beta.1]` — Fixes task management system not running correctly.
-* `[beta.1]` — Fixes API endpoint for command sending missing the required class definition.
-* `[beta.1]` — Fixes panel looking for an old compiled classfile that is no longer used. This was causing errors relating to `missing class DingoAPI` when trying to upgrade the panel.
-* `[beta.1]` — Should fix render issues when trying to edit some files via the panel file editor.
+* `[beta.1]` - Fixes task management system not running correctly.
+* `[beta.1]` - Fixes API endpoint for command sending missing the required class definition.
+* `[beta.1]` - Fixes panel looking for an old compiled classfile that is no longer used. This was causing errors relating to `missing class DingoAPI` when trying to upgrade the panel.
+* `[beta.1]` - Should fix render issues when trying to edit some files via the panel file editor.
 
 ### Added
 * Ability to launch the console in a new window as an individual unit. https://s3.kelp.in/IrTyE.png
 
 ## v0.6.0-beta.1
 ### Fixed
-* `[pre.7]` — Fixes bug with subuser checkbox display.
-* `[pre.7]` — Fixes bug with injected JS that was causing `<!DOCTYPE html>` to be ignored in templates.
-* `[pre.7]` — Fixes exception thrown when trying to delete a node due to a misnamed model.
-* `[pre.7]` — Fixes username vanishing on failed login attempts.
-* `[pre.7]` — Terminal is now fixed to actually output all lines, rather than leaving one hanging in neverland until the browser is resized.
+* `[pre.7]` - Fixes bug with subuser checkbox display.
+* `[pre.7]` - Fixes bug with injected JS that was causing `<!DOCTYPE html>` to be ignored in templates.
+* `[pre.7]` - Fixes exception thrown when trying to delete a node due to a misnamed model.
+* `[pre.7]` - Fixes username vanishing on failed login attempts.
+* `[pre.7]` - Terminal is now fixed to actually output all lines, rather than leaving one hanging in neverland until the browser is resized.
 
 ### Added
 * Login attempts and password reset requests are now protected by invisible ReCaptcha. This feature can be disabled with a `.env` variable.
@@ -1445,56 +1445,56 @@ spatie/laravel-fractal (4.0.0 => 4.0.1)
 
 ### Changed
 * Subuser permissions are now stored in `Permission::listPermissions()` to make views way cleaner and make adding to views significantly cleaner.
-* `[pre.7]` — Sidebar for file manager now is a single link rather than a dropdown.
+* `[pre.7]` - Sidebar for file manager now is a single link rather than a dropdown.
 * Attempting to reset a password for an account that does not exist no longer returns an error, rather it displays a success message. Failed resets trigger a `Pterodactyl\Events\Auth\FailedPasswordReset` event that can be caught if needed to perform other actions.
 * Servers are no longer queued for deletion due to the general hassle and extra logic required.
 * Updated all panel components to run on Laravel v5.4 rather than 5.3 which is EOL.
 * Routes are now handled in the `routes/` folder, and use a significantly cleaner syntax. Controller names and methods have been updated as well to be clearer as well as avoid conflicts with PHP reserved keywords.
 * API has been completely overhauled to use new permissions system. **Any old API keys will immediately become invalid and fail to operate properly anymore. You will need to generate new keys.**
 * Cleaned up dynamic database connection setting to use a single function call from the host model.
-* `[pre.7]` — Corrected a config option for spigot servers to set a boolean value as boolean, and not as a string.
+* `[pre.7]` - Corrected a config option for spigot servers to set a boolean value as boolean, and not as a string.
 
 ## v0.6.0-pre.7
 ### Fixed
-* `[pre.6]` — Addresses misconfigured console queue that was still sending data way to quickly thus causing the console to explode on some devices when large amounts of data were sent.
-* `[pre.6]` — Fixes bug in allocation parsing for a node that prevented adding new allocations.
-* `[pre.6]` — Fixes typo in migrations that wouldn't save custom regex for non-required variables.
-* `[pre.6]` — Fixes auto-deploy checkbox on server creation causing validation error.
+* `[pre.6]` - Addresses misconfigured console queue that was still sending data way to quickly thus causing the console to explode on some devices when large amounts of data were sent.
+* `[pre.6]` - Fixes bug in allocation parsing for a node that prevented adding new allocations.
+* `[pre.6]` - Fixes typo in migrations that wouldn't save custom regex for non-required variables.
+* `[pre.6]` - Fixes auto-deploy checkbox on server creation causing validation error.
 
 ## v0.6.0-pre.6
 ### Fixed
-* `[pre.5]` — Console based server rebuild tool now actually rebuilds the servers with the correct information.
-* `[pre.5]` — Fixes typo and wrong docker container for certain applications.
+* `[pre.5]` - Console based server rebuild tool now actually rebuilds the servers with the correct information.
+* `[pre.5]` - Fixes typo and wrong docker container for certain applications.
 
 ### Changed
 * Removed all old theme JS and CSS folders to cleanup and avoid confusion in the future.
 
 ### Added
-* `[pre.5]` — Added foreign key to `pack_id` to ensure nothing eds up breaking there.
+* `[pre.5]` - Added foreign key to `pack_id` to ensure nothing eds up breaking there.
 
 ## v0.6.0-pre.5
 ### Changed
 * New theme applied to Admin CP. Many graphical changes were made, some data was moved around and some display data changed. Too much was changed to feasibly log it all in here. Major breaking changes or notable new features will be logged.
 * New server creation page now makes significantly less AJAX calls and is much quicker to respond.
 * Server and Node view pages wee modified to split tabs into individual pages to make re-themeing and modifications significantly easier, and reduce MySQL query loads on page.
-* `[pre.4]` — Service and Pack management overhauled to be faster, cleaner, and more extensible in the future.
+* `[pre.4]` - Service and Pack management overhauled to be faster, cleaner, and more extensible in the future.
 * Most of the backend `UnhandledException` display errors now include a clearer error that directs admins to the program's logs.
 * Table seeders for services now can be run during upgrades and will attempt to locate and update, or create new if not found in the database.
 * Many structural changes to the database and `Pterodactyl\Models` classes that would flood this changelog if they were all included. All required migrations included to handle database changes.
-* `[pre.4]` — Service pack files are now stored in the database rather than on the host system to make updates easier.
+* `[pre.4]` - Service pack files are now stored in the database rather than on the host system to make updates easier.
 * Clarified details for database hosts to prevent users entering invalid account details, as well as renamed tables and columns relating to it to keep things clearer.
 * Updated all code to be Laravel compliant when using `env()` and moved to using `config()` throughout non `config/*.php` files.
 
 ### Fixed
 * Fixes potential bug with invalid CIDR notation (ex: `192.168.1.1/z`) when adding allocations that could cause over 4 million records to be created at once.
-* `[pre.4]` — Fixes bug preventing server updates from occurring by the system due to undefined `Auth::user()` in the event listener.
-* `[pre.4]` — Fixes `Server::byUuid()` caching to actually clear the cache for *all* users, rather than the logged in user by using cache tags.
-* `[pre.4]` — Fixes server listing on frontend not displaying a page selector when more than 10 servers exist.
-* `[pre.4]` — Fixes non-admin users being unable to create personal API keys.
+* `[pre.4]` - Fixes bug preventing server updates from occurring by the system due to undefined `Auth::user()` in the event listener.
+* `[pre.4]` - Fixes `Server::byUuid()` caching to actually clear the cache for *all* users, rather than the logged in user by using cache tags.
+* `[pre.4]` - Fixes server listing on frontend not displaying a page selector when more than 10 servers exist.
+* `[pre.4]` - Fixes non-admin users being unable to create personal API keys.
 * Fixes bug where daemon was unable to register that certain games had fully booted and were ready to play on.
 * Fixes bug causing MySQL user accounts to be corrupted when resetting a password via the panel.
-* `[pre.4]` — Multiple clients refreshing the console no longer clears the console for all parties involved... sorry about that.
-* `[pre.4]` — Fixes bug in environment setting script that would not remember defaults and try to re-assign values.
+* `[pre.4]` - Multiple clients refreshing the console no longer clears the console for all parties involved... sorry about that.
+* `[pre.4]` - Fixes bug in environment setting script that would not remember defaults and try to re-assign values.
 
 ### Added
 * Ability to assign multiple allocations at once when creating a new server.
@@ -1507,26 +1507,26 @@ spatie/laravel-fractal (4.0.0 => 4.0.1)
 
 ## v0.6.0-pre.4
 ### Fixed
-* `[pre.3]` — Fixes bug in cache handler that doesn't cache against the user making the request. Would have allowed for users to access servers not belonging to themselves in production.
-* `[pre.3]` — Fixes misnamed MySQL column that was causing the inability to delete certain port ranges from the database.
-* `[pre.3]` — Fixes bug preventing rebuilding server containers through the Admin CP.
+* `[pre.3]` - Fixes bug in cache handler that doesn't cache against the user making the request. Would have allowed for users to access servers not belonging to themselves in production.
+* `[pre.3]` - Fixes misnamed MySQL column that was causing the inability to delete certain port ranges from the database.
+* `[pre.3]` - Fixes bug preventing rebuilding server containers through the Admin CP.
 
 ### Added
 * New cache policy for ServerPolicy to avoid making 15+ queries per page load when confirming if a user has permission to perform an action.
 
 ## v0.6.0-pre.3
 ### Fixed
-* `[pre.2]` — Fixes bug where servers could not be manually deployed to nodes due to a broken SQL call.
-* `[pre.2]` — Fixes inability to edit a server due to owner_id issues.
-* `[pre.2]` — Fixes bug when trying to add new subusers.
+* `[pre.2]` - Fixes bug where servers could not be manually deployed to nodes due to a broken SQL call.
+* `[pre.2]` - Fixes inability to edit a server due to owner_id issues.
+* `[pre.2]` - Fixes bug when trying to add new subusers.
 * Emails sending with 'Pterodactyl Panel' as the from name. Now configurable by using `php artisan pterodactyl:mail` to update.
-* `[pre.2]` — Fixes inability to delete accounts due to SQL changes.
-* `[pre.2]` — Fixes bug with checking power-permissions that showed the wrong buttons. Also adds check back to sidebar to only show options a user can use.
-* `[pre.2]` — Fixes allocation listing on node allocations tab as well as bug preventing deletion of port.
-* `[pre.2]` — Fixes bug in services that prevented saving updated settings or creating new services.
+* `[pre.2]` - Fixes inability to delete accounts due to SQL changes.
+* `[pre.2]` - Fixes bug with checking power-permissions that showed the wrong buttons. Also adds check back to sidebar to only show options a user can use.
+* `[pre.2]` - Fixes allocation listing on node allocations tab as well as bug preventing deletion of port.
+* `[pre.2]` - Fixes bug in services that prevented saving updated settings or creating new services.
 
 ### Changed
-* `[pre.2]` — File Manager now displays relevant information on all screen sizes, and includes better button clicking mechanics for dropdown menu.
+* `[pre.2]` - File Manager now displays relevant information on all screen sizes, and includes better button clicking mechanics for dropdown menu.
 * Reduced the number of database queries being executed when viewing a specific server. This is done by caching the query for up to 60 minutes in memcached.
 * User creation emails include more information and are sent by the event listener rather than the repository.
 * Account password reset emails now auto-fill the email when clicking the link.
@@ -1536,10 +1536,10 @@ spatie/laravel-fractal (4.0.0 => 4.0.1)
 
 ## v0.6.0-pre.2
 ### Fixed
-* `[pre.1]` — Fixes bug with database seeders that prevented correctly installing the panel.
+* `[pre.1]` - Fixes bug with database seeders that prevented correctly installing the panel.
 
 ### Changed
-* `[pre.1]` — Moved around navigation bar on fronted to make it more obvious where logout and admin buttons were, as well as use the right icon for server listing.
+* `[pre.1]` - Moved around navigation bar on fronted to make it more obvious where logout and admin buttons were, as well as use the right icon for server listing.
 
 ## v0.6.0-pre.1
 ### Added

@@ -1,4 +1,4 @@
-# Plutonium T6 — install script (Windows Wings / PowerShell)
+# Plutonium T6 - install script (Windows Wings / PowerShell)
 # Uses plutonium-updater: https://github.com/mxve/plutonium-updater.rs
 $ErrorActionPreference = 'Stop'
 

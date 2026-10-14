@@ -188,8 +188,8 @@ export default () => {
                 key: 'amxx:admins',
                 type: 'success',
                 message: editingId !== null
-                    ? `Admin atualizado.${commandSent ? '' : ' Servidor offline — execute amx_reloadadmins quando estiver online.'}`
-                    : `Admin criado.${commandSent ? '' : ' Servidor offline — execute amx_reloadadmins quando estiver online.'}`,
+                    ? `Admin atualizado.${commandSent ? '' : ' Servidor offline - execute amx_reloadadmins quando estiver online.'}`
+                    : `Admin criado.${commandSent ? '' : ' Servidor offline - execute amx_reloadadmins quando estiver online.'}`,
             });
 
             resetForm();
@@ -321,7 +321,7 @@ export default () => {
                         <Input
                             value={nickname}
                             onChange={(e) => setNickname(e.currentTarget.value)}
-                            placeholder={'Opcional — aparece como comentário no users.ini'}
+                            placeholder={'Opcional - aparece como comentário no users.ini'}
                         />
                     </div>
                 </div>
@@ -337,7 +337,7 @@ export default () => {
                                     onChange={() => toggleFlag(flag)}
                                 />
                                 <span>
-                                    <strong>{flag}</strong> — {label}
+                                    <strong>{flag}</strong> - {label}
                                 </span>
                             </label>
                         ))}

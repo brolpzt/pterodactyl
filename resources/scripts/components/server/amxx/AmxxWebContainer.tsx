@@ -41,7 +41,7 @@ const parsePlayerIp = (address?: string): string | null => {
 };
 
 const isValidSteamId = (steamid: string): boolean =>
-    Boolean(steamid && steamid !== 'BOT' && steamid !== '—' && steamid.startsWith('STEAM_'));
+    Boolean(steamid && steamid !== 'BOT' && steamid !== '-' && steamid.startsWith('STEAM_'));
 
 const defaultBanType = (player: AmxxConsolePlayer): BanType => {
     if (isValidSteamId(player.steamid)) {
@@ -395,13 +395,13 @@ export default () => {
                                             css={tw`border-b border-neutral-800`}
                                         >
                                             <td css={tw`py-2 pr-4 font-mono`}>
-                                                {player.userid > 0 ? `#${player.userid}` : '—'}
+                                                {player.userid > 0 ? `#${player.userid}` : '-'}
                                             </td>
                                             <td css={tw`py-2 pr-4`}>{player.name}</td>
                                             <td css={tw`py-2 pr-4 font-mono text-xs`}>{player.steamid}</td>
                                             <td css={tw`py-2 pr-4`}>{player.score}</td>
                                             <td css={tw`py-2 pr-4`}>{player.ping}</td>
-                                            <td css={tw`py-2 pr-4 font-mono text-xs`}>{player.connected || '—'}</td>
+                                            <td css={tw`py-2 pr-4 font-mono text-xs`}>{player.connected || '-'}</td>
                                             <td css={tw`py-2`}>
                                                 <div css={tw`flex flex-wrap gap-2`}>
                                                     <Can action={['amxx.kick', 'control.console']} matchAny>

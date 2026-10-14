@@ -76,7 +76,7 @@ class GmodLuaWorkshopDriver implements WorkshopSyncDriver
     private function buildWorkshopLua(array $fileIds): string
     {
         $lines = [
-            '-- Gerenciado pelo painel Pterodactyl — não edite manualmente.',
+            '-- Gerenciado pelo painel Pterodactyl - não edite manualmente.',
             '-- Docs: https://wiki.garrysmod.com/page/resource/AddWorkshop',
             '',
         ];

@@ -121,7 +121,7 @@
                                     @if($record->server)
                                         <a href="{{ route('admin.servers.view', $record->server->id) }}">{{ $record->server->name }}</a>
                                     @else
-                                        —
+                                        -
                                     @endif
                                 </td>
                                 <td>{{ $record->zone?->label }} <code>{{ $record->zone?->publicDomain() }}</code></td>

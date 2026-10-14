@@ -1,4 +1,4 @@
-/** Durações de motion — UI HostGamer (ajuste centralizado) */
+/** Durações de motion - UI HostGamer (ajuste centralizado) */
 export const motionDurations = {
     fade: 100,
     reveal: 280,

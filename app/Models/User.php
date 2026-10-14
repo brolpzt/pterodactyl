@@ -274,7 +274,7 @@ class User extends Model implements
         return $this->hasMany(UserSSHKey::class);
     }
     /**
-     * Returns all the activity logs where this user is the subject — not to
+     * Returns all the activity logs where this user is the subject - not to
      * be confused by activity logs where this user is the _actor_.
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany<\Pterodactyl\Models\ActivityLog, $this>

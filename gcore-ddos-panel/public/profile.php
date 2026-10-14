@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $policies = GcoreClient::POLICIES;
 $aclJson = json_encode($form['acl'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 $ruleCount = count($form['acl']);
-$st = (string) ($profile['status']['status'] ?? '—');
+$st = (string) ($profile['status']['status'] ?? '-');
 $stClass = str_contains(strtolower($st), 'pending') ? 'status-pending' : 'status-updated';
 
 ob_start();

@@ -90,7 +90,7 @@ export default () => {
             console.error(error);
             setError(httpErrorToHuman(error));
         });
-        // `id` is read intentionally without being a dependency — including it would
+        // `id` is read intentionally without being a dependency - including it would
         // re-trigger a fetch right after clearServerState() resets the store.
     }, [routeServerId, clearServerState, getServer]);
 

@@ -49,7 +49,7 @@ class FirewallController extends ClientApiController
             throw new DisplayException('Este IP já está banido neste servidor.');
         }
 
-        // Apply the rule on Wings first — if this fails, we don't save to DB
+        // Apply the rule on Wings first - if this fails, we don't save to DB
         $this->daemonFirewallRepository->setServer($server)->addRule($ip, $reason);
 
         $rule = FirewallRule::create([

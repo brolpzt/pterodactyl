@@ -57,7 +57,7 @@
                             @else
                                 <span class="label label-warning">Não configurada</span>
                             @endif
-                            — configure em <a href="{{ route('admin.settings.advanced') }}">Settings → Advanced</a>.
+                            - configure em <a href="{{ route('admin.settings.advanced') }}">Settings → Advanced</a>.
                         </p>
                     </div>
                 </div>
@@ -161,18 +161,18 @@
                                         @if($server)
                                             <a href="{{ route('admin.servers.view', $server->id) }}">{{ $server->name }}</a>
                                         @else
-                                            —
+                                            -
                                         @endif
                                     </td>
-                                    <td>{{ $server?->egg?->name ?? '—' }}</td>
+                                    <td>{{ $server?->egg?->name ?? '-' }}</td>
                                     <td>
                                         @if($server?->user)
                                             <a href="{{ route('admin.users.view', $server->user->id) }}">{{ $server->user->username }}</a>
                                         @else
-                                            —
+                                            -
                                         @endif
                                     </td>
-                                    <td class="text-right">{{ $item->created_at?->diffForHumans() ?? '—' }}</td>
+                                    <td class="text-right">{{ $item->created_at?->diffForHumans() ?? '-' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

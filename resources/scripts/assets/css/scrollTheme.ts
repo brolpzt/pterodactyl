@@ -20,7 +20,7 @@ export const scrollbarTrackWidth = (variant: ScrollbarVariant = 'default') => {
     }
 };
 
-/** Esconde o scrollbar nativo — o scroll continua funcionando (mouse/trackpad). */
+/** Esconde o scrollbar nativo - o scroll continua funcionando (mouse/trackpad). */
 export const hideNativeScrollbar = css`
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -38,7 +38,7 @@ export const overlayScrollBehavior = css`
     ${hideNativeScrollbar};
 `;
 
-/** Estilos globais — página sem gutter de scrollbar nativo. */
+/** Estilos globais - página sem gutter de scrollbar nativo. */
 export const globalScrollbarStyles = css`
     html {
         overflow-y: auto;

@@ -125,7 +125,7 @@
                             <input type="checkbox" name="use_path_style_endpoint" id="pUsePathStyle" value="1" {{ old('use_path_style_endpoint', true) ? 'checked' : '' }} />
                             Use path-style endpoint
                         </label>
-                        <p class="text-muted small">Recomendado para Cloudflare R2. Se não conseguir marcar, tudo bem — o Wings ativa automaticamente em endpoints R2.</p>
+                        <p class="text-muted small">Recomendado para Cloudflare R2. Se não conseguir marcar, tudo bem - o Wings ativa automaticamente em endpoints R2.</p>
                     </div>
                 </div>
             </div>

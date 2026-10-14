@@ -5,7 +5,7 @@
 @endsection
 
 @section('content-header')
-    <h1>Gcore Anti-DDoS<small>Perfis IaaS / Bare Metal — ACL e rate limiters</small></h1>
+    <h1>Gcore Anti-DDoS<small>Perfis IaaS / Bare Metal - ACL e rate limiters</small></h1>
     <ol class="breadcrumb">
         <li><a href="{{ route('admin.index') }}">Admin</a></li>
         <li class="active">Gcore DDoS</li>
@@ -46,7 +46,7 @@
                 <tbody>
                 @foreach($profiles as $n => $p)
                     @php
-                        $st = (string) ($p['status']['status'] ?? '—');
+                        $st = (string) ($p['status']['status'] ?? '-');
                         $chip = str_contains(strtolower($st), 'pending') ? 'status-pending' : 'status-updated';
                         $opt = $p['options'] ?? [];
                     @endphp

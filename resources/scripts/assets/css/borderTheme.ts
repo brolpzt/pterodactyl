@@ -1,6 +1,6 @@
 import { css } from 'styled-components/macro';
 
-/** Borda padrão hostgamer.net — divider 55% transparente. */
+/** Borda padrão hostgamer.net - divider 55% transparente. */
 export const hgBorderColor = 'color-mix(in srgb, var(--color-divider) 55%, transparent)';
 
 export const hgBorderBottom = css`

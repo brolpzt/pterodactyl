@@ -4,10 +4,15 @@ set -e
 
 # ========================== PACKAGES ==========================
 
-apt-get update -qq > /dev/null 2>&1
-if ! apt-get install -y -qq curl unzip wget > /dev/null 2>&1; then
-    echo "[ERROR] Failed to install packages" >> /tmp/install.log
-    exit 1
+export DEBIAN_FRONTEND=noninteractive
+rm -rf /var/lib/apt/lists/*
+apt-get update -qq
+# Debian security mirror 404s current unzip candidate; pin bullseye main, fallback to latest
+if ! apt-get install -y -qq curl wget unzip=6.0-26+deb11u1; then
+    if ! apt-get install -y -qq curl wget unzip; then
+        echo "[ERROR] Failed to install packages"
+        exit 1
+    fi
 fi
 
 # ========================== CONFIGURATION ==========================
@@ -15,6 +20,7 @@ fi
 DEBUG=false
 BUCKET_NAME="pterodactyl-repo"
 S3_PATH="nests/cod2"
+S3_BASE_MAIN_PATH="nests/cod2_base/main"
 LOCAL_PATH="/mnt/server"
 
 # Official rclone .deb from GitHub releases
@@ -91,6 +97,16 @@ log_info "Syncing from R2 (r2:${BUCKET_NAME}/${S3_PATH})..."
     --stats 10s \
     --stats-one-line \
     || die "Failed to sync from R2."
+
+log_info "Copying CoD2 base main from R2 (r2:${BUCKET_NAME}/${S3_BASE_MAIN_PATH})..."
+mkdir -p "$LOCAL_PATH/main"
+"$RCLONE_BIN" copy \
+    --config "$RCLONE_CONFIG" \
+    "r2:${BUCKET_NAME}/${S3_BASE_MAIN_PATH}" \
+    "$LOCAL_PATH/main" \
+    --stats 10s \
+    --stats-one-line \
+    || die "Failed to copy CoD2 base main from R2."
 
 cleanup_rclone
 log_info "R2 sync completed."

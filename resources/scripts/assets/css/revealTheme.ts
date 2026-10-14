@@ -1,6 +1,6 @@
 import { motionDurations, motionRevealOffsetPx } from '@/assets/css/motionTheme';
 
-/** Fade + subida ao revelar blocos — alinhado ao hostgamer.net */
+/** Fade + subida ao revelar blocos - alinhado ao hostgamer.net */
 export const revealThemeStyles = `
     @keyframes reveal-on-view-up {
         from {

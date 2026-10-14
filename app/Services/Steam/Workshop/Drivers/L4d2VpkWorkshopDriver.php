@@ -253,7 +253,7 @@ class L4d2VpkWorkshopDriver implements WorkshopSyncDriver
             '    if [ -x "${STEAMCMD}" ]; then',
             '        return 0',
             '    fi',
-            '    echo "steamcmd não encontrado — a instalar..."',
+            '    echo "steamcmd não encontrado - a instalar..."',
             '    mkdir -p steamcmd',
             '    curl -fsSL -o /tmp/steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz',
             '    tar -xzf /tmp/steamcmd.tar.gz -C steamcmd',
@@ -287,7 +287,7 @@ class L4d2VpkWorkshopDriver implements WorkshopSyncDriver
         ];
 
         if ($httpDownloads === [] && $steamCmdIds === []) {
-            $lines[] = 'echo "Nenhum mod Workshop configurado — VPKs geridos pelo painel removidos."';
+            $lines[] = 'echo "Nenhum mod Workshop configurado - VPKs geridos pelo painel removidos."';
         } else {
             $lines[] = 'set +e';
             $lines[] = 'if [ "${#HTTP_ENTRIES[@]}" -gt 0 ]; then';

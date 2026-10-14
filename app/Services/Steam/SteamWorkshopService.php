@@ -20,7 +20,7 @@ class SteamWorkshopService
 
     private const DETAILS_URL = 'https://api.steampowered.com/IPublishedFileService/GetDetails/v1/';
 
-    /** Public Remote Storage details endpoint — returns direct file_url for downloadable Workshop content (e.g. L4D2 VPKs). */
+    /** Public Remote Storage details endpoint - returns direct file_url for downloadable Workshop content (e.g. L4D2 VPKs). */
     private const REMOTE_STORAGE_DETAILS_URL = 'https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/';
 
     /**

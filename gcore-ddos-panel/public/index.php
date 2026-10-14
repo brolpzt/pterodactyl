@@ -44,7 +44,7 @@ ob_start();
     <tbody>
     <?php foreach ($profiles as $n => $p): ?>
         <?php
-        $st = (string) ($p['status']['status'] ?? '—');
+        $st = (string) ($p['status']['status'] ?? '-');
         $chip = str_contains(strtolower($st), 'pending') ? 'status-pending' : 'status-updated';
         $opt = $p['options'] ?? [];
         ?>

@@ -45,7 +45,7 @@ const FirewallRuleRow = ({ rule, onDelete }: { rule: FirewallRule; onDelete: (ru
                     <span css={tw`font-mono text-sm text-neutral-100`}>{rule.ip}</span>
                 </td>
                 <td css={tw`px-3 py-3`}>
-                    <span css={tw`text-xs text-neutral-400`}>{rule.reason || '—'}</span>
+                    <span css={tw`text-xs text-neutral-400`}>{rule.reason || '-'}</span>
                 </td>
                 <td css={tw`px-3 py-3 text-xs text-neutral-500`}>
                     {new Date(rule.createdAt).toLocaleString('pt-BR')}

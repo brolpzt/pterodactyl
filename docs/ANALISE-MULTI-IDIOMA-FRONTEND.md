@@ -12,7 +12,7 @@
 - **Backend** (`app/Http/Controllers/Base/LocaleController.php`):
   - Rota: `GET /locales/locale.json?locale={{lng}}&namespace={{ns}}`.
   - Parâmetros:
-    - `locale`: 2 letras minúsculas (ex.: `en`, `pt`, `es`) — validado por `LocaleRequest`.
+    - `locale`: 2 letras minúsculas (ex.: `en`, `pt`, `es`) - validado por `LocaleRequest`.
     - `namespace`: nome do “grupo” de traduções (ex.: `activity`, `strings`).
   - O controller usa o **Loader de traduções do Laravel**: `$this->loader->load($locale, $namespace)`.
   - Ou seja, as chaves vêm dos ficheiros em **`resources/lang/{locale}/{namespace}.php`** (estrutura Laravel).
@@ -29,7 +29,7 @@
 
 - **Botão de idioma** (`resources/scripts/components/NavigationBar.tsx`):
   - Há um dropdown com línguas (US, BR, ES) e estado local `language` com `{ code, flag }`.
-  - Ao escolher uma língua só se faz `setLanguage(lang)` — **não** se chama `i18n.changeLanguage()`.
+  - Ao escolher uma língua só se faz `setLanguage(lang)` - **não** se chama `i18n.changeLanguage()`.
   - Conclusão: o botão **não está ligado ao i18n**; mudar de língua não altera as traduções.
 
 ---

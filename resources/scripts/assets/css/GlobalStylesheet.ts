@@ -224,7 +224,7 @@ export default createGlobalStyle`
     }
 
     /**
-     * Vidro / backdrop-filter — compatibilidade (Chrome Windows).
+     * Vidro / backdrop-filter - compatibilidade (Chrome Windows).
      * Blur fixo em camada separada; fallback opaco quando blur não é suportado.
      */
     .hg-glass-header::before,

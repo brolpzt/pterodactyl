@@ -43,7 +43,7 @@ you the power to run game servers without bloating machines with a host of addit
 
 Some of our core supported games include:
 
-* Minecraft — including Paper, Sponge, Bungeecord, Waterfall, and more
+* Minecraft - including Paper, Sponge, Bungeecord, Waterfall, and more
 * Rust
 * Terraria
 * Teamspeak

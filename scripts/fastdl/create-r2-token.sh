@@ -7,7 +7,7 @@
 #   A) API Token:  CLOUDFLARE_API_TOKEN
 #   B) Global Key: CLOUDFLARE_EMAIL + CLOUDFLARE_GLOBAL_API_KEY
 #
-# A Global API Key tem acesso total à conta — use só em ambiente confiável.
+# A Global API Key tem acesso total à conta - use só em ambiente confiável.
 # O token criado pelo script é o do FastDL (escopo só no bucket).
 #
 # Uso:
@@ -258,7 +258,7 @@ main() {
     endpoint="https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com"
 
     log ""
-    log "${GREEN}Token R2 criado com sucesso.${NC} Guarde o Secret — ele não será exibido de novo."
+    log "${GREEN}Token R2 criado com sucesso.${NC} Guarde o Secret - ele não será exibido de novo."
     log ""
     log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     log "  Campos para o nó FastDL (Admin → FastDL Nodes → S3)"

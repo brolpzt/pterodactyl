@@ -167,10 +167,10 @@ export default ({ server, className }: { server: Server; className?: string }) =
     const defaultAllocation = server.allocations.find((alloc) => alloc.isDefault);
     const address = defaultAllocation
         ? `${defaultAllocation.alias || ip(defaultAllocation.ip)}:${defaultAllocation.port}`
-        : '—';
+        : '-';
 
-    const locationLabel = server.locationLong || server.location || '—';
-    const rowTitle = server.description ? `${server.name} — ${server.description}` : server.name;
+    const locationLabel = server.locationLong || server.location || '-';
+    const rowTitle = server.description ? `${server.name} - ${server.description}` : server.name;
 
     return (
         <StatusIndicatorBox as={Link} to={`/server/${server.id}`} className={className} $status={stats?.status} title={rowTitle}>

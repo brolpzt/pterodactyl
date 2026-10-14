@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title')
-    Server — {{ $server->name }}: Firewall
+    Server - {{ $server->name }}: Firewall
 @endsection
 
 @section('content-header')
@@ -33,7 +33,7 @@
                     @foreach($server->firewallRules as $rule)
                         <tr>
                             <td><code>{{ $rule->ip }}</code></td>
-                            <td>{{ $rule->reason ?? '—' }}</td>
+                            <td>{{ $rule->reason ?? '-' }}</td>
                             <td>{{ $rule->created_at->toDayDateTimeString() }}</td>
                             <td class="text-center">
                                 <form action="{{ route('admin.servers.view.firewall.delete', [$server->id, $rule->id]) }}" method="POST">

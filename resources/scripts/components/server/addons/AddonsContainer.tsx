@@ -63,7 +63,7 @@ const AddonRow = ({ addon }: { addon: Addon }) => {
                     <p css={tw`text-sm font-medium text-neutral-100`}>{addon.name}</p>
                 </td>
                 <td css={tw`px-2 py-3 w-2/4`}>
-                    <p css={tw`text-xs text-neutral-400`}>{addon.description || '—'}</p>
+                    <p css={tw`text-xs text-neutral-400`}>{addon.description || '-'}</p>
                 </td>
                 <td css={tw`px-2 py-3 w-1/4 text-right`}>
                     <Button

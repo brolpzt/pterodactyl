@@ -3,7 +3,7 @@ import { motionDurations } from '@/assets/css/motionTheme';
 import { hgBorderBottom } from '@/assets/css/borderTheme';
 
 /**
- * Vidro / backdrop-filter — espelha .site-header do hostgamer.net.
+ * Vidro / backdrop-filter - espelha .site-header do hostgamer.net.
  * - Blur fixo em ::before; nunca animar backdrop-filter.
  * - Entrada/saída só com opacity.
  * - Fallback global em GlobalStylesheet (.hg-glass-*).
@@ -101,7 +101,7 @@ export const glassCardShell = css`
     }
 `;
 
-/** Barra sticky do servidor (subheader) — vidro transparente + borda inferior. */
+/** Barra sticky do servidor (subheader) - vidro transparente + borda inferior. */
 export const glassStickyBarShell = css`
     position: relative;
     background: transparent;

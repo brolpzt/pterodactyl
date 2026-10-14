@@ -57,7 +57,7 @@ const ServerOverviewContainer = () => {
     const username = useStoreState((state) => state.user.data!.username);
 
     const allocation = server?.allocations?.find((a) => a.isDefault);
-    const address = allocation ? `${allocation.alias || ip(allocation.ip)}:${allocation.port}` : '—';
+    const address = allocation ? `${allocation.alias || ip(allocation.ip)}:${allocation.port}` : '-';
 
     const passwordVariable = server?.variables?.find(
         (v) =>
@@ -68,11 +68,11 @@ const ServerOverviewContainer = () => {
     const rconVariable = server?.variables?.find(
         (v) => v.serverValue && /rcon/i.test(v.envVariable)
     ) || passwordVariable;
-    const connectionString = address !== '—'
+    const connectionString = address !== '-'
         ? passwordVariable?.serverValue
             ? `connect ${address}; password ${passwordVariable.serverValue}`
             : `connect ${address}`
-        : '—';
+        : '-';
 
     useEffect(() => {
         if (!connected || !instance) return;
@@ -95,23 +95,23 @@ const ServerOverviewContainer = () => {
             ? t('common.offline')
             : stats.uptime > 0
                 ? <UptimeDuration uptime={stats.uptime / 1000} />
-                : capitalize(status || '—');
+                : capitalize(status || '-');
 
     return (
         <ServerContentBlock title={t('server_overview.title')}>
             <div css={tw`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 items-start`}>
                 <TitledGreyBox title={t('server_overview.server_info')} icon={faServer}>
                     <div css={tw`space-y-0`}>
-                        <InfoRow label={t('server_overview.egg_name')} value={server.egg || '—'} />
+                        <InfoRow label={t('server_overview.egg_name')} value={server.egg || '-'} />
                         <InfoRow label={t('server_overview.server_id')} value={server.id} copyValue={server.id} />
                         <InfoRow label={t('server_overview.server_ip_port')} value={address} copyValue={address} />
                         <InfoRow
                             label={t('server_overview.databases_contracted')}
-                            value={server.featureLimits?.databases ?? '—'}
+                            value={server.featureLimits?.databases ?? '-'}
                         />
                         <InfoRow
                             label={t('server_overview.backups_contracted')}
-                            value={server.featureLimits?.backups ?? '—'}
+                            value={server.featureLimits?.backups ?? '-'}
                         />
                         <InfoRow label={t('server_overview.uptime')} value={uptimeDisplay} />
                     </div>
@@ -168,7 +168,7 @@ const ServerOverviewContainer = () => {
                 <CopyOnClick text={rconVariable?.serverValue || ''}>
                     <Input
                         type="text"
-                        value={rconVariable?.serverValue || '—'}
+                        value={rconVariable?.serverValue || '-'}
                         readOnly
                         css={tw`font-mono`}
                     />

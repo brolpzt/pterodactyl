@@ -231,14 +231,14 @@ export default () => {
                                                 css={tw`border-b border-neutral-800`}
                                             >
                                                 <td css={tw`py-2 pr-4 font-mono`}>#{player.clientnum}</td>
-                                                <td css={tw`py-2 pr-4`}>{player.name || '—'}</td>
+                                                <td css={tw`py-2 pr-4`}>{player.name || '-'}</td>
                                                 <td css={tw`py-2 pr-4 font-mono text-xs`}>
-                                                    {player.guid || '—'}
+                                                    {player.guid || '-'}
                                                 </td>
                                                 <td css={tw`py-2 pr-4`}>{player.score}</td>
                                                 <td css={tw`py-2 pr-4`}>{player.ping}</td>
                                                 <td css={tw`py-2 pr-4 font-mono text-xs`}>
-                                                    {parsePlayerIp(player.address) || player.address || '—'}
+                                                    {parsePlayerIp(player.address) || player.address || '-'}
                                                 </td>
                                                 <td css={tw`py-2`}>
                                                     <div css={tw`flex flex-wrap gap-2`}>

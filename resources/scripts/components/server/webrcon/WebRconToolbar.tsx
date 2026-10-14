@@ -193,7 +193,7 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
                                 <option value={''}>{t('server_webrcon.select_player')}</option>
                                 {tellOptions.map((player) => (
                                     <option key={player.clientnum} value={String(player.clientnum)}>
-                                        #{player.clientnum} — {player.name}
+                                        #{player.clientnum} - {player.name}
                                     </option>
                                 ))}
                             </Select>

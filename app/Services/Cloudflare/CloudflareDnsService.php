@@ -272,7 +272,7 @@ class CloudflareDnsService
     }
 
     /**
-     * Cloudflare exige hostname como target SRV — usamos o FQDN público do registro.
+     * Cloudflare exige hostname como target SRV - usamos o FQDN público do registro.
      */
     public function resolveSrvTarget(CloudflareZone $zone, string $subdomain): string
     {

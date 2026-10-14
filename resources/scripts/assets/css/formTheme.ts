@@ -1,7 +1,7 @@
 import { css } from 'styled-components/macro';
 import { sidebarItemText } from '@/assets/css/cardTheme';
 
-/** Espelha hostgamer.net/login — .field-group / .field-label / .input-base */
+/** Espelha hostgamer.net/login - .field-group / .field-label / .input-base */
 export const fieldGroup = css`
     display: grid;
     gap: 0;

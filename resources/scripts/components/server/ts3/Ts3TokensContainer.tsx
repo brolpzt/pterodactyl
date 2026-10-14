@@ -113,17 +113,17 @@ export default () => {
                                                 <span css={tw`cursor-pointer hover:text-neutral-100`}>{item.token}</span>
                                             </CopyOnClick>
                                         ) : (
-                                            '—'
+                                            '-'
                                         )}
                                     </td>
-                                    <td css={tw`py-2`}>{item.token_description || '—'}</td>
+                                    <td css={tw`py-2`}>{item.token_description || '-'}</td>
                                     <td css={tw`py-2 text-right`}>
                                         {item.token ? (
                                             <Button.Danger disabled={busy !== null} onClick={() => onDelete(item.token!)}>
                                                 {busy === item.token ? <Spinner size={Spinner.Size.SMALL} /> : 'Remover'}
                                             </Button.Danger>
                                         ) : (
-                                            '—'
+                                            '-'
                                         )}
                                     </td>
                                 </tr>

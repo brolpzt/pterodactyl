@@ -80,13 +80,13 @@ export default () => {
             <TitledGreyBox title={'Informações do servidor TS3'} css={tw`mb-6`}>
                 <table css={tw`w-full text-left text-sm`}>
                     <tbody>
-                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Status</td><td css={[tw`py-2`, cardValueText]}>{data?.status || '—'}</td></tr>
-                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Version</td><td css={[tw`py-2`, cardValueText]}>{data?.version || '—'} {data?.build ? `(Build ${data.build})` : ''}</td></tr>
-                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Platform</td><td css={[tw`py-2`, cardValueText]}>{data?.platform || '—'}</td></tr>
-                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Server name</td><td css={[tw`py-2`, cardValueText]}>{data?.server_name || '—'}</td></tr>
-                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Uptime (s)</td><td css={[tw`py-2`, cardValueText]}>{data?.uptime_seconds ?? '—'}</td></tr>
-                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Clients online</td><td css={[tw`py-2`, cardValueText]}>{data?.clients_online ?? '—'}</td></tr>
-                        <tr><td css={[tw`py-2`, cardLabelText]}>Channels online</td><td css={[tw`py-2`, cardValueText]}>{data?.channels_online ?? '—'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Status</td><td css={[tw`py-2`, cardValueText]}>{data?.status || '-'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Version</td><td css={[tw`py-2`, cardValueText]}>{data?.version || '-'} {data?.build ? `(Build ${data.build})` : ''}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Platform</td><td css={[tw`py-2`, cardValueText]}>{data?.platform || '-'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Server name</td><td css={[tw`py-2`, cardValueText]}>{data?.server_name || '-'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Uptime (s)</td><td css={[tw`py-2`, cardValueText]}>{data?.uptime_seconds ?? '-'}</td></tr>
+                        <tr css={[tw`border-b`, cardRowBorder]}><td css={[tw`py-2`, cardLabelText]}>Clients online</td><td css={[tw`py-2`, cardValueText]}>{data?.clients_online ?? '-'}</td></tr>
+                        <tr><td css={[tw`py-2`, cardLabelText]}>Channels online</td><td css={[tw`py-2`, cardValueText]}>{data?.channels_online ?? '-'}</td></tr>
                     </tbody>
                 </table>
             </TitledGreyBox>

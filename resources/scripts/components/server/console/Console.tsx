@@ -121,6 +121,32 @@ export default () => {
     const handlePowerChangeEvent = (state: string) =>
         terminal.writeln(TERMINAL_PRELUDE + 'Server marked as ' + state + '...' + CONSOLE_RESET);
 
+    const commandInputRef = useRef<HTMLInputElement>(null);
+
+    const submitCommand = (e?: React.FormEvent) => {
+        e?.preventDefault();
+
+        const input = commandInputRef.current;
+        if (!input || !instance || !connected) {
+            return;
+        }
+
+        const command = input.value;
+        if (command.length === 0) {
+            return;
+        }
+
+        setHistory((prevHistory) => [command, ...prevHistory!].slice(0, 32));
+        setHistoryIndex(-1);
+        instance.send('send command', command);
+        input.value = '';
+
+        // Keep focus on mobile so the soft keyboard / field does not jump away.
+        requestAnimationFrame(() => {
+            input.focus({ preventScroll: true });
+        });
+    };
+
     const handleCommandKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'ArrowUp') {
             const newIndex = Math.min(historyIndex + 1, history!.length - 1);
@@ -138,15 +164,6 @@ export default () => {
 
             setHistoryIndex(newIndex);
             e.currentTarget.value = history![newIndex] || '';
-        }
-
-        const command = e.currentTarget.value;
-        if (e.key === 'Enter' && command.length > 0) {
-            setHistory((prevHistory) => [command, ...prevHistory!].slice(0, 32));
-            setHistoryIndex(-1);
-
-            instance && instance.send('send command', command);
-            e.currentTarget.value = '';
         }
     };
 
@@ -257,26 +274,39 @@ export default () => {
                         <OverlayScrollbar target={xtermViewport} variant={'console'} anchored />
                     </div>
                     {canSendCommands && (
-                        <div className={classNames('relative', styles.overflows_container)}>
+                        <form
+                            className={classNames('relative', styles.overflows_container)}
+                            onSubmit={submitCommand}
+                            action={'#'}
+                        >
                             <input
+                                ref={commandInputRef}
                                 className={classNames('peer', styles.command_input)}
                                 type={'text'}
+                                name={'console_command'}
                                 placeholder={'Type a command...'}
                                 aria-label={'Console command input.'}
                                 disabled={!instance || !connected}
                                 onKeyDown={handleCommandKeyDown}
                                 autoCorrect={'off'}
                                 autoCapitalize={'none'}
+                                autoComplete={'off'}
+                                spellCheck={false}
+                                enterKeyHint={'send'}
+                                inputMode={'text'}
                             />
-                            <div
+                            <button
+                                type={'submit'}
                                 className={classNames(
                                     'text-gray-100 peer-focus:text-gray-50 peer-focus:animate-pulse',
                                     styles.command_icon
                                 )}
+                                disabled={!instance || !connected}
+                                aria-label={'Send command'}
                             >
                                 <ChevronDoubleRightIcon className={'w-4 h-4'} />
-                            </div>
-                        </div>
+                            </button>
+                        </form>
                     )}
                 </div>
             </ConsoleInner>

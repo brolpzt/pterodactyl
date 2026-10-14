@@ -44,6 +44,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Intentionally not reversible — feature removal migration.
+        // Intentionally not reversible - feature removal migration.
     }
 };

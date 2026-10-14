@@ -21,6 +21,9 @@ class DaemonGameQueryRepository extends DaemonRepository
     {
         Assert::isInstanceOf($this->server, Server::class);
 
+        $this->server->loadMissing('allocation');
+        $publicHost = trim((string) ($this->server->allocation?->alias ?? ''));
+
         try {
             $response = $this->getHttpClient()->get(
                 "/api/servers/{$this->server->uuid}/query",
@@ -28,6 +31,8 @@ class DaemonGameQueryRepository extends DaemonRepository
                     'query' => array_filter([
                         'type' => $gameType,
                         'query_port' => $queryPort,
+                        // Prefer allocation alias (public/GCore IP) for EOS ADDRESS_s.
+                        'public_host' => $publicHost !== '' ? $publicHost : null,
                     ], static fn ($value) => $value !== null && $value !== ''),
                 ]
             );

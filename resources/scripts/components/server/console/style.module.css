@@ -31,6 +31,13 @@
 
     & .command_icon {
         @apply flex items-center top-0 left-0 absolute z-10 select-none h-full px-3 transition-colors duration-100;
+        @apply bg-transparent border-0 cursor-pointer appearance-none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+
+        &:disabled {
+            @apply opacity-60 cursor-not-allowed;
+        }
     }
 
     & .command_input {

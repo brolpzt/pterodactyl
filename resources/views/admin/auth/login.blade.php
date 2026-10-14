@@ -18,7 +18,7 @@
         {!! Theme::css('css/pterodactyl.css?t={cache-version}') !!}
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <style>
-            /* Layout only — colors match AdminLTE / pterodactyl.css admin theme */
+            /* Layout only - colors match AdminLTE / pterodactyl.css admin theme */
             html, body.admin-login-page {
                 height: 100%;
                 margin: 0;

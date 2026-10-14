@@ -13,7 +13,7 @@ use Pterodactyl\Http\Controllers\Auth;
 */
 
 // Direct panel login is disabled; send visitors to the external client area.
-Route::get('/login', Auth\RedirectToExternalSiteController::class)->name('auth.login');
+Route::get('/login', [Auth\LoginController::class, 'index'])->name('auth.login');
 Route::get('/password', Auth\RedirectToExternalSiteController::class)->name('auth.forgot-password');
 Route::get('/password/reset/{token}', Auth\RedirectToExternalSiteController::class)->name('auth.reset');
 

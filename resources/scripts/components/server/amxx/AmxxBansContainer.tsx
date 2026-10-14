@@ -68,7 +68,7 @@ export default () => {
                 type: 'success',
                 message: result.command_sent
                     ? 'Ban aplicado com sucesso.'
-                    : 'Ban salvo no ficheiro. Servidor offline — será aplicado ao reiniciar ou quando estiver online.',
+                    : 'Ban salvo no ficheiro. Servidor offline - será aplicado ao reiniciar ou quando estiver online.',
             });
             await load();
         } catch (err) {
@@ -166,7 +166,7 @@ export default () => {
                                     <td css={tw`py-2 capitalize`}>{ban.type}</td>
                                     <td css={tw`py-2 font-mono text-xs`}>{ban.identifier}</td>
                                     <td css={tw`py-2`}>{formatDuration(ban)}</td>
-                                    <td css={tw`py-2`}>{ban.reason || '—'}</td>
+                                    <td css={tw`py-2`}>{ban.reason || '-'}</td>
                                     <td css={tw`py-2 text-right`}>
                                         <Button.Danger disabled={busyId !== null} onClick={() => onDelete(ban.id)}>
                                             {busyId === ban.id ? <Spinner size={Spinner.Size.SMALL} /> : 'Remover'}

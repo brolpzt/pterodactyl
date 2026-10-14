@@ -1,4 +1,4 @@
-# Plutonium IW5 — install script (Windows Wings / PowerShell)
+# Plutonium IW5 - install script (Windows Wings / PowerShell)
 # Uses plutonium-updater: https://github.com/mxve/plutonium-updater.rs
 $ErrorActionPreference = 'Stop'
 

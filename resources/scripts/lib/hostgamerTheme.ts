@@ -1,4 +1,4 @@
-/** Tokens de marca HostGamer — hostgamer.net */
+/** Tokens de marca HostGamer - hostgamer.net */
 export const hostgamerColors = {
     bg: '#090911',
     /** Fundo das páginas de servidor sem imagem de background. */
@@ -16,9 +16,9 @@ export const hostgamerColors = {
     labelColor: '#7d7d8e',
     inputPlaceholder: '#ffffffa6',
     headerGlassBg: '#090911bf',
-    /** Barra do servidor — só blur, sem tint escuro por cima. */
+    /** Barra do servidor - só blur, sem tint escuro por cima. */
     serverBarGlassBg: 'transparent',
-    /** Subheader (Start / Restart / Stop) — sombra do vidro. */
+    /** Subheader (Start / Restart / Stop) - sombra do vidro. */
     subheaderShadow: '0 6px 24px -10px rgba(0, 0, 0, 0.68), inset 0 0 0 1px rgba(45, 45, 58, 0.28)',
     subheaderShadowScrolled: '0 12px 32px -18px rgba(0, 0, 0, 0.82), inset 0 0 0 1px rgba(45, 45, 58, 0.28)',
     cardGlassBg: '#090911bf',
@@ -49,7 +49,7 @@ export const hostgamerColors = {
     mono: {
         fontSize: '0.75rem',
         lineHeight: '1.45',
-        /** Console ao vivo — mantém legibilidade do terminal. */
+        /** Console ao vivo - mantém legibilidade do terminal. */
         consoleFontSize: '0.875rem',
     },
 } as const;

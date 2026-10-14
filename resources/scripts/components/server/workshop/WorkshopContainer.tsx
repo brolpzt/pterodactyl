@@ -25,7 +25,7 @@ import { faExternalLinkAlt, faPlus, faSearch, faTrash } from '@fortawesome/free-
 import { useTranslation } from 'react-i18next';
 
 const formatBytes = (bytes: number): string => {
-    if (!bytes) return '—';
+    if (!bytes) return '-';
     const units = ['B', 'KB', 'MB', 'GB'];
     let value = bytes;
     let unit = 0;

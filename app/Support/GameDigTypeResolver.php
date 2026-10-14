@@ -36,6 +36,14 @@ class GameDigTypeResolver
         'tf2' => 'team-fortress-2',
         'css' => 'counter-strike-source',
         'csgo' => 'counter-strike-go',
+        // The Isle Evrima — Epic EOS (GameDig type "tie"), not Source "the-isle".
+        'tie' => 'tie',
+        'theisleevrima' => 'tie',
+        'evrima' => 'tie',
+        // RuneScape: Dragonwilds — Redpoint EOS Sessions (Wings driver, not gjq).
+        'dragonwilds' => 'dragonwilds',
+        'rsdragonwilds' => 'dragonwilds',
+        'runescapedragonwilds' => 'dragonwilds',
     ];
 
     /**
@@ -53,6 +61,8 @@ class GameDigTypeResolver
         ['/(counter-?strike\s*1\.?6|\bcs\s*1\.?6\b|\bcs16\b)/i', 'cs16'],
         ['/(gta\s*san\s*andreas|\bsa-?mp\b|\bgtasa\b)/i', 'samp'],
         ['/(medal\s*of\s*honor|\bmohaa\b)/i', 'mohaa'],
+        ['/(the\s*isle\s*evrima|\bevrima\b|\btie\b)/i', 'tie'],
+        ['/(dragonwilds|rune\s*scape\s*:?\s*dragonwilds|\brsdw\b)/i', 'dragonwilds'],
     ];
 
     /**
@@ -68,7 +78,7 @@ class GameDigTypeResolver
         'cod4x', 'codmw3', 'coduo', 'conan', 'conan-exiles', 'counter-strike', 'counter-strike-2',
         'counter-strike-go', 'counter-strike-source', 'counterstrike16', 'cs', 'cs16', 'cs2', 'cscz',
         'csgo', 'css', 'cstrike', 'cz', 'dark-and-light', 'day-of-defeat', 'day-of-defeat-source',
-        'day-of-infamy', 'dayz', 'deathmatch-classic', 'dmc', 'dnl', 'dod', 'dods', 'doi', 'egs',
+        'day-of-infamy', 'dayz', 'deathmatch-classic', 'dmc', 'dnl', 'dod', 'dods', 'doi', 'dragonwilds', 'egs',
         'empyrion', 'enshrouded', 'et', 'evrima', 'fistful-of-frags', 'fivem', 'fof', 'forest',
         'garrys-mod', 'gmod', 'goldsource', 'gta5', 'gtasa', 'half-life', 'half-life-2-deathmatch',
         'half-life-deathmatch-source', 'half-life-opposing-force', 'hell-let-loose', 'hl', 'hl1',
@@ -79,10 +89,10 @@ class GameDigTypeResolver
         'myth-of-empires', 'natural-selection-2', 'nd', 'neotokyo', 'nmrih', 'no-more-room-in-hell',
         'ns2', 'nt', 'nuclear-dawn', 'opfor', 'palworld', 'pirates-vikings-and-knights-ii', 'pixark',
         'project-zomboid', 'pvkii', 'pw', 'pz', 'ql', 'quake-live', 'red-orchestra-2', 'reforger',
-        'ricochet', 'rising-storm-2', 'ro2', 'rs2', 'rust', 's44', 'samp', 'se', 'sons-of-the-forest',
+        'ricochet', 'rising-storm-2', 'ro2', 'rs2', 'rsdragonwilds', 'runescapedragonwilds', 'rust', 's44', 'samp', 'se', 'sons-of-the-forest',
         'sotf', 'soulmask', 'space-engineers', 'squad', 'squad-44', 'starbound', 'sven-coop', 'svencoop',
         't4', 'team-fortress-2', 'team-fortress-classic', 'terraria', 'tf2', 'tfc', 'the-forest',
-        'the-front', 'the-isle', 'the-isle-evrima', 'tshock', 'unturned', 'v-rising', 'valheim',
+        'the-front', 'the-isle', 'the-isle-evrima', 'theisleevrima', 'tie', 'tshock', 'unturned', 'v-rising', 'valheim',
         'vrising', 'waw', 'wet', 'wolfenstein-et', 'zombie-panic-source', 'zomboid', 'zps',
     ];
 

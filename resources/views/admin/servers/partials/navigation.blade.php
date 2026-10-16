@@ -18,6 +18,9 @@
                     <li class="{{ $router->currentRouteNamed('admin.servers.view.startup') ? 'active' : '' }}">
                         <a href="{{ route('admin.servers.view.startup', $server->id) }}">Startup</a>
                     </li>
+                    <li class="{{ $router->currentRouteNamed('admin.servers.view.forced-commands') ? 'active' : '' }}">
+                        <a href="{{ route('admin.servers.view.forced-commands', $server->id) }}">Forced Commands</a>
+                    </li>
                     <li class="{{ $router->currentRouteNamed('admin.servers.view.database') ? 'active' : '' }}">
                         <a href="{{ route('admin.servers.view.database', $server->id) }}">Database</a>
                     </li>

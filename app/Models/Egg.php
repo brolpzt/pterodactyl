@@ -343,6 +343,16 @@ class Egg extends Model implements Identifiable
     }
 
     /**
+     * Forced console commands linked to egg ENV variables.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Pterodactyl\Models\EggForcedCommand, $this>
+     */
+    public function forcedCommands(): HasMany
+    {
+        return $this->hasMany(EggForcedCommand::class, 'egg_id');
+    }
+
+    /**
      * Gets the DNS profile configuration for this egg.
      */
     public function dnsProfile(): HasOne

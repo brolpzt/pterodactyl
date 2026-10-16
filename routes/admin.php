@@ -113,10 +113,14 @@ Route::group(['prefix' => 'servers'], function () {
         Route::get('/view/{server:id}/details', [Admin\Servers\ServerViewController::class, 'details'])->name('admin.servers.view.details');
         Route::get('/view/{server:id}/build', [Admin\Servers\ServerViewController::class, 'build'])->name('admin.servers.view.build');
         Route::get('/view/{server:id}/startup', [Admin\Servers\ServerViewController::class, 'startup'])->name('admin.servers.view.startup');
+        Route::get('/view/{server:id}/forced-commands', [Admin\Servers\ServerForcedCommandController::class, 'index'])->name('admin.servers.view.forced-commands');
         Route::get('/view/{server:id}/database', [Admin\Servers\ServerViewController::class, 'database'])->name('admin.servers.view.database');
         Route::get('/view/{server:id}/database/phpmyadmin', [Admin\ServersController::class, 'phpMyAdmin'])->name('admin.servers.view.database.phpmyadmin');
         Route::get('/view/{server:id}/mounts', [Admin\Servers\ServerViewController::class, 'mounts'])->name('admin.servers.view.mounts');
         Route::get('/view/{server:id}/firewall', [Admin\Servers\ServerViewController::class, 'firewall'])->name('admin.servers.view.firewall');
+
+        Route::post('/view/{server:id}/forced-commands/{forcedCommand:id}', [Admin\Servers\ServerForcedCommandController::class, 'update'])->name('admin.servers.view.forced-commands.update');
+        Route::post('/view/{server:id}/forced-commands/{forcedCommand:id}/force', [Admin\Servers\ServerForcedCommandController::class, 'forceNow'])->name('admin.servers.view.forced-commands.force');
     });
 
     Route::get('/view/{server:id}/manage', [Admin\Servers\ServerViewController::class, 'manage'])->name('admin.servers.view.manage');
@@ -284,12 +288,14 @@ Route::group(['prefix' => 'nests'], function () {
     Route::get('/egg/{egg:id}', [Admin\Nests\EggController::class, 'view'])->name('admin.nests.egg.view');
     Route::get('/egg/{egg:id}/export', [Admin\Nests\EggShareController::class, 'export'])->name('admin.nests.egg.export');
     Route::get('/egg/{egg:id}/variables', [Admin\Nests\EggVariableController::class, 'view'])->name('admin.nests.egg.variables');
+    Route::get('/egg/{egg:id}/forced-commands', [Admin\Nests\EggForcedCommandController::class, 'index'])->name('admin.nests.egg.forced-commands');
     Route::get('/egg/{egg:id}/scripts', [Admin\Nests\EggScriptController::class, 'index'])->name('admin.nests.egg.scripts');
 
     Route::post('/new', [Admin\Nests\NestController::class, 'store']);
     Route::post('/import', [Admin\Nests\EggShareController::class, 'import'])->name('admin.nests.egg.import');
     Route::post('/egg/new', [Admin\Nests\EggController::class, 'store']);
     Route::post('/egg/{egg:id}/variables', [Admin\Nests\EggVariableController::class, 'store']);
+    Route::post('/egg/{egg:id}/forced-commands', [Admin\Nests\EggForcedCommandController::class, 'store']);
 
     Route::put('/egg/{egg:id}', [Admin\Nests\EggShareController::class, 'update']);
 
@@ -299,10 +305,12 @@ Route::group(['prefix' => 'nests'], function () {
     Route::patch('/egg/{egg:id}/workshop', [Admin\Nests\EggWorkshopFeatureController::class, 'update'])->name('admin.nests.egg.workshop');
     Route::patch('/egg/{egg:id}/scripts', [Admin\Nests\EggScriptController::class, 'update']);
     Route::patch('/egg/{egg:id}/variables/{variable:id}', [Admin\Nests\EggVariableController::class, 'update'])->name('admin.nests.egg.variables.edit');
+    Route::patch('/egg/{egg:id}/forced-commands/{forcedCommand:id}', [Admin\Nests\EggForcedCommandController::class, 'update'])->name('admin.nests.egg.forced-commands.update');
 
     Route::delete('/view/{nest:id}', [Admin\Nests\NestController::class, 'destroy']);
     Route::delete('/egg/{egg:id}', [Admin\Nests\EggController::class, 'destroy']);
     Route::delete('/egg/{egg:id}/variables/{variable:id}', [Admin\Nests\EggVariableController::class, 'destroy']);
+    Route::delete('/egg/{egg:id}/forced-commands/{forcedCommand:id}', [Admin\Nests\EggForcedCommandController::class, 'destroy'])->name('admin.nests.egg.forced-commands.destroy');
 });
 
 /*

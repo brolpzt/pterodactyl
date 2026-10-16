@@ -319,6 +319,16 @@ class Server extends Model implements Identifiable
     }
 
     /**
+     * Per-server overrides for egg forced console commands.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Pterodactyl\Models\ServerForcedCommandOverride, $this>
+     */
+    public function forcedCommandOverrides(): HasMany
+    {
+        return $this->hasMany(ServerForcedCommandOverride::class);
+    }
+
+    /**
      * Gets information for the node associated with this server.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\Pterodactyl\Models\Node, $this>

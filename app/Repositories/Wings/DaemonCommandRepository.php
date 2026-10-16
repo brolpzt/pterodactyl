@@ -17,17 +17,32 @@ class DaemonCommandRepository extends DaemonRepository
     /**
      * Sends a command or multiple commands to a running server instance.
      *
+     * When $silent is true, Wings will avoid writing the command/response to the
+     * user-facing console (RCON path). Stdin games may still echo from the process.
+     *
+     * When $transmission is "stdin", Wings always writes to container stdin and
+     * ignores the egg RCON setting — used for panel-enforced commands.
+     *
      * @throws DaemonConnectionException
      */
-    public function send(array|string $command): ResponseInterface
+    public function send(array|string $command, bool $silent = false, ?string $transmission = null): ResponseInterface
     {
         Assert::isInstanceOf($this->server, Server::class);
+
+        $payload = [
+            'commands' => is_array($command) ? $command : [$command],
+            'silent' => $silent,
+        ];
+
+        if (!is_null($transmission)) {
+            $payload['transmission'] = $transmission;
+        }
 
         try {
             return $this->getHttpClient()->post(
                 sprintf('/api/servers/%s/commands', $this->server->uuid),
                 [
-                    'json' => ['commands' => is_array($command) ? $command : [$command]],
+                    'json' => $payload,
                 ]
             );
         } catch (TransferException $exception) {

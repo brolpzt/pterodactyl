@@ -12,6 +12,7 @@ use Pterodactyl\Services\Telemetry\TelemetryCollectionService;
 use Pterodactyl\Console\Commands\Schedule\ProcessRunnableCommand;
 use Pterodactyl\Console\Commands\Maintenance\PruneOrphanedBackupsCommand;
 use Pterodactyl\Console\Commands\Maintenance\CleanServiceBackupFilesCommand;
+use Pterodactyl\Console\Commands\Server\ProcessForcedConsoleCommandsCommand;
 
 class Kernel extends ConsoleKernel
 {
@@ -33,6 +34,9 @@ class Kernel extends ConsoleKernel
 
         // Execute scheduled commands for servers every minute, as if there was a normal cron running.
         $schedule->command(ProcessRunnableCommand::class)->everyMinute()->withoutOverlapping();
+
+        // Re-apply forced console commands (ENV → console) for running servers.
+        $schedule->command(ProcessForcedConsoleCommandsCommand::class)->everyMinute()->withoutOverlapping();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

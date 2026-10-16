@@ -319,6 +319,17 @@ class Server extends Model implements Identifiable
     }
 
     /**
+     * Forced console commands defined on this server's egg.
+     * Required for Laravel scoped route-model binding on {forcedCommand}.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Pterodactyl\Models\EggForcedCommand, $this>
+     */
+    public function forcedCommands(): HasMany
+    {
+        return $this->hasMany(EggForcedCommand::class, 'egg_id', 'egg_id');
+    }
+
+    /**
      * Per-server overrides for egg forced console commands.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Pterodactyl\Models\ServerForcedCommandOverride, $this>

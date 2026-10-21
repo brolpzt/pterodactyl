@@ -168,7 +168,7 @@ return [
         'sftp_password_generate' => 'Generate SFTP password',
         'sftp_password_rotate' => 'Reset SFTP password',
         'sftp_password_note' => 'Your SFTP password is the same as the password you use to access this panel.',
-        'sftp_firewall_help' => 'If you cannot connect, allow your IP (:ip) through the firewall for :minutes minutes. Multiple people can allow different IPs on the same account. The connection usually takes about 5 minutes to become available.',
+        'sftp_firewall_help' => 'If you cannot connect, allow your IP (:ip) through the firewall for :minutes minutes. The connection usually takes about 5 minutes to become available.',
         'sftp_firewall_allow' => 'Allow my IP for SFTP',
         'sftp_firewall_renew' => 'Renew IP allow',
         'sftp_firewall_working' => 'Allowing…',

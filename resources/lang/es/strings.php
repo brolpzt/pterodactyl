@@ -168,7 +168,7 @@ return [
         'sftp_password_generate' => 'Generar contraseña SFTP',
         'sftp_password_rotate' => 'Restablecer contraseña SFTP',
         'sftp_password_note' => 'La contraseña SFTP es la misma que usas para acceder a este panel.',
-        'sftp_firewall_help' => 'Si no puedes conectar, libera tu IP (:ip) en el firewall por :minutes minutos. Varias personas pueden liberar IPs distintas con la misma cuenta. La conexión suele tardar unos 5 minutos en quedar liberada.',
+        'sftp_firewall_help' => 'Si no puedes conectar, libera tu IP (:ip) en el firewall por :minutes minutos. La conexión suele tardar unos 5 minutos en quedar liberada.',
         'sftp_firewall_allow' => 'Liberar mi IP para SFTP',
         'sftp_firewall_renew' => 'Renovar liberación de IP',
         'sftp_firewall_working' => 'Liberando…',

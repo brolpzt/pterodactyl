@@ -424,16 +424,20 @@ class Ts3QueryService
             $variables[strtoupper(trim((string) $variable->env_variable))] = is_string($value) ? trim($value) : $value;
         }
 
-        $user = (string) ($variables['TS3_QUERY_USER']
-            ?? $variables['QUERY_USER']
-            ?? $variables['SERVERADMIN_USER']
-            ?? 'serveradmin');
-        $password = (string) ($variables['TS3_QUERY_PASS']
-            ?? $variables['TS3_QUERY_PASSWORD']
-            ?? $variables['QUERY_PASS']
-            ?? $variables['QUERY_PASSWORD']
-            ?? $variables['SERVERADMIN_PASSWORD']
-            ?? '');
+        $user = $this->firstNonEmptyString(
+            $variables['TS3_QUERY_USER'] ?? null,
+            $variables['QUERY_USER'] ?? null,
+            $variables['SERVERADMIN_USER'] ?? null,
+            'serveradmin'
+        );
+        $password = $this->firstNonEmptyString(
+            $variables['TS3_QUERY_PASS'] ?? null,
+            $variables['TS3_QUERY_PASSWORD'] ?? null,
+            $variables['QUERY_PASS'] ?? null,
+            $variables['QUERY_PASSWORD'] ?? null,
+            $variables['SERVERADMIN_PASSWORD'] ?? null,
+            $variables['TSSERVER_QUERY_ADMIN_PASSWORD'] ?? null,
+        );
 
         if ($user === '' || $password === '') {
             throw new Ts3QueryException(
@@ -443,18 +447,25 @@ class Ts3QueryService
         }
 
         $configuredHost = trim((string) ($variables['TS3_QUERY_HOST'] ?? $variables['QUERY_HOST'] ?? ''));
-        $allocationHost = trim((string) ($server->allocation?->ip ?? ''));
+        // Prefer allocation alias (public/GCore IP). The panel often cannot reach the
+        // node's private bind address used as allocation.ip.
+        $allocationHost = trim((string) ($server->allocation?->alias ?? $server->allocation?->ip ?? ''));
         $host = $configuredHost !== ''
             ? $configuredHost
             : (in_array($allocationHost, ['', '0.0.0.0', '::', '::0'], true)
             ? (string) $server->node->fqdn
             : $allocationHost);
 
+        $queryPort = (int) ($variables['TS3_QUERY_PORT'] ?? $variables['QUERY_PORT'] ?? 0);
+        if ($queryPort < 1 || $queryPort > 65535) {
+            $queryPort = $this->resolveQueryPortFromAllocations($server) ?? self::DEFAULT_QUERY_PORT;
+        }
+
         return [
             'host' => $host,
             // Backward compatible mapping for existing TS3 eggs:
             // - QUERY_PORT is commonly used as the startup variable name.
-            'query_port' => (int) ($variables['TS3_QUERY_PORT'] ?? $variables['QUERY_PORT'] ?? self::DEFAULT_QUERY_PORT),
+            'query_port' => $queryPort,
             // Prefer explicit TS3_SERVER_PORT, fallback to generic SERVER_PORT when present.
             'virtual_server_port' => (int) ($variables['TS3_SERVER_PORT'] ?? $variables['SERVER_PORT'] ?? $server->allocation?->port ?? 9987),
             'server_id' => isset($variables['TS3_SERVER_ID']) ? (int) $variables['TS3_SERVER_ID'] : null,
@@ -462,5 +473,36 @@ class Ts3QueryService
             'password' => $password,
             'html_viewer_url' => (string) ($variables['TS3_HTML_VIEWER_URL'] ?? ''),
         ];
+    }
+
+    private function firstNonEmptyString(?string ...$candidates): string
+    {
+        foreach ($candidates as $candidate) {
+            $value = trim((string) ($candidate ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '';
+    }
+
+    private function resolveQueryPortFromAllocations(Server $server): ?int
+    {
+        $server->loadMissing('allocations');
+
+        foreach ($server->allocations as $allocation) {
+            $env = strtoupper(trim((string) ($allocation->port_env ?? '')));
+            if (!in_array($env, ['QUERY_PORT', 'TS3_QUERY_PORT'], true)) {
+                continue;
+            }
+
+            $port = (int) $allocation->port;
+            if ($port >= 1 && $port <= 65535) {
+                return $port;
+            }
+        }
+
+        return null;
     }
 }

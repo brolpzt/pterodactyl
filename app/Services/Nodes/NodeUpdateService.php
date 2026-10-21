@@ -37,6 +37,28 @@ class NodeUpdateService
             $data['daemon_token_id'] = Str::random(Node::DAEMON_TOKEN_ID_LENGTH);
         }
 
+        // Empty secret field means "keep existing key".
+        if (array_key_exists('sftp_firewall_api_key', $data)) {
+            $rawKey = trim((string) $data['sftp_firewall_api_key']);
+            if ($rawKey === '') {
+                unset($data['sftp_firewall_api_key']);
+            } else {
+                $data['sftp_firewall_api_key'] = $this->encrypter->encrypt($rawKey);
+            }
+        }
+
+        foreach (['sftp_public_host', 'sftp_firewall_group_id'] as $nullableString) {
+            if (array_key_exists($nullableString, $data) && trim((string) $data[$nullableString]) === '') {
+                $data[$nullableString] = null;
+            }
+        }
+
+        foreach (['sftp_public_port', 'sftp_firewall_port'] as $nullablePort) {
+            if (array_key_exists($nullablePort, $data) && ($data[$nullablePort] === '' || $data[$nullablePort] === null)) {
+                $data[$nullablePort] = null;
+            }
+        }
+
         [$updated, $exception] = $this->connection->transaction(function () use ($data, $node) {
             /** @var Node $updated */
             $updated = $this->repository->withFreshModel()->update($node->id, $data, true, true);

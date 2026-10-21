@@ -90,6 +90,8 @@ Route::group([
         Route::get('/password', [Client\Servers\SftpController::class, 'index']);
         Route::post('/password/reveal', [Client\Servers\SftpController::class, 'reveal']);
         Route::post('/rotate-password', [Client\Servers\SftpController::class, 'rotate']);
+        Route::get('/firewall', [Client\Servers\SftpFirewallController::class, 'index']);
+        Route::post('/firewall', [Client\Servers\SftpFirewallController::class, 'store']);
     });
 
     Route::group(['prefix' => '/files', 'middleware' => [DenyFilesForTs3::class]], function () {

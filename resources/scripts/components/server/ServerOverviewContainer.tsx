@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import FlashMessageRender from '@/components/FlashMessageRender';
 import { cardLabelText, cardRowBorder, cardValueText } from '@/assets/css/cardTheme';
 import SftpPasswordField from '@/components/server/SftpPasswordField';
+import SftpFirewallAccessButton from '@/components/server/SftpFirewallAccessButton';
 
 type Stats = { uptime: number };
 
@@ -143,6 +144,7 @@ const ServerOverviewContainer = () => {
                             </CopyOnClick>
                         </div>
                         <SftpPasswordField serverUuid={server.uuid} />
+                        <SftpFirewallAccessButton serverUuid={server.uuid} />
                     </TitledGreyBox>
                 </Can>
             </div>

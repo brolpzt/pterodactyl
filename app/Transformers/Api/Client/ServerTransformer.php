@@ -60,8 +60,9 @@ class ServerTransformer extends BaseClientTransformer
             'created_at' => $server->created_at?->toIso8601String(),
             'is_node_under_maintenance' => $server->node->isUnderMaintenance(),
             'sftp_details' => [
-                'ip' => $server->node->fqdn,
-                'port' => $server->node->daemonSFTP,
+                'ip' => $server->node->getSftpPublicHost(),
+                'port' => $server->node->getSftpPublicPort(),
+                'firewall_access_enabled' => $server->node->sftpFirewallEnabled(),
             ],
             'description' => $server->description,
             'limits' => [

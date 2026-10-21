@@ -230,6 +230,62 @@
                                 <p class="text-muted"><small>The daemon runs its own SFTP management container and does not use the SSHd process on the main physical server. <Strong>Do not use the same port that you have assigned for your physical server's SSH process.</strong></small></p>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="form-group col-md-8">
+                                <label for="sftp_public_host" class="control-label">Public SFTP Host (HAProxy)</label>
+                                <input type="text" name="sftp_public_host" id="sftp_public_host" class="form-control"
+                                       value="{{ old('sftp_public_host', $node->sftp_public_host) }}"
+                                       placeholder="sftp.example.com ou IP" />
+                                <p class="text-muted small">Endereço mostrado ao cliente no painel. Vazio = usa o FQDN do node.</p>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="sftp_public_port" class="control-label">Public SFTP Port</label>
+                                <input type="number" name="sftp_public_port" id="sftp_public_port" class="form-control" min="1" max="65535"
+                                       value="{{ old('sftp_public_port', $node->sftp_public_port) }}"
+                                       placeholder="{{ $node->daemonSFTP }}" />
+                                <p class="text-muted small">Porta do HAProxy. Vazio = Daemon SFTP Port.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="box">
+                <div class="box-header with-border">
+                    <h3 class="box-title">SFTP Firewall Access (temporary IP allow)</h3>
+                </div>
+                <div class="box-body row">
+                    <div class="form-group col-md-4">
+                        <label for="sftp_firewall_provider" class="control-label">Provider</label>
+                        <select name="sftp_firewall_provider" id="sftp_firewall_provider" class="form-control">
+                            <option value="none" @if(old('sftp_firewall_provider', $node->sftp_firewall_provider) === 'none') selected @endif>Disabled</option>
+                            <option value="vultr" @if(old('sftp_firewall_provider', $node->sftp_firewall_provider) === 'vultr') selected @endif>Vultr Firewall</option>
+                        </select>
+                        <p class="text-muted small">Permite ao cliente liberar temporariamente o IP dele no firewall para aceder ao SFTP.</p>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="sftp_firewall_group_id" class="control-label">Firewall Group ID</label>
+                        <input type="text" name="sftp_firewall_group_id" id="sftp_firewall_group_id" class="form-control"
+                               value="{{ old('sftp_firewall_group_id', $node->sftp_firewall_group_id) }}"
+                               placeholder="Vultr firewall group UUID" />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="sftp_firewall_ttl_minutes" class="control-label">TTL (minutes)</label>
+                        <input type="number" name="sftp_firewall_ttl_minutes" id="sftp_firewall_ttl_minutes" class="form-control" min="5" max="10080"
+                               value="{{ old('sftp_firewall_ttl_minutes', $node->sftp_firewall_ttl_minutes ?: 60) }}" />
+                        <p class="text-muted small">Tempo até a regra ser removida automaticamente.</p>
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label for="sftp_firewall_api_key" class="control-label">API Key</label>
+                        <input type="password" name="sftp_firewall_api_key" id="sftp_firewall_api_key" class="form-control" autocomplete="new-password"
+                               placeholder="{{ $node->sftp_firewall_api_key ? '•••••••• (deixe vazio para manter)' : 'API key' }}" />
+                        <p class="text-muted small">Guardada encriptada. Deixe vazio para não alterar.</p>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="sftp_firewall_port" class="control-label">Firewall Port</label>
+                        <input type="number" name="sftp_firewall_port" id="sftp_firewall_port" class="form-control" min="1" max="65535"
+                               value="{{ old('sftp_firewall_port', $node->sftp_firewall_port) }}"
+                               placeholder="Public SFTP Port" />
+                        <p class="text-muted small">Porta TCP a liberar. Vazio = Public SFTP Port.</p>
                     </div>
                 </div>
             </div>

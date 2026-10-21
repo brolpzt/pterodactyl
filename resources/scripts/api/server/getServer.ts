@@ -56,6 +56,7 @@ export interface Server {
     sftpDetails: {
         ip: string;
         port: number;
+        firewallAccessEnabled?: boolean;
     };
     invocation: string;
     dockerImage: string;
@@ -105,6 +106,7 @@ export const rawDataToServerObject = ({ attributes: data }: FractalResponseData)
     sftpDetails: {
         ip: data.sftp_details.ip,
         port: data.sftp_details.port,
+        firewallAccessEnabled: !!data.sftp_details?.firewall_access_enabled,
     },
     description: data.description ? (data.description.length > 0 ? data.description : null) : null,
     limits: { ...data.limits },

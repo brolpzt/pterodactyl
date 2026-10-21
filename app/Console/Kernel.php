@@ -13,6 +13,7 @@ use Pterodactyl\Console\Commands\Schedule\ProcessRunnableCommand;
 use Pterodactyl\Console\Commands\Maintenance\PruneOrphanedBackupsCommand;
 use Pterodactyl\Console\Commands\Maintenance\CleanServiceBackupFilesCommand;
 use Pterodactyl\Console\Commands\Server\ProcessForcedConsoleCommandsCommand;
+use Pterodactyl\Console\Commands\Maintenance\ExpireSftpFirewallGrantsCommand;
 
 class Kernel extends ConsoleKernel
 {
@@ -37,6 +38,9 @@ class Kernel extends ConsoleKernel
 
         // Re-apply forced console commands (ENV → console) for running servers.
         $schedule->command(ProcessForcedConsoleCommandsCommand::class)->everyMinute()->withoutOverlapping();
+
+        // Revoke expired temporary SFTP firewall grants (Vultr / future providers).
+        $schedule->command(ExpireSftpFirewallGrantsCommand::class)->everyMinute()->withoutOverlapping();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

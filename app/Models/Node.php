@@ -36,6 +36,13 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property string $daemon_token
  * @property int $daemonListen
  * @property int $daemonSFTP
+ * @property string|null $sftp_public_host
+ * @property int|null $sftp_public_port
+ * @property string $sftp_firewall_provider
+ * @property string|null $sftp_firewall_api_key
+ * @property string|null $sftp_firewall_group_id
+ * @property int|null $sftp_firewall_port
+ * @property int $sftp_firewall_ttl_minutes
  * @property string $daemonBase
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
@@ -70,7 +77,7 @@ class Node extends Model implements Identifiable
     /**
      * The attributes excluded from the model's JSON form.
      */
-    protected $hidden = ['daemon_token_id', 'daemon_token'];
+    protected $hidden = ['daemon_token_id', 'daemon_token', 'sftp_firewall_api_key'];
 
     /**
      * Cast values to correct type.
@@ -81,6 +88,9 @@ class Node extends Model implements Identifiable
         'disk' => 'integer',
         'daemonListen' => 'integer',
         'daemonSFTP' => 'integer',
+        'sftp_public_port' => 'integer',
+        'sftp_firewall_port' => 'integer',
+        'sftp_firewall_ttl_minutes' => 'integer',
         'behind_proxy' => 'boolean',
         'public' => 'boolean',
         'maintenance_mode' => 'boolean',
@@ -97,6 +107,9 @@ class Node extends Model implements Identifiable
         'memory', 'memory_overallocate', 'disk',
         'disk_overallocate', 'upload_size', 'daemonBase',
         'daemonSFTP', 'daemonListen',
+        'sftp_public_host', 'sftp_public_port',
+        'sftp_firewall_provider', 'sftp_firewall_api_key',
+        'sftp_firewall_group_id', 'sftp_firewall_port', 'sftp_firewall_ttl_minutes',
         'description', 'maintenance_mode',
         'gcore_enabled',
         'nftables_enabled',
@@ -117,6 +130,13 @@ class Node extends Model implements Identifiable
         'daemonBase' => 'sometimes|required|regex:/^([\/][\d\w.\-\/]+)$/',
         'daemonSFTP' => 'required|numeric|between:1,65535',
         'daemonListen' => 'required|numeric|between:1,65535',
+        'sftp_public_host' => 'sometimes|nullable|string|max:191',
+        'sftp_public_port' => 'sometimes|nullable|numeric|between:1,65535',
+        'sftp_firewall_provider' => 'sometimes|string|in:none,vultr',
+        'sftp_firewall_api_key' => 'sometimes|nullable|string',
+        'sftp_firewall_group_id' => 'sometimes|nullable|string|max:191',
+        'sftp_firewall_port' => 'sometimes|nullable|numeric|between:1,65535',
+        'sftp_firewall_ttl_minutes' => 'sometimes|integer|min:5|max:10080',
         'maintenance_mode' => 'boolean',
         'gcore_enabled' => 'boolean',
         'nftables_enabled' => 'boolean',
@@ -134,6 +154,8 @@ class Node extends Model implements Identifiable
         'daemonBase' => '/var/lib/pterodactyl/volumes',
         'daemonSFTP' => 2022,
         'daemonListen' => 8080,
+        'sftp_firewall_provider' => 'none',
+        'sftp_firewall_ttl_minutes' => 60,
         'maintenance_mode' => false,
         'gcore_enabled' => false,
         'nftables_enabled' => false,
@@ -145,6 +167,44 @@ class Node extends Model implements Identifiable
     public function getConnectionAddress(): string
     {
         return sprintf('%s://%s:%s', $this->scheme, $this->fqdn, $this->daemonListen);
+    }
+
+    /**
+     * Host shown to clients for SFTP (HAProxy DNS/IP when set).
+     */
+    public function getSftpPublicHost(): string
+    {
+        $host = trim((string) ($this->sftp_public_host ?? ''));
+
+        return $host !== '' ? $host : $this->fqdn;
+    }
+
+    /**
+     * Port shown to clients for SFTP (HAProxy port when set).
+     */
+    public function getSftpPublicPort(): int
+    {
+        $port = (int) ($this->sftp_public_port ?? 0);
+
+        return $port > 0 ? $port : (int) $this->daemonSFTP;
+    }
+
+    /**
+     * Port opened on the external firewall for temporary SFTP access.
+     */
+    public function getSftpFirewallPort(): int
+    {
+        $port = (int) ($this->sftp_firewall_port ?? 0);
+        if ($port > 0) {
+            return $port;
+        }
+
+        return $this->getSftpPublicPort();
+    }
+
+    public function sftpFirewallEnabled(): bool
+    {
+        return ($this->sftp_firewall_provider ?? 'none') !== 'none';
     }
 
     /**

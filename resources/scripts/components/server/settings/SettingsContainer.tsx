@@ -16,6 +16,7 @@ import { ip } from '@/lib/formatters';
 import { Button } from '@/components/elements/button/index';
 import { fieldGroup } from '@/assets/css/formTheme';
 import SftpPasswordField from '@/components/server/SftpPasswordField';
+import SftpFirewallAccessButton from '@/components/server/SftpFirewallAccessButton';
 
 export default () => {
     const username = useStoreState((state) => state.user.data!.username);
@@ -34,6 +35,7 @@ export default () => {
                     <Can action={'file.sftp'}>
                         <TitledGreyBox title={'SFTP Details'} css={tw`mb-6 md:mb-10`}>
                             <FlashMessageRender byKey={'server:sftp-password'} css={tw`mb-4`} />
+                            <FlashMessageRender byKey={'server:sftp-firewall'} css={tw`mb-4`} />
                             <div css={fieldGroup}>
                                 <Label htmlFor={'sftp-address'}>Server Address</Label>
                                 <CopyOnClick text={`sftp://${ip(sftp.ip)}:${sftp.port}`}>
@@ -47,6 +49,7 @@ export default () => {
                                 </CopyOnClick>
                             </div>
                             <SftpPasswordField serverUuid={uuid} />
+                            <SftpFirewallAccessButton serverUuid={uuid} />
                             <div css={tw`mt-6 flex items-center justify-end`}>
                                 <a href={`sftp://${username}.${id}@${ip(sftp.ip)}:${sftp.port}`}>
                                     <Button.Text variant={Button.Variants.Secondary}>Launch SFTP</Button.Text>

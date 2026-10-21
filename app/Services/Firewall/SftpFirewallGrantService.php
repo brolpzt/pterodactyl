@@ -36,13 +36,14 @@ class SftpFirewallGrantService
             throw new BadRequestHttpException('SFTP firewall access is not configured on this node.');
         }
 
-        if (!filter_var($clientIp, FILTER_VALIDATE_IP)) {
+        $clientIp = ClientIp::canonicalize($clientIp);
+        if ($clientIp === null) {
             throw new BadRequestHttpException('Could not determine a valid client IP address.');
         }
 
-        if (ClientIp::isCloudflareEdge($clientIp)) {
+        if (!ClientIp::isPublic($clientIp) || ClientIp::isCloudflareEdge($clientIp)) {
             throw new BadRequestHttpException(
-                'Detected a Cloudflare proxy IP instead of your real address. Refresh and try again.'
+                'Detected a proxy or private IP instead of your real public address. Refresh and try again, or enter your public IP manually.'
             );
         }
 
@@ -118,6 +119,8 @@ class SftpFirewallGrantService
 
     public function activeGrantForUserIpOnNode(User $user, Node $node, string $clientIp): ?SftpFirewallGrant
     {
+        $clientIp = ClientIp::canonicalize($clientIp) ?? $clientIp;
+
         return SftpFirewallGrant::query()
             ->where('user_id', $user->id)
             ->where('node_id', $node->id)

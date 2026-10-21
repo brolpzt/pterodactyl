@@ -12,6 +12,7 @@ use Pterodactyl\Services\Firewall\SftpFirewallGrantService;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
 use Pterodactyl\Http\Requests\Api\Client\Servers\SftpFirewallRequest;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class SftpFirewallController extends ClientApiController
 {
@@ -42,13 +43,14 @@ class SftpFirewallController extends ClientApiController
     }
 
     /**
-     * Open temporary firewall access for the requester's IP.
+     * Open temporary firewall access for the requester's IP (or an explicit public IP).
      * Other active IPs for the same user on this node are kept.
      */
     public function store(SftpFirewallRequest $request, Server $server): JsonResponse
     {
         $server->loadMissing('node');
-        $clientIp = ClientIp::from($request);
+        $detectedIp = ClientIp::from($request);
+        $clientIp = $this->resolveGrantIp($request, $detectedIp);
 
         $result = $this->grantService->grantForServer($server, $request->user(), $clientIp);
         $grant = $result['grant'];
@@ -58,10 +60,11 @@ class SftpFirewallController extends ClientApiController
             ->log();
 
         $grants = $this->grantService->activeGrantsForUserOnNode($request->user(), $server->node);
+        $mine = $this->grantService->activeGrantForUserIpOnNode($request->user(), $server->node, $detectedIp);
 
         return new JsonResponse([
             'object' => 'sftp_firewall_access',
-            'attributes' => $this->attributes($server, true, $clientIp, $grant, $grants),
+            'attributes' => $this->attributes($server, true, $detectedIp, $mine, $grants),
         ], $result['created'] ? 201 : 200);
     }
 
@@ -73,8 +76,9 @@ class SftpFirewallController extends ClientApiController
     {
         $server->loadMissing('node');
         $detectedIp = ClientIp::from($request);
-        $targetIp = $request->query('ip', $detectedIp);
-        if (!is_string($targetIp) || !filter_var($targetIp, FILTER_VALIDATE_IP)) {
+        $rawTarget = $request->query('ip', $detectedIp);
+        $targetIp = is_string($rawTarget) ? ClientIp::canonicalize($rawTarget) : null;
+        if ($targetIp === null) {
             throw new NotFoundHttpException('No matching SFTP firewall allow found for that IP.');
         }
 
@@ -105,6 +109,21 @@ class SftpFirewallController extends ClientApiController
         ]);
     }
 
+    private function resolveGrantIp(SftpFirewallRequest $request, string $detectedIp): string
+    {
+        $manual = $request->input('ip');
+        if (!is_string($manual) || trim($manual) === '') {
+            return $detectedIp;
+        }
+
+        $ip = ClientIp::canonicalize($manual);
+        if ($ip === null) {
+            throw new BadRequestHttpException('The provided IP address is invalid.');
+        }
+
+        return $ip;
+    }
+
     /**
      * @param  Collection<int, SftpFirewallGrant>  $grants
      * @return array<string, mixed>
@@ -116,10 +135,13 @@ class SftpFirewallController extends ClientApiController
         ?SftpFirewallGrant $mine,
         Collection $grants
     ): array {
+        $detectedCanonical = ClientIp::canonicalize($detectedIp) ?? $detectedIp;
+
         return [
             'enabled' => $enabled,
             'client_ip' => $mine?->client_ip,
             'detected_ip' => $detectedIp,
+            'detected_ip_is_v6' => ClientIp::isIpv6($detectedIp),
             'expires_at' => $mine?->expires_at?->toIso8601String(),
             'ttl_minutes' => (int) $server->node->sftp_firewall_ttl_minutes,
             'sftp_host' => $server->node->getSftpPublicHost(),
@@ -127,7 +149,8 @@ class SftpFirewallController extends ClientApiController
             'grants' => $grants->map(fn ($g) => [
                 'ip' => $g->client_ip,
                 'expires_at' => $g->expires_at?->toIso8601String(),
-                'is_current' => $g->client_ip === $detectedIp,
+                'is_current' => (ClientIp::canonicalize($g->client_ip) ?? $g->client_ip) === $detectedCanonical,
+                'is_v6' => ClientIp::isIpv6($g->client_ip),
             ])->values()->all(),
         ];
     }

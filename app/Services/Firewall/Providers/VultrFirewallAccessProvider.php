@@ -31,11 +31,13 @@ class VultrFirewallAccessProvider implements FirewallAccessProvider
     public function grant(Node $node, string $clientIp, int $port, ?string $notes = null): string
     {
         $groupId = (string) $node->sftp_firewall_group_id;
+        $isV6 = (bool) filter_var($clientIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
         $payload = [
-            'ip_type' => filter_var($clientIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 'v6' : 'v4',
+            'ip_type' => $isV6 ? 'v6' : 'v4',
             'protocol' => 'tcp',
+            // Vultr expects the address itself; /32 (v4) or /128 (v6) for a single host.
             'subnet' => $clientIp,
-            'subnet_size' => filter_var($clientIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 128 : 32,
+            'subnet_size' => $isV6 ? 128 : 32,
             'port' => (string) $port,
             'notes' => $notes ?: 'Pterodactyl SFTP temporary access',
         ];

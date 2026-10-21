@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Pterodactyl\Models\Node;
 use Pterodactyl\Models\User;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Helpers\ClientIp;
 use Pterodactyl\Models\SftpFirewallGrant;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -33,6 +34,12 @@ class SftpFirewallGrantService
 
         if (!filter_var($clientIp, FILTER_VALIDATE_IP)) {
             throw new BadRequestHttpException('Could not determine a valid client IP address.');
+        }
+
+        if (ClientIp::isCloudflareEdge($clientIp)) {
+            throw new BadRequestHttpException(
+                'Detected a Cloudflare proxy IP instead of your real address. Refresh and try again.'
+            );
         }
 
         $port = $node->getSftpFirewallPort();

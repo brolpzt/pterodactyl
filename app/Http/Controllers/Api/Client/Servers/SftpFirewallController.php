@@ -5,6 +5,7 @@ namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 use Pterodactyl\Models\Server;
 use Illuminate\Http\JsonResponse;
 use Pterodactyl\Facades\Activity;
+use Pterodactyl\Helpers\ClientIp;
 use Pterodactyl\Services\Firewall\SftpFirewallGrantService;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
 use Pterodactyl\Http\Requests\Api\Client\Servers\SftpFirewallRequest;
@@ -39,7 +40,7 @@ class SftpFirewallController extends ClientApiController
     public function store(SftpFirewallRequest $request, Server $server): JsonResponse
     {
         $server->loadMissing('node');
-        $clientIp = $request->ip();
+        $clientIp = ClientIp::from($request);
 
         $result = $this->grantService->grantForServer($server, $request->user(), $clientIp);
         $grant = $result['grant'];
@@ -67,7 +68,7 @@ class SftpFirewallController extends ClientApiController
         return [
             'enabled' => $enabled,
             'client_ip' => $clientIp,
-            'detected_ip' => request()->ip(),
+            'detected_ip' => ClientIp::from(request()),
             'expires_at' => $expiresAt,
             'ttl_minutes' => (int) $server->node->sftp_firewall_ttl_minutes,
             'sftp_host' => $server->node->getSftpPublicHost(),

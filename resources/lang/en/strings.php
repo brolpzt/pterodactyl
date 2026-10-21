@@ -173,6 +173,8 @@ return [
         'sftp_firewall_renew' => 'Renew IP allow',
         'sftp_firewall_working' => 'Allowing…',
         'sftp_firewall_active' => 'IP :ip allowed until :expires. The connection usually takes about 5 minutes to become available.',
+        'sftp_firewall_revoke' => 'Remove IP allow',
+        'sftp_firewall_revoking' => 'Removing…',
         'connection_string' => 'Connection String',
         'connection_string_help' => 'Use this string to connect to the server (e.g. in-game: connect IP:port; password xxx).',
         'rcon_password' => 'RCON Password',

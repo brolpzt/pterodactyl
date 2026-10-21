@@ -173,6 +173,8 @@ return [
         'sftp_firewall_renew' => 'Renovar liberação do IP',
         'sftp_firewall_working' => 'A liberar…',
         'sftp_firewall_active' => 'IP :ip liberado até :expires. A conexão costuma levar cerca de 5 minutos para ficar liberada.',
+        'sftp_firewall_revoke' => 'Remover liberação do IP',
+        'sftp_firewall_revoking' => 'A remover…',
         'connection_string' => 'Connection string',
         'connection_string_help' => 'Use esta string para conectar ao servidor (ex.: no jogo: connect IP:porta; password xxx).',
         'rcon_password' => 'Senha RCON',

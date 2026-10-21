@@ -61,6 +61,28 @@ class SftpFirewallController extends ClientApiController
     }
 
     /**
+     * Revoke the active temporary SFTP firewall grant for this user on the node.
+     */
+    public function delete(SftpFirewallRequest $request, Server $server): JsonResponse
+    {
+        $server->loadMissing('node');
+        $grant = $this->grantService->activeGrantForUserOnNode($request->user(), $server->node);
+
+        if ($grant) {
+            $this->grantService->revokeGrant($grant, true);
+
+            Activity::event('server:sftp.firewall-revoke')
+                ->property(['ip' => $grant->client_ip])
+                ->log();
+        }
+
+        return new JsonResponse([
+            'object' => 'sftp_firewall_access',
+            'attributes' => $this->attributes($server, $server->node->sftpFirewallEnabled(), null, null),
+        ]);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function attributes(Server $server, bool $enabled, ?string $clientIp, ?string $expiresAt): array

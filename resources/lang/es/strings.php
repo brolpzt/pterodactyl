@@ -176,7 +176,6 @@ return [
         'sftp_firewall_you' => 'tu IP',
         'sftp_firewall_revoke' => 'Quitar',
         'sftp_firewall_revoking' => 'Quitando…',
-        'sftp_firewall_ipv6_note' => 'Tu conexión es IPv6. El firewall liberará esa IPv6. Si el SFTP solo tiene IPv4, indica tu IPv4 pública abajo.',
         'sftp_firewall_ip_placeholder' => 'Opcional: otra IP pública (IPv4 o IPv6)',
         'connection_string' => 'Cadena de conexión',
         'connection_string_help' => 'Usa esta cadena para conectarte al servidor (ej. en el juego: connect IP:puerto; password xxx).',

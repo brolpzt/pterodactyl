@@ -87,8 +87,6 @@ export const stringsEn = {
         sftp_firewall_you: 'your IP',
         sftp_firewall_revoke: 'Remove',
         sftp_firewall_revoking: 'Removing…',
-        sftp_firewall_ipv6_note:
-            'Your connection is IPv6. The firewall will allow that IPv6 address. If SFTP only has IPv4, enter your public IPv4 below.',
         sftp_firewall_ip_placeholder: 'Optional: other public IP (IPv4 or IPv6)',
         connection_string: 'Connection String',
         connection_string_help: 'Use this string to connect to the server (e.g. in-game: connect IP:port; password xxx).',
@@ -452,8 +450,6 @@ export const stringsPt = {
         sftp_firewall_you: 'o seu IP',
         sftp_firewall_revoke: 'Remover',
         sftp_firewall_revoking: 'A remover…',
-        sftp_firewall_ipv6_note:
-            'A sua conexão é IPv6. O firewall vai liberar esse IPv6. Se o SFTP só tiver IPv4, indique o seu IPv4 público abaixo.',
         sftp_firewall_ip_placeholder: 'Opcional: outro IP público (IPv4 ou IPv6)',
         connection_string: 'Connection string',
         connection_string_help: 'Use esta string para conectar ao servidor (ex.: no jogo: connect IP:porta; password xxx).',
@@ -817,8 +813,6 @@ export const stringsEs = {
         sftp_firewall_you: 'tu IP',
         sftp_firewall_revoke: 'Quitar',
         sftp_firewall_revoking: 'Quitando…',
-        sftp_firewall_ipv6_note:
-            'Tu conexión es IPv6. El firewall liberará esa IPv6. Si el SFTP solo tiene IPv4, indica tu IPv4 pública abajo.',
         sftp_firewall_ip_placeholder: 'Opcional: otra IP pública (IPv4 o IPv6)',
         connection_string: 'Cadena de conexión',
         connection_string_help: 'Usa esta cadena para conectarte al servidor (ej. en el juego: connect IP:puerto; password xxx).',

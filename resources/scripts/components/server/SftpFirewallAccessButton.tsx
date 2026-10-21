@@ -57,9 +57,6 @@ export default ({ serverUuid }: { serverUuid: string }) => {
                     ip: access.detectedIp || '—',
                 })}
             </p>
-            {access.detectedIpIsV6 && (
-                <p css={tw`text-xs text-yellow-400 mb-2`}>{t('server_overview.sftp_firewall_ipv6_note')}</p>
-            )}
             {access.grants.length > 0 && (
                 <ul css={tw`text-xs text-green-400 mb-2 space-y-1`}>
                     {access.grants.map((grant) => (

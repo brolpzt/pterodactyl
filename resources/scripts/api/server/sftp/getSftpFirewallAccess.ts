@@ -1,5 +1,11 @@
 import http from '@/api/http';
 
+export interface SftpFirewallGrant {
+    ip: string;
+    expiresAt: string | null;
+    isCurrent: boolean;
+}
+
 export interface SftpFirewallAccess {
     enabled: boolean;
     clientIp: string | null;
@@ -8,6 +14,7 @@ export interface SftpFirewallAccess {
     ttlMinutes: number;
     sftpHost: string;
     sftpPort: number;
+    grants: SftpFirewallGrant[];
 }
 
 export const rawToSftpFirewallAccess = (attributes: any): SftpFirewallAccess => ({
@@ -18,6 +25,13 @@ export const rawToSftpFirewallAccess = (attributes: any): SftpFirewallAccess => 
     ttlMinutes: Number(attributes.ttl_minutes || 60),
     sftpHost: attributes.sftp_host || '',
     sftpPort: Number(attributes.sftp_port || 0),
+    grants: Array.isArray(attributes.grants)
+        ? attributes.grants.map((g: any) => ({
+              ip: String(g.ip || ''),
+              expiresAt: g.expires_at ?? null,
+              isCurrent: !!g.is_current,
+          }))
+        : [],
 });
 
 export default (uuid: string): Promise<SftpFirewallAccess> => {

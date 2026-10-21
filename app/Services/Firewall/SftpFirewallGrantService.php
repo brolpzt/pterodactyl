@@ -3,6 +3,7 @@
 namespace Pterodactyl\Services\Firewall;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Pterodactyl\Models\Node;
@@ -16,6 +17,9 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class SftpFirewallGrantService
 {
+    /** Max concurrent active IP grants per user on a node (shared logins). */
+    public const MAX_ACTIVE_GRANTS_PER_USER = 10;
+
     public function __construct(private FirewallAccessManager $manager)
     {
     }
@@ -47,26 +51,24 @@ class SftpFirewallGrantService
         $expiresAt = CarbonImmutable::now()->addMinutes($ttl);
 
         /** @var SftpFirewallGrant|null $existing */
-        $existing = SftpFirewallGrant::query()
-            ->where('user_id', $user->id)
-            ->where('node_id', $node->id)
-            ->where('status', SftpFirewallGrant::STATUS_ACTIVE)
-            ->where('expires_at', '>', CarbonImmutable::now())
-            ->latest('id')
-            ->first();
+        $existing = $this->activeGrantForUserIpOnNode($user, $node, $clientIp);
 
-        if ($existing && $existing->client_ip === $clientIp) {
-            // Extend TTL for same IP.
+        if ($existing) {
+            // Extend TTL for same IP; leave other IPs for this user alone.
             $existing->forceFill(['expires_at' => $expiresAt, 'server_id' => $server->id])->save();
 
             return ['grant' => $existing->fresh(), 'created' => false];
         }
 
-        return DB::transaction(function () use ($existing, $provider, $node, $user, $server, $clientIp, $port, $expiresAt) {
-            if ($existing) {
-                $this->revokeGrant($existing, false);
-            }
+        $activeCount = $this->activeGrantsForUserOnNode($user, $node)->count();
+        if ($activeCount >= self::MAX_ACTIVE_GRANTS_PER_USER) {
+            throw new BadRequestHttpException(sprintf(
+                'Too many active SFTP firewall allows (%d). Remove an IP before adding another.',
+                self::MAX_ACTIVE_GRANTS_PER_USER
+            ));
+        }
 
+        return DB::transaction(function () use ($provider, $node, $user, $server, $clientIp, $port, $expiresAt) {
             try {
                 $externalId = $provider->grant(
                     $node,
@@ -100,15 +102,38 @@ class SftpFirewallGrantService
         });
     }
 
-    public function activeGrantForUserOnNode(User $user, Node $node): ?SftpFirewallGrant
+    /**
+     * @return Collection<int, SftpFirewallGrant>
+     */
+    public function activeGrantsForUserOnNode(User $user, Node $node): Collection
     {
         return SftpFirewallGrant::query()
             ->where('user_id', $user->id)
             ->where('node_id', $node->id)
             ->where('status', SftpFirewallGrant::STATUS_ACTIVE)
             ->where('expires_at', '>', CarbonImmutable::now())
+            ->orderBy('id')
+            ->get();
+    }
+
+    public function activeGrantForUserIpOnNode(User $user, Node $node, string $clientIp): ?SftpFirewallGrant
+    {
+        return SftpFirewallGrant::query()
+            ->where('user_id', $user->id)
+            ->where('node_id', $node->id)
+            ->where('client_ip', $clientIp)
+            ->where('status', SftpFirewallGrant::STATUS_ACTIVE)
+            ->where('expires_at', '>', CarbonImmutable::now())
             ->latest('id')
             ->first();
+    }
+
+    /**
+     * @deprecated Prefer activeGrantForUserIpOnNode / activeGrantsForUserOnNode
+     */
+    public function activeGrantForUserOnNode(User $user, Node $node): ?SftpFirewallGrant
+    {
+        return $this->activeGrantsForUserOnNode($user, $node)->last();
     }
 
     public function revokeGrant(SftpFirewallGrant $grant, bool $throw = true): void

@@ -11,7 +11,7 @@ export default ({ serverUuid }: { serverUuid: string }) => {
     const { t } = useTranslation('strings');
     const { clearAndAddHttpError, clearFlashes } = useFlash();
     const [access, setAccess] = useState<SftpFirewallAccess | null>(null);
-    const [loading, setLoading] = useState<'allow' | 'revoke' | null>(null);
+    const [loading, setLoading] = useState<'allow' | string | null>(null);
 
     useEffect(() => {
         getSftpFirewallAccess(serverUuid)
@@ -23,7 +23,7 @@ export default ({ serverUuid }: { serverUuid: string }) => {
         return null;
     }
 
-    const active = !!access.clientIp && !!access.expiresAt;
+    const currentAllowed = !!access.clientIp && !!access.expiresAt;
     const busy = loading !== null;
 
     const onRequest = () => {
@@ -35,10 +35,10 @@ export default ({ serverUuid }: { serverUuid: string }) => {
             .finally(() => setLoading(null));
     };
 
-    const onRevoke = () => {
+    const onRevoke = (ip: string) => {
         clearFlashes('server:sftp-firewall');
-        setLoading('revoke');
-        revokeSftpFirewallAccess(serverUuid)
+        setLoading(`revoke:${ip}`);
+        revokeSftpFirewallAccess(serverUuid, ip)
             .then(setAccess)
             .catch((error) => clearAndAddHttpError({ key: 'server:sftp-firewall', error }))
             .finally(() => setLoading(null));
@@ -52,29 +52,40 @@ export default ({ serverUuid }: { serverUuid: string }) => {
                     ip: access.detectedIp || '—',
                 })}
             </p>
-            {active && (
-                <p css={tw`text-xs text-green-400 mb-2`}>
-                    {t('server_overview.sftp_firewall_active', {
-                        ip: access.clientIp,
-                        expires: new Date(access.expiresAt as string).toLocaleString(),
-                    })}
-                </p>
+            {access.grants.length > 0 && (
+                <ul css={tw`text-xs text-green-400 mb-2 space-y-1`}>
+                    {access.grants.map((grant) => (
+                        <li key={grant.ip} css={tw`flex flex-wrap items-center gap-2`}>
+                            <span>
+                                {t('server_overview.sftp_firewall_active', {
+                                    ip: grant.ip,
+                                    expires: grant.expiresAt
+                                        ? new Date(grant.expiresAt).toLocaleString()
+                                        : '—',
+                                })}
+                                {grant.isCurrent ? ` (${t('server_overview.sftp_firewall_you')})` : ''}
+                            </span>
+                            <Button.Danger
+                                size={Button.Sizes.Small}
+                                disabled={busy}
+                                onClick={() => onRevoke(grant.ip)}
+                            >
+                                {loading === `revoke:${grant.ip}`
+                                    ? t('server_overview.sftp_firewall_revoking')
+                                    : t('server_overview.sftp_firewall_revoke')}
+                            </Button.Danger>
+                        </li>
+                    ))}
+                </ul>
             )}
             <div css={tw`flex flex-wrap gap-2`}>
                 <Button.Text variant={Button.Variants.Secondary} disabled={busy} onClick={onRequest}>
                     {loading === 'allow'
                         ? t('server_overview.sftp_firewall_working')
-                        : active
+                        : currentAllowed
                           ? t('server_overview.sftp_firewall_renew')
                           : t('server_overview.sftp_firewall_allow')}
                 </Button.Text>
-                {active && (
-                    <Button.Danger disabled={busy} onClick={onRevoke}>
-                        {loading === 'revoke'
-                            ? t('server_overview.sftp_firewall_revoking')
-                            : t('server_overview.sftp_firewall_revoke')}
-                    </Button.Danger>
-                )}
             </div>
         </div>
     );

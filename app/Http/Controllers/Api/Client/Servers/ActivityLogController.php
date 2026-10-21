@@ -28,22 +28,26 @@ class ActivityLogController extends ClientApiController
             ->allowedSorts(['timestamp'])
             ->allowedFilters([AllowedFilter::partial('event')])
             ->whereNotIn('activity_logs.event', ActivityLog::DISABLED_EVENTS)
-            ->when(config('activity.hide_admin_activity'), function (Builder $builder) use ($server) {
-                // We could do this with a query and a lot of joins, but that gets pretty
-                // painful so for now we'll execute a simpler query.
-                $subusers = $server->subusers()->pluck('user_id')->merge($server->owner_id);
+            // Hide panel-admin actions from regular users; admins still see the full log.
+            ->when(
+                config('activity.hide_admin_activity') && !$request->user()->root_admin,
+                function (Builder $builder) use ($server) {
+                    // We could do this with a query and a lot of joins, but that gets pretty
+                    // painful so for now we'll execute a simpler query.
+                    $subusers = $server->subusers()->pluck('user_id')->merge($server->owner_id);
 
-                $builder->select('activity_logs.*')
-                    ->leftJoin('users', function (JoinClause $join) {
-                        $join->on('users.id', 'activity_logs.actor_id')
-                            ->where('activity_logs.actor_type', (new User())->getMorphClass());
-                    })
-                    ->where(function (Builder $builder) use ($subusers) {
-                        $builder->whereNull('users.id')
-                            ->orWhere('users.root_admin', 0)
-                            ->orWhereIn('users.id', $subusers);
-                    });
-            })
+                    $builder->select('activity_logs.*')
+                        ->leftJoin('users', function (JoinClause $join) {
+                            $join->on('users.id', 'activity_logs.actor_id')
+                                ->where('activity_logs.actor_type', (new User())->getMorphClass());
+                        })
+                        ->where(function (Builder $builder) use ($subusers) {
+                            $builder->whereNull('users.id')
+                                ->orWhere('users.root_admin', 0)
+                                ->orWhereIn('users.id', $subusers);
+                        });
+                }
+            )
             ->paginate(min($request->query('per_page', 25), 100))
             ->appends($request->query());
 

@@ -266,8 +266,11 @@ class GcoreFirewallSyncService
     /**
      * Patch ACL in place: never reorder existing rules.
      *
-     * - Frozen infra (DROP, allowlist, geo, tcp-server, sip/sport, default-*, …) stays at the same index.
-     * - Panel only adds/removes dports on editable game rules (same policy+proto).
+     * - Frozen infra (DROP, allowlist, geo, dns-trust, sip/sport, default-*, …) stays at the same index.
+     * - Panel only adds/removes dports on editable game rules (same policy+proto),
+     *   including ratelimiter-* and tcp-server. Manual (non-allocation) ports stay.
+     * - A port already present on an earlier rule of the same policy+proto is
+     *   dropped from later duplicates (first match wins, so behaviour is unchanged).
      * - Missing policy+proto pairs are inserted before the trailing DROP block at the
      *   end (else before trailing default-*, else at the end).
      * - If a matching game rule already exists (same policy+proto), only dports change.
@@ -307,6 +310,10 @@ class GcoreFirewallSyncService
         $portsInFrozen = [];
         /** @var array<string, array<string, true>> $claimedProto */
         $claimedProto = [];
+        /** @var array<string, array<string, array<int, true>>> $placed policy => proto => port */
+        $placed = [];
+        /** @var int|null $firstDroppedAt index in $out where the first emptied game rule stood */
+        $firstDroppedAt = null;
         /** @var list<array<string, mixed>> $out */
         $out = [];
         $added = [];
@@ -355,15 +362,8 @@ class GcoreFirewallSyncService
             // Keep non-panel (manual) ports on this game rule.
             $keep = [];
             foreach ($currentPorts as $port) {
-                if (!isset($panelPortSet[$port])) {
+                if (!isset($panelPortSet[$port]) && !isset($placed[$policy][$protoKey][$port])) {
                     $keep[$port] = true;
-                }
-            }
-
-            $previousPanelPorts = [];
-            foreach ($currentPorts as $port) {
-                if (isset($panelPortSet[$port])) {
-                    $previousPanelPorts[] = $port;
                 }
             }
 
@@ -390,12 +390,13 @@ class GcoreFirewallSyncService
 
             $finalPorts = array_map('intval', array_keys($keep + $desiredHere));
             sort($finalPorts);
+            foreach ($finalPorts as $port) {
+                $placed[$policy][$protoKey][$port] = true;
+            }
 
+            // Panel ports no longer wanted here, plus duplicates of an earlier same policy+proto rule.
             $addedPorts = array_values(array_diff($finalPorts, $currentPorts));
-            $removedPorts = array_values(array_filter(
-                array_diff($currentPorts, $finalPorts),
-                fn (int $port) => isset($panelPortSet[$port]),
-            ));
+            $removedPorts = array_values(array_diff($currentPorts, $finalPorts));
 
             if ($addedPorts !== []) {
                 $added[$policy] = array_values(array_unique(array_merge($added[$policy] ?? [], $addedPorts)));
@@ -406,11 +407,9 @@ class GcoreFirewallSyncService
                 sort($removed[$policy]);
             }
 
-            // Empty game rule after stripping panel ports → drop only this line.
-            if ($finalPorts === [] && $previousPanelPorts !== [] && $keep === []) {
-                continue;
-            }
+            // Empty game rule after stripping panel ports / duplicates → drop only this line.
             if ($finalPorts === []) {
+                $firstDroppedAt ??= count($out);
                 continue;
             }
 
@@ -421,7 +420,8 @@ class GcoreFirewallSyncService
 
         // New game rules: before trailing DROP (last DROP block at end), else before
         // trailing default-*, else at end. Never reorder existing rows.
-        $insertAt = $this->findNewGameRuleInsertIndex($out);
+        // A rule that replaces an emptied one (e.g. egg changed policy) takes its slot.
+        $insertAt = $firstDroppedAt ?? $this->findNewGameRuleInsertIndex($out);
 
         $toInsert = [];
         foreach ($remainingDesired as $policy => $byProto) {
@@ -541,11 +541,7 @@ class GcoreFirewallSyncService
             'DROP',
             'allowlist',
             'geo',
-            'tcp-server',
             'dns-trust',
-            'ratelimiter-low',
-            'ratelimiter-medium',
-            'ratelimiter-high',
         ], true);
     }
 

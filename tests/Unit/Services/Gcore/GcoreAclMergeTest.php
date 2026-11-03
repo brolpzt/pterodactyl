@@ -222,4 +222,67 @@ class GcoreAclMergeTest extends TestCase
         $this->assertSame([], $result['removed']);
         $this->assertSame('DROP', $result['acl'][0]['policy']);
     }
+
+    public function testRatelimiterNewServerJoinsExistingRule(): void
+    {
+        $acl = [
+            $this->rule('DROP', ['icmp']),
+            $this->rule('ratelimiter-high', ['udp'], [4976, 4977]),
+            $this->rule('DROP', []),
+        ];
+
+        $out = $this->merge($acl, ['ratelimiter-high' => ['udp' => [4976, 4977, 4978]]], [4976, 4977, 4978])['acl'];
+
+        $this->assertCount(3, $out);
+        $this->assertSame([4976, 4977, 4978], $out[1]['dport_list']);
+    }
+
+    public function testRatelimiterDuplicateRowsAreCollapsedAndDeletedPortRemoved(): void
+    {
+        $acl = [
+            $this->rule('DROP', ['icmp']),
+            $this->rule('ratelimiter-high', ['udp'], [4976, 4977, 9999]),
+            $this->rule('ratelimiter-high', ['udp'], [4977, 4978, 9999]),
+            $this->rule('DROP', []),
+        ];
+
+        // 4977 belonged to a deleted server; 9999 is a manual port.
+        $result = $this->merge($acl, ['ratelimiter-high' => ['udp' => [4976, 4978]]], [4976, 4977, 4978]);
+        $out = $result['acl'];
+
+        $this->assertCount(3, $out);
+        $this->assertSame([4976, 4978, 9999], $out[1]['dport_list']);
+        $this->assertSame('DROP', $out[2]['policy']);
+        $this->assertContains(4977, $result['removed']['ratelimiter-high']);
+    }
+
+    public function testPolicyChangeMovesPortsInsteadOfDuplicating(): void
+    {
+        $acl = [
+            $this->rule('DROP', ['icmp']),
+            $this->rule('ratelimiter-high', ['udp'], [4976, 4977]),
+            $this->rule('DROP', []),
+        ];
+
+        $out = $this->merge($acl, ['udp-general' => ['udp' => [4976, 4977]]], [4976, 4977])['acl'];
+
+        $this->assertCount(3, $out);
+        $this->assertSame('DROP', $out[0]['policy']);
+        $this->assertSame('udp-general', $out[1]['policy']);
+        $this->assertSame([4976, 4977], $out[1]['dport_list']);
+    }
+
+    public function testTcpServerKeepsManualPortsAndManagesPanelPorts(): void
+    {
+        $acl = [
+            $this->rule('tcp-server', ['tcp'], [2022]),
+            $this->rule('tcp-server', ['tcp'], [8080]),
+            $this->rule('DROP', []),
+        ];
+
+        $out = $this->merge($acl, ['tcp-server' => ['tcp' => [7777]]], [7777, 7778])['acl'];
+
+        $this->assertSame([2022, 7777], $out[0]['dport_list']);
+        $this->assertSame([8080], $out[1]['dport_list']);
+    }
 }

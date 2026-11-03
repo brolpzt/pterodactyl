@@ -17,9 +17,11 @@
 <link rel="stylesheet" href="/themes/pterodactyl/css/gcore-ddos.css">
 <style>
     .col-dports { min-width: 260px; }
-    .port-chips { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; min-height: 26px; padding: 2px 4px; border: 1px solid transparent; border-radius: 3px; cursor: pointer; }
+    .port-chips, .sip-chips { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 3px; height: 26px; padding: 0 4px; border: 1px solid transparent; border-radius: 3px; cursor: pointer; overflow: hidden; }
+    .chips-track { display: flex; flex-wrap: nowrap; gap: 3px; min-width: 0; overflow: hidden; }
+    .pchip[hidden] { display: none; }
     .port-chips:hover, .port-chips:focus { border-color: var(--accent); outline: none; background: var(--bg); }
-    .port-chips .empty { color: var(--muted); font-style: italic; }
+    .port-chips .empty, .sip-chips .empty { color: var(--muted); font-style: italic; white-space: nowrap; overflow: hidden; }
     .pchip { display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 0 6px; border-radius: 9px; font-family: var(--mono); font-size: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); white-space: nowrap; }
     .pchip.st-ok { border-color: rgba(16,185,129,.55); }
     .pchip.st-manual { color: var(--muted); border-style: dashed; }
@@ -29,11 +31,12 @@
     .pm-list .flags .act { display: inline-block; margin-top: 3px; height: 22px; padding: 0 8px; font-size: 11px; }
     .col-sip { min-width: 180px; }
     .col-ports { min-width: 120px; }
-    .sip-chips { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; min-height: 26px; padding: 2px 4px; border: 1px solid transparent; border-radius: 3px; cursor: pointer; }
     .sip-chips:hover, .sip-chips:focus { border-color: var(--accent); outline: none; background: var(--bg); }
     .sip-chips .empty { color: var(--muted); font-style: italic; }
     .pchip.more { background: transparent; color: var(--muted); }
-    .pchip-edit { margin-left: auto; color: var(--muted); font-size: 11px; padding: 0 2px; }
+    .pchip-edit { color: var(--muted); font-size: 11px; padding: 0 2px; white-space: nowrap; }
+    .col-dports { width: 40%; }
+    .col-sip { width: 18%; }
     .warn-total { color: #fcd34d; margin-left: 6px; }
     .pm-backdrop { position: fixed; inset: 0; z-index: 1050; background: rgba(0,0,0,.55); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px 16px; }
     .pm-backdrop[hidden] { display: none; }
@@ -280,7 +283,38 @@
 <script>
 (function () {
     const PORT_MAP = @json((object) $portMap);
-    const MAX_CHIPS = 10;
+    const MAX_CHIPS = 60; // rendered per cell; fitChips() hides what does not fit the width
+
+    // One line per cell: chips that do not fit are hidden and counted in "+N".
+    function setChipCell(box, chipsHtml, extra, label) {
+        box.innerHTML = '<span class="chips-track">' + chipsHtml + '</span><span class="pchip more" hidden></span><span class="pchip-edit">' + label + '</span>';
+        box.dataset.extra = String(extra);
+        fitChips(box);
+    }
+
+    function fitChips(box) {
+        const track = box.querySelector('.chips-track');
+        const more = box.querySelector('.pchip.more');
+        if (!track || !more) return;
+        const chips = [...track.children];
+        chips.forEach(c => { c.hidden = false; });
+        let hiddenCount = Number(box.dataset.extra || 0);
+        more.textContent = '+' + hiddenCount;
+        more.hidden = hiddenCount === 0;
+        if (track.clientWidth === 0) return; // not laid out (hidden tab / tests)
+        for (let i = chips.length - 1; i > 0 && track.scrollWidth > track.clientWidth; i--) {
+            chips[i].hidden = true;
+            hiddenCount++;
+            more.textContent = '+' + hiddenCount;
+            more.hidden = false;
+        }
+    }
+
+    let fitTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(fitTimer);
+        fitTimer = setTimeout(() => document.querySelectorAll('.port-chips, .sip-chips').forEach(fitChips), 120);
+    });
     const body = document.getElementById('acl-body');
     const tpl = document.getElementById('rule-row-template').innerHTML;
     const countEl = document.getElementById('rule-count');
@@ -419,15 +453,14 @@
         const box = row.querySelector('.port-chips');
         if (!box) return;
         if (ports.length === 0) {
-            box.innerHTML = '<span class="empty">sem portas</span><span class="pchip-edit">✎</span>';
+            box.innerHTML = '<span class="empty">sem portas</span><span></span><span class="pchip-edit">✎</span>';
             return;
         }
         const shown = ports.slice(0, MAX_CHIPS).map(p =>
             '<span class="pchip st-' + p.level + (p.pinned ? ' pinned' : '') + '" title="' + esc(p.port + ' — ' + ownerLabel(p) + (p.flags.length ? '\n' + p.flags.map(f => f.text).join('\n') : '')) + '">' + p.port + '</span>'
         ).join('');
-        const more = ports.length > MAX_CHIPS ? '<span class="pchip more">+' + (ports.length - MAX_CHIPS) + '</span>' : '';
         const warn = ports.filter(p => p.level === 'warn' || p.level === 'err').length;
-        box.innerHTML = shown + more + '<span class="pchip-edit">' + ports.length + (warn ? ' · ⚠' + warn : '') + ' ✎</span>';
+        setChipCell(box, shown, Math.max(0, ports.length - MAX_CHIPS), ports.length + (warn ? ' · ⚠' + warn : '') + ' ✎');
     }
 
     let modalRow = null;
@@ -745,13 +778,12 @@
         const K = LIST_KINDS[kind];
         const items = analyzeList(row, kind);
         if (items.length === 0) {
-            box.innerHTML = '<span class="empty">' + K.chipEmpty + '</span><span class="pchip-edit">✎</span>';
+            box.innerHTML = '<span class="empty">' + K.chipEmpty + '</span><span></span><span class="pchip-edit">✎</span>';
             return;
         }
-        const shown = items.slice(0, K.maxChips).map(i => '<span class="pchip st-' + i.level + '" title="' + esc(i.value + ' — ' + (i.parsed ? K.describe(i.parsed.info) : K.invalid)) + '">' + esc(i.value) + '</span>').join('');
-        const more = items.length > K.maxChips ? '<span class="pchip more">+' + (items.length - K.maxChips) + '</span>' : '';
+        const shown = items.slice(0, MAX_CHIPS).map(i => '<span class="pchip st-' + i.level + '" title="' + esc(i.value + ' — ' + (i.parsed ? K.describe(i.parsed.info) : K.invalid)) + '">' + esc(i.value) + '</span>').join('');
         const bad = items.filter(i => i.level !== 'ok').length;
-        box.innerHTML = shown + more + '<span class="pchip-edit">' + items.length + (bad ? ' · ⚠' + bad : '') + ' ✎</span>';
+        setChipCell(box, shown, Math.max(0, items.length - MAX_CHIPS), items.length + (bad ? ' · ⚠' + bad : '') + ' ✎');
     }
 
     function renderSipChips(row) {

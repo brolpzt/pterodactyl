@@ -25,6 +25,7 @@ class GcoreClient
         'rust',
         'battlefield2-query',
         'battlefield2',
+        'udp-general',
         'geo',
         'tcp-server',
         'dns-trust',

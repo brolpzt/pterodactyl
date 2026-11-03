@@ -285,4 +285,28 @@ class GcoreAclMergeTest extends TestCase
         $this->assertSame([2022, 7777], $out[0]['dport_list']);
         $this->assertSame([8080], $out[1]['dport_list']);
     }
+
+    public function testEggMovingFromAllowlistFreesOldRowAndKeepsManualSipGrants(): void
+    {
+        $acl = [
+            $this->rule('allowlist', ['any'], [22], ['sip_list' => ['1.2.3.4/32']]),
+            $this->rule('allowlist', ['any'], [7777]),
+            $this->rule('allowlist', ['any'], [9120, 10013]),
+            $this->rule('DROP', []),
+        ];
+
+        $out = $this->merge(
+            $acl,
+            ['allowlist' => ['any' => [7777]], 'team-speak' => ['udp' => [9120]], 'tcp-server' => ['tcp' => [10013]]],
+            [7777, 9120, 10013],
+        )['acl'];
+
+        $policies = array_column($out, 'policy');
+        $this->assertSame(['1.2.3.4/32'], $out[0]['sip_list']);
+        $this->assertSame([7777], $out[1]['dport_list']);
+        $this->assertCount(1, array_filter($out, fn ($r) => $r['policy'] === 'allowlist' && $r['sip_list'] === []));
+        $this->assertContains('team-speak', $policies);
+        $this->assertContains('tcp-server', $policies);
+        $this->assertSame('DROP', end($out)['policy']);
+    }
 }

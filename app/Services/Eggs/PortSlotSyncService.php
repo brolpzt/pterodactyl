@@ -212,11 +212,7 @@ class PortSlotSyncService
             $byEnv[$slot['env_variable']] = $slot;
         }
 
-        $isPrimary = (int) $allocation->id === (int) $primaryAllocationId;
-        $env = $isPrimary
-            ? self::PRIMARY_ENV
-            : strtoupper(trim((string) ($allocation->port_env ?? '')));
-
+        $env = $this->resolveSlotEnv($allocation, $primaryAllocationId, array_keys($byEnv));
         if ($env === '') {
             return null;
         }
@@ -258,11 +254,7 @@ class PortSlotSyncService
             $byEnv[$slot['env_variable']] = $slot;
         }
 
-        $isPrimary = (int) $allocation->id === (int) $primaryAllocationId;
-        $env = $isPrimary
-            ? self::PRIMARY_ENV
-            : strtoupper(trim((string) ($allocation->port_env ?? '')));
-
+        $env = $this->resolveSlotEnv($allocation, $primaryAllocationId, array_keys($byEnv));
         if ($env === '') {
             return null;
         }
@@ -292,6 +284,40 @@ class PortSlotSyncService
 
         // icmp/gre/esp are not useful as dport ACCEPTs for game servers.
         return null;
+    }
+
+    /**
+     * Port slot env for an allocation: SERVER_PORT for the primary, else allocations.port_env.
+     * Legacy allocations without port_env fall back to the server variable whose value is
+     * this port (e.g. QUERY_PORT=7778), restricted to the egg's slot env names.
+     *
+     * @param list<string> $slotEnvs
+     */
+    private function resolveSlotEnv(Allocation $allocation, int $primaryAllocationId, array $slotEnvs): string
+    {
+        if ((int) $allocation->id === $primaryAllocationId) {
+            return self::PRIMARY_ENV;
+        }
+
+        $env = strtoupper(trim((string) ($allocation->port_env ?? '')));
+        if ($env !== '' || !$allocation->server_id) {
+            return $env;
+        }
+
+        $candidates = array_values(array_diff($slotEnvs, [self::PRIMARY_ENV]));
+        if ($candidates === []) {
+            return '';
+        }
+
+        $match = $this->connection->table('server_variables')
+            ->join('egg_variables', 'egg_variables.id', '=', 'server_variables.variable_id')
+            ->where('server_variables.server_id', $allocation->server_id)
+            ->where('server_variables.variable_value', (string) $allocation->port)
+            ->whereIn('egg_variables.env_variable', $candidates)
+            ->orderBy('egg_variables.id')
+            ->value('egg_variables.env_variable');
+
+        return strtoupper(trim((string) ($match ?? '')));
     }
 
     /**

@@ -266,7 +266,7 @@ class GcoreFirewallSyncService
     /**
      * Patch ACL in place: never reorder existing rules.
      *
-     * - Frozen infra (DROP, allowlist, geo, dns-trust, sip/sport, default-*, …) stays at the same index.
+     * - Frozen infra (DROP, geo, dns-trust, any rule with sip/sport, default-*, …) stays at the same index.
      * - Panel only adds/removes dports on editable game rules (same policy+proto),
      *   including ratelimiter-* and tcp-server. Manual (non-allocation) ports stay.
      * - A port already present on an earlier rule of the same policy+proto is
@@ -537,9 +537,10 @@ class GcoreFirewallSyncService
             return true;
         }
 
+        // allowlist is editable like a game rule (egg slots use it); allowlist rows with
+        // sip/sport are manual grants and stay frozen via isGroupableRule().
         return in_array($policy, [
             'DROP',
-            'allowlist',
             'geo',
             'dns-trust',
         ], true);

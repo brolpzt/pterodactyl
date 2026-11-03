@@ -29,6 +29,7 @@
     .pchip-edit { margin-left: auto; color: var(--muted); font-size: 11px; padding: 0 2px; }
     .warn-total { color: #fcd34d; margin-left: 6px; }
     .pm-backdrop { position: fixed; inset: 0; z-index: 1050; background: rgba(0,0,0,.55); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px 16px; }
+    .pm-backdrop[hidden] { display: none; }
     .pm-dialog { width: min(820px, 100%); max-height: 86vh; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
     .pm-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface2); border-radius: 8px 8px 0 0; }
     .pm-head h4 { margin: 0; font-size: 13px; font-weight: 600; }

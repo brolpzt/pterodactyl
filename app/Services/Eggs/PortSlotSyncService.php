@@ -236,6 +236,31 @@ class PortSlotSyncService
     }
 
     /**
+     * Slot env + slot name for an allocation (for admin display), or null when the
+     * allocation is not bound to any slot of the egg.
+     *
+     * @return array{env: string, name: string}|null
+     */
+    public function describeSlotForAllocation(Egg $egg, Allocation $allocation, int $primaryAllocationId): ?array
+    {
+        $slots = $this->withLegacyPrimarySlot(
+            is_array($egg->port_slots) ? $egg->port_slots : [],
+            $egg
+        );
+        $byEnv = [];
+        foreach ($slots as $slot) {
+            $byEnv[$slot['env_variable']] = $slot;
+        }
+
+        $env = $this->resolveSlotEnv($allocation, $primaryAllocationId, array_keys($byEnv));
+        if ($env === '') {
+            return null;
+        }
+
+        return ['env' => $env, 'name' => (string) ($byEnv[$env]['name'] ?? $env)];
+    }
+
+    /**
      * Resolve nftables protocols for an allocation via its port slot.
      *
      * Opens the port when the slot defines gcore_policy and/or gcore_proto (same

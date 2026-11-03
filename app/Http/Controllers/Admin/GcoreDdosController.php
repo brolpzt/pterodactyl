@@ -9,6 +9,8 @@ use Prologue\Alerts\AlertsMessageBag;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Services\Gcore\GcoreClient;
 use Pterodactyl\Services\Gcore\GcoreAclHelper;
+use Pterodactyl\Models\Allocation;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 
 class GcoreDdosController extends Controller
 {
@@ -37,7 +39,7 @@ class GcoreDdosController extends Controller
         ]);
     }
 
-    public function show(int $profile): View|RedirectResponse
+    public function show(int $profile, PortSlotSyncService $portSlots): View|RedirectResponse
     {
         try {
             $client = GcoreClient::fromConfig();
@@ -48,6 +50,7 @@ class GcoreDdosController extends Controller
                 'profile' => $data,
                 'form' => $form,
                 'policies' => GcoreClient::POLICIES,
+                'portMap' => $this->buildPortMap((string) ($data['ip_address'] ?? ''), $portSlots),
                 'error' => null,
             ]);
         } catch (\Throwable $e) {
@@ -86,5 +89,56 @@ class GcoreDdosController extends Controller
         }
 
         return redirect()->route('admin.gcore.profile', $profile);
+    }
+
+    /**
+     * Panel allocations on the profile IP, keyed by port, so the ACL editor can show
+     * which server/slot owns each dport and which policy the egg expects for it.
+     *
+     * @return array<int, list<array<string, mixed>>>
+     */
+    private function buildPortMap(string $ip, PortSlotSyncService $portSlots): array
+    {
+        if ($ip === '') {
+            return [];
+        }
+
+        $allocations = Allocation::query()
+            ->where('ip', $ip)
+            ->with(['node:id,name', 'server:id,uuidShort,name,egg_id,allocation_id', 'server.egg:id,nest_id,name,port_slots,gcore_policy,gcore_proto', 'server.egg.nest:id,name'])
+            ->orderBy('port')
+            ->get();
+
+        $map = [];
+        foreach ($allocations as $allocation) {
+            $server = $allocation->server;
+            $entry = [
+                'node' => $allocation->node?->name,
+                'protected' => (bool) $allocation->gcore_protected,
+                'server' => null,
+            ];
+
+            if ($server && $server->egg) {
+                $primaryId = (int) $server->allocation_id;
+                $slot = $portSlots->describeSlotForAllocation($server->egg, $allocation, $primaryId);
+                $expected = $portSlots->resolveGcoreForAllocation($server->egg, $allocation, $primaryId);
+                $entry['server'] = [
+                    'id' => $server->id,
+                    'name' => $server->name,
+                    'url' => route('admin.servers.view', $server->id),
+                    'egg' => $server->egg->name,
+                    'nest' => $server->egg->nest?->name,
+                    'slot' => $slot['env'] ?? null,
+                    'slot_name' => $slot['name'] ?? null,
+                    'primary' => (int) $allocation->id === $primaryId,
+                    'policy' => $expected['policy'] ?? null,
+                    'proto' => $expected['proto'] ?? null,
+                ];
+            }
+
+            $map[(int) $allocation->port][] = $entry;
+        }
+
+        return $map;
     }
 }

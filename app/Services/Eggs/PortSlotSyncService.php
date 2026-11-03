@@ -199,9 +199,27 @@ class PortSlotSyncService
     /**
      * Resolve Gcore ACL policy/proto for an allocation via its port slot.
      *
+     * A per-allocation override (set in the Gcore profile editor) wins over the egg
+     * while the allocation still belongs to the server it was set for.
+     *
      * @return array{policy: string, proto: string|null}|null
      */
     public function resolveGcoreForAllocation(Egg $egg, Allocation $allocation, int $primaryAllocationId): ?array
+    {
+        $override = $allocation->activeGcoreOverride();
+        if ($override !== null && in_array($override['policy'], GcoreClient::POLICIES, true)) {
+            return $override;
+        }
+
+        return $this->resolveEggGcoreForAllocation($egg, $allocation, $primaryAllocationId);
+    }
+
+    /**
+     * Policy/proto the egg's port slot defines for an allocation (ignores overrides).
+     *
+     * @return array{policy: string, proto: string|null}|null
+     */
+    public function resolveEggGcoreForAllocation(Egg $egg, Allocation $allocation, int $primaryAllocationId): ?array
     {
         $slots = $this->withLegacyPrimarySlot(
             is_array($egg->port_slots) ? $egg->port_slots : [],

@@ -18,6 +18,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string|null $port_env
  * @property bool $gcore_protected
  * @property bool $nftables_managed
+ * @property string|null $gcore_override_policy
+ * @property string|null $gcore_override_proto
+ * @property int|null $gcore_override_server_id
  * @property \Carbon\Carbon|null $created_at
  * @property \Carbon\Carbon|null $updated_at
  * @property string $alias
@@ -72,6 +75,7 @@ class Allocation extends Model
         'server_id' => 'integer',
         'gcore_protected' => 'boolean',
         'nftables_managed' => 'boolean',
+        'gcore_override_server_id' => 'integer',
     ];
 
     protected $attributes = [
@@ -89,7 +93,28 @@ class Allocation extends Model
         'port_env' => 'nullable|string|max:191',
         'gcore_protected' => 'boolean',
         'nftables_managed' => 'boolean',
+        'gcore_override_policy' => 'nullable|string|max:64',
+        'gcore_override_proto' => 'nullable|string|max:16',
+        'gcore_override_server_id' => 'nullable|integer',
     ];
+
+    /**
+     * Gcore ACL override set from the profile editor, honoured only while the
+     * allocation still belongs to the server it was set for.
+     *
+     * @return array{policy: string, proto: string|null}|null
+     */
+    public function activeGcoreOverride(): ?array
+    {
+        $policy = trim((string) ($this->gcore_override_policy ?? ''));
+        if ($policy === '' || !$this->server_id || (int) $this->gcore_override_server_id !== (int) $this->server_id) {
+            return null;
+        }
+
+        $proto = strtolower(trim((string) ($this->gcore_override_proto ?? '')));
+
+        return ['policy' => $policy, 'proto' => $proto === '' || $proto === 'any' ? null : $proto];
+    }
 
     public function getRouteKeyName(): string
     {

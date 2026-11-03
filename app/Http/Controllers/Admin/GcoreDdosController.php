@@ -62,6 +62,8 @@ class GcoreDdosController extends Controller
 
     public function update(Request $request, int $profile): RedirectResponse
     {
+        $overrides = $this->parseOverrides((string) $request->input('port_overrides', ''));
+
         try {
             $client = GcoreClient::fromConfig();
             $data = $client->getProfile($profile);
@@ -81,8 +83,12 @@ class GcoreDdosController extends Controller
             $payload = $client->buildUpdatePayload($data, $rate, $geoip, $acl);
             $updated = $client->updateProfile($profile, $payload);
 
+            $overrideNote = $overrides === []
+                ? ''
+                : ' · ' . $this->applyOverrides((string) ($data['ip_address'] ?? ''), $overrides);
+
             $this->alert->success(
-                'Enviado à Gcore · ' . ($updated['status']['status'] ?? 'OK') . ' (propagação ~2–5 min)'
+                'Enviado à Gcore · ' . ($updated['status']['status'] ?? 'OK') . ' (propagação ~2–5 min)' . $overrideNote
             )->flash();
         } catch (\Throwable $e) {
             $this->alert->danger($e->getMessage())->flash();
@@ -122,6 +128,8 @@ class GcoreDdosController extends Controller
                 $primaryId = (int) $server->allocation_id;
                 $slot = $portSlots->describeSlotForAllocation($server->egg, $allocation, $primaryId);
                 $expected = $portSlots->resolveGcoreForAllocation($server->egg, $allocation, $primaryId);
+                $fromEgg = $portSlots->resolveEggGcoreForAllocation($server->egg, $allocation, $primaryId);
+                $override = $allocation->activeGcoreOverride();
                 $entry['server'] = [
                     'id' => $server->id,
                     'name' => $server->name,
@@ -133,6 +141,9 @@ class GcoreDdosController extends Controller
                     'primary' => (int) $allocation->id === $primaryId,
                     'policy' => $expected['policy'] ?? null,
                     'proto' => $expected['proto'] ?? null,
+                    'egg_policy' => $fromEgg['policy'] ?? null,
+                    'egg_proto' => $fromEgg['proto'] ?? null,
+                    'override' => $override !== null,
                 ];
             }
 
@@ -140,5 +151,102 @@ class GcoreDdosController extends Controller
         }
 
         return $map;
+    }
+
+    /**
+     * Pending per-port overrides from the editor: [{port, policy, proto}] to pin,
+     * [{port, clear: true}] to drop.
+     *
+     * @return array<int, array{policy: string, proto: string|null}|null> port => override (null = clear)
+     */
+    private function parseOverrides(string $raw): array
+    {
+        $decoded = $raw === '' ? [] : json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($decoded as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $port = (int) ($item['port'] ?? 0);
+            if ($port < 1 || $port > 65535) {
+                continue;
+            }
+            if (!empty($item['clear'])) {
+                $out[$port] = null;
+                continue;
+            }
+            $policy = trim((string) ($item['policy'] ?? ''));
+            $proto = strtolower(trim((string) ($item['proto'] ?? '')));
+            if (!in_array($policy, GcoreClient::POLICIES, true)) {
+                continue;
+            }
+            if ($proto !== '' && $proto !== 'any' && !in_array($proto, ['tcp', 'udp'], true)) {
+                continue;
+            }
+            $out[$port] = ['policy' => $policy, 'proto' => $proto === '' || $proto === 'any' ? null : $proto];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Persist overrides on the allocations of this IP that currently have a server.
+     *
+     * @param array<int, array{policy: string, proto: string|null}|null> $overrides
+     */
+    private function applyOverrides(string $ip, array $overrides): string
+    {
+        if ($ip === '') {
+            return 'exceções ignoradas (perfil sem IP)';
+        }
+
+        $pinned = [];
+        $cleared = [];
+        $skipped = [];
+        foreach ($overrides as $port => $override) {
+            $allocations = Allocation::query()->where('ip', $ip)->where('port', $port)->get();
+            if ($override === null) {
+                foreach ($allocations as $allocation) {
+                    $allocation->forceFill([
+                        'gcore_override_policy' => null,
+                        'gcore_override_proto' => null,
+                        'gcore_override_server_id' => null,
+                    ])->save();
+                }
+                $cleared[] = $port;
+                continue;
+            }
+
+            $owned = $allocations->filter(fn (Allocation $a) => (bool) $a->server_id);
+            if ($owned->isEmpty()) {
+                $skipped[] = $port;
+                continue;
+            }
+            foreach ($owned as $allocation) {
+                $allocation->forceFill([
+                    'gcore_override_policy' => $override['policy'],
+                    'gcore_override_proto' => $override['proto'],
+                    'gcore_override_server_id' => $allocation->server_id,
+                ])->save();
+            }
+            $pinned[] = $port . '→' . $override['policy'] . '/' . ($override['proto'] ?? 'any');
+        }
+
+        $parts = [];
+        if ($pinned) {
+            $parts[] = 'fixadas: ' . implode(', ', $pinned);
+        }
+        if ($cleared) {
+            $parts[] = 'exceção removida: ' . implode(', ', $cleared);
+        }
+        if ($skipped) {
+            $parts[] = 'sem servidor (ignoradas): ' . implode(', ', $skipped);
+        }
+
+        return implode(' · ', $parts);
     }
 }

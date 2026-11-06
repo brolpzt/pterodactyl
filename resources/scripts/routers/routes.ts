@@ -33,6 +33,7 @@ const AmxxBansContainer = lazy(() => import('@/components/server/amxx/AmxxBansCo
 const AmxxWebContainer = lazy(() => import('@/components/server/amxx/AmxxWebContainer'));
 const WebRconContainer = lazy(() => import('@/components/server/webrcon/WebRconContainer'));
 const PlayerStatsContainer = lazy(() => import('@/components/server/stats/PlayerStatsContainer'));
+const AntiDdosContainer = lazy(() => import('@/components/server/antiDdos/AntiDdosContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -117,6 +118,15 @@ export default {
             permission: 'file.*',
             name: undefined,
             component: FileEditContainer,
+        },
+        {
+            path: '/anti-ddos',
+            permission: null,
+            name: 'Anti-DDoS (beta)',
+            nameKey: 'server.anti_ddos',
+            component: AntiDdosContainer,
+            exact: true,
+            adminOnly: true,
         },
         {
             path: '/databases',

@@ -168,12 +168,13 @@ export default () => {
                                         <TransitionRouter>
                                             <Suspense fallback={routeContentFallback}>
                                                 <Switch location={location}>
-                                                    {routes.server.map(({ path, permission, component: Component }) => (
+                                                    {routes.server.map(({ path, permission, component: Component, adminOnly }) => (
                                                         (isTs3 && isBlockedRouteForTs3(path)) ||
                                                         (!isTs3 && isTs3OnlyRoute(path)) ||
                                                         (!isCs16 && isAmxxOnlyRoute(path)) ||
                                                         (!hasWebRcon && isWebRconOnlyRoute(path)) ||
-                                                        (isTs3 && isRootAdminOnlyTs3Route(path) && !rootAdmin) ? (
+                                                        (isTs3 && isRootAdminOnlyTs3Route(path) && !rootAdmin) ||
+                                                        (adminOnly && !rootAdmin) ? (
                                                             <Route key={path} path={to(path)} exact>
                                                                 <Redirect to={to('/')} />
                                                             </Route>

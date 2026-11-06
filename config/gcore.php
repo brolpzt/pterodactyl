@@ -24,4 +24,9 @@ return [
     | Kept so existing .env keys do not break config load.
     */
     'acl_game_rules_after' => (int) env('GCORE_ACL_GAME_RULES_AFTER', 5),
+
+    /*
+    | How many days of DDoS event logs to pull on each sync (local DB retention is 90 days).
+    */
+    'attack_sync_days' => (int) env('GCORE_ATTACK_SYNC_DAYS', 7),
 ];

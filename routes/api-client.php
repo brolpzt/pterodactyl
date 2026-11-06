@@ -73,6 +73,8 @@ Route::group([
     Route::get('/resources', Client\Servers\ResourceUtilizationController::class)->name('api:client:server.resources');
     Route::get('/query', Client\Servers\GameQueryController::class)->name('api:client:server.query');
     Route::get('/player-stats', Client\Servers\PlayerStatsController::class)->name('api:client:server.player-stats');
+    Route::get('/anti-ddos/attacks', [Client\Servers\AntiDdosController::class, 'index'])->name('api:client:server.anti-ddos');
+    Route::get('/anti-ddos/attacks/{attack}', [Client\Servers\AntiDdosController::class, 'view'])->name('api:client:server.anti-ddos.view');
     Route::get('/activity', Client\Servers\ActivityLogController::class)->name('api:client:server.activity');
 
     Route::post('/command', [Client\Servers\CommandController::class, 'index'])->middleware([DenyConsoleForTs3::class]);

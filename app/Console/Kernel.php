@@ -15,6 +15,7 @@ use Pterodactyl\Console\Commands\Maintenance\CleanServiceBackupFilesCommand;
 use Pterodactyl\Console\Commands\Server\ProcessForcedConsoleCommandsCommand;
 use Pterodactyl\Console\Commands\Maintenance\ExpireSftpFirewallGrantsCommand;
 use Pterodactyl\Console\Commands\Maintenance\SamplePlayerCountsCommand;
+use Pterodactyl\Console\Commands\Maintenance\SyncGcoreAttackEventsCommand;
 
 class Kernel extends ConsoleKernel
 {
@@ -46,6 +47,10 @@ class Kernel extends ConsoleKernel
         // Sample GameDig player counts every 5 minutes; purge is included in the command.
         $schedule->command(SamplePlayerCountsCommand::class)->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('p:maintenance:sample-player-counts --purge-only')->daily();
+
+        // Pull Gcore DDoS event logs into local DB for the Anti-DDoS client page.
+        $schedule->command(SyncGcoreAttackEventsCommand::class)->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('p:maintenance:sync-gcore-attacks --purge-only')->daily();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

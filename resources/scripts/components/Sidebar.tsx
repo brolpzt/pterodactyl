@@ -25,6 +25,7 @@ import {
     faGamepad,
     faStore,
     faChartArea,
+    faShieldVirus,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
@@ -240,6 +241,8 @@ const ServerLinks = () => {
             case 'Stats': return faChartArea;
             case 'server.files':
             case 'Files': return faFolderOpen;
+            case 'server.anti_ddos':
+            case 'Anti-DDoS (beta)': return faShieldVirus;
             case 'server.databases':
             case 'Databases': return faDatabase;
             case 'server.schedules':
@@ -306,6 +309,7 @@ const ServerLinks = () => {
         '/console',
         '/stats',
         '/files',
+        '/anti-ddos',
         '/addons',
         '/firewall',
         '/dns',
@@ -382,7 +386,8 @@ const ServerLinks = () => {
         .filter((route) => !isWebRconRoute(route.path))
         .filter((route) => route.path !== '/dns' || dnsEnabled || eggFeatures.includes('dns'))
         .filter((route) => route.path !== '/workshop' || eggFeatures.includes('workshop'))
-        .filter((route) => !(isTs3 && route.path === '/stats'));
+        .filter((route) => !(isTs3 && route.path === '/stats'))
+        .filter((route) => !route.adminOnly || rootAdmin);
 
     const sortedRoutes = isTs3
         ? sortRoutes(filteredRoutes, ts3RouteOrder)

@@ -126,8 +126,38 @@ class GcoreClient
         ];
     }
 
-    /** @return array<string, mixed>|list<mixed> */
-    private function request(string $method, string $path, ?array $body = null): array
+    /**
+     * List DDoS / RTBH event logs.
+     *
+     * @param array<string, scalar|null> $query
+     * @return array{results?: list<array<string, mixed>>, count?: int, limit?: int, offset?: int}
+     */
+    public function listEventLogs(array $query = []): array
+    {
+        $data = $this->request('GET', '/security/notifier/v1/event_logs', null, $query);
+
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getEventLog(string $eventId): array
+    {
+        $data = $this->request('GET', '/security/notifier/v1/event_logs/' . rawurlencode($eventId));
+        if (!is_array($data) || !isset($data['id'])) {
+            throw new RuntimeException('Resposta inválida do event log Gcore.');
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param array<string, mixed>|null $body
+     * @param array<string, scalar|null> $query
+     * @return array<string, mixed>|list<mixed>
+     */
+    private function request(string $method, string $path, ?array $body = null, array $query = []): array
     {
         $pending = Http::baseUrl(self::BASE)
             ->withHeaders([
@@ -135,6 +165,13 @@ class GcoreClient
                 'Accept' => 'application/json',
             ])
             ->timeout(60);
+
+        if ($query !== []) {
+            $pending = $pending->withQueryParameters(array_filter(
+                $query,
+                static fn ($value) => $value !== null && $value !== ''
+            ));
+        }
 
         $response = $body === null
             ? $pending->send($method, $path)

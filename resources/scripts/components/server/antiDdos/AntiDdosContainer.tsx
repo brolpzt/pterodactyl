@@ -262,8 +262,9 @@ export default () => {
                 <div>
                     <p className={'m-0 font-medium text-neutral-100'}>Mostra apenas ataques às portas deste servidor</p>
                     <p className={'m-0 mt-1.5 text-neutral-200 leading-relaxed'}>
-                        Ataques costumam atingir várias portas e IPs ao mesmo tempo; a coluna «% neste servidor» indica
-                        a parte que chegou aqui. Eventos em andamento ainda podem ser atualizados.
+                        Ataques costumam atingir várias portas e IPs ao mesmo tempo; a coluna{' '}
+                        <strong className={'font-semibold text-neutral-100'}>% neste servidor</strong> indica a parte
+                        que chegou aqui no seu servidor de jogo. Eventos em andamento ainda podem ser atualizados.
                     </p>
                 </div>
             </Alert>

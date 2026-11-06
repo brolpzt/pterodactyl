@@ -72,6 +72,7 @@ Route::group([
         ->name('api:client:server.ws');
     Route::get('/resources', Client\Servers\ResourceUtilizationController::class)->name('api:client:server.resources');
     Route::get('/query', Client\Servers\GameQueryController::class)->name('api:client:server.query');
+    Route::get('/player-stats', Client\Servers\PlayerStatsController::class)->name('api:client:server.player-stats');
     Route::get('/activity', Client\Servers\ActivityLogController::class)->name('api:client:server.activity');
 
     Route::post('/command', [Client\Servers\CommandController::class, 'index'])->middleware([DenyConsoleForTs3::class]);

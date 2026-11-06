@@ -442,6 +442,16 @@ class Server extends Model implements Identifiable
     }
 
     /**
+     * Historical player-count samples for the stats page.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\Pterodactyl\Models\ServerPlayerSample, $this>
+     */
+    public function playerSamples(): HasMany
+    {
+        return $this->hasMany(ServerPlayerSample::class);
+    }
+
+    /**
      * Returns all of the activity log entries where the server is the subject.
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany<\Pterodactyl\Models\ActivityLog, $this>

@@ -14,6 +14,7 @@ use Pterodactyl\Console\Commands\Maintenance\PruneOrphanedBackupsCommand;
 use Pterodactyl\Console\Commands\Maintenance\CleanServiceBackupFilesCommand;
 use Pterodactyl\Console\Commands\Server\ProcessForcedConsoleCommandsCommand;
 use Pterodactyl\Console\Commands\Maintenance\ExpireSftpFirewallGrantsCommand;
+use Pterodactyl\Console\Commands\Maintenance\SamplePlayerCountsCommand;
 
 class Kernel extends ConsoleKernel
 {
@@ -41,6 +42,10 @@ class Kernel extends ConsoleKernel
 
         // Revoke expired temporary SFTP firewall grants (Vultr / future providers).
         $schedule->command(ExpireSftpFirewallGrantsCommand::class)->everyMinute()->withoutOverlapping();
+
+        // Sample GameDig player counts every 5 minutes; purge is included in the command.
+        $schedule->command(SamplePlayerCountsCommand::class)->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('p:maintenance:sample-player-counts --purge-only')->daily();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

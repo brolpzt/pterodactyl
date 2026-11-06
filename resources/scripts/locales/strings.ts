@@ -27,6 +27,7 @@ export const stringsEn = {
     server: {
         home: 'Home',
         console: 'Console',
+        stats: 'Stats',
         files: 'Files',
         databases: 'Databases',
         schedules: 'Schedules',
@@ -416,6 +417,7 @@ export const stringsPt = {
     server: {
         home: 'Início',
         console: 'Console',
+        stats: 'Stats',
         files: 'Arquivos',
         databases: 'Bancos de dados',
         schedules: 'Agendamentos',
@@ -804,6 +806,7 @@ export const stringsEs = {
     server: {
         home: 'Inicio',
         console: 'Consola',
+        stats: 'Stats',
         files: 'Archivos',
         databases: 'Bases de datos',
         schedules: 'Programaciones',

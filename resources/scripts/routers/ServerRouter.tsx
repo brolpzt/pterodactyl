@@ -116,7 +116,9 @@ export default () => {
     const isCs16 = isCs16Server(gamedig, eggName);
     const hasWebRcon = eggFeatures.includes('webrcon');
     const isBlockedRouteForTs3 = (path: string) =>
-        path === '/backups' || ((!rootAdmin) && (path === '/console' || path === '/files' || path === '/files/:action(edit|new)'));
+        path === '/backups' ||
+        path === '/stats' ||
+        ((!rootAdmin) && (path === '/console' || path === '/files' || path === '/files/:action(edit|new)'));
     const isTs3OnlyRoute = (path: string) => path.startsWith('/ts3');
     const isAmxxOnlyRoute = (path: string) => path.startsWith('/amxx');
     const isWebRconOnlyRoute = (path: string) => path.startsWith('/webrcon');

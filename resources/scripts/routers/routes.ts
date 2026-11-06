@@ -32,6 +32,7 @@ const AmxxAdminsContainer = lazy(() => import('@/components/server/amxx/AmxxAdmi
 const AmxxBansContainer = lazy(() => import('@/components/server/amxx/AmxxBansContainer'));
 const AmxxWebContainer = lazy(() => import('@/components/server/amxx/AmxxWebContainer'));
 const WebRconContainer = lazy(() => import('@/components/server/webrcon/WebRconContainer'));
+const PlayerStatsContainer = lazy(() => import('@/components/server/stats/PlayerStatsContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -94,6 +95,14 @@ export default {
             name: 'Console',
             nameKey: 'server.console',
             component: ServerConsole,
+            exact: true,
+        },
+        {
+            path: '/stats',
+            permission: null,
+            name: 'Stats',
+            nameKey: 'server.stats',
+            component: PlayerStatsContainer,
             exact: true,
         },
         {

@@ -60,8 +60,8 @@
                     <div class="form-group">
                         <label for="pIsActive" class="control-label">Status</label>
                         <select name="is_active" id="pIsActive" class="form-control">
-                            <option value="1" {{ old('is_active') !== '0' ?: 'selected' }}>Active</option>
-                            <option value="0" {{ old('is_active') !== '0' ?: 'selected' }}>Inactive</option>
+                            <option value="1" {{ old('is_active', '1') !== '0' ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ old('is_active', '1') === '0' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                     <div class="form-group">

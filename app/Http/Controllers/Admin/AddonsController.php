@@ -50,7 +50,8 @@ class AddonsController extends Controller
         ]);
 
         $data = $request->validated();
-        $data['is_active'] = $request->has('is_active');
+        // "is_active" is a select that always submits 1 or 0.
+        $data['is_active'] = $request->boolean('is_active');
         $data['reinstall_server'] = $request->has('reinstall_server');
         $data['start_after_install'] = $request->boolean('start_after_install');
         
@@ -78,7 +79,8 @@ class AddonsController extends Controller
     public function update(AddonFormRequest $request, Addon $addon): RedirectResponse
     {
         $data = $request->validated();
-        $data['is_active'] = $request->has('is_active');
+        // "is_active" is a select that always submits 1 or 0.
+        $data['is_active'] = $request->boolean('is_active');
         $data['reinstall_server'] = $request->has('reinstall_server');
         $data['start_after_install'] = $request->boolean('start_after_install');
         

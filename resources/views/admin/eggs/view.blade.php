@@ -109,6 +109,7 @@
                                         Passa a valer a partir da próxima sincronização de cada servidor.
                                     </p>
                                 </div>
+                            </div>
                             <div class="form-group">
                                 <label for="pFastDlPatterns" class="control-label">FastDL: tipos de arquivo</label>
                                 <textarea id="pFastDlPatterns" name="fastdl_patterns" class="form-control" rows="5" placeholder="{{ "*.bsp\n*.wad\n*.wav\n*.mdl\n*.spr" }}">{{ old('fastdl_patterns', $egg->fastdl_patterns) }}</textarea>

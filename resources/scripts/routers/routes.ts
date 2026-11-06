@@ -126,14 +126,12 @@ export default {
             name: 'Anti-DDoS (beta)',
             nameKey: 'server.anti_ddos',
             component: AntiDdosContainer,
-            adminOnly: true,
         },
         {
             path: '/anti-ddos/:eventId',
             permission: null,
             name: undefined,
             component: AntiDdosEventContainer,
-            adminOnly: true,
         },
         {
             path: '/databases',

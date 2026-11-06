@@ -2,9 +2,7 @@
 
 namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 
-use Illuminate\Http\Request;
 use Pterodactyl\Models\Server;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Pterodactyl\Models\GcoreAttackEvent;
 use Pterodactyl\Services\Gcore\GcoreAttackSyncService;
@@ -29,8 +27,6 @@ class AntiDdosController extends ClientApiController
      */
     public function index(GetServerRequest $request, Server $server): array
     {
-        $this->assertRootAdmin($request);
-
         $endpoints = GcoreAttackSyncService::protectedEndpointsForServer($server);
         $portsByIp = GcoreAttackSyncService::portsByIp($endpoints);
         $ips = array_keys($portsByIp);
@@ -85,8 +81,6 @@ class AntiDdosController extends ClientApiController
      */
     public function view(GetServerRequest $request, Server $server, string $event): array
     {
-        $this->assertRootAdmin($request);
-
         $endpoints = GcoreAttackSyncService::protectedEndpointsForServer($server);
         $portsByIp = GcoreAttackSyncService::portsByIp($endpoints);
         $ips = array_keys($portsByIp);
@@ -116,12 +110,6 @@ class AntiDdosController extends ClientApiController
         ];
     }
 
-    private function assertRootAdmin(Request $request): void
-    {
-        if (!$request->user()?->root_admin) {
-            throw new AccessDeniedHttpException('Only root administrators can access Anti-DDoS data.');
-        }
-    }
 
     private function resolvePeriod(GetServerRequest $request): string
     {

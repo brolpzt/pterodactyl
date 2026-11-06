@@ -23,9 +23,7 @@ import PaginationFooter from '@/components/elements/table/PaginationFooter';
 import PeriodSelector, { PeriodOption, PeriodValue } from '@/components/elements/PeriodSelector';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
 import { Alert } from '@/components/elements/alert';
-import ChartBlock from '@/components/server/console/ChartBlock';
 import { ServerContext } from '@/state/server';
-import { useStoreState } from 'easy-peasy';
 import { AntiDdosEventSummary, getAntiDdosEvents } from '@/api/server/antiDdos/getAntiDdosEvents';
 import { bpsToMbps, formatBps, formatPps, formatWhen } from '@/components/server/antiDdos/format';
 import { cardLabelText, cardRowBorder, cardValueText, emptyStateText } from '@/assets/css/cardTheme';
@@ -55,7 +53,6 @@ export default () => {
     const history = useHistory();
     const match = useRouteMatch();
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
-    const rootAdmin = useStoreState((state) => state.user.data!.rootAdmin);
     const [period, setPeriod] = useState<PeriodValue>('30d');
     const [page, setPage] = useState(1);
 
@@ -69,7 +66,7 @@ export default () => {
     };
 
     const { data, error, isValidating } = useSWR(
-        rootAdmin ? ['server:anti-ddos', uuid, period] : null,
+        ['server:anti-ddos', uuid, period],
         () => getAntiDdosEvents(uuid, period),
         { refreshInterval: 60_000, revalidateOnFocus: true }
     );
@@ -219,16 +216,6 @@ export default () => {
         };
     }, [events, period, history, match.url]);
 
-    if (!rootAdmin) {
-        return (
-            <ServerContentBlock title={'Anti-DDoS'}>
-                <TitledGreyBox title={'Anti-DDoS (beta)'} icon={faShieldVirus}>
-                    <p css={[cardValueText, tw`m-0`]}>Esta página está disponível apenas para administradores.</p>
-                </TitledGreyBox>
-            </ServerContentBlock>
-        );
-    }
-
     if ((!data && !error) || (error && isValidating && !data)) {
         return (
             <ServerContentBlock title={'Anti-DDoS'}>
@@ -301,182 +288,173 @@ export default () => {
                             </p>
                         </TitledGreyBox>
                     ) : (
-                        <div css={tw`mb-4`}>
-                            <ChartBlock title={'Potência dos ataques (período selecionado)'}>
-                                <div css={tw`h-64 cursor-pointer`}>
-                                    <Line data={chart.data} options={chart.options} />
-                                </div>
-                            </ChartBlock>
-                        </div>
+                        <TitledGreyBox title={'Potência dos ataques'} icon={faShieldVirus} className={'mb-4'}>
+                            <div css={tw`h-64 cursor-pointer`}>
+                                <Line data={chart.data} options={chart.options} />
+                            </div>
+                        </TitledGreyBox>
                     )}
 
-                    <ChartBlock title={'Eventos'}>
-                        <div css={tw`pl-2 pr-4 pb-3`}>
-                            {events.length === 0 ? (
-                                <p css={[emptyStateText, tw`py-4 m-0`]}>
-                                    Sem eventos neste período. Atualizado a cada 5 minutos.
-                                </p>
-                            ) : (
-                                <>
-                                    <div css={tw`overflow-x-auto -mx-1`}>
-                                        <table css={tw`w-full text-sm`}>
-                                            <thead>
-                                                <tr css={[tw`border-b`, cardRowBorder]}>
-                                                    <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
-                                                        <ColumnLabel
-                                                            label={'Início'}
-                                                            tip={
-                                                                'Momento em que o ataque foi detectado pela Proteção DDoS'
-                                                            }
-                                                        />
-                                                    </th>
-                                                    <th
-                                                        css={[
-                                                            cardLabelText,
-                                                            tw`text-left py-2 font-medium hidden md:table-cell`,
-                                                        ]}
-                                                    >
-                                                        <ColumnLabel
-                                                            label={'Alvo'}
-                                                            tip={'IP e portas deste servidor atingidas pelo ataque'}
-                                                        />
-                                                    </th>
-                                                    <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
-                                                        <ColumnLabel
-                                                            label={'Estado'}
-                                                            tip={'Se o ataque ainda está em andamento ou já terminou'}
-                                                        />
-                                                    </th>
-                                                    <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
-                                                        <ColumnLabel
-                                                            label={'Potência'}
-                                                            tip={
-                                                                'Volume máximo do ataque nas portas deste servidor (bits por segundo)'
-                                                            }
-                                                        />
-                                                    </th>
-                                                    <th
-                                                        css={[
-                                                            cardLabelText,
-                                                            tw`text-right py-2 font-medium hidden sm:table-cell`,
-                                                        ]}
-                                                    >
-                                                        <ColumnLabel
-                                                            label={'Pacotes'}
-                                                            tip={
-                                                                'Taxa máxima de pacotes por segundo nas portas deste servidor'
-                                                            }
-                                                        />
-                                                    </th>
-                                                    <th
-                                                        css={[
-                                                            cardLabelText,
-                                                            tw`text-right py-2 font-medium hidden lg:table-cell`,
-                                                        ]}
-                                                    >
-                                                        <ColumnLabel
-                                                            label={'% neste servidor'}
-                                                            tip={
-                                                                'Porcentagem do tráfego do ataque (no IP) que atingiu as portas deste servidor'
-                                                            }
-                                                        />
-                                                    </th>
-                                                    <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
-                                                        <ColumnLabel
-                                                            label={'Ações'}
-                                                            tip={'Abrir o detalhe deste evento'}
-                                                        />
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {pageEvents.map((event: AntiDdosEventSummary) => {
-                                                    const target =
-                                                        (event.ports || [])
-                                                            .map((port) => `${event.targeted_ip}:${port}`)
-                                                            .join(', ') || event.targeted_ip;
+                    <TitledGreyBox title={'Eventos'} icon={faShieldVirus}>
+                        {events.length === 0 ? (
+                            <p css={[emptyStateText, tw`py-4 m-0`]}>
+                                Sem eventos neste período. Atualizado a cada 5 minutos.
+                            </p>
+                        ) : (
+                            <>
+                                <div css={tw`overflow-x-auto -mx-1`}>
+                                    <table css={tw`w-full text-sm`}>
+                                        <thead>
+                                            <tr css={[tw`border-b`, cardRowBorder]}>
+                                                <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
+                                                    <ColumnLabel
+                                                        label={'Início'}
+                                                        tip={'Momento em que o ataque foi detectado pela Proteção DDoS'}
+                                                    />
+                                                </th>
+                                                <th
+                                                    css={[
+                                                        cardLabelText,
+                                                        tw`text-left py-2 font-medium hidden md:table-cell`,
+                                                    ]}
+                                                >
+                                                    <ColumnLabel
+                                                        label={'Alvo'}
+                                                        tip={'IP e portas deste servidor atingidas pelo ataque'}
+                                                    />
+                                                </th>
+                                                <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
+                                                    <ColumnLabel
+                                                        label={'Estado'}
+                                                        tip={'Se o ataque ainda está em andamento ou já terminou'}
+                                                    />
+                                                </th>
+                                                <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
+                                                    <ColumnLabel
+                                                        label={'Potência'}
+                                                        tip={
+                                                            'Volume máximo do ataque nas portas deste servidor (bits por segundo)'
+                                                        }
+                                                    />
+                                                </th>
+                                                <th
+                                                    css={[
+                                                        cardLabelText,
+                                                        tw`text-right py-2 font-medium hidden sm:table-cell`,
+                                                    ]}
+                                                >
+                                                    <ColumnLabel
+                                                        label={'Pacotes'}
+                                                        tip={
+                                                            'Taxa máxima de pacotes por segundo nas portas deste servidor'
+                                                        }
+                                                    />
+                                                </th>
+                                                <th
+                                                    css={[
+                                                        cardLabelText,
+                                                        tw`text-right py-2 font-medium hidden lg:table-cell`,
+                                                    ]}
+                                                >
+                                                    <ColumnLabel
+                                                        label={'% neste servidor'}
+                                                        tip={
+                                                            'Porcentagem do tráfego do ataque (no IP) que atingiu as portas deste servidor'
+                                                        }
+                                                    />
+                                                </th>
+                                                <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
+                                                    <ColumnLabel label={'Ações'} tip={'Abrir o detalhe deste evento'} />
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {pageEvents.map((event: AntiDdosEventSummary) => {
+                                                const target =
+                                                    (event.ports || [])
+                                                        .map((port) => `${event.targeted_ip}:${port}`)
+                                                        .join(', ') || event.targeted_ip;
 
-                                                    return (
-                                                        <tr
-                                                            key={event.id}
+                                                return (
+                                                    <tr
+                                                        key={event.id}
+                                                        css={[
+                                                            tw`border-b last:border-0 cursor-pointer transition hover:bg-neutral-700/30`,
+                                                            cardRowBorder,
+                                                        ]}
+                                                        onClick={() => openEvent(event.id)}
+                                                    >
+                                                        <td css={[cardValueText, tw`py-3 pr-3 whitespace-nowrap`]}>
+                                                            {formatWhen(event.attack_start_time)}
+                                                        </td>
+                                                        <td
                                                             css={[
-                                                                tw`border-b last:border-0 cursor-pointer transition hover:bg-neutral-700/30`,
-                                                                cardRowBorder,
+                                                                cardValueText,
+                                                                tw`py-3 pr-3 font-mono text-xs hidden md:table-cell`,
                                                             ]}
-                                                            onClick={() => openEvent(event.id)}
                                                         >
-                                                            <td css={[cardValueText, tw`py-3 pr-3 whitespace-nowrap`]}>
-                                                                {formatWhen(event.attack_start_time)}
-                                                            </td>
-                                                            <td
+                                                            {target}
+                                                        </td>
+                                                        <td css={tw`py-3 pr-3`}>
+                                                            <span
                                                                 css={[
-                                                                    cardValueText,
-                                                                    tw`py-3 pr-3 font-mono text-xs hidden md:table-cell`,
+                                                                    tw`inline-block text-xs px-2 py-0.5 rounded`,
+                                                                    event.ongoing
+                                                                        ? tw`bg-red-500/20 text-red-300`
+                                                                        : tw`bg-neutral-600/40 text-neutral-200`,
                                                                 ]}
                                                             >
-                                                                {target}
-                                                            </td>
-                                                            <td css={tw`py-3 pr-3`}>
-                                                                <span
-                                                                    css={[
-                                                                        tw`inline-block text-xs px-2 py-0.5 rounded`,
-                                                                        event.ongoing
-                                                                            ? tw`bg-red-500/20 text-red-300`
-                                                                            : tw`bg-neutral-600/40 text-neutral-200`,
-                                                                    ]}
-                                                                >
-                                                                    {event.ongoing ? 'Em andamento' : 'Terminado'}
-                                                                </span>
-                                                            </td>
-                                                            <td
-                                                                css={[
-                                                                    cardValueText,
-                                                                    tw`py-3 pr-3 text-right whitespace-nowrap`,
-                                                                ]}
+                                                                {event.ongoing ? 'Em andamento' : 'Terminado'}
+                                                            </span>
+                                                        </td>
+                                                        <td
+                                                            css={[
+                                                                cardValueText,
+                                                                tw`py-3 pr-3 text-right whitespace-nowrap`,
+                                                            ]}
+                                                        >
+                                                            {formatBps(event.attack_power_bps)}
+                                                        </td>
+                                                        <td
+                                                            css={[
+                                                                cardValueText,
+                                                                tw`py-3 pr-3 text-right whitespace-nowrap hidden sm:table-cell`,
+                                                            ]}
+                                                        >
+                                                            {formatPps(event.attack_power_pps)}
+                                                        </td>
+                                                        <td
+                                                            css={[
+                                                                cardValueText,
+                                                                tw`py-3 pr-3 text-right whitespace-nowrap hidden lg:table-cell`,
+                                                            ]}
+                                                        >
+                                                            {event.share_percentage != null
+                                                                ? `${event.share_percentage}%`
+                                                                : '—'}
+                                                        </td>
+                                                        <td
+                                                            css={tw`py-3 text-right`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <Button
+                                                                isSecondary
+                                                                size={'xsmall'}
+                                                                onClick={() => openEvent(event.id)}
                                                             >
-                                                                {formatBps(event.attack_power_bps)}
-                                                            </td>
-                                                            <td
-                                                                css={[
-                                                                    cardValueText,
-                                                                    tw`py-3 pr-3 text-right whitespace-nowrap hidden sm:table-cell`,
-                                                                ]}
-                                                            >
-                                                                {formatPps(event.attack_power_pps)}
-                                                            </td>
-                                                            <td
-                                                                css={[
-                                                                    cardValueText,
-                                                                    tw`py-3 pr-3 text-right whitespace-nowrap hidden lg:table-cell`,
-                                                                ]}
-                                                            >
-                                                                {event.share_percentage != null
-                                                                    ? `${event.share_percentage}%`
-                                                                    : '—'}
-                                                            </td>
-                                                            <td
-                                                                css={tw`py-3 text-right`}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <Button
-                                                                    isSecondary
-                                                                    size={'xsmall'}
-                                                                    onClick={() => openEvent(event.id)}
-                                                                >
-                                                                    Ver
-                                                                </Button>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <PaginationFooter pagination={pagination} onPageSelect={setPage} />
-                                </>
-                            )}
-                        </div>
-                    </ChartBlock>
+                                                                Ver
+                                                            </Button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <PaginationFooter pagination={pagination} onPageSelect={setPage} />
+                            </>
+                        )}
+                    </TitledGreyBox>
                 </>
             )}
 

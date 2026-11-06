@@ -11,7 +11,6 @@ import Button from '@/components/elements/Button';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
 import CopyOnClick from '@/components/elements/CopyOnClick';
 import { ServerContext } from '@/state/server';
-import { useStoreState } from 'easy-peasy';
 import { getAntiDdosEvent } from '@/api/server/antiDdos/getAntiDdosEvents';
 import { formatBps, formatPps, formatWhen } from '@/components/server/antiDdos/format';
 import { cardLabelText, cardRowBorder, cardValueText } from '@/assets/css/cardTheme';
@@ -40,28 +39,15 @@ export default () => {
     const { eventId } = useParams<{ eventId: string }>();
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const id = ServerContext.useStoreState((state) => state.server.data!.id);
-    const rootAdmin = useStoreState((state) => state.user.data!.rootAdmin);
     const listPath = `/server/${id}/anti-ddos`;
 
     const {
         data: detail,
         error,
         isValidating,
-    } = useSWR(
-        rootAdmin && eventId ? ['server:anti-ddos-detail', uuid, eventId] : null,
-        () => getAntiDdosEvent(uuid, eventId),
-        { revalidateOnFocus: false }
-    );
-
-    if (!rootAdmin) {
-        return (
-            <ServerContentBlock title={'Anti-DDoS'}>
-                <TitledGreyBox title={'Anti-DDoS (beta)'} icon={faShieldVirus}>
-                    <p css={[cardValueText, tw`m-0`]}>Esta página está disponível apenas para administradores.</p>
-                </TitledGreyBox>
-            </ServerContentBlock>
-        );
-    }
+    } = useSWR(eventId ? ['server:anti-ddos-detail', uuid, eventId] : null, () => getAntiDdosEvent(uuid, eventId), {
+        revalidateOnFocus: false,
+    });
 
     if ((!detail && !error) || (error && isValidating && !detail)) {
         return (
@@ -107,134 +93,87 @@ export default () => {
                 </TitledGreyBox>
             ) : (
                 <>
-                    <TitledGreyBox title={'Resumo'} icon={faShieldVirus} className={'mb-4'}>
-                        <InfoRow
-                            label={'Estado'}
-                            value={
-                                detail.ongoing ? (
-                                    <span css={tw`text-red-300`}>Em andamento</span>
-                                ) : (
-                                    <span css={tw`text-neutral-300`}>Terminado</span>
-                                )
-                            }
-                        />
-                        <InfoRow label={'Início'} value={formatWhen(detail.attack_start_time)} />
-                        <InfoRow label={'Fim'} value={formatWhen(detail.attack_end_time)} />
-                        <InfoRow label={'Alvo'} value={targets} copyValue={targets !== '—' ? targets : undefined} />
-                        <InfoRow label={'Potência (esta porta)'} value={formatBps(detail.attack_power_bps)} />
-                        <InfoRow label={'Pacotes (esta porta)'} value={formatPps(detail.attack_power_pps)} />
-                        <InfoRow
-                            label={'% neste servidor'}
-                            value={detail.share_percentage != null ? `${detail.share_percentage}%` : '—'}
-                        />
-                    </TitledGreyBox>
+                    <div css={[tw`grid gap-4 lg:grid-cols-2 items-start`, { '& > *': { minWidth: 0 } }]}>
+                        <TitledGreyBox title={'Resumo'} icon={faShieldVirus}>
+                            <InfoRow
+                                label={'Estado'}
+                                value={
+                                    detail.ongoing ? (
+                                        <span css={tw`text-red-300`}>Em andamento</span>
+                                    ) : (
+                                        <span css={tw`text-neutral-300`}>Terminado</span>
+                                    )
+                                }
+                            />
+                            <InfoRow label={'Início'} value={formatWhen(detail.attack_start_time)} />
+                            <InfoRow label={'Fim'} value={formatWhen(detail.attack_end_time)} />
+                            <InfoRow label={'Alvo'} value={targets} copyValue={targets !== '—' ? targets : undefined} />
+                            <InfoRow label={'Potência (esta porta)'} value={formatBps(detail.attack_power_bps)} />
+                            <InfoRow label={'Pacotes (esta porta)'} value={formatPps(detail.attack_power_pps)} />
+                            <InfoRow
+                                label={'% neste servidor'}
+                                value={detail.share_percentage != null ? `${detail.share_percentage}%` : '—'}
+                            />
+                        </TitledGreyBox>
 
-                    <TitledGreyBox title={'Portas deste servidor'} icon={faShieldVirus} className={'mb-4'}>
-                        {(detail.attack_top_destination_ports || []).length === 0 ? (
-                            <p css={[cardValueText, tw`text-sm m-0`]}>Sem dados de porta.</p>
-                        ) : (
-                            <div css={tw`overflow-x-auto`}>
-                                <table css={tw`w-full text-sm`}>
-                                    <thead>
-                                        <tr css={[tw`border-b`, cardRowBorder]}>
-                                            <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
-                                                <ColumnLabel
-                                                    label={'Destino'}
-                                                    tip={'IP e porta de destino neste servidor'}
-                                                />
-                                            </th>
-                                            <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
-                                                <ColumnLabel
-                                                    label={'Protocolo'}
-                                                    tip={'Protocolo de rede do tráfego (UDP, TCP, etc.)'}
-                                                />
-                                            </th>
-                                            <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
-                                                <ColumnLabel
-                                                    label={'Potência'}
-                                                    tip={'Volume do ataque nesta porta (bits por segundo)'}
-                                                />
-                                            </th>
-                                            <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
-                                                <ColumnLabel
-                                                    label={'% do ataque'}
-                                                    tip={'Porcentagem do tráfego do ataque que caiu nesta porta'}
-                                                />
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {(detail.attack_top_destination_ports || []).map((row, index) => (
-                                            <tr
-                                                key={`${row.dst_port}-${index}`}
-                                                css={[tw`border-b last:border-0`, cardRowBorder]}
-                                            >
-                                                <td css={[cardValueText, tw`py-2 font-mono text-xs`]}>
-                                                    {detail.targeted_ip}:{row.dst_port ?? '?'}
-                                                </td>
-                                                <td css={[cardValueText, tw`py-2`]}>{row.protocol || '—'}</td>
-                                                <td css={[cardValueText, tw`py-2 text-right`]}>
-                                                    {formatBps(row.bps ?? null)}
-                                                </td>
-                                                <td css={[cardValueText, tw`py-2 text-right`]}>
-                                                    {row.bps_percentage != null ? `${row.bps_percentage}%` : '—'}
-                                                </td>
+                        <TitledGreyBox title={'Portas deste servidor'} icon={faShieldVirus}>
+                            {(detail.attack_top_destination_ports || []).length === 0 ? (
+                                <p css={[cardValueText, tw`text-sm m-0`]}>Sem dados de porta.</p>
+                            ) : (
+                                <div css={tw`overflow-x-auto`}>
+                                    <table css={tw`w-full text-sm`}>
+                                        <thead>
+                                            <tr css={[tw`border-b`, cardRowBorder]}>
+                                                <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
+                                                    <ColumnLabel
+                                                        label={'Destino'}
+                                                        tip={'IP e porta de destino neste servidor'}
+                                                    />
+                                                </th>
+                                                <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
+                                                    <ColumnLabel
+                                                        label={'Protocolo'}
+                                                        tip={'Protocolo de rede do tráfego (UDP, TCP, etc.)'}
+                                                    />
+                                                </th>
+                                                <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
+                                                    <ColumnLabel
+                                                        label={'Potência'}
+                                                        tip={'Volume do ataque nesta porta (bits por segundo)'}
+                                                    />
+                                                </th>
+                                                <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
+                                                    <ColumnLabel
+                                                        label={'% do ataque'}
+                                                        tip={'Porcentagem do tráfego do ataque que caiu nesta porta'}
+                                                    />
+                                                </th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </TitledGreyBox>
-
-                    <TitledGreyBox title={'Protocolos nestas portas'} icon={faShieldVirus}>
-                        {(detail.attack_top_protocols || []).length === 0 ? (
-                            <p css={[cardValueText, tw`text-sm m-0`]}>Sem dados de protocolo.</p>
-                        ) : (
-                            <div css={tw`overflow-x-auto`}>
-                                <table css={tw`w-full text-sm`}>
-                                    <thead>
-                                        <tr css={[tw`border-b`, cardRowBorder]}>
-                                            <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
-                                                <ColumnLabel
-                                                    label={'Protocolo'}
-                                                    tip={'Protocolo de rede do tráfego (UDP, TCP, etc.)'}
-                                                />
-                                            </th>
-                                            <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
-                                                <ColumnLabel
-                                                    label={'Potência'}
-                                                    tip={'Volume do ataque neste protocolo, nas portas deste servidor'}
-                                                />
-                                            </th>
-                                            <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
-                                                <ColumnLabel
-                                                    label={'% do ataque'}
-                                                    tip={'Porcentagem do tráfego do ataque neste protocolo'}
-                                                />
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {(detail.attack_top_protocols || []).map((row, index) => (
-                                            <tr
-                                                key={`${row.protocol}-${index}`}
-                                                css={[tw`border-b last:border-0`, cardRowBorder]}
-                                            >
-                                                <td css={[cardValueText, tw`py-2`]}>{row.protocol || '—'}</td>
-                                                <td css={[cardValueText, tw`py-2 text-right`]}>
-                                                    {formatBps(row.bps ?? null)}
-                                                </td>
-                                                <td css={[cardValueText, tw`py-2 text-right`]}>
-                                                    {row.bps_percentage != null ? `${row.bps_percentage}%` : '—'}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </TitledGreyBox>
+                                        </thead>
+                                        <tbody>
+                                            {(detail.attack_top_destination_ports || []).map((row, index) => (
+                                                <tr
+                                                    key={`${row.dst_port}-${index}`}
+                                                    css={[tw`border-b last:border-0`, cardRowBorder]}
+                                                >
+                                                    <td css={[cardValueText, tw`py-2 font-mono text-xs`]}>
+                                                        {detail.targeted_ip}:{row.dst_port ?? '?'}
+                                                    </td>
+                                                    <td css={[cardValueText, tw`py-2`]}>{row.protocol || '—'}</td>
+                                                    <td css={[cardValueText, tw`py-2 text-right`]}>
+                                                        {formatBps(row.bps ?? null)}
+                                                    </td>
+                                                    <td css={[cardValueText, tw`py-2 text-right`]}>
+                                                        {row.bps_percentage != null ? `${row.bps_percentage}%` : '—'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </TitledGreyBox>
+                    </div>
                 </>
             )}
         </ServerContentBlock>

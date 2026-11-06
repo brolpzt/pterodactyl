@@ -14,6 +14,7 @@ import { ServerContext } from '@/state/server';
 import useGameQuery from '@/api/swr/getGameQuery';
 import { supportsGameQuery } from '@/lib/supportsGameQuery';
 import { stripGameHostnameColors } from '@/lib/stripGameHostnameColors';
+import { truncateMapName } from '@/lib/truncateMapName';
 
 interface Props {
     name?: string;
@@ -135,7 +136,7 @@ const queryStatLabel = css`
 
 const queryStatValue = css`
     ${navText};
-    ${tw`text-[13px] whitespace-nowrap truncate max-w-[8rem] sm:max-w-[10rem] xl:max-w-[12rem]`};
+    ${tw`block text-[13px] whitespace-nowrap truncate max-w-[8rem] sm:max-w-[10rem] xl:max-w-[12rem]`};
 `;
 
 const statsRowStyles = css`
@@ -202,7 +203,7 @@ const ServerStatusBar = ({
         : query
           ? 'Offline'
           : '-';
-    const queryMap = query?.online ? query.map || '-' : '-';
+    const queryMap = query?.online && query.map ? truncateMapName(query.map) : '-';
     const queryPlayers =
         query && query.online ? `${query.players}/${query.max_players || '?'}` : query ? '0/0' : '-';
 

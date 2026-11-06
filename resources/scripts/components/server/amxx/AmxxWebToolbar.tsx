@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import tw from 'twin.macro';
+import { truncateMapName } from '@/lib/truncateMapName';
 import { emptyStateText } from '@/assets/css/cardTheme';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import Spinner from '@/components/elements/Spinner';
@@ -154,7 +155,7 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
     const showMapPreview = Boolean(mapPreviewUrl) && !mapPreviewFailed;
 
     return (
-        <div css={tw`grid gap-4 mb-4 lg:grid-cols-2`}>
+        <div css={[tw`grid gap-4 mb-4 lg:grid-cols-2`, { '& > *': { minWidth: 0 } }]}>
             <Can action={['amxx.map', 'control.console']} matchAny>
                 <TitledGreyBox title={t('server_amxx_web.map_title')}>
                     {mapsLoading && maps.length === 0 ? (
@@ -180,24 +181,25 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
                                         </div>
                                     )}
                                     <div
-                                        css={tw`absolute inset-x-0 bottom-0 px-3 py-2 text-sm font-semibold text-white bg-gradient-to-t from-black/80 to-transparent`}
+                                        css={tw`absolute inset-x-0 bottom-0 px-3 py-2 text-sm font-semibold text-white bg-gradient-to-t from-black/80 to-transparent truncate`}
+                                        title={selectedMap}
                                     >
-                                        {selectedMap}
+                                        {truncateMapName(selectedMap)}
                                     </div>
                                 </div>
                             )}
                             {currentMap && currentMap.toLowerCase() !== selectedMap.toLowerCase() && (
-                                <div css={tw`text-sm text-neutral-200`}>
+                                <div css={tw`text-sm text-neutral-200 truncate`} title={currentMap}>
                                     <span css={tw`text-neutral-400`}>{t('server_amxx_web.map_current')}:</span>{' '}
-                                    {currentMap}
+                                    {truncateMapName(currentMap)}
                                 </div>
                             )}
                             <div>
                                 <Label>{t('server_amxx_web.map_select')}</Label>
                                 <Select value={selectedMap} onChange={(e) => setSelectedMap(e.target.value)}>
                                     {maps.map((map) => (
-                                        <option key={map.name} value={map.name}>
-                                            {map.name}
+                                        <option key={map.name} value={map.name} title={map.name}>
+                                            {truncateMapName(map.name, 40)}
                                         </option>
                                     ))}
                                 </Select>

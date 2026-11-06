@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import tw from 'twin.macro';
+import { truncateMapName } from '@/lib/truncateMapName';
 import { emptyStateText } from '@/assets/css/cardTheme';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import Spinner from '@/components/elements/Spinner';
@@ -139,7 +140,7 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
     };
 
     return (
-        <div css={tw`grid gap-4 mb-4 lg:grid-cols-2`}>
+        <div css={[tw`grid gap-4 mb-4 lg:grid-cols-2`, { '& > *': { minWidth: 0 } }]}>
             <Can action={['webrcon.map', 'control.console']} matchAny>
                 <TitledGreyBox title={t('server_webrcon.map_title')}>
                     {mapsLoading && maps.length === 0 ? (
@@ -149,17 +150,17 @@ export default ({ uuid, isServerRunning, currentMap, consolePlayers }: Props) =>
                     ) : (
                         <div css={tw`space-y-3`}>
                             {currentMap && (
-                                <div css={tw`text-sm text-neutral-200`}>
+                                <div css={tw`text-sm text-neutral-200 truncate`} title={currentMap}>
                                     <span css={tw`text-neutral-400`}>{t('server_webrcon.map_current')}:</span>{' '}
-                                    {currentMap}
+                                    {truncateMapName(currentMap)}
                                 </div>
                             )}
                             <div>
                                 <Label>{t('server_webrcon.map_select')}</Label>
                                 <Select value={selectedMap} onChange={(e) => setSelectedMap(e.target.value)}>
                                     {maps.map((map) => (
-                                        <option key={map.name} value={map.name}>
-                                            {map.name}
+                                        <option key={map.name} value={map.name} title={map.name}>
+                                            {truncateMapName(map.name, 40)}
                                         </option>
                                     ))}
                                 </Select>

@@ -97,6 +97,18 @@
                                         Só vale se o egg tiver a feature <code>fastdl</code>. Arquivos originais do jogo nunca são enviados.
                                     </p>
                                 </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="checkbox checkbox-primary no-margin-bottom">
+                                    <input type="hidden" name="fastdl_auto_sync" value="0" />
+                                    <input id="pFastDlAutoSync" name="fastdl_auto_sync" type="checkbox" value="1" @if($egg->fastdl_auto_sync) checked @endif />
+                                    <label for="pFastDlAutoSync" class="strong">Sincronizar FastDL automaticamente ao detectar arquivos novos</label>
+                                    <p class="text-muted small">
+                                        O Wings observa os arquivos do servidor e, quando arquivos dos tipos abaixo são criados ou alterados (upload, SFTP, extração),
+                                        sincroniza sozinho depois de 1 minuto sem novas mudanças. O botão de sincronizar continua disponível.
+                                        Passa a valer a partir da próxima sincronização de cada servidor.
+                                    </p>
+                                </div>
                             <div class="form-group">
                                 <label for="pFastDlPatterns" class="control-label">FastDL: tipos de arquivo</label>
                                 <textarea id="pFastDlPatterns" name="fastdl_patterns" class="form-control" rows="5" placeholder="{{ "*.bsp\n*.wad\n*.wav\n*.mdl\n*.spr" }}">{{ old('fastdl_patterns', $egg->fastdl_patterns) }}</textarea>
@@ -118,7 +130,6 @@
                                     Ex.: CS 1.6 <code>cstrike/</code>, Condition Zero <code>czero/</code>, CS:S <code>cstrike/</code>, TF2 <code>tf/</code>, Plutonium T6 <code>storage/t6/</code>.
                                     Vazio = raiz do servidor (CoD1/UO/CoD2/CoD4, que somam <code>main/</code> ou a pasta do mod sozinhos).
                                 </p>
-                            </div>
                             </div>
                             <div class="form-group">
                                 <div class="checkbox checkbox-primary no-margin-bottom">

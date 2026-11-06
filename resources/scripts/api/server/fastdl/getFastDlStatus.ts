@@ -23,6 +23,8 @@ export interface FastDlStatus {
     manifest: { exists: boolean } | null;
     /** File types (globs) synchronized for this game; null when no FastDL node serves it. */
     file_types: string[] | null;
+    /** New or changed files are synchronized automatically. */
+    auto_sync?: boolean;
 }
 
 export default async (uuid: string): Promise<FastDlStatus> => {

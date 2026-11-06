@@ -58,6 +58,8 @@ class FastDlSyncService
             'storage_type' => $node->storage_type,
             'remote_path' => $node->remote_path,
             'sync_patterns' => $this->patternsFor($server, $node),
+            // Wings watches the files and asks for a sync when new ones appear.
+            'auto_sync' => (bool) $server->egg->fastdl_auto_sync,
         ];
 
         if ($node->isS3()) {

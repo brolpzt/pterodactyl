@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ServerContext } from '@/state/server';
 import useFastDlStatus from '@/api/swr/getFastDlStatus';
 import { bytesToString } from '@/lib/formatters';
+import CopyOnClick from '@/components/elements/CopyOnClick';
 
 const formatDate = (value?: string) => (value ? new Date(value).toLocaleString() : '-');
 
@@ -13,9 +14,10 @@ const formatDate = (value?: string) => (value ? new Date(value).toLocaleString()
 export default () => {
     const { t } = useTranslation('strings');
     const fastdlEnabled = ServerContext.useStoreState((state) => state.server.data!.fastdlEnabled);
+    const fastdlUrl = ServerContext.useStoreState((state) => state.server.data!.fastdlUrl);
     const { data, error } = useFastDlStatus(fastdlEnabled);
 
-    if (!fastdlEnabled || (!data && !error)) {
+    if (!fastdlEnabled) {
         return null;
     }
 
@@ -24,7 +26,10 @@ export default () => {
     let tone = 'text-neutral-300';
     let progress: number | null = null;
 
-    if (error || !sync) {
+    if (!data && !error) {
+        message = t('fastdl.loading');
+        tone = 'text-neutral-400';
+    } else if (error || !sync) {
         message = t('fastdl.unavailable');
         tone = 'text-neutral-400';
     } else if (sync.state === 'running') {
@@ -73,6 +78,15 @@ export default () => {
                 </div>
             )}
             {blocked && <p className={'mt-1 text-yellow-300'}>{t('fastdl.no_manifest')}</p>}
+            {fastdlUrl && (
+                <p className={'mt-1 text-xs text-neutral-400'}>
+                    {t('fastdl.url')}{' '}
+                    <CopyOnClick text={fastdlUrl}>
+                        <code className={'rounded bg-neutral-900 px-1 py-0.5 font-mono text-neutral-200'}>{fastdlUrl}</code>
+                    </CopyOnClick>
+                </p>
+            )}
+            {data?.auto_sync && <p className={'mt-1 text-xs text-neutral-400'}>{t('fastdl.auto_sync')}</p>}
             {data?.file_types && data.file_types.length > 0 && (
                 <p className={'mt-1 text-xs text-neutral-400'}>
                     {t('fastdl.file_types')}{' '}

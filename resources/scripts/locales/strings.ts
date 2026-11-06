@@ -386,6 +386,9 @@ export const stringsEn = {
             'FastDL is blocked until the original game files of this server are mapped (so they are never uploaded). Reinstall the server or contact support.',
         file_types: 'Synchronized file types:',
         originals_note: 'Original game files are never uploaded; players already have them.',
+        loading: 'FastDL: loading status…',
+        url: 'FastDL URL:',
+        auto_sync: 'New or changed files of these types are synchronized automatically about 1 minute after the last change.',
     },
 };
 
@@ -772,6 +775,9 @@ export const stringsPt = {
             'O FastDL está bloqueado até os arquivos originais do jogo deste servidor serem mapeados (para nunca serem enviados). Reinstale o servidor ou fale com o suporte.',
         file_types: 'Tipos de arquivo sincronizados:',
         originals_note: 'Arquivos originais do jogo nunca são enviados; os jogadores já os têm.',
+        loading: 'FastDL: carregando status…',
+        url: 'URL do FastDL:',
+        auto_sync: 'Arquivos novos ou alterados desses tipos são sincronizados automaticamente cerca de 1 minuto após a última mudança.',
     },
 };
 
@@ -1158,5 +1164,8 @@ export const stringsEs = {
             'FastDL está bloqueado hasta que se mapeen los archivos originales del juego de este servidor (para que nunca se suban). Reinstale el servidor o contacte con soporte.',
         file_types: 'Tipos de archivo sincronizados:',
         originals_note: 'Los archivos originales del juego nunca se suben; los jugadores ya los tienen.',
+        loading: 'FastDL: cargando estado…',
+        url: 'URL de FastDL:',
+        auto_sync: 'Los archivos nuevos o modificados de estos tipos se sincronizan automáticamente cerca de 1 minuto después del último cambio.',
     },
 };

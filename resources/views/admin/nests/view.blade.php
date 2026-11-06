@@ -32,7 +32,6 @@
                             <textarea name="description" class="form-control" rows="7">{{ $nest->description }}</textarea>
                         </div>
                     </div>
-                    </div>
                 </div>
                 <div class="box-footer">
                     {!! csrf_field() !!}

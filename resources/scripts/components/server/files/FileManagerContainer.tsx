@@ -92,9 +92,7 @@ export default () => {
                         </div>
                     </Can>
                 </div>
-                <Can action={'control.console'}>
-                    <FastDlSyncStatus />
-                </Can>
+                <FastDlSyncStatus />
             </ErrorBoundary>
             {!files ? (
                 <Spinner size={'large'} centered />

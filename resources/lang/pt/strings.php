@@ -324,5 +324,8 @@ return [
         'no_manifest' => 'O FastDL está bloqueado até os arquivos originais do jogo deste servidor serem mapeados (para nunca serem enviados). Reinstale o servidor ou fale com o suporte.',
         'file_types' => 'Tipos de arquivo sincronizados:',
         'originals_note' => 'Arquivos originais do jogo nunca são enviados; os jogadores já os têm.',
+        'loading' => 'FastDL: carregando status…',
+        'url' => 'URL do FastDL:',
+        'auto_sync' => 'Arquivos novos ou alterados desses tipos são sincronizados automaticamente cerca de 1 minuto após a última mudança.',
     ],
 ];

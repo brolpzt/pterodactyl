@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string $update_url
  * @property bool $force_outgoing_ip
  * @property bool $fastdl_sync_on_install
+ * @property bool $fastdl_auto_sync
  * @property string|null $fastdl_patterns
  * @property string|null $fastdl_url_suffix
  * @property array|null $file_denylist
@@ -117,6 +118,7 @@ class Egg extends Model implements Identifiable
         'docker_images',
         'force_outgoing_ip',
         'fastdl_sync_on_install',
+        'fastdl_auto_sync',
         'fastdl_patterns',
         'fastdl_url_suffix',
         'file_denylist',
@@ -154,6 +156,7 @@ class Egg extends Model implements Identifiable
         'script_is_privileged' => 'boolean',
         'force_outgoing_ip' => 'boolean',
         'fastdl_sync_on_install' => 'boolean',
+        'fastdl_auto_sync' => 'boolean',
         'warn_slot_mismatch' => 'boolean',
         'copy_script_from' => 'integer',
         'features' => 'array',
@@ -186,6 +189,7 @@ class Egg extends Model implements Identifiable
         'update_url' => 'sometimes|nullable|string',
         'force_outgoing_ip' => 'sometimes|boolean',
         'fastdl_sync_on_install' => 'sometimes|boolean',
+        'fastdl_auto_sync' => 'sometimes|boolean',
         'fastdl_patterns' => 'nullable|string|max:65535',
         'fastdl_url_suffix' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9._\/-]*$/'],
         'gcore_policy' => 'sometimes|nullable|string|max:64',

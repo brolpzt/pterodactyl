@@ -54,6 +54,7 @@ class FastDlController extends ClientApiController
                 'sync' => $sync,
                 'manifest' => $manifest,
                 'file_types' => $this->syncService->fileTypesFor($server),
+                'auto_sync' => (bool) $server->egg?->fastdl_auto_sync,
             ],
         ];
     }

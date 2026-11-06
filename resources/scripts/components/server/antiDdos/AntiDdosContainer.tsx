@@ -20,11 +20,11 @@ import ChartBlock from '@/components/server/console/ChartBlock';
 import { ServerContext } from '@/state/server';
 import { useStoreState } from 'easy-peasy';
 import {
-    AntiDdosAttackDetail,
-    AntiDdosAttackSummary,
-    getAntiDdosAttack,
-    getAntiDdosAttacks,
-} from '@/api/server/antiDdos/getAntiDdosAttacks';
+    AntiDdosEventDetail,
+    AntiDdosEventSummary,
+    getAntiDdosEvent,
+    getAntiDdosEvents,
+} from '@/api/server/antiDdos/getAntiDdosEvents';
 import { cardLabelText, cardSurface, cardValueText } from '@/assets/css/cardTheme';
 import { glassCardShell, glassContentLayer } from '@/assets/css/glassPanel';
 import { hgRadiusSm } from '@/assets/css/borderTheme';
@@ -79,7 +79,7 @@ export default () => {
 
     const { data, error, isValidating } = useSWR(
         rootAdmin ? ['server:anti-ddos', uuid] : null,
-        () => getAntiDdosAttacks(uuid, 30),
+        () => getAntiDdosEvents(uuid, 30),
         { refreshInterval: 60_000, revalidateOnFocus: true }
     );
 
@@ -89,7 +89,7 @@ export default () => {
         isValidating: detailLoading,
     } = useSWR(
         rootAdmin && selectedId ? ['server:anti-ddos-detail', uuid, selectedId] : null,
-        () => getAntiDdosAttack(uuid, selectedId!),
+        () => getAntiDdosEvent(uuid, selectedId!),
         { revalidateOnFocus: false }
     );
 
@@ -192,27 +192,27 @@ export default () => {
             ) : (
                 <div css={tw`grid grid-cols-1 xl:grid-cols-5 gap-4`}>
                     <div css={tw`xl:col-span-2 space-y-3`}>
-                        {(data.attacks || []).length === 0 ? (
+                        {(data.events || []).length === 0 ? (
                             <CardShell>
                                 <CardInner>
                                     <p css={[cardValueText, tw`m-0`]}>
-                                        Ainda sem ataques sincronizados para este IP. O sync corre a cada 5 minutos.
+                                        Ainda sem eventos sincronizados para este IP. O sync corre a cada 5 minutos.
                                     </p>
                                 </CardInner>
                             </CardShell>
                         ) : (
-                            data.attacks.map((attack: AntiDdosAttackSummary) => {
-                                const active = selectedId === attack.id;
-                                const ports = (attack.top_destination_ports || [])
+                            data.events.map((event: AntiDdosEventSummary) => {
+                                const active = selectedId === event.id;
+                                const ports = (event.top_destination_ports || [])
                                     .slice(0, 3)
                                     .map((p) => `${p.dst_port ?? '?'}/${p.protocol || '?'}`)
                                     .join(', ');
 
                                 return (
                                     <button
-                                        key={attack.id}
+                                        key={event.id}
                                         type={'button'}
-                                        onClick={() => setSelectedId(attack.id)}
+                                        onClick={() => setSelectedId(event.id)}
                                         css={[
                                             tw`w-full text-left transition`,
                                             active ? tw`ring-1 ring-primary-400` : tw`opacity-95 hover:opacity-100`,
@@ -222,23 +222,23 @@ export default () => {
                                             <CardInner>
                                                 <div css={tw`flex items-center justify-between gap-2 mb-1`}>
                                                     <span css={[cardValueText, tw`font-medium m-0`]}>
-                                                        {formatWhen(attack.attack_start_time)}
+                                                        {formatWhen(event.attack_start_time)}
                                                     </span>
                                                     <span
                                                         css={[
                                                             tw`text-xs px-2 py-0.5 rounded`,
-                                                            attack.ongoing
+                                                            event.ongoing
                                                                 ? tw`bg-red-500/20 text-red-300`
                                                                 : tw`bg-gray-600/40 text-gray-200`,
                                                         ]}
                                                     >
-                                                        {attack.ongoing ? 'Em curso' : 'Terminado'}
+                                                        {event.ongoing ? 'Em curso' : 'Terminado'}
                                                     </span>
                                                 </div>
                                                 <p css={[cardLabelText, tw`text-sm m-0`]}>
-                                                    {formatBps(attack.attack_power_bps)} · {formatPps(attack.attack_power_pps)}
-                                                    {attack.source_ip_count != null
-                                                        ? ` · ${attack.source_ip_count.toLocaleString()} IPs`
+                                                    {formatBps(event.attack_power_bps)} · {formatPps(event.attack_power_pps)}
+                                                    {event.source_ip_count != null
+                                                        ? ` · ${event.source_ip_count.toLocaleString()} IPs`
                                                         : ''}
                                                 </p>
                                                 {ports && (
@@ -256,7 +256,7 @@ export default () => {
                         {!selectedId ? (
                             <CardShell>
                                 <CardInner>
-                                    <p css={[cardValueText, tw`m-0`]}>Seleciona um ataque à esquerda para ver o detalhe.</p>
+                                    <p css={[cardValueText, tw`m-0`]}>Seleciona um evento à esquerda para ver o detalhe.</p>
                                 </CardInner>
                             </CardShell>
                         ) : detailLoading && !detail ? (
@@ -264,7 +264,7 @@ export default () => {
                         ) : detailError ? (
                             <CardShell>
                                 <CardInner>
-                                    <p css={[cardValueText, tw`m-0 text-red-300`]}>Falha ao carregar o detalhe do ataque.</p>
+                                    <p css={[cardValueText, tw`m-0 text-red-300`]}>Falha ao carregar o detalhe do evento.</p>
                                 </CardInner>
                             </CardShell>
                         ) : detail ? (
@@ -341,7 +341,7 @@ export default () => {
             )}
 
             {error && (
-                <p css={tw`text-sm text-red-400 mt-3 mb-0`}>Não foi possível atualizar a lista de ataques.</p>
+                <p css={tw`text-sm text-red-400 mt-3 mb-0`}>Não foi possível atualizar a lista de eventos.</p>
             )}
         </ServerContentBlock>
     );

@@ -1,6 +1,6 @@
 import http from '@/api/http';
 
-export interface AntiDdosAttackSummary {
+export interface AntiDdosEventSummary {
     id: string;
     alert_type: string;
     targeted_ip: string;
@@ -21,14 +21,14 @@ export interface AntiDdosAttackSummary {
     }>;
 }
 
-export interface AntiDdosAttacksResult {
+export interface AntiDdosEventsResult {
     supported: boolean;
     ips: string[];
     days: number;
-    attacks: AntiDdosAttackSummary[];
+    events: AntiDdosEventSummary[];
 }
 
-export interface AntiDdosAttackDetail extends AntiDdosAttackSummary {
+export interface AntiDdosEventDetail extends AntiDdosEventSummary {
     attack_traffic: Array<{
         dst_addr?: string;
         total_bytes?: number;
@@ -49,7 +49,7 @@ export interface AntiDdosAttackDetail extends AntiDdosAttackSummary {
         pps_percentage?: number;
     }>;
     attack_top_source_ports: Array<Record<string, unknown>>;
-    attack_top_destination_ports: AntiDdosAttackSummary['top_destination_ports'];
+    attack_top_destination_ports: AntiDdosEventSummary['top_destination_ports'];
     attack_top_protocols: Array<{
         protocol?: string;
         bps?: number;
@@ -59,16 +59,16 @@ export interface AntiDdosAttackDetail extends AntiDdosAttackSummary {
     }>;
 }
 
-export const getAntiDdosAttacks = async (uuid: string, days = 30): Promise<AntiDdosAttacksResult> => {
-    const { data } = await http.get(`/api/client/servers/${uuid}/anti-ddos/attacks`, {
+export const getAntiDdosEvents = async (uuid: string, days = 30): Promise<AntiDdosEventsResult> => {
+    const { data } = await http.get(`/api/client/servers/${uuid}/anti-ddos/events`, {
         params: { days },
     });
 
-    return data.attributes as AntiDdosAttacksResult;
+    return data.attributes as AntiDdosEventsResult;
 };
 
-export const getAntiDdosAttack = async (uuid: string, attackId: string): Promise<AntiDdosAttackDetail> => {
-    const { data } = await http.get(`/api/client/servers/${uuid}/anti-ddos/attacks/${attackId}`);
+export const getAntiDdosEvent = async (uuid: string, eventId: string): Promise<AntiDdosEventDetail> => {
+    const { data } = await http.get(`/api/client/servers/${uuid}/anti-ddos/events/${eventId}`);
 
-    return data.attributes as AntiDdosAttackDetail;
+    return data.attributes as AntiDdosEventDetail;
 };

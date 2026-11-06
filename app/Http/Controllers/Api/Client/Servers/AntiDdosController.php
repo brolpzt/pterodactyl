@@ -19,7 +19,7 @@ class AntiDdosController extends ClientApiController
     }
 
     /**
-     * List stored Gcore attack events for this server's protected IP(s).
+     * List stored Gcore DDoS events for this server's protected IP(s).
      */
     public function index(GetServerRequest $request, Server $server): array
     {
@@ -30,17 +30,17 @@ class AntiDdosController extends ClientApiController
 
         if ($ips === []) {
             return [
-                'object' => 'anti_ddos_attacks',
+                'object' => 'anti_ddos_events',
                 'attributes' => [
                     'supported' => false,
                     'ips' => [],
                     'days' => $days,
-                    'attacks' => [],
+                    'events' => [],
                 ],
             ];
         }
 
-        $attacks = GcoreAttackEvent::query()
+        $events = GcoreAttackEvent::query()
             ->whereIn('targeted_ip', $ips)
             ->where('attack_start_time', '>=', now()->subDays($days))
             ->orderByDesc('attack_start_time')
@@ -51,20 +51,20 @@ class AntiDdosController extends ClientApiController
             ->all();
 
         return [
-            'object' => 'anti_ddos_attacks',
+            'object' => 'anti_ddos_events',
             'attributes' => [
                 'supported' => true,
                 'ips' => $ips,
                 'days' => $days,
-                'attacks' => $attacks,
+                'events' => $events,
             ],
         ];
     }
 
     /**
-     * Return a single stored attack event (with detail when available).
+     * Return a single stored DDoS event (with detail when available).
      */
-    public function view(GetServerRequest $request, Server $server, string $attack): array
+    public function view(GetServerRequest $request, Server $server, string $event): array
     {
         $this->assertRootAdmin($request);
 
@@ -73,19 +73,19 @@ class AntiDdosController extends ClientApiController
             throw new NotFoundHttpException();
         }
 
-        /** @var GcoreAttackEvent|null $event */
-        $event = GcoreAttackEvent::query()
-            ->where('gcore_event_id', $attack)
+        /** @var GcoreAttackEvent|null $model */
+        $model = GcoreAttackEvent::query()
+            ->where('gcore_event_id', $event)
             ->whereIn('targeted_ip', $ips)
             ->first();
 
-        if ($event === null) {
+        if ($model === null) {
             throw new NotFoundHttpException();
         }
 
         return [
-            'object' => 'anti_ddos_attack',
-            'attributes' => $this->detailPayload($event),
+            'object' => 'anti_ddos_event',
+            'attributes' => $this->detailPayload($model),
         ];
     }
 

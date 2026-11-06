@@ -68,7 +68,7 @@
                     <div class="form-group">
                         <label for="pSyncPatterns" class="control-label">Sync Patterns</label>
                         <textarea name="sync_patterns" id="pSyncPatterns" class="form-control" rows="3">{{ old('sync_patterns', $node->sync_patterns) }}</textarea>
-                        <p class="text-muted small">Separadores: vírgula, <code>;</code> ou quebra de linha. Sem <code>/</code> no padrão = nome do arquivo só. Com <code>/</code> = caminho relativo. Pasta: <code>sound/</code> ou <code>maps/**</code>. Qualquer profundidade: <code>**/*.bsp</code>. <strong>Excluir:</strong> <code>!</code> antes do glob (ex.: <code>!pak*.pk3</code>). <strong>Usado só para nests sem padrões próprios</strong> (Admin → Nests).</p>
+                        <p class="text-muted small">Separadores: vírgula, <code>;</code> ou quebra de linha. Sem <code>/</code> no padrão = nome do arquivo só. Com <code>/</code> = caminho relativo. Pasta: <code>sound/</code> ou <code>maps/**</code>. Qualquer profundidade: <code>**/*.bsp</code>. <strong>Excluir:</strong> <code>!</code> antes do glob (ex.: <code>!pak*.pk3</code>). <strong>Reserva:</strong> só vale para servidores de nests sem tipos de arquivo próprios (Admin → Nests → FastDL). Prefira configurar no nest.</p>
                     </div>
                     <div class="form-group">
                         <label for="pIsActive" class="control-label">Is Active</label>

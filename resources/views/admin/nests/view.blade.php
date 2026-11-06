@@ -33,10 +33,17 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="control-label">FastDL Sync Patterns</label>
+                        <label class="control-label">FastDL: tipos de arquivo</label>
                         <div>
-                            <textarea name="fastdl_patterns" class="form-control" rows="6" placeholder="{{ "cstrike/maps/**\ncstrike/sound/**\n*.wad\n!*.cfg" }}">{{ old('fastdl_patterns', $nest->fastdl_patterns) }}</textarea>
-                            <p class="text-muted"><small>Arquivos e pastas deste jogo que vão para o FastDL. Vazio = usa os padrões do FastDL Node. Separadores: vírgula, <code>;</code> ou quebra de linha. Sem <code>/</code> = nome do arquivo; com <code>/</code> = caminho relativo. Pasta: <code>sound/</code> ou <code>maps/**</code>. Qualquer profundidade: <code>**/*.bsp</code>. <strong>Excluir:</strong> <code>!</code> antes (ex.: <code>!*.cfg</code>). Arquivos originais da instalação nunca são enviados.</small></p>
+                            <textarea name="fastdl_patterns" class="form-control" rows="6" placeholder="{{ "*.bsp\n*.wad\n*.wav\n*.mdl\n*.spr" }}">{{ old('fastdl_patterns', $nest->fastdl_patterns) }}</textarea>
+                            <p class="text-muted"><small>
+                                Liste os <strong>tipos de arquivo</strong> que os jogadores baixam neste jogo, um por linha (ex.: <code>*.bsp</code>, <code>*.iwd</code>, <code>*.pk3</code>, <code>*.ff</code>).
+                                Vale para qualquer pasta, inclusive pastas de mod (<code>fs_game</code>), e os arquivos sobem com o mesmo caminho do servidor.
+                                <strong>Arquivos originais da instalação nunca são enviados</strong>: o manifesto de instalação os separa, então não é preciso listar pastas.
+                                Não inclua tipos de configuração ou script (<code>.cfg</code>, <code>.ini</code>, <code>.txt</code>, <code>.gsc</code>, <code>.json</code>): podem expor dados do servidor.
+                                Vazio = usa os padrões do FastDL Node.
+                                <br>Avançado: com <code>/</code> o padrão vira caminho relativo (<code>maps/**</code>), e <code>!</code> exclui (<code>!*.cfg</code>).
+                            </small></p>
                         </div>
                     </div>
                 </div>

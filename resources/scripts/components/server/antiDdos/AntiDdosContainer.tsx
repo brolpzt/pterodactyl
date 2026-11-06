@@ -249,7 +249,7 @@ export default () => {
                 <div>
                     <h2 css={tw`text-xl font-header font-medium text-neutral-100 m-0`}>Anti-DDoS (beta)</h2>
                     <p css={[cardLabelText, tw`text-sm mt-1 mb-0`]}>
-                        {endpointsLabel ? `Portas monitorizadas: ${endpointsLabel}` : 'Portas deste servidor'}
+                        {endpointsLabel ? `Portas monitoradas: ${endpointsLabel}` : 'Portas deste servidor'}
                     </p>
                 </div>
                 <PeriodSelector value={period} options={PERIOD_OPTIONS} onChange={onPeriodChange} />
@@ -263,7 +263,7 @@ export default () => {
                     <p className={'m-0 font-medium text-neutral-100'}>Mostra apenas ataques às portas deste servidor</p>
                     <p className={'m-0 mt-1.5 text-neutral-200 leading-relaxed'}>
                         Ataques costumam atingir várias portas e IPs ao mesmo tempo; a coluna «% neste servidor» indica
-                        a parte que chegou aqui. Eventos em curso podem ainda ser atualizados.
+                        a parte que chegou aqui. Eventos em andamento ainda podem ser atualizados.
                     </p>
                 </div>
             </Alert>
@@ -304,7 +304,7 @@ export default () => {
                                                 <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
                                                     <ColumnLabel
                                                         label={'Início'}
-                                                        tip={'Momento em que o ataque foi detetado pela Proteção DDoS'}
+                                                        tip={'Momento em que o ataque foi detectado pela Proteção DDoS'}
                                                     />
                                                 </th>
                                                 <th
@@ -321,14 +321,14 @@ export default () => {
                                                 <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
                                                     <ColumnLabel
                                                         label={'Estado'}
-                                                        tip={'Se o ataque ainda está a decorrer ou já terminou'}
+                                                        tip={'Se o ataque ainda está em andamento ou já terminou'}
                                                     />
                                                 </th>
                                                 <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
                                                     <ColumnLabel
                                                         label={'Potência'}
                                                         tip={
-                                                            'Débito máximo do ataque nas portas deste servidor (bits por segundo)'
+                                                            'Volume máximo do ataque nas portas deste servidor (bits por segundo)'
                                                         }
                                                     />
                                                 </th>
@@ -354,7 +354,7 @@ export default () => {
                                                     <ColumnLabel
                                                         label={'% neste servidor'}
                                                         tip={
-                                                            'Percentagem do tráfego do ataque (no IP) que atingiu as portas deste servidor'
+                                                            'Porcentagem do tráfego do ataque (no IP) que atingiu as portas deste servidor'
                                                         }
                                                     />
                                                 </th>
@@ -399,7 +399,7 @@ export default () => {
                                                                         : tw`bg-neutral-600/40 text-neutral-200`,
                                                                 ]}
                                                             >
-                                                                {event.ongoing ? 'Em curso' : 'Terminado'}
+                                                                {event.ongoing ? 'Em andamento' : 'Terminado'}
                                                             </span>
                                                         </td>
                                                         <td

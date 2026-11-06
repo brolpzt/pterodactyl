@@ -22,15 +22,7 @@ const ColumnLabel = ({ label, tip }: { label: string; tip: string }) => (
     </Tooltip>
 );
 
-const InfoRow = ({
-    label,
-    value,
-    copyValue,
-}: {
-    label: string;
-    value: React.ReactNode;
-    copyValue?: string;
-}) => (
+const InfoRow = ({ label, value, copyValue }: { label: string; value: React.ReactNode; copyValue?: string }) => (
     <div css={[tw`flex items-center justify-between text-sm py-2 border-b last:border-0`, cardRowBorder]}>
         <p css={cardLabelText}>{label}</p>
         {copyValue !== undefined ? (
@@ -51,7 +43,11 @@ export default () => {
     const rootAdmin = useStoreState((state) => state.user.data!.rootAdmin);
     const listPath = `/server/${id}/anti-ddos`;
 
-    const { data: detail, error, isValidating } = useSWR(
+    const {
+        data: detail,
+        error,
+        isValidating,
+    } = useSWR(
         rootAdmin && eventId ? ['server:anti-ddos-detail', uuid, eventId] : null,
         () => getAntiDdosEvent(uuid, eventId),
         { revalidateOnFocus: false }
@@ -116,7 +112,7 @@ export default () => {
                             label={'Estado'}
                             value={
                                 detail.ongoing ? (
-                                    <span css={tw`text-red-300`}>Em curso</span>
+                                    <span css={tw`text-red-300`}>Em andamento</span>
                                 ) : (
                                     <span css={tw`text-neutral-300`}>Terminado</span>
                                 )
@@ -156,13 +152,13 @@ export default () => {
                                             <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
                                                 <ColumnLabel
                                                     label={'Potência'}
-                                                    tip={'Débito do ataque nesta porta (bits por segundo)'}
+                                                    tip={'Volume do ataque nesta porta (bits por segundo)'}
                                                 />
                                             </th>
                                             <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
                                                 <ColumnLabel
                                                     label={'% do ataque'}
-                                                    tip={'Percentagem do tráfego do ataque que caiu nesta porta'}
+                                                    tip={'Porcentagem do tráfego do ataque que caiu nesta porta'}
                                                 />
                                             </th>
                                         </tr>
@@ -208,15 +204,13 @@ export default () => {
                                             <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
                                                 <ColumnLabel
                                                     label={'Potência'}
-                                                    tip={
-                                                        'Débito do ataque neste protocolo, nas portas deste servidor'
-                                                    }
+                                                    tip={'Volume do ataque neste protocolo, nas portas deste servidor'}
                                                 />
                                             </th>
                                             <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
                                                 <ColumnLabel
                                                     label={'% do ataque'}
-                                                    tip={'Percentagem do tráfego do ataque neste protocolo'}
+                                                    tip={'Porcentagem do tráfego do ataque neste protocolo'}
                                                 />
                                             </th>
                                         </tr>

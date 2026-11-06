@@ -34,6 +34,7 @@ const AmxxWebContainer = lazy(() => import('@/components/server/amxx/AmxxWebCont
 const WebRconContainer = lazy(() => import('@/components/server/webrcon/WebRconContainer'));
 const PlayerStatsContainer = lazy(() => import('@/components/server/stats/PlayerStatsContainer'));
 const AntiDdosContainer = lazy(() => import('@/components/server/antiDdos/AntiDdosContainer'));
+const AntiDdosEventContainer = lazy(() => import('@/components/server/antiDdos/AntiDdosEventContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -125,7 +126,13 @@ export default {
             name: 'Anti-DDoS (beta)',
             nameKey: 'server.anti_ddos',
             component: AntiDdosContainer,
-            exact: true,
+            adminOnly: true,
+        },
+        {
+            path: '/anti-ddos/:eventId',
+            permission: null,
+            name: undefined,
+            component: AntiDdosEventContainer,
             adminOnly: true,
         },
         {

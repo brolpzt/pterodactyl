@@ -163,7 +163,7 @@ class AntiDdosController extends ClientApiController
             'attack_power_pps' => $scoped['pps'],
             'share_percentage' => $scoped['share_percentage'],
             'source_ip_count' => null,
-            'ongoing' => $event->attack_end_time === null,
+            'ongoing' => GcoreAttackSyncService::isOngoing($event),
             'has_detail' => true,
             'top_destination_ports' => $matchedPorts,
         ];

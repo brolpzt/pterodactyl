@@ -12,6 +12,9 @@ class GcoreAttackSyncService
 {
     public const RETENTION_DAYS = 90;
 
+    /** Minutes without traffic before we treat a null-ended attack as finished. */
+    public const ONGOING_GRACE_MINUTES = 5;
+
     private GcoreClient $client;
 
     public function __construct(?GcoreClient $client = null)
@@ -86,9 +89,66 @@ class GcoreAttackSyncService
             $details = $this->fetchMissingDetails();
         }
 
+        // Gcore often leaves attack_end_time null even after the attack stops; infer from traffic.
+        $this->backfillMissingEndTimes();
+
         $purged = $this->purgeOlderThanDays(self::RETENTION_DAYS);
 
         return compact('upserted', 'details', 'purged', 'errors');
+    }
+
+    /**
+     * Persist an inferred end time for finished events that Gcore left with a null end.
+     */
+    public function backfillMissingEndTimes(int $limit = 500): int
+    {
+        $updated = 0;
+
+        $events = GcoreAttackEvent::query()
+            ->whereNull('attack_end_time')
+            ->where('detail_fetched', true)
+            ->orderByDesc('attack_start_time')
+            ->limit($limit)
+            ->get();
+
+        foreach ($events as $event) {
+            $inferred = $this->inferEndTime(
+                null,
+                is_array($event->detail) ? $event->detail : [],
+                $event->attack_start_time
+            );
+            if ($inferred === null) {
+                continue;
+            }
+
+            $event->forceFill(['attack_end_time' => $inferred])->save();
+            $updated++;
+        }
+
+        return $updated;
+    }
+
+    /**
+     * Whether the attack is still considered active.
+     */
+    public static function isOngoing(GcoreAttackEvent $event): bool
+    {
+        if ($event->attack_end_time !== null) {
+            return false;
+        }
+
+        $lastActivity = self::lastTrafficActivity(
+            is_array($event->detail) ? ($event->detail['attack_traffic'] ?? []) : []
+        );
+        if ($lastActivity !== null) {
+            return $lastActivity->gt(now()->subMinutes(self::ONGOING_GRACE_MINUTES));
+        }
+
+        if ($event->attack_start_time !== null) {
+            return $event->attack_start_time->gt(now()->subMinutes(self::ONGOING_GRACE_MINUTES));
+        }
+
+        return false;
     }
 
     public function fetchMissingDetails(int $limit = 40): int
@@ -259,12 +319,15 @@ class GcoreAttackSyncService
     {
         $eventId = (string) $row['id'];
         $targeted = $this->normalizeTargetedIp($row['targeted_ip_addresses'] ?? null);
+        $existing = GcoreAttackEvent::query()->where('gcore_event_id', $eventId)->first();
+        $incomingEnd = $this->parseTime($row['attack_end_time'] ?? null);
 
         $attributes = [
             'alert_type' => (string) ($row['alert_type'] ?? 'ddos_alert'),
             'targeted_ip' => $targeted,
             'attack_start_time' => $this->parseTime($row['attack_start_time'] ?? null),
-            'attack_end_time' => $this->parseTime($row['attack_end_time'] ?? null),
+            // List payloads often omit/null the end time — don't wipe a known end.
+            'attack_end_time' => $incomingEnd ?? $existing?->attack_end_time,
             'attack_power_bps' => $this->toUnsignedInt($row['attack_power_bps'] ?? null),
             'attack_power_pps' => $this->toUnsignedInt($row['attack_power_pps'] ?? null),
             'source_ip_count' => isset($row['number_of_ip_involved_in_attack'])
@@ -288,11 +351,16 @@ class GcoreAttackSyncService
      */
     private function applyDetail(GcoreAttackEvent $event, array $detail): void
     {
+        $startTime = $this->parseTime($detail['attack_start_time'] ?? null) ?? $event->attack_start_time;
+        $apiEndTime = array_key_exists('attack_end_time', $detail)
+            ? $this->parseTime($detail['attack_end_time'])
+            : $event->attack_end_time;
+
         $event->forceFill([
             'alert_type' => (string) ($detail['alert_type'] ?? $event->alert_type),
             'targeted_ip' => $this->normalizeTargetedIp($detail['targeted_ip_addresses'] ?? $event->targeted_ip),
-            'attack_start_time' => $this->parseTime($detail['attack_start_time'] ?? null) ?? $event->attack_start_time,
-            'attack_end_time' => $this->parseTime($detail['attack_end_time'] ?? null),
+            'attack_start_time' => $startTime,
+            'attack_end_time' => $this->inferEndTime($apiEndTime, $detail, $startTime),
             'attack_power_bps' => $this->toUnsignedInt($detail['attack_power_bps'] ?? $event->attack_power_bps),
             'attack_power_pps' => $this->toUnsignedInt($detail['attack_power_pps'] ?? $event->attack_power_pps),
             'source_ip_count' => isset($detail['number_of_ip_involved_in_attack'])
@@ -311,6 +379,73 @@ class GcoreAttackSyncService
             ],
             'synced_at' => now(),
         ])->save();
+    }
+
+    /**
+     * Prefer Gcore's end time; otherwise infer from the last active traffic sample
+     * once activity has been quiet for {@see ONGOING_GRACE_MINUTES}.
+     *
+     * @param array<string, mixed> $detail
+     */
+    private function inferEndTime(?Carbon $apiEndTime, array $detail, ?Carbon $startTime): ?Carbon
+    {
+        if ($apiEndTime !== null) {
+            return $apiEndTime;
+        }
+
+        $lastActivity = self::lastTrafficActivity($detail['attack_traffic'] ?? []);
+        if ($lastActivity === null) {
+            return null;
+        }
+
+        if ($lastActivity->gt(now()->subMinutes(self::ONGOING_GRACE_MINUTES))) {
+            return null;
+        }
+
+        // Never end before start.
+        if ($startTime !== null && $lastActivity->lt($startTime)) {
+            return $startTime;
+        }
+
+        return $lastActivity;
+    }
+
+    /**
+     * @param mixed $traffic
+     */
+    public static function lastTrafficActivity(mixed $traffic): ?Carbon
+    {
+        if (!is_array($traffic) || $traffic === []) {
+            return null;
+        }
+
+        $lastUnix = null;
+        foreach ($traffic as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $bytes = (int) ($row['total_bytes'] ?? 0);
+            $packets = (int) ($row['total_packets'] ?? 0);
+            if ($bytes <= 0 && $packets <= 0) {
+                continue;
+            }
+
+            $unix = (int) ($row['interval_start_unix'] ?? 0);
+            if ($unix <= 0) {
+                continue;
+            }
+
+            if ($lastUnix === null || $unix > $lastUnix) {
+                $lastUnix = $unix;
+            }
+        }
+
+        if ($lastUnix === null) {
+            return null;
+        }
+
+        return Carbon::createFromTimestampUTC($lastUnix);
     }
 
     private function normalizeTargetedIp(mixed $value): string

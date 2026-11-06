@@ -1,7 +1,7 @@
 import React from 'react';
 import tw from 'twin.macro';
 import { useTranslation } from 'react-i18next';
-import { CloudUploadIcon, ExclamationCircleIcon } from '@heroicons/react/solid';
+import { CloudUploadIcon, ExclamationCircleIcon, InformationCircleIcon } from '@heroicons/react/solid';
 import { ServerContext } from '@/state/server';
 import useFastDlStatus from '@/api/swr/getFastDlStatus';
 import { bytesToString } from '@/lib/formatters';
@@ -83,6 +83,14 @@ export default () => {
                 >
                     {message}
                 </span>
+                {auto && !failure && !blocked && (
+                    <Tooltip content={t('fastdl.auto_hint')} placement={'top'}>
+                        <InformationCircleIcon
+                            className={'h-4 w-4 flex-shrink-0 cursor-help'}
+                            style={{ color: 'var(--color-text-muted)' }}
+                        />
+                    </Tooltip>
+                )}
                 {(failure || blocked) && (
                     <Tooltip content={blocked ? t('fastdl.no_manifest') : failure!} placement={'top'}>
                         <ExclamationCircleIcon

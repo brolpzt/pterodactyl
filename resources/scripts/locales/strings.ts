@@ -383,6 +383,7 @@ export const stringsEn = {
         cleaning: 'synchronizing: removing old files…',
         completed: 'synchronized on {{date}}',
         completed_auto: 'automatic sync · last on {{date}}',
+        auto_hint: 'When you change or upload a file, FastDL is synced automatically after a few seconds.',
         failed: 'last sync failed ({{date}})',
         unavailable: 'status unavailable',
         no_manifest:
@@ -773,6 +774,7 @@ export const stringsPt = {
         cleaning: 'sincronizando: removendo arquivos antigos…',
         completed: 'sincronizado em {{date}}',
         completed_auto: 'sincronização automática · última em {{date}}',
+        auto_hint: 'Ao alterar ou enviar um arquivo, o FastDL é sincronizado automaticamente após alguns segundos.',
         failed: 'a última sincronização falhou ({{date}})',
         unavailable: 'status indisponível',
         no_manifest:
@@ -1163,6 +1165,7 @@ export const stringsEs = {
         cleaning: 'sincronizando: eliminando archivos antiguos…',
         completed: 'sincronizado el {{date}}',
         completed_auto: 'sincronización automática · última el {{date}}',
+        auto_hint: 'Al modificar o subir un archivo, el FastDL se sincroniza automáticamente tras unos segundos.',
         failed: 'la última sincronización falló ({{date}})',
         unavailable: 'estado no disponible',
         no_manifest:

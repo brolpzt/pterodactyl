@@ -8,8 +8,8 @@ import FileList from '@/components/server/files/FileList';
 import FileManagerBreadcrumbs from '@/components/server/files/FileManagerBreadcrumbs';
 import { FileObject } from '@/api/server/files/loadDirectory';
 import NewDirectoryButton from '@/components/server/files/NewDirectoryButton';
-import SyncFastDlButton from '@/components/server/files/SyncFastDlButton';
 import FastDlSyncStatus from '@/components/server/files/FastDlSyncStatus';
+import SftpHint from '@/components/server/files/SftpHint';
 import { NavLink, useLocation } from 'react-router-dom';
 import Can from '@/components/elements/Can';
 import { ServerError } from '@/components/elements/ScreenBlock';
@@ -81,9 +81,6 @@ export default () => {
                     <Can action={'file.create'}>
                         <div className={style.manager_actions}>
                             <FileManagerStatus />
-                            <Can action={'control.console'}>
-                                <SyncFastDlButton />
-                            </Can>
                             <NewDirectoryButton />
                             <UploadButton />
                             <NavLink to={`/server/${id}/files/new${window.location.hash}`}>
@@ -93,6 +90,7 @@ export default () => {
                     </Can>
                 </div>
                 <FastDlSyncStatus />
+                <SftpHint />
             </ErrorBoundary>
             {!files ? (
                 <Spinner size={'large'} centered />

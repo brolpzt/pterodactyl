@@ -71,6 +71,7 @@ const TaskDetailsModal = ({ schedule, task }: Props) => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const appendSchedule = ServerContext.useStoreActions((actions) => actions.schedules.appendSchedule);
     const backupLimit = ServerContext.useStoreState((state) => state.server.data!.featureLimits.backups);
+    const fastdlEnabled = ServerContext.useStoreState((state) => state.server.data!.fastdlEnabled);
 
     useEffect(() => {
         return () => {
@@ -129,7 +130,9 @@ const TaskDetailsModal = ({ schedule, task }: Props) => {
                                     <option value={'command'}>Send command</option>
                                     <option value={'power'}>Send power action</option>
                                     <option value={'backup'}>Create backup</option>
-                                    <option value={'fastdl'}>Sync FastDL</option>
+                                    {(fastdlEnabled || task?.action === 'fastdl') && (
+                                        <option value={'fastdl'}>Sync FastDL</option>
+                                    )}
                                 </FormikField>
                             </FormikFieldWrapper>
                         </div>

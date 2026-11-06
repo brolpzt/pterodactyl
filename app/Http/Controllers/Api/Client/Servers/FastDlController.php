@@ -27,7 +27,7 @@ class FastDlController extends ClientApiController
      */
     public function status(GetServerRequest $request, Server $server): array
     {
-        if (!$server->fastdl_enabled) {
+        if (!$server->fastdl_enabled || !in_array('fastdl', $server->egg->features ?? [], true)) {
             abort(404, 'FastDL is not enabled for this server.');
         }
 
@@ -53,7 +53,6 @@ class FastDlController extends ClientApiController
             'attributes' => [
                 'sync' => $sync,
                 'manifest' => $manifest,
-                'file_types' => $this->syncService->fileTypesFor($server),
                 'auto_sync' => (bool) $server->egg?->fastdl_auto_sync,
             ],
         ];

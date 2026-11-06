@@ -92,33 +92,6 @@ class FastDlSyncService
     }
 
     /**
-     * File types the user sees in the panel: include rules of the effective
-     * patterns, without the "+" marker. Null when no FastDL node serves the server.
-     *
-     * @return string[]|null
-     */
-    public function fileTypesFor(Server $server): ?array
-    {
-        $node = FastDlNode::query()
-            ->where('location_id', $server->node->location_id)
-            ->where('is_active', true)
-            ->first();
-        if (!$node) {
-            return null;
-        }
-
-        $types = [];
-        foreach (preg_split('/[,;\r\n]+/', (string) $this->patternsFor($server, $node)) as $rule) {
-            $rule = ltrim(trim($rule), '+');
-            if ($rule !== '' && !str_starts_with($rule, '!')) {
-                $types[] = trim($rule);
-            }
-        }
-
-        return array_values(array_unique($types));
-    }
-
-    /**
      * Each game downloads different file types, so they come from the server's
      * egg; the FastDL node's patterns are the fallback.
      */

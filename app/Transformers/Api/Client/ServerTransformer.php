@@ -96,7 +96,8 @@ class ServerTransformer extends BaseClientTransformer
                 'allocations' => $server->allocation_limit,
                 'backups' => $server->backup_limit,
             ],
-            'fastdl_enabled' => $server->fastdl_enabled,
+            // Only games whose egg supports FastDL show anything about it.
+            'fastdl_enabled' => $this->fastDlAvailable($server),
             'fastdl_url' => $this->resolveFastDlUrl($server),
             'status' => $server->status,
             // This field is deprecated, please use "status".
@@ -108,12 +109,17 @@ class ServerTransformer extends BaseClientTransformer
         ];
     }
 
+    private function fastDlAvailable(Server $server): bool
+    {
+        return $server->fastdl_enabled && in_array('fastdl', $server->egg->features ?? [], true);
+    }
+
     /**
      * Resolves the public FastDL URL for the given server, if one is configured.
      */
     private function resolveFastDlUrl(Server $server): ?string
     {
-        if (!$server->fastdl_enabled) {
+        if (!$this->fastDlAvailable($server)) {
             return null;
         }
 

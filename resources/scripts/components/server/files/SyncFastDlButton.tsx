@@ -41,6 +41,7 @@ export default ({ className }: WithClassname) => {
     return (
         <Button
             variant={Button.Variants.Secondary}
+            size={Button.Sizes.Small}
             disabled={isSubmitting || running}
             onClick={onSubmit}
             className={className}

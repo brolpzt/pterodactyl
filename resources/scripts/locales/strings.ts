@@ -374,18 +374,20 @@ export const stringsEn = {
         button: 'Access via SFTP',
     },
     fastdl: {
-        sync_button: 'Sync now',
-        queued: 'FastDL synchronization started.',
         never: 'not synchronized yet',
-        uploading: 'uploading {{done}}/{{total}} ({{bytes_done}} of {{bytes_total}})',
+        never_auto: 'automatic sync on',
+        uploading: 'synchronizing: {{done}}/{{total}} files · {{percent}}%',
         running: 'synchronizing…',
+        cleaning: 'synchronizing: removing old files…',
         completed: 'synchronized on {{date}}',
+        completed_auto: 'automatic sync · last on {{date}}',
         failed: 'last sync failed ({{date}})',
         unavailable: 'status unavailable',
         no_manifest:
             'Blocked until the original game files of this server are mapped. Reinstall the server or contact support.',
         loading: 'loading…',
-        url: 'Click to copy the FastDL URL',
+        url: 'URL:',
+        copy_url: 'Click to copy',
     },
 };
 
@@ -760,18 +762,20 @@ export const stringsPt = {
         button: 'Acessar via SFTP',
     },
     fastdl: {
-        sync_button: 'Sincronizar agora',
-        queued: 'Sincronização do FastDL iniciada.',
         never: 'ainda não sincronizado',
-        uploading: 'enviando {{done}}/{{total}} ({{bytes_done}} de {{bytes_total}})',
+        never_auto: 'sincronização automática ativa',
+        uploading: 'sincronizando: {{done}}/{{total}} arquivos · {{percent}}%',
         running: 'sincronizando…',
+        cleaning: 'sincronizando: removendo arquivos antigos…',
         completed: 'sincronizado em {{date}}',
+        completed_auto: 'sincronização automática · última em {{date}}',
         failed: 'a última sincronização falhou ({{date}})',
         unavailable: 'status indisponível',
         no_manifest:
             'Bloqueado até os arquivos originais do jogo deste servidor serem mapeados. Reinstale o servidor ou fale com o suporte.',
         loading: 'carregando…',
-        url: 'Clique para copiar a URL do FastDL',
+        url: 'URL:',
+        copy_url: 'Clique para copiar',
     },
 };
 
@@ -1146,17 +1150,19 @@ export const stringsEs = {
         button: 'Acceder vía SFTP',
     },
     fastdl: {
-        sync_button: 'Sincronizar ahora',
-        queued: 'Sincronización de FastDL iniciada.',
         never: 'aún no sincronizado',
-        uploading: 'subiendo {{done}}/{{total}} ({{bytes_done}} de {{bytes_total}})',
+        never_auto: 'sincronización automática activa',
+        uploading: 'sincronizando: {{done}}/{{total}} archivos · {{percent}}%',
         running: 'sincronizando…',
+        cleaning: 'sincronizando: eliminando archivos antiguos…',
         completed: 'sincronizado el {{date}}',
+        completed_auto: 'sincronización automática · última el {{date}}',
         failed: 'la última sincronización falló ({{date}})',
         unavailable: 'estado no disponible',
         no_manifest:
             'Bloqueado hasta que se mapeen los archivos originales del juego de este servidor. Reinstale el servidor o contacte con soporte.',
         loading: 'cargando…',
-        url: 'Haga clic para copiar la URL de FastDL',
+        url: 'URL:',
+        copy_url: 'Haga clic para copiar',
     },
 };

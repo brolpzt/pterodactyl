@@ -4,7 +4,8 @@ import { ServerContext } from '@/state/server';
 import getFastDlStatus, { FastDlStatus } from '@/api/server/fastdl/getFastDlStatus';
 
 const RUNNING_INTERVAL_MS = 2000;
-const IDLE_INTERVAL_MS = 60000;
+// Automatic syncs start on their own, so idle polling must be short enough to show them.
+const IDLE_INTERVAL_MS = 15000;
 
 /** Polls quickly while a synchronization runs, slowly otherwise. */
 export default (enabled = true) => {

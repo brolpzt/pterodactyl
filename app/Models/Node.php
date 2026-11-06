@@ -221,7 +221,10 @@ class Node extends Model implements Identifiable
                 'host' => '0.0.0.0',
                 'port' => $this->daemonListen,
                 'ssl' => [
-                    'enabled' => (!$this->behind_proxy && $this->scheme === 'https'),
+                    // Our nodes terminate TLS in Wings even when "behind proxy" is set
+                    // (the panel still talks HTTPS to fqdn:daemonListen), so HTTPS nodes
+                    // always get SSL; otherwise a node save disables it on the next restart.
+                    'enabled' => $this->scheme === 'https',
                     'cert' => '/etc/letsencrypt/live/' . Str::lower($this->fqdn) . '/fullchain.pem',
                     'key' => '/etc/letsencrypt/live/' . Str::lower($this->fqdn) . '/privkey.pem',
                 ],

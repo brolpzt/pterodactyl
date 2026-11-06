@@ -1,22 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import useSWR from 'swr';
 import { format, parseISO } from 'date-fns';
 import tw from 'twin.macro';
 import styled from 'styled-components/macro';
-import { Line } from 'react-chartjs-2';
-import {
-    CategoryScale,
-    Chart as ChartJS,
-    Filler,
-    LinearScale,
-    LineElement,
-    PointElement,
-    Tooltip,
-} from 'chart.js';
-import { theme } from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Spinner from '@/components/elements/Spinner';
-import ChartBlock from '@/components/server/console/ChartBlock';
 import PeriodSelector, { PeriodOption, PeriodValue } from '@/components/elements/PeriodSelector';
 import { ServerContext } from '@/state/server';
 import { useStoreState } from 'easy-peasy';
@@ -28,10 +16,6 @@ import {
 import { cardLabelText, cardSurface, cardValueText } from '@/assets/css/cardTheme';
 import { glassCardShell, glassContentLayer } from '@/assets/css/glassPanel';
 import { hgRadiusSm } from '@/assets/css/borderTheme';
-import { hexToRgba } from '@/lib/helpers';
-import type { ChartOptions } from 'chart.js';
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
 const PERIOD_OPTIONS: PeriodOption[] = [
     { value: '15m', label: '15 min' },
@@ -108,64 +92,6 @@ export default () => {
         { revalidateOnFocus: false }
     );
 
-    const trafficChart = useMemo(() => {
-        const points = (detail?.attack_traffic || [])
-            .filter((p) => typeof p.interval_start_unix === 'number')
-            .slice(-180);
-
-        const labels = points.map((p) => {
-            const d = new Date((p.interval_start_unix as number) * 1000);
-            return format(d, 'HH:mm:ss');
-        });
-        const bytes = points.map((p) => Number(p.total_bytes || 0));
-
-        const options: ChartOptions<'line'> = {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: true, mode: 'index', intersect: false },
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        maxTicksLimit: 8,
-                        color: theme('colors.gray.200'),
-                        font: { size: 10, family: theme('fontFamily.sans') },
-                    },
-                    grid: { display: false, drawBorder: false },
-                },
-                y: {
-                    min: 0,
-                    ticks: {
-                        color: theme('colors.gray.200'),
-                        callback: (value) => formatBps(typeof value === 'number' ? value * 8 : Number(value) * 8),
-                        font: { size: 10, family: theme('fontFamily.sans') },
-                    },
-                    grid: { color: theme('colors.gray.700'), drawBorder: false },
-                },
-            },
-            elements: { point: { radius: 0 }, line: { tension: 0.2 } },
-        };
-
-        return {
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: 'Tráfego',
-                        fill: true,
-                        data: bytes,
-                        borderColor: theme('colors.primary.400'),
-                        backgroundColor: hexToRgba(theme('colors.primary.700'), 0.4),
-                    },
-                ],
-            },
-            options,
-        };
-    }, [detail?.attack_traffic]);
-
     if (!rootAdmin) {
         return (
             <ServerContentBlock title={'Anti-DDoS'}>
@@ -192,8 +118,13 @@ export default () => {
                 <div>
                     <h2 css={tw`text-xl font-header font-medium text-gray-100 m-0`}>Anti-DDoS (beta)</h2>
                     <p css={[cardLabelText, tw`text-sm mt-1 mb-0`]}>
-                        Eventos Gcore sincronizados localmente para o IP protegido deste servidor.
-                        {data?.ips?.length ? ` IP: ${data.ips.join(', ')}` : ''}
+                        Só eventos que atingiram as portas deste servidor
+                        {data?.endpoints?.length
+                            ? `: ${data.endpoints.map((e) => `${e.ip}:${e.port}`).join(', ')}`
+                            : data?.ips?.length
+                            ? ` (IP: ${data.ips.join(', ')})`
+                            : ''}
+                        .
                     </p>
                 </div>
                 <PeriodSelector value={period} options={PERIOD_OPTIONS} onChange={onPeriodChange} />
@@ -214,16 +145,16 @@ export default () => {
                             <CardShell>
                                 <CardInner>
                                     <p css={[cardValueText, tw`m-0`]}>
-                                        Sem eventos neste período. O sync corre a cada 5 minutos.
+                                        Sem eventos neste período nas portas deste servidor. O sync corre a cada 5
+                                        minutos.
                                     </p>
                                 </CardInner>
                             </CardShell>
                         ) : (
                             data.events.map((event: AntiDdosEventSummary) => {
                                 const active = selectedId === event.id;
-                                const ports = (event.top_destination_ports || [])
-                                    .slice(0, 3)
-                                    .map((p) => `${p.dst_port ?? '?'}/${p.protocol || '?'}`)
+                                const ports = (event.ports || [])
+                                    .map((port) => `${event.targeted_ip}:${port}`)
                                     .join(', ');
 
                                 return (
@@ -255,12 +186,12 @@ export default () => {
                                                 </div>
                                                 <p css={[cardLabelText, tw`text-sm m-0`]}>
                                                     {formatBps(event.attack_power_bps)} · {formatPps(event.attack_power_pps)}
-                                                    {event.source_ip_count != null
-                                                        ? ` · ${event.source_ip_count.toLocaleString()} IPs`
+                                                    {event.share_percentage != null
+                                                        ? ` · ${event.share_percentage}% do evento`
                                                         : ''}
                                                 </p>
                                                 {ports && (
-                                                    <p css={[cardLabelText, tw`text-xs m-0 mt-1`]}>Portas: {ports}</p>
+                                                    <p css={[cardLabelText, tw`text-xs m-0 mt-1`]}>{ports}</p>
                                                 )}
                                             </CardInner>
                                         </CardShell>
@@ -290,21 +221,21 @@ export default () => {
                                 <div css={tw`grid grid-cols-2 md:grid-cols-4 gap-3`}>
                                     <CardShell>
                                         <CardInner>
-                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Potência</p>
+                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Potência (esta porta)</p>
                                             <p css={[cardValueText, tw`m-0`]}>{formatBps(detail.attack_power_bps)}</p>
                                         </CardInner>
                                     </CardShell>
                                     <CardShell>
                                         <CardInner>
-                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Pacotes</p>
+                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Pacotes (esta porta)</p>
                                             <p css={[cardValueText, tw`m-0`]}>{formatPps(detail.attack_power_pps)}</p>
                                         </CardInner>
                                     </CardShell>
                                     <CardShell>
                                         <CardInner>
-                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>IPs origem</p>
+                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Parte do evento</p>
                                             <p css={[cardValueText, tw`m-0`]}>
-                                                {detail.source_ip_count?.toLocaleString() ?? '—'}
+                                                {detail.share_percentage != null ? `${detail.share_percentage}%` : '—'}
                                             </p>
                                         </CardInner>
                                     </CardShell>
@@ -316,39 +247,30 @@ export default () => {
                                     </CardShell>
                                 </div>
 
-                                {(detail.attack_traffic || []).length > 0 && (
-                                    <ChartBlock title={'Tráfego observado'}>
-                                        <div css={tw`h-56`}>
-                                            <Line data={trafficChart.data} options={trafficChart.options} />
-                                        </div>
-                                    </ChartBlock>
-                                )}
+                                <CardShell>
+                                    <CardInner>
+                                        <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Alvo deste servidor</p>
+                                        <p css={[cardValueText, tw`m-0`]}>
+                                            {(detail.ports || [])
+                                                .map((port) => `${detail.targeted_ip}:${port}`)
+                                                .join(', ') || `${detail.targeted_ip}`}
+                                        </p>
+                                    </CardInner>
+                                </CardShell>
 
                                 <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-4`}>
                                     <DetailList
-                                        title={'Portas de destino'}
+                                        title={'Portas deste servidor'}
                                         rows={(detail.attack_top_destination_ports || []).map(
                                             (p) =>
-                                                `${p.dst_port ?? '?'}/${p.protocol || '?'} · ${formatBps(p.bps ?? null)} (${p.bps_percentage ?? 0}%)`
+                                                `${detail.targeted_ip}:${p.dst_port ?? '?'}/${p.protocol || '?'} · ${formatBps(p.bps ?? null)} (${p.bps_percentage ?? 0}%)`
                                         )}
                                     />
                                     <DetailList
-                                        title={'Protocolos'}
+                                        title={'Protocolos nestas portas'}
                                         rows={(detail.attack_top_protocols || []).map(
                                             (p) =>
                                                 `${p.protocol || '?'} · ${formatBps(p.bps ?? null)} (${p.bps_percentage ?? 0}%)`
-                                        )}
-                                    />
-                                    <DetailList
-                                        title={'Países de origem'}
-                                        rows={(detail.attack_top_source_countries || []).map(
-                                            (p) => `${p.source_country || '?'} · ${formatBps(p.bps ?? null)}`
-                                        )}
-                                    />
-                                    <DetailList
-                                        title={'Top IPs de origem'}
-                                        rows={(detail.attack_top_source_ips || []).map(
-                                            (p) => `${p.src_addr || '?'} · ${formatBps(p.bps ?? null)}`
                                         )}
                                     />
                                 </div>

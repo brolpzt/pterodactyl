@@ -135,6 +135,19 @@ class GcoreAttackSyncService
      */
     public static function protectedIpsForServer(Server $server): array
     {
+        return array_values(array_unique(array_map(
+            static fn (array $endpoint) => $endpoint['ip'],
+            self::protectedEndpointsForServer($server)
+        )));
+    }
+
+    /**
+     * Protected Gcore IP:port endpoints that belong to this server only.
+     *
+     * @return list<array{ip: string, port: int}>
+     */
+    public static function protectedEndpointsForServer(Server $server): array
+    {
         $server->loadMissing(['allocations']);
 
         $allocationIps = $server->allocations
@@ -148,14 +161,95 @@ class GcoreAttackSyncService
             return [];
         }
 
-        return NodeGcoreIp::query()
+        $protectedIps = NodeGcoreIp::query()
             ->where('node_id', $server->node_id)
             ->whereIn('ip', $allocationIps->all())
             ->pluck('ip')
             ->map(static fn ($ip) => trim((string) $ip))
             ->unique()
+            ->all();
+
+        if ($protectedIps === []) {
+            return [];
+        }
+
+        $protectedLookup = array_fill_keys($protectedIps, true);
+
+        return $server->allocations
+            ->filter(static function ($allocation) use ($protectedLookup) {
+                $ip = trim((string) $allocation->ip);
+
+                return isset($protectedLookup[$ip]) && (int) $allocation->port > 0;
+            })
+            ->map(static fn ($allocation) => [
+                'ip' => trim((string) $allocation->ip),
+                'port' => (int) $allocation->port,
+            ])
+            ->unique(static fn (array $endpoint) => $endpoint['ip'] . ':' . $endpoint['port'])
             ->values()
             ->all();
+    }
+
+    /**
+     * @param list<array{ip: string, port: int}> $endpoints
+     * @return array<string, list<int>>
+     */
+    public static function portsByIp(array $endpoints): array
+    {
+        $map = [];
+        foreach ($endpoints as $endpoint) {
+            $ip = $endpoint['ip'];
+            $map[$ip] ??= [];
+            $map[$ip][] = (int) $endpoint['port'];
+        }
+
+        foreach ($map as $ip => $ports) {
+            $map[$ip] = array_values(array_unique($ports));
+        }
+
+        return $map;
+    }
+
+    /**
+     * Whether this Gcore event touched at least one of the server's ports.
+     *
+     * Gcore only exposes top destination ports — ports outside the top list are invisible.
+     *
+     * @param list<int> $ports
+     */
+    public static function eventTouchesPorts(GcoreAttackEvent $event, array $ports): bool
+    {
+        return self::matchingDestinationPorts($event, $ports) !== [];
+    }
+
+    /**
+     * @param list<int> $ports
+     * @return list<array<string, mixed>>
+     */
+    public static function matchingDestinationPorts(GcoreAttackEvent $event, array $ports): array
+    {
+        if ($ports === [] || !$event->detail_fetched || !is_array($event->detail)) {
+            return [];
+        }
+
+        $portLookup = array_fill_keys(array_map('intval', $ports), true);
+        $rows = $event->detail['attack_top_destination_ports'] ?? [];
+        if (!is_array($rows)) {
+            return [];
+        }
+
+        $matched = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $dstPort = (int) ($row['dst_port'] ?? 0);
+            if ($dstPort > 0 && isset($portLookup[$dstPort])) {
+                $matched[] = $row;
+            }
+        }
+
+        return $matched;
     }
 
     /**

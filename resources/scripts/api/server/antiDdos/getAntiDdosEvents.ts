@@ -1,14 +1,21 @@
 import http from '@/api/http';
 import type { PeriodValue } from '@/components/elements/PeriodSelector';
 
+export interface AntiDdosEndpoint {
+    ip: string;
+    port: number;
+}
+
 export interface AntiDdosEventSummary {
     id: string;
     alert_type: string;
     targeted_ip: string;
+    ports: number[];
     attack_start_time: string | null;
     attack_end_time: string | null;
     attack_power_bps: number | null;
     attack_power_pps: number | null;
+    share_percentage: number | null;
     source_ip_count: number | null;
     ongoing: boolean;
     has_detail: boolean;
@@ -25,6 +32,7 @@ export interface AntiDdosEventSummary {
 export interface AntiDdosEventsResult {
     supported: boolean;
     ips: string[];
+    endpoints: AntiDdosEndpoint[];
     period: PeriodValue;
     events: AntiDdosEventSummary[];
 }

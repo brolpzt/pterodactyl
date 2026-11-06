@@ -155,6 +155,44 @@
                     </div>
                 </div>
             </div>
+            <div class="col-sm-4">
+                <div class="box box-info">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">FastDL Manifest</h3>
+                    </div>
+                    <div class="box-body">
+                        <p>Lists the stock game files delivered by the install; FastDL syncs skip them while unchanged. New installs create it automatically.</p>
+                        @if(is_null($fastDlManifest) || ($fastDlManifest['unreachable'] ?? false))
+                            <p class="text-muted small">Could not read the manifest status from Wings.</p>
+                        @else
+                            <p class="small" style="margin-bottom:4px;">
+                                @if($fastDlManifest['exists'] ?? false)
+                                    <span class="label label-success">Present</span>
+                                    {{ number_format($fastDlManifest['original_files'] ?? 0) }} original files
+                                    @if(!empty($fastDlManifest['updated_at']))
+                                        &middot; {{ \Carbon\Carbon::parse($fastDlManifest['updated_at'])->diffForHumans() }}
+                                    @endif
+                                @else
+                                    <span class="label label-warning">Missing</span> every file is synchronized
+                                @endif
+                            </p>
+                            @if(in_array($fastDlManifest['state'] ?? 'idle', ['queued', 'running'], true))
+                                <p class="small"><span class="label label-info">{{ ucfirst($fastDlManifest['state']) }}</span> reference install in progress</p>
+                            @endif
+                            @if(!empty($fastDlManifest['last_error']))
+                                <p class="small text-danger">Last attempt failed: {{ $fastDlManifest['last_error'] }}</p>
+                            @endif
+                        @endif
+                        <p class="text-muted small">Generating runs the egg install script in a temporary directory on the node (the server keeps running), compares the files and deletes the temporary copy.</p>
+                    </div>
+                    <div class="box-footer">
+                        <form action="{{ route('admin.servers.view.manage.fastdl-manifest', $server->id) }}" method="POST">
+                            {!! csrf_field() !!}
+                            <button type="submit" class="btn btn-info" @if(in_array($fastDlManifest['state'] ?? 'idle', ['queued', 'running'], true)) disabled @endif>Generate Manifest</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         @endif
     </div>
 

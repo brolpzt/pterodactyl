@@ -303,6 +303,21 @@ class ServersController extends Controller
     }
 
     /**
+     * Queues a reference install on Wings that builds the server's FastDL manifest.
+     */
+    public function generateFastDlManifest(Server $server): RedirectResponse
+    {
+        try {
+            app(\Pterodactyl\Services\Servers\FastDlManifestService::class)->generate($server);
+            $this->alert->success('FastDL manifest generation queued. Wings installs the game in a temporary directory, compares it with this server and removes it afterwards; this can take a while.')->flash();
+        } catch (\Exception $exception) {
+            $this->alert->danger('Failed to queue the FastDL manifest: ' . $exception->getMessage())->flash();
+        }
+
+        return redirect()->route('admin.servers.view.manage', $server->id);
+    }
+
+    /**
      * Triggers a FastDL sync for the server.
      */
     public function syncFastDl(Server $server): RedirectResponse

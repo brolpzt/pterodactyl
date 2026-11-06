@@ -134,10 +134,21 @@ class ServerViewController extends Controller
             'nodeData' => $this->nodeRepository->getNodesForServerCreation(),
         ]);
 
+        $fastDlManifest = null;
+        $manifestService = app(\Pterodactyl\Services\Servers\FastDlManifestService::class);
+        if ($manifestService->supports($server)) {
+            try {
+                $fastDlManifest = $manifestService->status($server);
+            } catch (\Throwable) {
+                $fastDlManifest = ['unreachable' => true];
+            }
+        }
+
         return view('admin.servers.view.manage', [
             'server' => $server,
             'locations' => $this->locationRepository->all(),
             'canTransfer' => $canTransfer,
+            'fastDlManifest' => $fastDlManifest,
         ]);
     }
 

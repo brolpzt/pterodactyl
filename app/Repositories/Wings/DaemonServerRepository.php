@@ -90,6 +90,43 @@ class DaemonServerRepository extends DaemonRepository
     }
 
     /**
+     * Returns the server's FastDL install manifest status on Wings.
+     *
+     * @throws DaemonConnectionException
+     */
+    public function getFastDlManifest(): array
+    {
+        Assert::isInstanceOf($this->server, Server::class);
+
+        try {
+            $response = $this->getHttpClient()->get("/api/servers/{$this->server->uuid}/fastdl/manifest", ['timeout' => 5]);
+        } catch (GuzzleException $exception) {
+            throw new DaemonConnectionException($exception);
+        }
+
+        return json_decode($response->getBody()->__toString(), true) ?? [];
+    }
+
+    /**
+     * Queues a reference install on Wings that builds the FastDL manifest of a
+     * server installed before manifests existed.
+     *
+     * @throws DaemonConnectionException
+     */
+    public function generateFastDlManifest(): array
+    {
+        Assert::isInstanceOf($this->server, Server::class);
+
+        try {
+            $response = $this->getHttpClient()->post("/api/servers/{$this->server->uuid}/fastdl/manifest");
+        } catch (GuzzleException $exception) {
+            throw new DaemonConnectionException($exception);
+        }
+
+        return json_decode($response->getBody()->__toString(), true) ?? [];
+    }
+
+    /**
      * Executes an addon (installation script) on the daemon.
      *
      * @throws DaemonConnectionException

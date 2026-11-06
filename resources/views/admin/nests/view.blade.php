@@ -42,7 +42,8 @@
                                 <strong>Arquivos originais da instalação nunca são enviados</strong>: o manifesto de instalação os separa, então não é preciso listar pastas.
                                 Não inclua tipos de configuração ou script (<code>.cfg</code>, <code>.ini</code>, <code>.txt</code>, <code>.gsc</code>, <code>.json</code>): podem expor dados do servidor.
                                 Vazio = usa os padrões do FastDL Node.
-                                <br>Avançado: com <code>/</code> o padrão vira caminho relativo (<code>maps/**</code>), e <code>!</code> exclui (<code>!*.cfg</code>).
+                                <br><strong>Mods que o egg instala</strong> e que os jogadores precisam baixar (ex.: zPAM no CoD2) contam como originais; force o envio com <code>+</code> na frente (ex.: <code>+zpam*.iwd</code>).
+                                <br>Avançado: com <code>/</code> o padrão vira caminho relativo (<code>maps/**</code>), e <code>!</code> exclui (<code>!*.cfg</code>; vale mesmo sobre <code>+</code>).
                             </small></p>
                         </div>
                     </div>

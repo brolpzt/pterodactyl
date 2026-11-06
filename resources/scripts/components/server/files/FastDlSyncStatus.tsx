@@ -73,6 +73,20 @@ export default () => {
                 </div>
             )}
             {blocked && <p className={'mt-1 text-yellow-300'}>{t('fastdl.no_manifest')}</p>}
+            {data?.file_types && data.file_types.length > 0 && (
+                <p className={'mt-1 text-xs text-neutral-400'}>
+                    {t('fastdl.file_types')}{' '}
+                    {data.file_types.map((type) => (
+                        <code
+                            key={type}
+                            className={'mr-1 rounded bg-neutral-900 px-1 py-0.5 font-mono text-neutral-200'}
+                        >
+                            {type}
+                        </code>
+                    ))}
+                    <span className={'block mt-0.5'}>{t('fastdl.originals_note')}</span>
+                </p>
+            )}
         </div>
     );
 };

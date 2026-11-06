@@ -79,7 +79,8 @@ export const stringsEn = {
         sftp_password_generate: 'Generate SFTP password',
         sftp_password_rotate: 'Reset SFTP password',
         sftp_password_note: 'Your SFTP password is the same as the password you use to access this panel.',
-        sftp_firewall_help: 'If you cannot connect, allow your IP ({{ip}}) through the firewall for {{minutes}} minutes. The connection usually takes about 5 minutes to become available.',
+        sftp_firewall_help:
+            'If you cannot connect, allow your IP ({{ip}}) through the firewall for {{minutes}} minutes. The connection usually takes about 5 minutes to become available.',
         sftp_firewall_allow: 'Allow my IP for SFTP',
         sftp_firewall_renew: 'Renew IP allow',
         sftp_firewall_working: 'Allowing…',
@@ -89,7 +90,8 @@ export const stringsEn = {
         sftp_firewall_revoking: 'Removing…',
         sftp_firewall_ip_placeholder: 'Optional: other public IP (IPv4 or IPv6)',
         connection_string: 'Connection String',
-        connection_string_help: 'Use this string to connect to the server (e.g. in-game: connect IP:port; password xxx).',
+        connection_string_help:
+            'Use this string to connect to the server (e.g. in-game: connect IP:port; password xxx).',
         rcon_password: 'RCON Password',
         rcon_password_help: 'Server RCON password (for in-game commands or remote console).',
     },
@@ -144,9 +146,11 @@ export const stringsEn = {
         app_id: 'Steam App ID: {{id}}',
         votes: '{{count}} votes',
         install_success: 'Workshop item added. Restart the server to apply changes.',
-        install_success_l4d2: 'Workshop item queued. The server was stopped to download VPKs into addons/workshop/ - check the console, then restart when finished.',
+        install_success_l4d2:
+            'Workshop item queued. The server was stopped to download VPKs into addons/workshop/ - check the console, then restart when finished.',
         remove_success: 'Workshop item removed. Restart the server to apply changes.',
-        restart_hint: 'Restart the server after adding or removing mods to apply changes. Configure Steam Account Token (GSLT) in Startup if content does not mount.',
+        restart_hint:
+            'Restart the server after adding or removing mods to apply changes. Configure Steam Account Token (GSLT) in Startup if content does not mount.',
         install_by_id: 'Install by ID',
         install_by_id_placeholder: 'e.g. 2845878432',
     },
@@ -326,7 +330,8 @@ export const stringsEn = {
         center_subtitle: 'Track your current issues and requests.',
         create_new_ticket: 'Create New Ticket',
         no_tickets_title: 'No active tickets found',
-        no_tickets_description: "If you're having trouble, don't hesitate to reach out to our professional support team.",
+        no_tickets_description:
+            "If you're having trouble, don't hesitate to reach out to our professional support team.",
         start_conversation: 'Start a Conversation',
         last_activity: 'Last Activity',
         create_ticket_title: 'Create Ticket',
@@ -355,7 +360,8 @@ export const stringsEn = {
         post_reply: 'Post a Reply',
         submit_reply: 'Submit Reply',
         ticket_resolved: 'Ticket Resolved',
-        ticket_locked_description: 'This ticket has been marked as resolved and is now locked for further conversation.',
+        ticket_locked_description:
+            'This ticket has been marked as resolved and is now locked for further conversation.',
         status: 'Status',
         status_open: 'OPEN',
         status_closed: 'CLOSED',
@@ -372,10 +378,14 @@ export const stringsEn = {
         uploading: 'FastDL: uploading {{done}} of {{total}} files ({{bytes_done}} of {{bytes_total}})',
         cleaning: 'FastDL: removing old files from the FastDL server…',
         running: 'FastDL: synchronizing…',
-        completed: 'FastDL synchronized on {{date}}: {{uploaded}} file(s) sent, {{deleted}} removed, {{skipped}} original game file(s) skipped.',
+        completed:
+            'FastDL synchronized on {{date}}: {{uploaded}} file(s) sent, {{deleted}} removed, {{skipped}} original game file(s) skipped.',
         failed: 'FastDL: the last synchronization ({{date}}) failed: {{error}}',
         unavailable: 'FastDL status is unavailable right now.',
-        no_manifest: 'FastDL is blocked until the original game files of this server are mapped (so they are never uploaded). Reinstall the server or contact support.',
+        no_manifest:
+            'FastDL is blocked until the original game files of this server are mapped (so they are never uploaded). Reinstall the server or contact support.',
+        file_types: 'Synchronized file types:',
+        originals_note: 'Original game files are never uploaded; players already have them.',
     },
 };
 
@@ -456,7 +466,8 @@ export const stringsPt = {
         sftp_password_generate: 'Gerar senha SFTP',
         sftp_password_rotate: 'Redefinir senha SFTP',
         sftp_password_note: 'A senha SFTP é a mesma que você usa para acessar este painel.',
-        sftp_firewall_help: 'Se não conseguir conectar, libere o seu IP ({{ip}}) no firewall por {{minutes}} minutos. A conexão costuma levar cerca de 5 minutos para ficar liberada.',
+        sftp_firewall_help:
+            'Se não conseguir conectar, libere o seu IP ({{ip}}) no firewall por {{minutes}} minutos. A conexão costuma levar cerca de 5 minutos para ficar liberada.',
         sftp_firewall_allow: 'Liberar meu IP para SFTP',
         sftp_firewall_renew: 'Renovar liberação do IP',
         sftp_firewall_working: 'A liberar…',
@@ -466,7 +477,8 @@ export const stringsPt = {
         sftp_firewall_revoking: 'A remover…',
         sftp_firewall_ip_placeholder: 'Opcional: outro IP público (IPv4 ou IPv6)',
         connection_string: 'Connection string',
-        connection_string_help: 'Use esta string para conectar ao servidor (ex.: no jogo: connect IP:porta; password xxx).',
+        connection_string_help:
+            'Use esta string para conectar ao servidor (ex.: no jogo: connect IP:porta; password xxx).',
         rcon_password: 'Senha RCON',
         rcon_password_help: 'Senha RCON do servidor (para comandos no jogo ou console remota).',
     },
@@ -521,9 +533,11 @@ export const stringsPt = {
         app_id: 'Steam App ID: {{id}}',
         votes: '{{count}} votos',
         install_success: 'Item Workshop adicionado. Reinicie o servidor para aplicar.',
-        install_success_l4d2: 'Item Workshop enfileirado. O servidor foi parado para descarregar os VPKs em addons/workshop/ - acompanhe o console e reinicie quando terminar.',
+        install_success_l4d2:
+            'Item Workshop enfileirado. O servidor foi parado para descarregar os VPKs em addons/workshop/ - acompanhe o console e reinicie quando terminar.',
         remove_success: 'Item Workshop removido. Reinicie o servidor para aplicar.',
-        restart_hint: 'Reinicie o servidor após adicionar ou remover mods para aplicar as alterações. Configure o Steam Account Token (GSLT) em Startup se o conteúdo não montar.',
+        restart_hint:
+            'Reinicie o servidor após adicionar ou remover mods para aplicar as alterações. Configure o Steam Account Token (GSLT) em Startup se o conteúdo não montar.',
         install_by_id: 'Instalar por ID',
         install_by_id_placeholder: 'Ex: 2845878432',
     },
@@ -703,7 +717,8 @@ export const stringsPt = {
         center_subtitle: 'Acompanhe seus problemas e solicitações atuais.',
         create_new_ticket: 'Criar Novo Ticket',
         no_tickets_title: 'Nenhum ticket ativo encontrado',
-        no_tickets_description: 'Se você estiver com problemas, não hesite em entrar em contato com nossa equipe de suporte.',
+        no_tickets_description:
+            'Se você estiver com problemas, não hesite em entrar em contato com nossa equipe de suporte.',
         start_conversation: 'Iniciar Conversa',
         last_activity: 'Última Atividade',
         create_ticket_title: 'Criar Ticket',
@@ -749,10 +764,14 @@ export const stringsPt = {
         uploading: 'FastDL: enviando {{done}} de {{total}} arquivos ({{bytes_done}} de {{bytes_total}})',
         cleaning: 'FastDL: removendo arquivos antigos do servidor de FastDL…',
         running: 'FastDL: sincronizando…',
-        completed: 'FastDL sincronizado em {{date}}: {{uploaded}} arquivo(s) enviado(s), {{deleted}} removido(s), {{skipped}} arquivo(s) original(is) do jogo ignorado(s).',
+        completed:
+            'FastDL sincronizado em {{date}}: {{uploaded}} arquivo(s) enviado(s), {{deleted}} removido(s), {{skipped}} arquivo(s) original(is) do jogo ignorado(s).',
         failed: 'FastDL: a última sincronização ({{date}}) falhou: {{error}}',
         unavailable: 'O status do FastDL está indisponível no momento.',
-        no_manifest: 'O FastDL está bloqueado até os arquivos originais do jogo deste servidor serem mapeados (para nunca serem enviados). Reinstale o servidor ou fale com o suporte.',
+        no_manifest:
+            'O FastDL está bloqueado até os arquivos originais do jogo deste servidor serem mapeados (para nunca serem enviados). Reinstale o servidor ou fale com o suporte.',
+        file_types: 'Tipos de arquivo sincronizados:',
+        originals_note: 'Arquivos originais do jogo nunca são enviados; os jogadores já os têm.',
     },
 };
 
@@ -833,7 +852,8 @@ export const stringsEs = {
         sftp_password_generate: 'Generar contraseña SFTP',
         sftp_password_rotate: 'Restablecer contraseña SFTP',
         sftp_password_note: 'La contraseña SFTP es la misma que usas para acceder a este panel.',
-        sftp_firewall_help: 'Si no puedes conectar, libera tu IP ({{ip}}) en el firewall por {{minutes}} minutos. La conexión suele tardar unos 5 minutos en quedar liberada.',
+        sftp_firewall_help:
+            'Si no puedes conectar, libera tu IP ({{ip}}) en el firewall por {{minutes}} minutos. La conexión suele tardar unos 5 minutos en quedar liberada.',
         sftp_firewall_allow: 'Liberar mi IP para SFTP',
         sftp_firewall_renew: 'Renovar liberación de IP',
         sftp_firewall_working: 'Liberando…',
@@ -843,7 +863,8 @@ export const stringsEs = {
         sftp_firewall_revoking: 'Quitando…',
         sftp_firewall_ip_placeholder: 'Opcional: otra IP pública (IPv4 o IPv6)',
         connection_string: 'Cadena de conexión',
-        connection_string_help: 'Usa esta cadena para conectarte al servidor (ej. en el juego: connect IP:puerto; password xxx).',
+        connection_string_help:
+            'Usa esta cadena para conectarte al servidor (ej. en el juego: connect IP:puerto; password xxx).',
         rcon_password: 'Contraseña RCON',
         rcon_password_help: 'Contraseña RCON del servidor (para comandos en el juego o consola remota).',
     },
@@ -898,9 +919,11 @@ export const stringsEs = {
         app_id: 'Steam App ID: {{id}}',
         votes: '{{count}} votos',
         install_success: 'Item Workshop añadido. Reinicia el servidor para aplicar.',
-        install_success_l4d2: 'Item Workshop en cola. El servidor se detuvo para descargar los VPK en addons/workshop/ - revisa la consola y reinicia al terminar.',
+        install_success_l4d2:
+            'Item Workshop en cola. El servidor se detuvo para descargar los VPK en addons/workshop/ - revisa la consola y reinicia al terminar.',
         remove_success: 'Item Workshop eliminado. Reinicia el servidor para aplicar.',
-        restart_hint: 'Reinicia el servidor después de añadir o quitar mods para aplicar los cambios. Configura el Steam Account Token (GSLT) en Startup si el contenido no se monta.',
+        restart_hint:
+            'Reinicia el servidor después de añadir o quitar mods para aplicar los cambios. Configura el Steam Account Token (GSLT) en Startup si el contenido no se monta.',
         install_by_id: 'Instalar por ID',
         install_by_id_placeholder: 'Ej: 2845878432',
     },
@@ -1109,7 +1132,8 @@ export const stringsEs = {
         post_reply: 'Publicar Respuesta',
         submit_reply: 'Enviar Respuesta',
         ticket_resolved: 'Ticket Resuelto',
-        ticket_locked_description: 'Este ticket fue marcado como resuelto y ahora está bloqueado para más conversación.',
+        ticket_locked_description:
+            'Este ticket fue marcado como resuelto y ahora está bloqueado para más conversación.',
         status: 'Estado',
         status_open: 'ABIERTO',
         status_closed: 'CERRADO',
@@ -1126,9 +1150,13 @@ export const stringsEs = {
         uploading: 'FastDL: subiendo {{done}} de {{total}} archivos ({{bytes_done}} de {{bytes_total}})',
         cleaning: 'FastDL: eliminando archivos antiguos del servidor de FastDL…',
         running: 'FastDL: sincronizando…',
-        completed: 'FastDL sincronizado el {{date}}: {{uploaded}} archivo(s) enviado(s), {{deleted}} eliminado(s), {{skipped}} archivo(s) original(es) del juego omitido(s).',
+        completed:
+            'FastDL sincronizado el {{date}}: {{uploaded}} archivo(s) enviado(s), {{deleted}} eliminado(s), {{skipped}} archivo(s) original(es) del juego omitido(s).',
         failed: 'FastDL: la última sincronización ({{date}}) falló: {{error}}',
         unavailable: 'El estado de FastDL no está disponible en este momento.',
-        no_manifest: 'FastDL está bloqueado hasta que se mapeen los archivos originales del juego de este servidor (para que nunca se suban). Reinstale el servidor o contacte con soporte.',
+        no_manifest:
+            'FastDL está bloqueado hasta que se mapeen los archivos originales del juego de este servidor (para que nunca se suban). Reinstale el servidor o contacte con soporte.',
+        file_types: 'Tipos de archivo sincronizados:',
+        originals_note: 'Los archivos originales del juego nunca se suben; los jugadores ya los tienen.',
     },
 };

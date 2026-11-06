@@ -21,6 +21,8 @@ export interface FastDlStatus {
     /** null when Wings could not be reached or does not report it. */
     sync: FastDlSyncStatus | null;
     manifest: { exists: boolean } | null;
+    /** File types (globs) synchronized for this game; null when no FastDL node serves it. */
+    file_types: string[] | null;
 }
 
 export default async (uuid: string): Promise<FastDlStatus> => {

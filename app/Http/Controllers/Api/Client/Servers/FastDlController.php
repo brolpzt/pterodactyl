@@ -46,9 +46,15 @@ class FastDlController extends ClientApiController
             $manifest = null;
         }
 
+        $server->loadMissing(['node', 'egg.nest']);
+
         return [
             'object' => 'fastdl_status',
-            'attributes' => ['sync' => $sync, 'manifest' => $manifest],
+            'attributes' => [
+                'sync' => $sync,
+                'manifest' => $manifest,
+                'file_types' => $this->syncService->fileTypesFor($server),
+            ],
         ];
     }
 

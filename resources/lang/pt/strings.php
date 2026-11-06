@@ -322,5 +322,7 @@ return [
         'failed' => 'FastDL: a última sincronização (:date) falhou: :error',
         'unavailable' => 'O status do FastDL está indisponível no momento.',
         'no_manifest' => 'O FastDL está bloqueado até os arquivos originais do jogo deste servidor serem mapeados (para nunca serem enviados). Reinstale o servidor ou fale com o suporte.',
+        'file_types' => 'Tipos de arquivo sincronizados:',
+        'originals_note' => 'Arquivos originais do jogo nunca são enviados; os jogadores já os têm.',
     ],
 ];

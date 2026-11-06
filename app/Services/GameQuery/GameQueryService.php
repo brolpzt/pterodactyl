@@ -13,8 +13,10 @@ use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 
 class GameQueryService
 {
-    public function __construct(private DaemonGameQueryRepository $daemonGameQueryRepository)
-    {
+    public function __construct(
+        private DaemonGameQueryRepository $daemonGameQueryRepository,
+        private PlutoniumMasterList $plutoniumMasterList,
+    ) {
     }
 
     public function query(Server $server): array
@@ -49,6 +51,11 @@ class GameQueryService
         }
 
         $port = (int) $allocation->port;
+
+        if ($gameType === GameDigTypeResolver::PLUTONIUM) {
+            return $this->formatResponse($server, $gameType, $allocation->alias, $port, $port, $this->queryPlutonium($server, $port));
+        }
+
         $queryPort = $this->resolveQueryPort($server, $gameType, $port);
 
         try {
@@ -63,6 +70,53 @@ class GameQueryService
 
         // Prefer alias (public/GCore IP) over the private bind address.
         return $this->formatResponse($server, $gameType, $allocation->alias, $port, $queryPort, $result);
+    }
+
+    /**
+     * Looks the server up in the plutonium.pw list and converts the entry to the
+     * shape Wings returns, so formatResponse() handles both.
+     */
+    private function queryPlutonium(Server $server, int $port): array
+    {
+        $server->loadMissing('node');
+        $allocation = $server->allocation;
+
+        // Plutonium lists the address its heartbeats come from: try every address the server may use.
+        $ips = [$allocation->ip_alias, $allocation->ip];
+        foreach ([$allocation->ip_alias, $server->node?->fqdn] as $host) {
+            if (is_string($host) && $host !== '' && filter_var($host, FILTER_VALIDATE_IP) === false) {
+                $ips = array_merge($ips, gethostbynamel($host) ?: []);
+            } else {
+                $ips[] = $host;
+            }
+        }
+        $ips = array_merge($ips, array_map('trim', explode(',', (string) config('services.plutonium.extra_ips', ''))));
+
+        $entry = $this->plutoniumMasterList->find($ips, $port);
+        if ($entry === null) {
+            return ['online' => false, 'port' => $port, 'query_port' => $port];
+        }
+
+        $players = array_map(static fn ($player) => [
+            'name' => is_array($player) ? ($player['username'] ?? null) : null,
+            'ping' => is_array($player) && isset($player['ping']) ? (int) $player['ping'] : null,
+        ], array_values(array_filter((array) ($entry['players'] ?? []), 'is_array')));
+
+        return [
+            'online' => true,
+            'port' => $port,
+            'query_port' => $port,
+            'hostname' => $entry['hostname'] ?? null,
+            'map' => $entry['map'] ?? null,
+            'game' => $entry['game'] ?? null,
+            'gametype' => $entry['gametype'] ?? null,
+            'players' => count($players),
+            'bots' => (int) ($entry['bots'] ?? 0),
+            'max_players' => (int) ($entry['maxplayers'] ?? 0),
+            'password_protected' => (bool) ($entry['password'] ?? false),
+            'version' => isset($entry['revision']) ? 'r' . $entry['revision'] : null,
+            'player_list' => $players,
+        ];
     }
 
     private function resolveQueryPort(Server $server, string $gameType, int $defaultPort): int
@@ -142,6 +196,8 @@ class GameQueryService
             'max_players' => $maxPlayers,
             'password_protected' => (bool) ($result['password_protected'] ?? false),
             'version' => $result['version'] ?? null,
+            'gametype' => $result['gametype'] ?? null,
+            'bots' => isset($result['bots']) ? (int) $result['bots'] : null,
             'player_list' => $players,
             'queried_at' => $result['queried_at'] ?? now()->toAtomString(),
             'slots' => SlotMismatchResolver::resolve($server, $online, $maxPlayers),

@@ -13,6 +13,12 @@ return [
     |
     */
 
+    // Extra addresses the Plutonium list may show for our servers (comma separated),
+    // e.g. the NAT/egress IP when it differs from the allocation IP/alias.
+    'plutonium' => [
+        'extra_ips' => env('PLUTONIUM_EXTRA_IPS', ''),
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],

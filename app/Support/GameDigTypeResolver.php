@@ -5,6 +5,11 @@ namespace Pterodactyl\Support;
 class GameDigTypeResolver
 {
     /**
+     * Plutonium servers (T4/T5/T6/IW5) are read from the plutonium.pw list, not via Wings.
+     */
+    public const PLUTONIUM = 'plutonium';
+
+    /**
      * Aliases comuns do campo gamedig → tipo de protocolo consultado pelo Wings (gjq).
      *
      * @var array<string, string>
@@ -44,6 +49,17 @@ class GameDigTypeResolver
         'dragonwilds' => 'dragonwilds',
         'rsdragonwilds' => 'dragonwilds',
         'runescapedragonwilds' => 'dragonwilds',
+        // Plutonium (T4/T5/T6/IW5) — read from the plutonium.pw server list.
+        'plutonium' => self::PLUTONIUM,
+        'plutoniumt6' => self::PLUTONIUM,
+        't6' => self::PLUTONIUM,
+        't6mp' => self::PLUTONIUM,
+        't6zm' => self::PLUTONIUM,
+        'bo2' => self::PLUTONIUM,
+        'blackops2' => self::PLUTONIUM,
+        'iw5mp' => self::PLUTONIUM,
+        't5mp' => self::PLUTONIUM,
+        't4mp' => self::PLUTONIUM,
     ];
 
     /**
@@ -87,7 +103,7 @@ class GameDigTypeResolver
         'l4d', 'l4d2', 'left-4-dead', 'left-4-dead-2', 'mc', 'mcbe', 'mcje', 'minecraft',
         'minecraft-bedrock', 'minecraft-java', 'miscreated', 'moe', 'mohaa', 'mordhau', 'mw2', 'mw3',
         'myth-of-empires', 'natural-selection-2', 'nd', 'neotokyo', 'nmrih', 'no-more-room-in-hell',
-        'ns2', 'nt', 'nuclear-dawn', 'opfor', 'palworld', 'pirates-vikings-and-knights-ii', 'pixark',
+        'ns2', 'nt', 'nuclear-dawn', 'opfor', 'palworld', 'plutonium', 'pirates-vikings-and-knights-ii', 'pixark',
         'project-zomboid', 'pvkii', 'pw', 'pz', 'ql', 'quake-live', 'red-orchestra-2', 'reforger',
         'ricochet', 'rising-storm-2', 'ro2', 'rs2', 'rsdragonwilds', 'runescapedragonwilds', 'rust', 's44', 'samp', 'se', 'sons-of-the-forest',
         'sotf', 'soulmask', 'space-engineers', 'squad', 'squad-44', 'starbound', 'sven-coop', 'svencoop',
@@ -133,6 +149,6 @@ class GameDigTypeResolver
 
     private static function normalizeSlug(string $value): string
     {
-        return strtolower(preg_replace('/[^a-z0-9]/', '', trim($value)) ?? '');
+        return preg_replace('/[^a-z0-9]/', '', strtolower(trim($value))) ?? '';
     }
 }

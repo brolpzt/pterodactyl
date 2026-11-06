@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import useSWR from 'swr';
 import { format, parseISO } from 'date-fns';
 import tw from 'twin.macro';
-import styled from 'styled-components/macro';
+import { faShieldVirus } from '@fortawesome/free-solid-svg-icons';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Spinner from '@/components/elements/Spinner';
+import TitledGreyBox from '@/components/elements/TitledGreyBox';
+import Button from '@/components/elements/Button';
 import PeriodSelector, { PeriodOption, PeriodValue } from '@/components/elements/PeriodSelector';
 import { ServerContext } from '@/state/server';
 import { useStoreState } from 'easy-peasy';
@@ -13,9 +15,8 @@ import {
     getAntiDdosEvent,
     getAntiDdosEvents,
 } from '@/api/server/antiDdos/getAntiDdosEvents';
-import { cardLabelText, cardSurface, cardValueText } from '@/assets/css/cardTheme';
-import { glassCardShell, glassContentLayer } from '@/assets/css/glassPanel';
-import { hgRadiusSm } from '@/assets/css/borderTheme';
+import AntiDdosEventModal from '@/components/server/antiDdos/AntiDdosEventModal';
+import { cardLabelText, cardRowBorder, cardValueText, emptyStateText } from '@/assets/css/cardTheme';
 
 const PERIOD_OPTIONS: PeriodOption[] = [
     { value: '15m', label: '15 min' },
@@ -25,17 +26,6 @@ const PERIOD_OPTIONS: PeriodOption[] = [
     { value: '7d', label: '7 dias' },
     { value: '30d', label: '30 dias' },
 ];
-
-const CardShell = styled.div.attrs({ className: 'hg-glass-card' })`
-    ${glassCardShell};
-    ${hgRadiusSm};
-`;
-
-const CardInner = styled.div`
-    ${glassContentLayer};
-    ${cardSurface};
-    ${tw`relative z-10 p-4`};
-`;
 
 const formatBps = (value: number | null | undefined): string => {
     if (value === null || value === undefined) return '—';
@@ -95,11 +85,9 @@ export default () => {
     if (!rootAdmin) {
         return (
             <ServerContentBlock title={'Anti-DDoS'}>
-                <CardShell>
-                    <CardInner>
-                        <p css={[cardValueText, tw`m-0`]}>Esta página está disponível apenas para administradores.</p>
-                    </CardInner>
-                </CardShell>
+                <TitledGreyBox title={'Anti-DDoS (beta)'} icon={faShieldVirus}>
+                    <p css={[cardValueText, tw`m-0`]}>Esta página está disponível apenas para administradores.</p>
+                </TitledGreyBox>
             </ServerContentBlock>
         );
     }
@@ -112,172 +100,144 @@ export default () => {
         );
     }
 
+    const endpointsLabel = data?.endpoints?.length
+        ? data.endpoints.map((e) => `${e.ip}:${e.port}`).join(', ')
+        : data?.ips?.length
+        ? data.ips.join(', ')
+        : null;
+
     return (
         <ServerContentBlock title={'Anti-DDoS'}>
+            <AntiDdosEventModal
+                visible={selectedId !== null}
+                loading={detailLoading}
+                error={Boolean(detailError)}
+                detail={detail}
+                startedLabel={formatWhen(detail?.attack_start_time)}
+                endedLabel={formatWhen(detail?.attack_end_time)}
+                onDismissed={() => setSelectedId(null)}
+            />
+
             <div css={tw`mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3`}>
                 <div>
-                    <h2 css={tw`text-xl font-header font-medium text-gray-100 m-0`}>Anti-DDoS (beta)</h2>
+                    <h2 css={tw`text-xl font-header font-medium text-neutral-100 m-0`}>Anti-DDoS (beta)</h2>
                     <p css={[cardLabelText, tw`text-sm mt-1 mb-0`]}>
-                        Só eventos que atingiram as portas deste servidor
-                        {data?.endpoints?.length
-                            ? `: ${data.endpoints.map((e) => `${e.ip}:${e.port}`).join(', ')}`
-                            : data?.ips?.length
-                            ? ` (IP: ${data.ips.join(', ')})`
-                            : ''}
-                        .
+                        Eventos filtrados pelas portas deste servidor
+                        {endpointsLabel ? `: ${endpointsLabel}` : ''}.
                     </p>
                 </div>
                 <PeriodSelector value={period} options={PERIOD_OPTIONS} onChange={onPeriodChange} />
             </div>
 
             {!data?.supported ? (
-                <CardShell>
-                    <CardInner>
-                        <p css={[cardValueText, tw`m-0`]}>
-                            Este servidor não tem IP Gcore protegido associado. Marca o IP em Node → Gcore IPs.
-                        </p>
-                    </CardInner>
-                </CardShell>
+                <TitledGreyBox title={'Proteção Gcore'} icon={faShieldVirus}>
+                    <p css={[cardValueText, tw`m-0`]}>
+                        Este servidor não tem IP Gcore protegido associado. Marca o IP em Node → Gcore IPs.
+                    </p>
+                </TitledGreyBox>
             ) : (
-                <div css={tw`grid grid-cols-1 xl:grid-cols-5 gap-4`}>
-                    <div css={tw`xl:col-span-2 space-y-3`}>
-                        {(data.events || []).length === 0 ? (
-                            <CardShell>
-                                <CardInner>
-                                    <p css={[cardValueText, tw`m-0`]}>
-                                        Sem eventos neste período nas portas deste servidor. O sync corre a cada 5
-                                        minutos.
-                                    </p>
-                                </CardInner>
-                            </CardShell>
-                        ) : (
-                            data.events.map((event: AntiDdosEventSummary) => {
-                                const active = selectedId === event.id;
-                                const ports = (event.ports || [])
-                                    .map((port) => `${event.targeted_ip}:${port}`)
-                                    .join(', ');
+                <TitledGreyBox title={'Eventos'} icon={faShieldVirus}>
+                    {(data.events || []).length === 0 ? (
+                        <p css={[emptyStateText, tw`py-4 m-0`]}>
+                            Sem eventos neste período nas portas deste servidor. O sync corre a cada 5 minutos.
+                        </p>
+                    ) : (
+                        <div css={tw`overflow-x-auto -mx-1`}>
+                            <table css={tw`w-full text-sm`}>
+                                <thead>
+                                    <tr css={[tw`border-b`, cardRowBorder]}>
+                                        <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>Início</th>
+                                        <th css={[cardLabelText, tw`text-left py-2 font-medium hidden md:table-cell`]}>
+                                            Alvo
+                                        </th>
+                                        <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>Estado</th>
+                                        <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>Potência</th>
+                                        <th css={[cardLabelText, tw`text-right py-2 font-medium hidden sm:table-cell`]}>
+                                            Pacotes
+                                        </th>
+                                        <th css={[cardLabelText, tw`text-right py-2 font-medium hidden lg:table-cell`]}>
+                                            Parte
+                                        </th>
+                                        <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(data.events || []).map((event: AntiDdosEventSummary) => {
+                                        const target =
+                                            (event.ports || [])
+                                                .map((port) => `${event.targeted_ip}:${port}`)
+                                                .join(', ') || event.targeted_ip;
 
-                                return (
-                                    <button
-                                        key={event.id}
-                                        type={'button'}
-                                        onClick={() => setSelectedId(event.id)}
-                                        css={[
-                                            tw`w-full text-left transition`,
-                                            active ? tw`ring-1 ring-primary-400` : tw`opacity-95 hover:opacity-100`,
-                                        ]}
-                                    >
-                                        <CardShell>
-                                            <CardInner>
-                                                <div css={tw`flex items-center justify-between gap-2 mb-1`}>
-                                                    <span css={[cardValueText, tw`font-medium m-0`]}>
-                                                        {formatWhen(event.attack_start_time)}
-                                                    </span>
+                                        return (
+                                            <tr
+                                                key={event.id}
+                                                css={[
+                                                    tw`border-b last:border-0 cursor-pointer transition hover:bg-neutral-700/30`,
+                                                    cardRowBorder,
+                                                ]}
+                                                onClick={() => setSelectedId(event.id)}
+                                            >
+                                                <td css={[cardValueText, tw`py-3 pr-3 whitespace-nowrap`]}>
+                                                    {formatWhen(event.attack_start_time)}
+                                                </td>
+                                                <td
+                                                    css={[
+                                                        cardValueText,
+                                                        tw`py-3 pr-3 font-mono text-xs hidden md:table-cell`,
+                                                    ]}
+                                                >
+                                                    {target}
+                                                </td>
+                                                <td css={tw`py-3 pr-3`}>
                                                     <span
                                                         css={[
-                                                            tw`text-xs px-2 py-0.5 rounded`,
+                                                            tw`inline-block text-xs px-2 py-0.5 rounded`,
                                                             event.ongoing
                                                                 ? tw`bg-red-500/20 text-red-300`
-                                                                : tw`bg-gray-600/40 text-gray-200`,
+                                                                : tw`bg-neutral-600/40 text-neutral-200`,
                                                         ]}
                                                     >
                                                         {event.ongoing ? 'Em curso' : 'Terminado'}
                                                     </span>
-                                                </div>
-                                                <p css={[cardLabelText, tw`text-sm m-0`]}>
-                                                    {formatBps(event.attack_power_bps)} · {formatPps(event.attack_power_pps)}
+                                                </td>
+                                                <td css={[cardValueText, tw`py-3 pr-3 text-right whitespace-nowrap`]}>
+                                                    {formatBps(event.attack_power_bps)}
+                                                </td>
+                                                <td
+                                                    css={[
+                                                        cardValueText,
+                                                        tw`py-3 pr-3 text-right whitespace-nowrap hidden sm:table-cell`,
+                                                    ]}
+                                                >
+                                                    {formatPps(event.attack_power_pps)}
+                                                </td>
+                                                <td
+                                                    css={[
+                                                        cardValueText,
+                                                        tw`py-3 pr-3 text-right whitespace-nowrap hidden lg:table-cell`,
+                                                    ]}
+                                                >
                                                     {event.share_percentage != null
-                                                        ? ` · ${event.share_percentage}% do evento`
-                                                        : ''}
-                                                </p>
-                                                {ports && (
-                                                    <p css={[cardLabelText, tw`text-xs m-0 mt-1`]}>{ports}</p>
-                                                )}
-                                            </CardInner>
-                                        </CardShell>
-                                    </button>
-                                );
-                            })
-                        )}
-                    </div>
-
-                    <div css={tw`xl:col-span-3`}>
-                        {!selectedId ? (
-                            <CardShell>
-                                <CardInner>
-                                    <p css={[cardValueText, tw`m-0`]}>Seleciona um evento à esquerda para ver o detalhe.</p>
-                                </CardInner>
-                            </CardShell>
-                        ) : detailLoading && !detail ? (
-                            <Spinner size={'large'} centered />
-                        ) : detailError ? (
-                            <CardShell>
-                                <CardInner>
-                                    <p css={[cardValueText, tw`m-0 text-red-300`]}>Falha ao carregar o detalhe do evento.</p>
-                                </CardInner>
-                            </CardShell>
-                        ) : detail ? (
-                            <div css={tw`space-y-4`}>
-                                <div css={tw`grid grid-cols-2 md:grid-cols-4 gap-3`}>
-                                    <CardShell>
-                                        <CardInner>
-                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Potência (esta porta)</p>
-                                            <p css={[cardValueText, tw`m-0`]}>{formatBps(detail.attack_power_bps)}</p>
-                                        </CardInner>
-                                    </CardShell>
-                                    <CardShell>
-                                        <CardInner>
-                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Pacotes (esta porta)</p>
-                                            <p css={[cardValueText, tw`m-0`]}>{formatPps(detail.attack_power_pps)}</p>
-                                        </CardInner>
-                                    </CardShell>
-                                    <CardShell>
-                                        <CardInner>
-                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Parte do evento</p>
-                                            <p css={[cardValueText, tw`m-0`]}>
-                                                {detail.share_percentage != null ? `${detail.share_percentage}%` : '—'}
-                                            </p>
-                                        </CardInner>
-                                    </CardShell>
-                                    <CardShell>
-                                        <CardInner>
-                                            <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Fim</p>
-                                            <p css={[cardValueText, tw`m-0`]}>{formatWhen(detail.attack_end_time)}</p>
-                                        </CardInner>
-                                    </CardShell>
-                                </div>
-
-                                <CardShell>
-                                    <CardInner>
-                                        <p css={[cardLabelText, tw`text-xs m-0 mb-1`]}>Alvo deste servidor</p>
-                                        <p css={[cardValueText, tw`m-0`]}>
-                                            {(detail.ports || [])
-                                                .map((port) => `${detail.targeted_ip}:${port}`)
-                                                .join(', ') || `${detail.targeted_ip}`}
-                                        </p>
-                                    </CardInner>
-                                </CardShell>
-
-                                <div css={tw`grid grid-cols-1 md:grid-cols-2 gap-4`}>
-                                    <DetailList
-                                        title={'Portas deste servidor'}
-                                        rows={(detail.attack_top_destination_ports || []).map(
-                                            (p) =>
-                                                `${detail.targeted_ip}:${p.dst_port ?? '?'}/${p.protocol || '?'} · ${formatBps(p.bps ?? null)} (${p.bps_percentage ?? 0}%)`
-                                        )}
-                                    />
-                                    <DetailList
-                                        title={'Protocolos nestas portas'}
-                                        rows={(detail.attack_top_protocols || []).map(
-                                            (p) =>
-                                                `${p.protocol || '?'} · ${formatBps(p.bps ?? null)} (${p.bps_percentage ?? 0}%)`
-                                        )}
-                                    />
-                                </div>
-                            </div>
-                        ) : null}
-                    </div>
-                </div>
+                                                        ? `${event.share_percentage}%`
+                                                        : '—'}
+                                                </td>
+                                                <td css={tw`py-3 text-right`} onClick={(e) => e.stopPropagation()}>
+                                                    <Button
+                                                        isSecondary
+                                                        size={'xsmall'}
+                                                        onClick={() => setSelectedId(event.id)}
+                                                    >
+                                                        Ver
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </TitledGreyBox>
             )}
 
             {error && (
@@ -286,22 +246,3 @@ export default () => {
         </ServerContentBlock>
     );
 };
-
-const DetailList = ({ title, rows }: { title: string; rows: string[] }) => (
-    <CardShell>
-        <CardInner>
-            <p css={[cardLabelText, tw`text-xs uppercase tracking-wide m-0 mb-2`]}>{title}</p>
-            {rows.length === 0 ? (
-                <p css={[cardValueText, tw`m-0 text-sm`]}>Sem dados</p>
-            ) : (
-                <ul css={tw`m-0 pl-4 space-y-1`}>
-                    {rows.map((row) => (
-                        <li key={row} css={[cardValueText, tw`text-sm`]}>
-                            {row}
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </CardInner>
-    </CardShell>
-);

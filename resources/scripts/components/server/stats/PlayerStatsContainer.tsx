@@ -89,6 +89,37 @@ export default () => {
     const { data, error, isValidating } = usePlayerStats(true, period);
     const periodLabel = PERIOD_LABELS[data?.period || period] || period;
 
+    // Match the chart: use the browser timezone, not app UTC.
+    const busiestLocal = useMemo(() => {
+        const samples = data?.samples ?? [];
+        if (samples.length === 0) {
+            return null;
+        }
+
+        const buckets = new Map<number, number[]>();
+        for (const sample of samples) {
+            const hour = parseISO(sample.sampled_at).getHours();
+            const list = buckets.get(hour) ?? [];
+            list.push(sample.players);
+            buckets.set(hour, list);
+        }
+
+        let bestHour = 0;
+        let bestAvg = -1;
+        buckets.forEach((values, hour) => {
+            const avg = values.reduce((sum, n) => sum + n, 0) / values.length;
+            if (avg > bestAvg) {
+                bestAvg = avg;
+                bestHour = hour;
+            }
+        });
+
+        return {
+            hour: bestHour,
+            average_players: Math.round(bestAvg * 100) / 100,
+        };
+    }, [data?.samples]);
+
     const chart = useMemo(() => {
         const samples = data?.samples ?? [];
         const short = ['15m', '1h', '6h'].includes(data?.period || period);
@@ -214,11 +245,11 @@ export default () => {
                         <SummaryCard label={`Pico (${periodLabel})`} value={formatNumber(summary?.peak)} />
                         <SummaryCard label={`Média (${periodLabel})`} value={formatNumber(summary?.average, 1)} />
                         <SummaryCard
-                            label={'Hora com mais jogadores'}
+                            label={'Hora com mais jogadores (local)'}
                             value={
-                                summary?.busiest_hour
-                                    ? `${formatHourLabel(summary.busiest_hour.hour)} (~${formatNumber(
-                                          summary.busiest_hour.average_players,
+                                busiestLocal
+                                    ? `${formatHourLabel(busiestLocal.hour)} (~${formatNumber(
+                                          busiestLocal.average_players,
                                           1
                                       )})`
                                     : '—'

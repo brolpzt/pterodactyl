@@ -100,8 +100,10 @@ class PlayerStatsService
      */
     private function resolveBusiestHour(Collection $samples): ?array
     {
+        // Prefer Brazil local time for HostGamer ops; APP_TIMEZONE is UTC in production.
+        $timezone = config('app.stats_timezone', 'America/Sao_Paulo');
         $byHour = $samples
-            ->groupBy(static fn (ServerPlayerSample $sample) => (int) $sample->sampled_at->timezone(config('app.timezone'))->format('G'))
+            ->groupBy(static fn (ServerPlayerSample $sample) => (int) $sample->sampled_at->timezone($timezone)->format('G'))
             ->map(static fn (Collection $group) => round((float) $group->avg('players'), 2));
 
         if ($byHour->isEmpty()) {

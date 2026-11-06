@@ -78,6 +78,12 @@ return [
     'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
+    | Timezone used when aggregating player-stats "busiest hour" for the API.
+    | The client UI prefers the browser local timezone for display.
+    */
+    'stats_timezone' => env('APP_STATS_TIMEZONE', 'America/Sao_Paulo'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------

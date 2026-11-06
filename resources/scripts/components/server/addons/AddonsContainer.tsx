@@ -51,14 +51,20 @@ const AddonRow = ({ addon }: { addon: Addon }) => {
                 onClose={() => setModalVisible(false)}
                 onConfirmed={doInstall}
             >
-                Atenção: O seu servidor será desligado para a instalação do addon <strong>{addon.name}</strong>. Deseja continuar?
+                Atenção: O seu servidor será desligado para a instalação do addon <strong>{addon.name}</strong>
+                {addon.startAfterInstall
+                    ? ' e iniciado novamente quando a instalação terminar.'
+                    : ' e continuará desligado ao final; inicie-o pelo console quando quiser.'}{' '}
+                Deseja continuar?
                 {addon.reinstallServer && (
                     <p css={tw`mt-3 text-red-400 text-sm font-semibold`}>
                         Este addon pode modificar arquivos existentes. Realize um backup antes de continuar.
                     </p>
                 )}
             </Dialog.Confirm>
-            <tr css={tw`border-b border-neutral-600 last:border-b-0 hover:bg-neutral-600/20 transition-colors duration-100`}>
+            <tr
+                css={tw`border-b border-neutral-600 last:border-b-0 hover:bg-neutral-600/20 transition-colors duration-100`}
+            >
                 <td css={tw`px-2 py-3 w-1/4`}>
                     <p css={tw`text-sm font-medium text-neutral-100`}>{addon.name}</p>
                 </td>

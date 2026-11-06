@@ -71,6 +71,13 @@
                         </div>
                         <p class="text-muted small">If checked, the panel will prompt users that their server will be reinstalled when they install this addon.</p>
                     </div>
+                    <div class="form-group">
+                        <div class="checkbox checkbox-primary no-margin-bottom">
+                            <input id="pStartAfterInstall" name="start_after_install" type="checkbox" value="1" {{ old('start_after_install', $addon->start_after_install) ? 'checked' : '' }} />
+                            <label for="pStartAfterInstall" class="strong">Iniciar o servidor ao terminar a instalação?</label>
+                        </div>
+                        <p class="text-muted small">Se marcado, o servidor é iniciado automaticamente quando o script deste addon termina com sucesso. Se desmarcado, o servidor continua desligado.</p>
+                    </div>
                 </div>
             </div>
         </div>

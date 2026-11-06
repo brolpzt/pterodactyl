@@ -27,6 +27,7 @@ class AddonTransformer extends BaseClientTransformer
             'container_image' => $addon->container_image,
             'is_active' => $addon->is_active,
             'reinstall_server' => $addon->reinstall_server,
+            'start_after_install' => $addon->start_after_install,
             'category_id' => $addon->category_id,
             'category_name' => $addon->category ? $addon->category->name : 'Uncategorized',
             'created_at' => $addon->created_at->toIso8601String(),

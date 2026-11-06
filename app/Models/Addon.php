@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string $script
  * @property string $container_image
  * @property bool $reinstall_server
+ * @property bool $start_after_install
  * @property bool $is_active
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
@@ -47,6 +48,7 @@ class Addon extends Model
     protected $casts = [
         'is_active' => 'bool',
         'reinstall_server' => 'bool',
+        'start_after_install' => 'bool',
         'egg_id' => 'int',
         'category_id' => 'int',
     ];
@@ -62,6 +64,7 @@ class Addon extends Model
         'script' => 'required|string',
         'container_image' => 'required|string|max:191',
         'reinstall_server' => 'sometimes|boolean',
+        'start_after_install' => 'sometimes|boolean',
         'is_active' => 'sometimes|boolean',
     ];
 

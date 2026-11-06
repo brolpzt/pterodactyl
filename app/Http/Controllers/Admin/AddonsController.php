@@ -52,6 +52,7 @@ class AddonsController extends Controller
         $data = $request->validated();
         $data['is_active'] = $request->has('is_active');
         $data['reinstall_server'] = $request->has('reinstall_server');
+        $data['start_after_install'] = $request->boolean('start_after_install');
         
         $addon->fill($data)->save();
 
@@ -79,6 +80,7 @@ class AddonsController extends Controller
         $data = $request->validated();
         $data['is_active'] = $request->has('is_active');
         $data['reinstall_server'] = $request->has('reinstall_server');
+        $data['start_after_install'] = $request->boolean('start_after_install');
         
         $addon->fill($data)->save();
 

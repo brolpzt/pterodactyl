@@ -55,6 +55,8 @@ class AddonController extends ClientApiController
         $this->daemonServerRepository->setServer($server)->executeAddon([
             'script' => $addon->script,
             'container_image' => $addon->container_image,
+            // Wings starts the server once the script finishes successfully.
+            'start_on_completion' => $addon->start_after_install,
         ]);
 
         // Mark as installed in the pivot table

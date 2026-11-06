@@ -29,6 +29,7 @@ class AddonTransformer extends BaseTransformer
             'script' => $addon->script,
             'container_image' => $addon->container_image,
             'reinstall_server' => $addon->reinstall_server,
+            'start_after_install' => $addon->start_after_install,
             'is_active' => $addon->is_active,
             'created_at' => $addon->created_at->toIso8601String(),
             'updated_at' => $addon->updated_at->toIso8601String(),

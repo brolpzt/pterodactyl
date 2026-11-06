@@ -6,9 +6,13 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\ServerPlayerSample;
+use Pterodactyl\Support\TimePeriod;
 
 class PlayerStatsService
 {
+    /** @var list<string> */
+    public const PERIODS = ['15m', '1h', '6h', '24h', '7d'];
+
     public function __construct(private PlayerCountSamplingService $samplingService)
     {
     }
@@ -18,7 +22,7 @@ class PlayerStatsService
      *
      * @return array{
      *     supported: bool,
-     *     days: int,
+     *     period: string,
      *     samples: list<array{sampled_at: string, players: int, max_players: int, online: bool}>,
      *     summary: array{
      *         current: int|null,
@@ -28,12 +32,17 @@ class PlayerStatsService
      *     }
      * }
      */
-    public function forServer(Server $server, int $days = PlayerCountSamplingService::RETENTION_DAYS): array
+    public function forServer(Server $server, ?string $period = '7d'): array
     {
-        $days = max(1, min(PlayerCountSamplingService::RETENTION_DAYS, $days));
-        $supported = $this->samplingService->supportsPlayerStats($server) || $this->hasAnySamples($server);
+        $period = TimePeriod::normalize($period, self::PERIODS, '7d');
+        // Hard cap to sampling retention.
+        if (TimePeriod::seconds($period) > TimePeriod::seconds('7d')) {
+            $period = '7d';
+        }
 
-        $since = Carbon::now()->subDays($days);
+        $supported = $this->samplingService->supportsPlayerStats($server) || $this->hasAnySamples($server);
+        $since = TimePeriod::since($period);
+
         $samples = ServerPlayerSample::query()
             ->where('server_id', $server->id)
             ->where('sampled_at', '>=', $since)
@@ -42,7 +51,7 @@ class PlayerStatsService
 
         return [
             'supported' => $supported,
-            'days' => $days,
+            'period' => $period,
             'samples' => $samples->map(static fn (ServerPlayerSample $sample) => [
                 'sampled_at' => $sample->sampled_at->toAtomString(),
                 'players' => (int) $sample->players,

@@ -1,4 +1,5 @@
 import http from '@/api/http';
+import type { PeriodValue } from '@/components/elements/PeriodSelector';
 
 export interface PlayerStatsSample {
     sampled_at: string;
@@ -19,14 +20,14 @@ export interface PlayerStatsSummary {
 
 export interface PlayerStatsResult {
     supported: boolean;
-    days: number;
+    period: PeriodValue;
     samples: PlayerStatsSample[];
     summary: PlayerStatsSummary;
 }
 
-export default async (uuid: string, days = 7): Promise<PlayerStatsResult> => {
+export default async (uuid: string, period: PeriodValue = '7d'): Promise<PlayerStatsResult> => {
     const { data } = await http.get(`/api/client/servers/${uuid}/player-stats`, {
-        params: { days },
+        params: { period },
     });
 
     return data.attributes as PlayerStatsResult;

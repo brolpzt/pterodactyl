@@ -15,15 +15,25 @@ class PlayerStatsController extends ClientApiController
     }
 
     /**
-     * Returns historical player-count samples for the server (up to 7 days).
+     * Returns historical player-count samples for the server.
+     *
+     * Query: period=15m|1h|6h|24h|7d (default 7d). Legacy ?days=N still accepted.
      */
     public function __invoke(GetServerRequest $request, Server $server): array
     {
-        $days = (int) $request->query('days', 7);
+        $period = $request->query('period');
+        if (!is_string($period) || $period === '') {
+            $days = (int) $request->query('days', 7);
+            $period = match (true) {
+                $days <= 0 => '7d',
+                $days === 1 => '24h',
+                default => '7d',
+            };
+        }
 
         return [
             'object' => 'player_stats',
-            'attributes' => $this->playerStatsService->forServer($server, $days),
+            'attributes' => $this->playerStatsService->forServer($server, $period),
         ];
     }
 }

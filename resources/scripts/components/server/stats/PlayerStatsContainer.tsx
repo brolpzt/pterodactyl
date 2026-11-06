@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
     CategoryScale,
@@ -15,6 +15,7 @@ import { theme } from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Spinner from '@/components/elements/Spinner';
 import ChartBlock from '@/components/server/console/ChartBlock';
+import PeriodSelector, { PeriodOption, PeriodValue } from '@/components/elements/PeriodSelector';
 import usePlayerStats from '@/api/swr/getPlayerStats';
 import { ServerContext } from '@/state/server';
 import { supportsGameQuery } from '@/lib/supportsGameQuery';
@@ -26,6 +27,22 @@ import { hgRadiusSm } from '@/assets/css/borderTheme';
 import type { ChartOptions } from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
+
+const PERIOD_OPTIONS: PeriodOption[] = [
+    { value: '15m', label: '15 min' },
+    { value: '1h', label: '1 h' },
+    { value: '6h', label: '6 h' },
+    { value: '24h', label: '24 h' },
+    { value: '7d', label: '7 dias' },
+];
+
+const PERIOD_LABELS: Record<string, string> = {
+    '15m': '15 min',
+    '1h': '1 h',
+    '6h': '6 h',
+    '24h': '24 h',
+    '7d': '7 dias',
+};
 
 const StatCardShell = styled.div.attrs({ className: 'hg-glass-card' })`
     ${glassCardShell};
@@ -67,12 +84,17 @@ export default () => {
     const gamedig = ServerContext.useStoreState((state) => state.server.data?.gamedig);
     const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
     const querySupported = supportsGameQuery(gamedig, eggId);
+    const [period, setPeriod] = useState<PeriodValue>('24h');
 
-    const { data, error, isValidating } = usePlayerStats(true, 7);
+    const { data, error, isValidating } = usePlayerStats(true, period);
+    const periodLabel = PERIOD_LABELS[data?.period || period] || period;
 
     const chart = useMemo(() => {
         const samples = data?.samples ?? [];
-        const labels = samples.map((sample) => format(parseISO(sample.sampled_at), 'dd/MM HH:mm'));
+        const short = ['15m', '1h', '6h'].includes(data?.period || period);
+        const labels = samples.map((sample) =>
+            format(parseISO(sample.sampled_at), short ? 'HH:mm' : 'dd/MM HH:mm')
+        );
         const players = samples.map((sample) => sample.players);
         const suggestedMax = Math.max(1, ...(samples.map((sample) => sample.max_players || sample.players)), 1);
 
@@ -150,7 +172,7 @@ export default () => {
             },
             options,
         };
-    }, [data?.samples]);
+    }, [data?.samples, data?.period, period]);
 
     if ((!data && !error) || (error && isValidating && !data)) {
         return (
@@ -166,11 +188,14 @@ export default () => {
 
     return (
         <ServerContentBlock title={'Stats'}>
-            <div css={tw`mb-4`}>
-                <h2 css={tw`text-xl font-header font-medium text-gray-100 m-0`}>Jogadores online</h2>
-                <p css={[cardLabelText, tw`text-sm mt-1 mb-0`]}>
-                    Histórico dos últimos 7 dias, com amostragem a cada 5 minutos.
-                </p>
+            <div css={tw`mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3`}>
+                <div>
+                    <h2 css={tw`text-xl font-header font-medium text-gray-100 m-0`}>Jogadores online</h2>
+                    <p css={[cardLabelText, tw`text-sm mt-1 mb-0`]}>
+                        Histórico do período selecionado · amostragem a cada 5 minutos.
+                    </p>
+                </div>
+                <PeriodSelector value={period} options={PERIOD_OPTIONS} onChange={setPeriod} />
             </div>
 
             {!supported ? (
@@ -186,8 +211,8 @@ export default () => {
                 <>
                     <div css={tw`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4`}>
                         <SummaryCard label={'Atual'} value={formatNumber(summary?.current)} />
-                        <SummaryCard label={'Pico (7 dias)'} value={formatNumber(summary?.peak)} />
-                        <SummaryCard label={'Média (7 dias)'} value={formatNumber(summary?.average, 1)} />
+                        <SummaryCard label={`Pico (${periodLabel})`} value={formatNumber(summary?.peak)} />
+                        <SummaryCard label={`Média (${periodLabel})`} value={formatNumber(summary?.average, 1)} />
                         <SummaryCard
                             label={'Hora com mais jogadores'}
                             value={
@@ -205,8 +230,8 @@ export default () => {
                         <StatCardShell>
                             <StatCardInner>
                                 <p css={[cardValueText, tw`m-0`]}>
-                                    Ainda não há amostras. A amostragem começa em breve e o gráfico aparece depois da
-                                    primeira coleta.
+                                    Ainda não há amostras neste período. A amostragem começa em breve e o gráfico
+                                    aparece depois da primeira coleta.
                                 </p>
                             </StatCardInner>
                         </StatCardShell>

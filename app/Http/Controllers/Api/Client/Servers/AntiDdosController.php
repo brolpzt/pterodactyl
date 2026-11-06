@@ -8,11 +8,15 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Pterodactyl\Models\GcoreAttackEvent;
 use Pterodactyl\Services\Gcore\GcoreAttackSyncService;
+use Pterodactyl\Support\TimePeriod;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
 use Pterodactyl\Http\Requests\Api\Client\Servers\GetServerRequest;
 
 class AntiDdosController extends ClientApiController
 {
+    /** @var list<string> */
+    public const PERIODS = ['15m', '1h', '6h', '24h', '7d', '30d', '90d'];
+
     public function __construct()
     {
         parent::__construct();
@@ -20,13 +24,25 @@ class AntiDdosController extends ClientApiController
 
     /**
      * List stored Gcore DDoS events for this server's protected IP(s).
+     *
+     * Query: period=15m|1h|6h|24h|7d|30d|90d (default 7d). Legacy ?days=N still accepted.
      */
     public function index(GetServerRequest $request, Server $server): array
     {
         $this->assertRootAdmin($request);
 
         $ips = GcoreAttackSyncService::protectedIpsForServer($server);
-        $days = max(1, min(90, (int) $request->query('days', 30)));
+        $period = $request->query('period');
+        if (!is_string($period) || $period === '') {
+            $days = max(1, min(90, (int) $request->query('days', 7)));
+            $period = match (true) {
+                $days <= 1 => '24h',
+                $days <= 7 => '7d',
+                $days <= 30 => '30d',
+                default => '90d',
+            };
+        }
+        $period = TimePeriod::normalize($period, self::PERIODS, '7d');
 
         if ($ips === []) {
             return [
@@ -34,7 +50,7 @@ class AntiDdosController extends ClientApiController
                 'attributes' => [
                     'supported' => false,
                     'ips' => [],
-                    'days' => $days,
+                    'period' => $period,
                     'events' => [],
                 ],
             ];
@@ -42,9 +58,9 @@ class AntiDdosController extends ClientApiController
 
         $events = GcoreAttackEvent::query()
             ->whereIn('targeted_ip', $ips)
-            ->where('attack_start_time', '>=', now()->subDays($days))
+            ->where('attack_start_time', '>=', TimePeriod::since($period))
             ->orderByDesc('attack_start_time')
-            ->limit(100)
+            ->limit(200)
             ->get()
             ->map(fn (GcoreAttackEvent $event) => $this->summaryPayload($event))
             ->values()
@@ -55,7 +71,7 @@ class AntiDdosController extends ClientApiController
             'attributes' => [
                 'supported' => true,
                 'ips' => $ips,
-                'days' => $days,
+                'period' => $period,
                 'events' => $events,
             ],
         ];

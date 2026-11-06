@@ -42,13 +42,18 @@ class PlayerStatsControllerTest extends ClientApiIntegrationTestCase
         $response->assertOk();
         $response->assertJsonPath('object', 'player_stats');
         $response->assertJsonPath('attributes.supported', true);
-        $response->assertJsonPath('attributes.days', 7);
+        $response->assertJsonPath('attributes.period', '7d');
         $response->assertJsonPath('attributes.summary.current', 6);
         $response->assertJsonPath('attributes.summary.peak', 10);
         $response->assertJsonPath('attributes.summary.average', 6.67);
         $this->assertCount(3, $response->json('attributes.samples'));
         $this->assertNotNull($response->json('attributes.summary.busiest_hour'));
         $this->assertSame(10.0, (float) $response->json('attributes.summary.busiest_hour.average_players'));
+
+        $short = $this->actingAs($user)->getJson("/api/client/servers/{$server->uuid}/player-stats?period=1h");
+        $short->assertOk();
+        $short->assertJsonPath('attributes.period', '1h');
+        $this->assertLessThanOrEqual(3, count($short->json('attributes.samples')));
     }
 
     public function testPlayerStatsEndpointReportsUnsupportedWithoutGamedig(): void

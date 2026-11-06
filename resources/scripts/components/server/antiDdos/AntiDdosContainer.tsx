@@ -17,10 +17,10 @@ import { theme } from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Spinner from '@/components/elements/Spinner';
 import ChartBlock from '@/components/server/console/ChartBlock';
+import PeriodSelector, { PeriodOption, PeriodValue } from '@/components/elements/PeriodSelector';
 import { ServerContext } from '@/state/server';
 import { useStoreState } from 'easy-peasy';
 import {
-    AntiDdosEventDetail,
     AntiDdosEventSummary,
     getAntiDdosEvent,
     getAntiDdosEvents,
@@ -32,6 +32,15 @@ import { hexToRgba } from '@/lib/helpers';
 import type { ChartOptions } from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
+
+const PERIOD_OPTIONS: PeriodOption[] = [
+    { value: '15m', label: '15 min' },
+    { value: '1h', label: '1 h' },
+    { value: '6h', label: '6 h' },
+    { value: '24h', label: '24 h' },
+    { value: '7d', label: '7 dias' },
+    { value: '30d', label: '30 dias' },
+];
 
 const CardShell = styled.div.attrs({ className: 'hg-glass-card' })`
     ${glassCardShell};
@@ -76,10 +85,16 @@ export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const rootAdmin = useStoreState((state) => state.user.data!.rootAdmin);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [period, setPeriod] = useState<PeriodValue>('7d');
+
+    const onPeriodChange = (next: PeriodValue) => {
+        setPeriod(next);
+        setSelectedId(null);
+    };
 
     const { data, error, isValidating } = useSWR(
-        rootAdmin ? ['server:anti-ddos', uuid] : null,
-        () => getAntiDdosEvents(uuid, 30),
+        rootAdmin ? ['server:anti-ddos', uuid, period] : null,
+        () => getAntiDdosEvents(uuid, period),
         { refreshInterval: 60_000, revalidateOnFocus: true }
     );
 
@@ -173,12 +188,15 @@ export default () => {
 
     return (
         <ServerContentBlock title={'Anti-DDoS'}>
-            <div css={tw`mb-4`}>
-                <h2 css={tw`text-xl font-header font-medium text-gray-100 m-0`}>Anti-DDoS (beta)</h2>
-                <p css={[cardLabelText, tw`text-sm mt-1 mb-0`]}>
-                    Eventos Gcore sincronizados localmente para o IP protegido deste servidor.
-                    {data?.ips?.length ? ` IP: ${data.ips.join(', ')}` : ''}
-                </p>
+            <div css={tw`mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3`}>
+                <div>
+                    <h2 css={tw`text-xl font-header font-medium text-gray-100 m-0`}>Anti-DDoS (beta)</h2>
+                    <p css={[cardLabelText, tw`text-sm mt-1 mb-0`]}>
+                        Eventos Gcore sincronizados localmente para o IP protegido deste servidor.
+                        {data?.ips?.length ? ` IP: ${data.ips.join(', ')}` : ''}
+                    </p>
+                </div>
+                <PeriodSelector value={period} options={PERIOD_OPTIONS} onChange={onPeriodChange} />
             </div>
 
             {!data?.supported ? (
@@ -196,7 +214,7 @@ export default () => {
                             <CardShell>
                                 <CardInner>
                                     <p css={[cardValueText, tw`m-0`]}>
-                                        Ainda sem eventos sincronizados para este IP. O sync corre a cada 5 minutos.
+                                        Sem eventos neste período. O sync corre a cada 5 minutos.
                                     </p>
                                 </CardInner>
                             </CardShell>

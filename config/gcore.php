@@ -28,5 +28,5 @@ return [
     /*
     | How many days of DDoS event logs to pull on each sync (local DB retention is 90 days).
     */
-    'attack_sync_days' => (int) env('GCORE_ATTACK_SYNC_DAYS', 7),
+    'attack_sync_days' => (int) env('GCORE_ATTACK_SYNC_DAYS', 30),
 ];

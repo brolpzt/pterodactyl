@@ -1,4 +1,5 @@
 import http from '@/api/http';
+import type { PeriodValue } from '@/components/elements/PeriodSelector';
 
 export interface AntiDdosEventSummary {
     id: string;
@@ -24,7 +25,7 @@ export interface AntiDdosEventSummary {
 export interface AntiDdosEventsResult {
     supported: boolean;
     ips: string[];
-    days: number;
+    period: PeriodValue;
     events: AntiDdosEventSummary[];
 }
 
@@ -59,9 +60,12 @@ export interface AntiDdosEventDetail extends AntiDdosEventSummary {
     }>;
 }
 
-export const getAntiDdosEvents = async (uuid: string, days = 30): Promise<AntiDdosEventsResult> => {
+export const getAntiDdosEvents = async (
+    uuid: string,
+    period: PeriodValue = '7d'
+): Promise<AntiDdosEventsResult> => {
     const { data } = await http.get(`/api/client/servers/${uuid}/anti-ddos/events`, {
-        params: { days },
+        params: { period },
     });
 
     return data.attributes as AntiDdosEventsResult;

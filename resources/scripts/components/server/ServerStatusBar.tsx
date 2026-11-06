@@ -136,7 +136,7 @@ const queryStatLabel = css`
 
 const queryStatValue = css`
     ${navText};
-    ${tw`block text-[13px] whitespace-nowrap truncate max-w-[8rem] sm:max-w-[10rem] xl:max-w-[12rem]`};
+    ${tw`block min-w-0 max-w-full text-[13px] whitespace-nowrap truncate`};
 `;
 
 const statsRowStyles = css`
@@ -148,8 +148,26 @@ const statsRowStyles = css`
     }
 `;
 
-const QueryStat = ({ label, value, title }: { label: string; value: string; title?: string }) => (
-    <div tw="flex flex-col flex-shrink-0 min-w-0">
+const QueryStat = ({
+    label,
+    value,
+    title,
+    narrow,
+}: {
+    label: string;
+    value: string;
+    title?: string;
+    /** Tighter width for long values like map names. */
+    narrow?: boolean;
+}) => (
+    <div
+        css={[
+            tw`flex flex-col min-w-0`,
+            narrow
+                ? tw`max-w-[6.5rem] sm:max-w-[8rem] xl:max-w-[9rem]`
+                : tw`flex-shrink-0 max-w-[8rem] sm:max-w-[10rem] xl:max-w-[12rem]`,
+        ]}
+    >
         <span css={queryStatLabel}>{label}</span>
         <span css={queryStatValue} title={title || value}>
             {value}
@@ -286,7 +304,12 @@ const ServerStatusBar = ({
                                                 value={queryHostname}
                                                 title={queryHostname !== '-' ? queryHostname : undefined}
                                             />
-                                            <QueryStat label="Mapa" value={queryMap} title={query?.map || undefined} />
+                                            <QueryStat
+                                                label="Mapa"
+                                                value={queryMap}
+                                                title={query?.map || undefined}
+                                                narrow
+                                            />
                                             <QueryStat label="Jogadores" value={queryPlayers} />
                                         </>
                                     )}

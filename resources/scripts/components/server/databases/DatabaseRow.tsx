@@ -122,25 +122,25 @@ export default ({ database, className }: Props) => {
                         <Input type={'text'} readOnly value={database.connectionString} />
                     </CopyOnClick>
                 </div>
-                <div css={tw`mt-6`}>
+                <div css={tw`mt-4`}>
                     <Label>Connections from</Label>
                     <Input type={'text'} readOnly value={database.allowConnectionsFrom} />
                 </div>
-                <div css={tw`mt-6`}>
+                <div css={tw`mt-4`}>
                     <Label>Username</Label>
                     <CopyOnClick text={database.username}>
                         <Input type={'text'} readOnly value={database.username} />
                     </CopyOnClick>
                 </div>
                 <Can action={'database.view_password'}>
-                    <div css={tw`mt-6`}>
+                    <div css={tw`mt-4`}>
                         <Label>Password</Label>
                         <CopyOnClick text={database.password} showInNotification={false}>
                             <Input type={'text'} readOnly value={database.password} />
                         </CopyOnClick>
                     </div>
                 </Can>
-                <div css={tw`mt-6`}>
+                <div css={tw`mt-4`}>
                     <Label>JDBC Connection String</Label>
                     <CopyOnClick text={jdbcConnectionString} showInNotification={false}>
                         <Input type={'text'} readOnly value={jdbcConnectionString} />

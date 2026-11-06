@@ -66,7 +66,7 @@ export default ({ match, location }: RouteComponentProps<{ token: string }>) => 
                         <label>Email</label>
                         <Input value={email} isLight disabled />
                     </div>
-                    <div css={tw`mt-6`}>
+                    <div css={tw`mt-4`}>
                         <Field
                             light
                             label={'New Password'}
@@ -75,7 +75,7 @@ export default ({ match, location }: RouteComponentProps<{ token: string }>) => 
                             description={'Passwords must be at least 8 characters in length.'}
                         />
                     </div>
-                    <div css={tw`mt-6`}>
+                    <div css={tw`mt-4`}>
                         <Field light label={'Confirm New Password'} name={'passwordConfirmation'} type={'password'} />
                     </div>
                     <div css={tw`mt-6`}>

@@ -72,7 +72,7 @@ export default () => {
                                 name={'current'}
                                 label={'Current Password'}
                             />
-                            <div css={tw`mt-6`}>
+                            <div css={tw`mt-4`}>
                                 <Field
                                     id={'new_password'}
                                     type={'password'}
@@ -83,7 +83,7 @@ export default () => {
                                     }
                                 />
                             </div>
-                            <div css={tw`mt-6`}>
+                            <div css={tw`mt-4`}>
                                 <Field
                                     id={'confirm_new_password'}
                                     type={'password'}

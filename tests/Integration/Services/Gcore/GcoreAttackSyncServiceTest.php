@@ -14,6 +14,30 @@ class GcoreAttackSyncServiceTest extends IntegrationTestCase
     public function testSyncUpsertsEventSummariesAndDetails(): void
     {
         Http::fake([
+            'api.gcore.com/security/notifier/v1/event_logs/11111111-1111-1111-1111-111111111111' => Http::response([
+                'id' => '11111111-1111-1111-1111-111111111111',
+                'alert_type' => 'ddos_alert',
+                'targeted_ip_addresses' => '203.0.113.10',
+                'attack_start_time' => now()->subHour()->toIso8601String(),
+                // Gcore frequently leaves this null even after the attack stops.
+                'attack_end_time' => null,
+                'attack_power_bps' => 1500000000,
+                'attack_power_pps' => 1200000,
+                'number_of_ip_involved_in_attack' => 42,
+                'advanced_stats_ready' => true,
+                'attack_traffic' => [[
+                    'dst_addr' => '203.0.113.10',
+                    'total_bytes' => 100,
+                    'total_packets' => 10,
+                    'interval_start_unix' => now()->subMinutes(15)->timestamp,
+                ]],
+                'attack_top_destination_ports' => [['dst_port' => 27015, 'protocol' => 'UDP', 'bps' => 1, 'bps_percentage' => 90]],
+                'attack_top_protocols' => [],
+                'attack_top_source_countries' => [],
+                'attack_top_source_ips' => [],
+                'attack_top_source_ports' => [],
+                'attack_packet_sizes' => [],
+            ]),
             'api.gcore.com/security/notifier/v1/event_logs*' => Http::response([
                 'count' => 1,
                 'limit' => 100,
@@ -30,24 +54,6 @@ class GcoreAttackSyncServiceTest extends IntegrationTestCase
                     'advanced_stats_ready' => true,
                 ]],
             ]),
-            'api.gcore.com/security/notifier/v1/event_logs/11111111-1111-1111-1111-111111111111' => Http::response([
-                'id' => '11111111-1111-1111-1111-111111111111',
-                'alert_type' => 'ddos_alert',
-                'targeted_ip_addresses' => '203.0.113.10',
-                'attack_start_time' => now()->subHour()->toIso8601String(),
-                'attack_end_time' => now()->subMinutes(10)->toIso8601String(),
-                'attack_power_bps' => 1500000000,
-                'attack_power_pps' => 1200000,
-                'number_of_ip_involved_in_attack' => 42,
-                'advanced_stats_ready' => true,
-                'attack_traffic' => [['dst_addr' => '203.0.113.10', 'total_bytes' => 100, 'total_packets' => 10, 'interval_start_unix' => time()]],
-                'attack_top_destination_ports' => [['dst_port' => 27015, 'protocol' => 'UDP', 'bps' => 1, 'bps_percentage' => 90]],
-                'attack_top_protocols' => [],
-                'attack_top_source_countries' => [],
-                'attack_top_source_ips' => [],
-                'attack_top_source_ports' => [],
-                'attack_packet_sizes' => [],
-            ]),
         ]);
 
         $service = new GcoreAttackSyncService(new GcoreClient('test-key'));
@@ -61,6 +67,8 @@ class GcoreAttackSyncServiceTest extends IntegrationTestCase
         $this->assertSame('203.0.113.10', $event->targeted_ip);
         $this->assertTrue($event->detail_fetched);
         $this->assertSame(27015, $event->detail['attack_top_destination_ports'][0]['dst_port']);
+        $this->assertNotNull($event->attack_end_time);
+        $this->assertFalse(GcoreAttackSyncService::isOngoing($event));
     }
 
     public function testProtectedIpsForServerUsesNodeGcoreIntersection(): void

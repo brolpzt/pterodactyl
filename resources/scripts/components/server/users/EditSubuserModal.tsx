@@ -125,7 +125,7 @@ const EditSubuserModal = ({ subuser }: Props) => {
                     </div>
                 )}
                 {!subuser && (
-                    <div css={tw`mt-6`}>
+                    <div css={tw`mt-4`}>
                         <Field
                             name={'email'}
                             label={'User Email'}

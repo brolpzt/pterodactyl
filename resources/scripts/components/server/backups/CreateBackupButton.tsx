@@ -34,7 +34,7 @@ const ModalContent = ({ ...props }: RequiredModalProps) => {
                     label={'Backup name'}
                     description={'If provided, the name that should be used to reference this backup.'}
                 />
-                <div css={tw`mt-6`}>
+                <div css={tw`mt-4`}>
                     <FormikFieldWrapper
                         name={'ignored'}
                         label={'Ignored Files & Directories'}
@@ -49,7 +49,7 @@ const ModalContent = ({ ...props }: RequiredModalProps) => {
                     </FormikFieldWrapper>
                 </div>
                 <Can action={'backup.delete'}>
-                    <div css={tw`mt-6 bg-neutral-700 border border-neutral-800 shadow-inner p-4 rounded`}>
+                    <div css={tw`mt-4 bg-neutral-700 border border-neutral-800 shadow-inner p-4 rounded`}>
                         <FormikSwitch
                             name={'isLocked'}
                             label={'Locked'}

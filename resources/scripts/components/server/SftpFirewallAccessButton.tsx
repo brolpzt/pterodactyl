@@ -50,7 +50,7 @@ export default ({ serverUuid }: { serverUuid: string }) => {
     };
 
     return (
-        <div css={tw`mt-6`}>
+        <div css={tw`mt-4`}>
             <p css={tw`text-xs text-neutral-300 mb-2`}>
                 {t('server_overview.sftp_firewall_help', {
                     minutes: access.ttlMinutes,

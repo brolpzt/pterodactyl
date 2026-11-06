@@ -78,7 +78,7 @@ export default () => {
                                 label={'Database Name'}
                                 description={'A descriptive name for your database instance.'}
                             />
-                            <div css={tw`mt-6`}>
+                            <div css={tw`mt-4`}>
                                 <Field
                                     type={'string'}
                                     id={'connections_from'}

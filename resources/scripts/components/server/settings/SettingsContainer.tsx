@@ -42,7 +42,7 @@ export default () => {
                                     <Input id={'sftp-address'} type={'text'} value={`sftp://${ip(sftp.ip)}:${sftp.port}`} readOnly />
                                 </CopyOnClick>
                             </div>
-                            <div css={[fieldGroup, tw`mt-6`]}>
+                            <div css={[fieldGroup, tw`mt-4`]}>
                                 <Label htmlFor={'sftp-username'}>Username</Label>
                                 <CopyOnClick text={`${username}.${id}`}>
                                     <Input id={'sftp-username'} type={'text'} value={`${username}.${id}`} readOnly />

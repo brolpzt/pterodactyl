@@ -57,7 +57,7 @@ export default () => {
                     <SpinnerOverlay size={'large'} visible={isSubmitting} />
                     <Form css={tw`m-0`}>
                         <Field id={'current_email'} type={'email'} name={'email'} label={'Email'} />
-                        <div css={tw`mt-6`}>
+                        <div css={tw`mt-4`}>
                             <Field
                                 id={'confirm_password'}
                                 type={'password'}

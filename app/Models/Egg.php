@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property bool $force_outgoing_ip
  * @property bool $fastdl_sync_on_install
  * @property string|null $fastdl_patterns
+ * @property string|null $fastdl_url_suffix
  * @property array|null $file_denylist
  * @property string|null $config_files
  * @property string|null $config_startup
@@ -117,6 +118,7 @@ class Egg extends Model implements Identifiable
         'force_outgoing_ip',
         'fastdl_sync_on_install',
         'fastdl_patterns',
+        'fastdl_url_suffix',
         'file_denylist',
         'config_files',
         'config_startup',
@@ -185,6 +187,7 @@ class Egg extends Model implements Identifiable
         'force_outgoing_ip' => 'sometimes|boolean',
         'fastdl_sync_on_install' => 'sometimes|boolean',
         'fastdl_patterns' => 'nullable|string|max:65535',
+        'fastdl_url_suffix' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9._\/-]*$/'],
         'gcore_policy' => 'sometimes|nullable|string|max:64',
         'gcore_proto' => 'sometimes|nullable|string|max:16',
         'port_slots' => 'sometimes|nullable|array',

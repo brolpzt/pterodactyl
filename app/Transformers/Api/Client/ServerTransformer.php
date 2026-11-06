@@ -129,8 +129,9 @@ class ServerTransformer extends BaseClientTransformer
 
         $base = rtrim($node->public_url ?: ('http://' . $node->fqdn), '/');
 
-        return $base . '/' . $server->uuidShort . '/';
+        $suffix = trim((string) $server->egg?->fastdl_url_suffix, '/');
 
+        return $base . '/' . $server->uuidShort . '/' . ($suffix !== '' ? $suffix . '/' : '');
     }
 
     /**

@@ -18,6 +18,7 @@ class EggFormRequest extends AdminFormRequest
             'force_outgoing_ip' => 'sometimes|boolean',
             'fastdl_sync_on_install' => 'sometimes|boolean',
             'fastdl_patterns' => 'sometimes|nullable|string|max:65535',
+            'fastdl_url_suffix' => ['sometimes', 'nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9._\/-]*$/', 'not_regex:/(^|\/)\.\.(\/|$)/'],
             'file_denylist' => 'array',
             'features' => 'sometimes|array',
             'workshop_enabled' => 'sometimes|boolean',

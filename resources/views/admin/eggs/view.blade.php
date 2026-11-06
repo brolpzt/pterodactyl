@@ -110,6 +110,15 @@
                                 <br>Avançado: com <code>/</code> o padrão vira caminho relativo (<code>maps/**</code>), e <code>!</code> exclui (<code>!*.cfg</code>; vale mesmo sobre <code>+</code>).
                             </p>
                             </div>
+                            <div class="form-group">
+                                <label for="pFastDlUrlSuffix" class="control-label">FastDL: pasta da URL</label>
+                                <input type="text" id="pFastDlUrlSuffix" name="fastdl_url_suffix" class="form-control" placeholder="cstrike/" value="{{ old('fastdl_url_suffix', $egg->fastdl_url_suffix) }}" />
+                                <p class="text-muted small">
+                                    Pasta do servidor que o jogo usa como raiz do download; é somada à URL do FastDL mostrada ao cliente (<code>…/&lt;id&gt;/<strong>cstrike/</strong></code>).
+                                    Ex.: CS 1.6 <code>cstrike/</code>, Condition Zero <code>czero/</code>, CS:S <code>cstrike/</code>, TF2 <code>tf/</code>, Plutonium T6 <code>storage/t6/</code>.
+                                    Vazio = raiz do servidor (CoD1/UO/CoD2/CoD4, que somam <code>main/</code> ou a pasta do mod sozinhos).
+                                </p>
+                            </div>
                             </div>
                             <div class="form-group">
                                 <div class="checkbox checkbox-primary no-margin-bottom">

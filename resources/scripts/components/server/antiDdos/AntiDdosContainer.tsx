@@ -247,7 +247,14 @@ export default () => {
         <ServerContentBlock title={'Anti-DDoS'}>
             <div css={tw`mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3`}>
                 <div>
-                    <h2 css={tw`text-xl font-header font-medium text-neutral-100 m-0`}>Anti-DDoS (beta)</h2>
+                    <h2 css={tw`flex items-center gap-2 text-xl font-header font-medium text-neutral-100 m-0`}>
+                        Anti-DDoS
+                        <span
+                            css={tw`text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300`}
+                        >
+                            Beta
+                        </span>
+                    </h2>
                     <p css={[cardLabelText, tw`text-sm mt-1 mb-0`]}>
                         {endpointsLabel ? `Portas monitoradas: ${endpointsLabel}` : 'Portas deste servidor'}
                     </p>
@@ -260,6 +267,10 @@ export default () => {
                 className={'mb-4 text-sm items-start [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:w-5 [&>svg]:h-5'}
             >
                 <div>
+                    <p className={'m-0 font-medium text-neutral-100'}>Esta tela está em beta</p>
+                    <p className={'m-0 mt-1.5 mb-3 text-neutral-200 leading-relaxed'}>
+                        Os dados podem ter atrasos ou imprecisões, e a página ainda pode mudar.
+                    </p>
                     <p className={'m-0 font-medium text-neutral-100'}>Mostra apenas ataques às portas deste servidor</p>
                     <p className={'m-0 mt-1.5 text-neutral-200 leading-relaxed'}>
                         Ataques costumam atingir várias portas e IPs ao mesmo tempo; a coluna{' '}

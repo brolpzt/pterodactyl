@@ -56,7 +56,7 @@ export default () => {
     const match = useRouteMatch();
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const rootAdmin = useStoreState((state) => state.user.data!.rootAdmin);
-    const [period, setPeriod] = useState<PeriodValue>('7d');
+    const [period, setPeriod] = useState<PeriodValue>('30d');
     const [page, setPage] = useState(1);
 
     const onPeriodChange = (next: PeriodValue) => {

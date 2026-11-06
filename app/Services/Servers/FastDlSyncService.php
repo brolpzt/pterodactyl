@@ -117,12 +117,12 @@ class FastDlSyncService
     }
 
     /**
-     * Each game keeps its files in different places, so the patterns come from
-     * the server's nest; the FastDL node's patterns are the fallback.
+     * Each game downloads different file types, so they come from the server's
+     * egg; the FastDL node's patterns are the fallback.
      */
     public function patternsFor(Server $server, FastDlNode $node): ?string
     {
-        $patterns = trim((string) $server->egg?->nest?->fastdl_patterns);
+        $patterns = trim((string) $server->egg?->fastdl_patterns);
 
         return $patterns !== '' ? $patterns : $node->sync_patterns;
     }

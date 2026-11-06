@@ -32,20 +32,6 @@
                             <textarea name="description" class="form-control" rows="7">{{ $nest->description }}</textarea>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="control-label">FastDL: tipos de arquivo</label>
-                        <div>
-                            <textarea name="fastdl_patterns" class="form-control" rows="6" placeholder="{{ "*.bsp\n*.wad\n*.wav\n*.mdl\n*.spr" }}">{{ old('fastdl_patterns', $nest->fastdl_patterns) }}</textarea>
-                            <p class="text-muted"><small>
-                                Liste os <strong>tipos de arquivo</strong> que os jogadores baixam neste jogo, um por linha (ex.: <code>*.bsp</code>, <code>*.iwd</code>, <code>*.pk3</code>, <code>*.ff</code>).
-                                Vale para qualquer pasta, inclusive pastas de mod (<code>fs_game</code>), e os arquivos sobem com o mesmo caminho do servidor.
-                                <strong>Arquivos originais da instalação nunca são enviados</strong>: o manifesto de instalação os separa, então não é preciso listar pastas.
-                                Não inclua tipos de configuração ou script (<code>.cfg</code>, <code>.ini</code>, <code>.txt</code>, <code>.gsc</code>, <code>.json</code>): podem expor dados do servidor.
-                                Vazio = usa os padrões do FastDL Node.
-                                <br><strong>Mods que o egg instala</strong> e que os jogadores precisam baixar (ex.: zPAM no CoD2) contam como originais; force o envio com <code>+</code> na frente (ex.: <code>+zpam*.iwd</code>).
-                                <br>Avançado: com <code>/</code> o padrão vira caminho relativo (<code>maps/**</code>), e <code>!</code> exclui (<code>!*.cfg</code>; vale mesmo sobre <code>+</code>).
-                            </small></p>
-                        </div>
                     </div>
                 </div>
                 <div class="box-footer">

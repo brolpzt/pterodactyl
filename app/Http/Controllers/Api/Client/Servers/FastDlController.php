@@ -46,7 +46,7 @@ class FastDlController extends ClientApiController
             $manifest = null;
         }
 
-        $server->loadMissing(['node', 'egg.nest']);
+        $server->loadMissing(['node', 'egg']);
 
         return [
             'object' => 'fastdl_status',

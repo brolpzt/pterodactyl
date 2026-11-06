@@ -11,7 +11,6 @@ class StoreNestFormRequest extends AdminFormRequest
         return [
             'name' => 'required|string|min:1|max:191|regex:/^[\w\- ]+$/',
             'description' => 'string|nullable',
-            'fastdl_patterns' => 'string|nullable|max:65535',
         ];
     }
 }

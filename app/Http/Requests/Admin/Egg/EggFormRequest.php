@@ -17,6 +17,7 @@ class EggFormRequest extends AdminFormRequest
             'docker_images' => ['required', 'string', 'regex:/^[\w#\.\/\- ]*\|?~?[\w\.\/\-:@ ]*$/im'],
             'force_outgoing_ip' => 'sometimes|boolean',
             'fastdl_sync_on_install' => 'sometimes|boolean',
+            'fastdl_patterns' => 'sometimes|nullable|string|max:65535',
             'file_denylist' => 'array',
             'features' => 'sometimes|array',
             'workshop_enabled' => 'sometimes|boolean',

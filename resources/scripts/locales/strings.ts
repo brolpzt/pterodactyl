@@ -363,6 +363,20 @@ export const stringsEn = {
         created: 'Created',
         activity: 'Activity',
     },
+    fastdl: {
+        sync_button: 'Sync FastDL',
+        queued: 'FastDL synchronization started.',
+        never: 'FastDL: never synchronized.',
+        scanning: 'FastDL: checking files…',
+        comparing: 'FastDL: comparing with the FastDL server…',
+        uploading: 'FastDL: uploading {{done}} of {{total}} files ({{bytes_done}} of {{bytes_total}})',
+        cleaning: 'FastDL: removing old files from the FastDL server…',
+        running: 'FastDL: synchronizing…',
+        completed: 'FastDL synchronized on {{date}}: {{uploaded}} file(s) sent, {{deleted}} removed, {{skipped}} original game file(s) skipped.',
+        failed: 'FastDL: the last synchronization ({{date}}) failed: {{error}}',
+        unavailable: 'FastDL status is unavailable right now.',
+        no_manifest: 'FastDL is blocked until the original game files of this server are mapped (so they are never uploaded). Reinstall the server or contact support.',
+    },
 };
 
 export const stringsPt = {
@@ -726,6 +740,20 @@ export const stringsPt = {
         created: 'Criado em',
         activity: 'Atividade',
     },
+    fastdl: {
+        sync_button: 'Sincronizar FastDL',
+        queued: 'Sincronização do FastDL iniciada.',
+        never: 'FastDL: ainda não sincronizado.',
+        scanning: 'FastDL: verificando arquivos…',
+        comparing: 'FastDL: comparando com o servidor de FastDL…',
+        uploading: 'FastDL: enviando {{done}} de {{total}} arquivos ({{bytes_done}} de {{bytes_total}})',
+        cleaning: 'FastDL: removendo arquivos antigos do servidor de FastDL…',
+        running: 'FastDL: sincronizando…',
+        completed: 'FastDL sincronizado em {{date}}: {{uploaded}} arquivo(s) enviado(s), {{deleted}} removido(s), {{skipped}} arquivo(s) original(is) do jogo ignorado(s).',
+        failed: 'FastDL: a última sincronização ({{date}}) falhou: {{error}}',
+        unavailable: 'O status do FastDL está indisponível no momento.',
+        no_manifest: 'O FastDL está bloqueado até os arquivos originais do jogo deste servidor serem mapeados (para nunca serem enviados). Reinstale o servidor ou fale com o suporte.',
+    },
 };
 
 export const stringsEs = {
@@ -1088,5 +1116,19 @@ export const stringsEs = {
         server: 'Servidor',
         created: 'Creado',
         activity: 'Actividad',
+    },
+    fastdl: {
+        sync_button: 'Sincronizar FastDL',
+        queued: 'Sincronización de FastDL iniciada.',
+        never: 'FastDL: aún no sincronizado.',
+        scanning: 'FastDL: verificando archivos…',
+        comparing: 'FastDL: comparando con el servidor de FastDL…',
+        uploading: 'FastDL: subiendo {{done}} de {{total}} archivos ({{bytes_done}} de {{bytes_total}})',
+        cleaning: 'FastDL: eliminando archivos antiguos del servidor de FastDL…',
+        running: 'FastDL: sincronizando…',
+        completed: 'FastDL sincronizado el {{date}}: {{uploaded}} archivo(s) enviado(s), {{deleted}} eliminado(s), {{skipped}} archivo(s) original(es) del juego omitido(s).',
+        failed: 'FastDL: la última sincronización ({{date}}) falló: {{error}}',
+        unavailable: 'El estado de FastDL no está disponible en este momento.',
+        no_manifest: 'FastDL está bloqueado hasta que se mapeen los archivos originales del juego de este servidor (para que nunca se suban). Reinstale el servidor o contacte con soporte.',
     },
 };

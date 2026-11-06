@@ -190,6 +190,7 @@ Route::group([
         Route::delete('/{dnsRecord}', [Client\Servers\DnsController::class, 'delete']);
     });
 
+    Route::get('/fastdl', [Client\Servers\FastDlController::class, 'status']);
     Route::post('/fastdl/sync', [Client\Servers\FastDlController::class, 'sync']);
 
     Route::group(['prefix' => '/ts3'], function () {

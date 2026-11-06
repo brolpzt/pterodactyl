@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property array<string, string> $docker_images
  * @property string $update_url
  * @property bool $force_outgoing_ip
+ * @property bool $fastdl_sync_on_install
  * @property array|null $file_denylist
  * @property string|null $config_files
  * @property string|null $config_startup
@@ -113,6 +114,7 @@ class Egg extends Model implements Identifiable
         'features',
         'docker_images',
         'force_outgoing_ip',
+        'fastdl_sync_on_install',
         'file_denylist',
         'config_files',
         'config_startup',
@@ -147,6 +149,7 @@ class Egg extends Model implements Identifiable
         'config_from' => 'integer',
         'script_is_privileged' => 'boolean',
         'force_outgoing_ip' => 'boolean',
+        'fastdl_sync_on_install' => 'boolean',
         'warn_slot_mismatch' => 'boolean',
         'copy_script_from' => 'integer',
         'features' => 'array',
@@ -178,6 +181,7 @@ class Egg extends Model implements Identifiable
         'config_files' => 'required_without:config_from|nullable|json',
         'update_url' => 'sometimes|nullable|string',
         'force_outgoing_ip' => 'sometimes|boolean',
+        'fastdl_sync_on_install' => 'sometimes|boolean',
         'gcore_policy' => 'sometimes|nullable|string|max:64',
         'gcore_proto' => 'sometimes|nullable|string|max:16',
         'port_slots' => 'sometimes|nullable|array',

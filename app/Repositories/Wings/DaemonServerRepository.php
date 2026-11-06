@@ -108,6 +108,24 @@ class DaemonServerRepository extends DaemonRepository
     }
 
     /**
+     * Returns the running FastDL sync progress, or the result of the last one.
+     *
+     * @throws DaemonConnectionException
+     */
+    public function getFastDlSyncStatus(): array
+    {
+        Assert::isInstanceOf($this->server, Server::class);
+
+        try {
+            $response = $this->getHttpClient()->get("/api/servers/{$this->server->uuid}/fastdl/sync", ['timeout' => 5]);
+        } catch (GuzzleException $exception) {
+            throw new DaemonConnectionException($exception);
+        }
+
+        return json_decode($response->getBody()->__toString(), true) ?? [];
+    }
+
+    /**
      * Queues a reference install on Wings that builds the FastDL manifest of a
      * server installed before manifests existed.
      *

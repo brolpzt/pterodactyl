@@ -309,4 +309,18 @@ return [
     'common' => [
         'offline' => 'Desconectado',
     ],
+    'fastdl' => [
+        'sync_button' => 'Sincronizar FastDL',
+        'queued' => 'Sincronización de FastDL iniciada.',
+        'never' => 'FastDL: aún no sincronizado.',
+        'scanning' => 'FastDL: verificando archivos…',
+        'comparing' => 'FastDL: comparando con el servidor de FastDL…',
+        'uploading' => 'FastDL: subiendo :done de :total archivos (:bytes_done de :bytes_total)',
+        'cleaning' => 'FastDL: eliminando archivos antiguos del servidor de FastDL…',
+        'running' => 'FastDL: sincronizando…',
+        'completed' => 'FastDL sincronizado el :date: :uploaded archivo(s) enviado(s), :deleted eliminado(s), :skipped archivo(s) original(es) del juego omitido(s).',
+        'failed' => 'FastDL: la última sincronización (:date) falló: :error',
+        'unavailable' => 'El estado de FastDL no está disponible en este momento.',
+        'no_manifest' => 'FastDL está bloqueado hasta que se mapeen los archivos originales del juego de este servidor (para que nunca se suban). Reinstale el servidor o contacte con soporte.',
+    ],
 ];

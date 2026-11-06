@@ -28,6 +28,7 @@ class NestCreationService
             'author' => $author ?? $this->config->get('pterodactyl.service.author'),
             'name' => array_get($data, 'name'),
             'description' => array_get($data, 'description'),
+            'fastdl_patterns' => array_get($data, 'fastdl_patterns'),
         ], true, true);
     }
 }

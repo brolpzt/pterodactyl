@@ -3,6 +3,8 @@
 namespace Pterodactyl\Http\Controllers\Admin;
 
 use Illuminate\View\View;
+use Illuminate\Http\Request;
+use Pterodactyl\Services\FastDl\FastDlBucketAuditService;
 use Pterodactyl\Models\FastDlNode;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
@@ -27,6 +29,39 @@ class FastDlController extends Controller
         protected FastDlNodeUpdateService $updateService,
         protected LocationRepositoryInterface $locationRepository
     ) {
+    }
+
+    /**
+     * Bucket folders mapped to servers (de→para).
+     */
+    public function audit(FastDlNode $node, FastDlBucketAuditService $service): View
+    {
+        try {
+            $audit = $service->audit($node);
+            $error = null;
+        } catch (\Throwable $exception) {
+            $audit = ['root' => '', 'folders' => []];
+            $error = 'Não foi possível ler o bucket: ' . $exception->getMessage();
+        }
+
+        return view('admin.fastdl.audit', ['node' => $node, 'audit' => $audit, 'error' => $error]);
+    }
+
+    /**
+     * Removes unused server folders from the bucket.
+     */
+    public function clean(Request $request, FastDlNode $node, FastDlBucketAuditService $service): RedirectResponse
+    {
+        $folders = array_values(array_filter((array) $request->input('folders', []), 'is_string'));
+
+        try {
+            $deleted = $service->clean($node, $folders);
+            $this->alert->success(sprintf('%d pasta(s) removida(s) do bucket (%d arquivos).', count($deleted), array_sum($deleted)))->flash();
+        } catch (\Throwable $exception) {
+            $this->alert->danger('Falha ao limpar o bucket: ' . $exception->getMessage())->flash();
+        }
+
+        return redirect()->route('admin.fastdl.audit', $node->id);
     }
 
     /**

@@ -9,6 +9,7 @@ import FileManagerBreadcrumbs from '@/components/server/files/FileManagerBreadcr
 import { FileObject } from '@/api/server/files/loadDirectory';
 import NewDirectoryButton from '@/components/server/files/NewDirectoryButton';
 import SyncFastDlButton from '@/components/server/files/SyncFastDlButton';
+import FastDlSyncStatus from '@/components/server/files/FastDlSyncStatus';
 import { NavLink, useLocation } from 'react-router-dom';
 import Can from '@/components/elements/Can';
 import { ServerError } from '@/components/elements/ScreenBlock';
@@ -91,6 +92,9 @@ export default () => {
                         </div>
                     </Can>
                 </div>
+                <Can action={'control.console'}>
+                    <FastDlSyncStatus />
+                </Can>
             </ErrorBoundary>
             {!files ? (
                 <Spinner size={'large'} centered />

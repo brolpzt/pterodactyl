@@ -32,6 +32,13 @@
                             <textarea name="description" class="form-control" rows="7">{{ $nest->description }}</textarea>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label class="control-label">FastDL Sync Patterns</label>
+                        <div>
+                            <textarea name="fastdl_patterns" class="form-control" rows="6" placeholder="{{ "cstrike/maps/**\ncstrike/sound/**\n*.wad\n!*.cfg" }}">{{ old('fastdl_patterns', $nest->fastdl_patterns) }}</textarea>
+                            <p class="text-muted"><small>Arquivos e pastas deste jogo que vão para o FastDL. Vazio = usa os padrões do FastDL Node. Separadores: vírgula, <code>;</code> ou quebra de linha. Sem <code>/</code> = nome do arquivo; com <code>/</code> = caminho relativo. Pasta: <code>sound/</code> ou <code>maps/**</code>. Qualquer profundidade: <code>**/*.bsp</code>. <strong>Excluir:</strong> <code>!</code> antes (ex.: <code>!*.cfg</code>). Arquivos originais da instalação nunca são enviados.</small></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="box-footer">
                     {!! csrf_field() !!}

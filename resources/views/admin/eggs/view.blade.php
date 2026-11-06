@@ -89,6 +89,17 @@
                             </div>
                             <div class="form-group">
                                 <div class="checkbox checkbox-primary no-margin-bottom">
+                                    <input type="hidden" name="fastdl_sync_on_install" value="0" />
+                                    <input id="pFastDlSyncOnInstall" name="fastdl_sync_on_install" type="checkbox" value="1" @if($egg->fastdl_sync_on_install) checked @endif />
+                                    <label for="pFastDlSyncOnInstall" class="strong">Sincronizar FastDL após a instalação</label>
+                                    <p class="text-muted small">
+                                        Quando a instalação ou reinstalação termina com sucesso, servidores com FastDL ativo sincronizam automaticamente.
+                                        Só vale se o egg tiver a feature <code>fastdl</code>. Arquivos originais do jogo nunca são enviados.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="checkbox checkbox-primary no-margin-bottom">
                                     <input id="pForceOutgoingIp" name="force_outgoing_ip" type="checkbox" value="1" @if($egg->force_outgoing_ip) checked @endif />
                                     <label for="pForceOutgoingIp" class="strong">Force Outgoing IP</label>
                                     <p class="text-muted small">
@@ -340,13 +351,26 @@
                     </div>
                     <button type="button" class="btn btn-xs btn-default" id="portSlotAdd">+ porta extra</button>
                 </div>
-                <div class="box-footer">
-                    {!! csrf_field() !!}
-                    <button type="submit" name="_method" value="PATCH" class="btn btn-primary btn-sm pull-right">Save</button>
-                    <a href="{{ route('admin.nests.egg.export', $egg->id) }}" class="btn btn-sm btn-info pull-right" style="margin-right:10px;">Export</a>
-                    <button id="deleteButton" type="submit" name="_method" value="DELETE" class="btn btn-danger btn-sm muted muted-hover">
-                        <i class="fa fa-trash-o"></i>
-                    </button>
+            </div>
+        </div>
+    </div>
+    {{-- Saves the three boxes above together; kept apart so it doesn't look like it belongs to the last one. --}}
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box box-success box-solid">
+                <div class="box-body" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+                    <div style="flex:1 1 320px;min-width:0;">
+                        <strong><i class="fa fa-save"></i> Salvar egg</strong>
+                        <p class="text-muted small" style="margin:2px 0 0;">Salva juntos <strong>Configuration</strong>, <strong>Process Management</strong> e <strong>Port slots + Gcore ACL</strong>. As caixas abaixo (Steam Workshop, DNS...) têm botões próprios.</p>
+                    </div>
+                    <div style="flex:0 0 auto;">
+                        {!! csrf_field() !!}
+                        <button id="deleteButton" type="submit" name="_method" value="DELETE" class="btn btn-danger btn-sm muted muted-hover" title="Excluir egg">
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                        <a href="{{ route('admin.nests.egg.export', $egg->id) }}" class="btn btn-sm btn-info" style="margin-left:6px;">Export</a>
+                        <button type="submit" name="_method" value="PATCH" class="btn btn-success" style="margin-left:6px;"><i class="fa fa-save"></i> Salvar egg</button>
+                    </div>
                 </div>
             </div>
         </div>

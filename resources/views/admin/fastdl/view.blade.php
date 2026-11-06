@@ -68,7 +68,7 @@
                     <div class="form-group">
                         <label for="pSyncPatterns" class="control-label">Sync Patterns</label>
                         <textarea name="sync_patterns" id="pSyncPatterns" class="form-control" rows="3">{{ old('sync_patterns', $node->sync_patterns) }}</textarea>
-                        <p class="text-muted small">Separadores: vírgula, <code>;</code> ou quebra de linha. Sem <code>/</code> no padrão = nome do arquivo só. Com <code>/</code> = caminho relativo. Pasta: <code>sound/</code> ou <code>maps/**</code>. Qualquer profundidade: <code>**/*.bsp</code>. <strong>Excluir:</strong> <code>!</code> antes do glob (ex.: <code>!pak*.pk3</code>).</p>
+                        <p class="text-muted small">Separadores: vírgula, <code>;</code> ou quebra de linha. Sem <code>/</code> no padrão = nome do arquivo só. Com <code>/</code> = caminho relativo. Pasta: <code>sound/</code> ou <code>maps/**</code>. Qualquer profundidade: <code>**/*.bsp</code>. <strong>Excluir:</strong> <code>!</code> antes do glob (ex.: <code>!pak*.pk3</code>). <strong>Usado só para nests sem padrões próprios</strong> (Admin → Nests).</p>
                     </div>
                     <div class="form-group">
                         <label for="pIsActive" class="control-label">Is Active</label>
@@ -140,6 +140,9 @@
                 {!! csrf_field() !!}
                 <button type="submit" class="btn btn-primary pull-right">Update Node</button>
                 <button type="button" class="btn btn-danger pull-left" data-toggle="modal" data-target="#deleteNodeModal">Delete Node</button>
+                @if($node->isS3())
+                    <a href="{{ route('admin.fastdl.audit', $node->id) }}" class="btn btn-default pull-right" style="margin-right:10px;"><i class="fa fa-sitemap"></i> Pastas do bucket</a>
+                @endif
             </div>
         </div>
     </div>

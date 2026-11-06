@@ -43,10 +43,21 @@ class FastDlSyncService
             throw new DisplayException('No active FastDL node is configured for this server\'s location.');
         }
 
+        // Never ship stock game files: without the install manifest Wings cannot tell
+        // them apart from the user's own files, so nothing is synchronized.
+        try {
+            $manifest = $this->daemonServerRepository->setServer($server)->getFastDlManifest();
+        } catch (\Throwable $exception) {
+            throw new DisplayException('Não foi possível verificar o manifesto de arquivos originais do FastDL no node; a sincronização foi cancelada para não enviar arquivos do jogo. Tente novamente mais tarde.');
+        }
+        if (!($manifest['exists'] ?? false)) {
+            throw new DisplayException('Este servidor ainda não tem o manifesto de arquivos originais do FastDL, então a sincronização foi bloqueada para não enviar arquivos do jogo. Reinstale o servidor ou peça ao suporte para gerar o manifesto.');
+        }
+
         $payload = [
             'storage_type' => $node->storage_type,
             'remote_path' => $node->remote_path,
-            'sync_patterns' => $node->sync_patterns,
+            'sync_patterns' => $this->patternsFor($server, $node),
         ];
 
         if ($node->isS3()) {
@@ -76,5 +87,16 @@ class FastDlSyncService
         }
 
         $this->daemonServerRepository->setServer($server)->syncFastDl($payload);
+    }
+
+    /**
+     * Each game keeps its files in different places, so the patterns come from
+     * the server's nest; the FastDL node's patterns are the fallback.
+     */
+    public function patternsFor(Server $server, FastDlNode $node): ?string
+    {
+        $patterns = trim((string) $server->egg?->nest?->fastdl_patterns);
+
+        return $patterns !== '' ? $patterns : $node->sync_patterns;
     }
 }

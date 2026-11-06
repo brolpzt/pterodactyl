@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string $author
  * @property string $name
  * @property string|null $description
+ * @property string|null $fastdl_patterns
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\Server[] $servers
@@ -38,12 +39,14 @@ class Nest extends Model
     protected $fillable = [
         'name',
         'description',
+        'fastdl_patterns',
     ];
 
     public static array $validationRules = [
         'author' => 'required|string|email',
         'name' => 'required|string|max:191',
         'description' => 'nullable|string',
+        'fastdl_patterns' => 'nullable|string|max:65535',
     ];
 
     /**

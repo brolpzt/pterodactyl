@@ -75,6 +75,14 @@ class ServerInstallController extends Controller
 
         $this->repository->update($server->id, ['status' => $status, 'installed_at' => CarbonImmutable::now()], true, true);
 
+        // FastDL: independent of the e-mail below, and only after a successful install.
+        if ($request->boolean('successful')) {
+            $installed = (clone $server)->refresh()->loadMissing('egg');
+            if (\Pterodactyl\Jobs\SyncFastDlAfterInstallJob::shouldRun($installed)) {
+                \Pterodactyl\Jobs\SyncFastDlAfterInstallJob::dispatch($installed->id);
+            }
+        }
+
         // If the server successfully installed, fire installed event.
         // This logic allows individually disabling install and reinstall notifications separately.
         $isInitialInstall = is_null($server->installed_at);

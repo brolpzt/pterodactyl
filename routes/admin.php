@@ -211,6 +211,8 @@ Route::group(['prefix' => 'fastdl'], function () {
     Route::get('/', [Admin\FastDlController::class, 'index'])->name('admin.fastdl');
     Route::get('/new', [Admin\FastDlController::class, 'create'])->name('admin.fastdl.new');
     Route::get('/view/{node:id}', [Admin\FastDlController::class, 'view'])->name('admin.fastdl.view');
+    Route::get('/view/{node:id}/bucket', [Admin\FastDlController::class, 'audit'])->name('admin.fastdl.audit');
+    Route::post('/view/{node:id}/bucket/clean', [Admin\FastDlController::class, 'clean'])->name('admin.fastdl.clean');
 
     Route::post('/new', [Admin\FastDlController::class, 'store']);
     Route::patch('/view/{node:id}', [Admin\FastDlController::class, 'update']);

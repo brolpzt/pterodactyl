@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { format, parseISO } from 'date-fns';
 import { Line } from 'react-chartjs-2';
@@ -43,6 +43,25 @@ const PERIOD_OPTIONS: PeriodOption[] = [
 
 const PAGE_SIZE = 10;
 
+const MINUTE = 60_000;
+
+/** Timeline resolution per period: total span, bucket size and x-axis label format. */
+const TIMELINE: Record<string, { span: number; bucket: number; label: string }> = {
+    '15m': { span: 15 * MINUTE, bucket: MINUTE, label: 'HH:mm' },
+    '1h': { span: 60 * MINUTE, bucket: 5 * MINUTE, label: 'HH:mm' },
+    '6h': { span: 6 * 60 * MINUTE, bucket: 15 * MINUTE, label: 'HH:mm' },
+    '24h': { span: 24 * 60 * MINUTE, bucket: 60 * MINUTE, label: 'HH:mm' },
+    '7d': { span: 7 * 24 * 60 * MINUTE, bucket: 6 * 60 * MINUTE, label: 'dd/MM HH:mm' },
+    '30d': { span: 30 * 24 * 60 * MINUTE, bucket: 24 * 60 * MINUTE, label: 'dd/MM' },
+};
+
+interface TimelineBucket {
+    start: number;
+    end: number;
+    events: AntiDdosEventSummary[];
+    peak: AntiDdosEventSummary | null;
+}
+
 const ColumnLabel = ({ label, tip }: { label: string; tip: string }) => (
     <Tooltip placement={'top'} content={tip}>
         <span css={tw`cursor-help border-b border-dashed border-neutral-500`}>{label}</span>
@@ -55,6 +74,13 @@ export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const [period, setPeriod] = useState<PeriodValue>('30d');
     const [page, setPage] = useState(1);
+    const [now, setNow] = useState(() => Date.now());
+
+    // Keep the timeline moving up to "now" even when no new events arrive.
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), MINUTE);
+        return () => clearInterval(timer);
+    }, []);
 
     const onPeriodChange = (next: PeriodValue) => {
         setPeriod(next);
@@ -88,20 +114,35 @@ export default () => {
     };
 
     const chart = useMemo(() => {
-        const ordered = [...events]
-            .filter((event) => event.attack_start_time)
-            .sort((a, b) => {
-                const aTime = parseISO(a.attack_start_time!).getTime();
-                const bTime = parseISO(b.attack_start_time!).getTime();
-                return aTime - bTime;
-            });
+        const config = TIMELINE[period] ?? TIMELINE['30d'];
+        // Align buckets to the viewer's local clock so daily buckets start at local midnight.
+        const offset = new Date(now).getTimezoneOffset() * MINUTE;
+        const first = Math.floor((now - config.span - offset) / config.bucket) * config.bucket + offset;
+        const buckets: TimelineBucket[] = [];
+        for (let start = first; start <= now; start += config.bucket) {
+            buckets.push({ start, end: start + config.bucket, events: [], peak: null });
+        }
 
-        const short = ['15m', '1h', '6h', '24h'].includes(period);
-        const labels = ordered.map((event) =>
-            format(parseISO(event.attack_start_time!), short ? 'dd/MM HH:mm' : 'dd/MM')
-        );
-        const powers = ordered.map((event) => bpsToMbps(event.attack_power_bps));
-        const suggestedMax = Math.max(0.1, ...powers, 0.1);
+        events.forEach((event) => {
+            if (!event.attack_start_time) return;
+            const time = parseISO(event.attack_start_time).getTime();
+            const index = Math.floor((time - first) / config.bucket);
+            const bucket = buckets[index];
+            if (!bucket) return;
+            bucket.events.push(event);
+            if (!bucket.peak || (event.attack_power_bps ?? 0) > (bucket.peak.attack_power_bps ?? 0)) {
+                bucket.peak = event;
+            }
+        });
+
+        const labels = buckets.map((bucket) => format(bucket.start, config.label));
+        const powers = buckets.map((bucket) => (bucket.peak ? bpsToMbps(bucket.peak.attack_power_bps) : 0));
+        const pointRadius = buckets.map((bucket) => (bucket.peak ? 3 : 0));
+        const suggestedMax = Math.max(0.1, ...powers);
+        const rangeLabel = (bucket: TimelineBucket) =>
+            config.bucket >= 24 * 60 * MINUTE
+                ? format(bucket.start, 'dd/MM/yyyy')
+                : `${format(bucket.start, 'dd/MM HH:mm')} – ${format(Math.min(bucket.end, now), 'HH:mm')}`;
 
         const options: ChartOptions<'line'> = {
             responsive: true,
@@ -116,17 +157,19 @@ export default () => {
                     mode: 'index',
                     callbacks: {
                         title: (items) => {
-                            const index = items[0]?.dataIndex ?? 0;
-                            const event = ordered[index];
-                            return event ? formatWhen(event.attack_start_time) : '';
+                            const bucket = buckets[items[0]?.dataIndex ?? 0];
+                            return bucket ? rangeLabel(bucket) : '';
                         },
                         label: (item) => {
-                            const event = ordered[item.dataIndex];
-                            if (!event) return '';
-                            return ` Potência: ${formatBps(event.attack_power_bps)}`;
+                            const bucket = buckets[item.dataIndex];
+                            if (!bucket?.peak) return ' Sem ataques';
+                            const count = bucket.events.length;
+                            return ` Potência: ${formatBps(bucket.peak.attack_power_bps)}${
+                                count > 1 ? ` (maior de ${count} ataques)` : ''
+                            }`;
                         },
                         afterLabel: (item) => {
-                            const event = ordered[item.dataIndex];
+                            const event = buckets[item.dataIndex]?.peak;
                             if (!event) return '';
                             const target =
                                 (event.ports || []).map((port) => `${event.targeted_ip}:${port}`).join(', ') ||
@@ -181,7 +224,6 @@ export default () => {
             },
             elements: {
                 point: {
-                    radius: ordered.length <= 24 ? 3 : 0,
                     hoverRadius: 5,
                 },
                 line: { tension: 0.25 },
@@ -189,7 +231,7 @@ export default () => {
             onClick: (_event, elements) => {
                 const index = elements[0]?.index;
                 if (index === undefined) return;
-                const event = ordered[index];
+                const event = buckets[index]?.peak;
                 if (event) {
                     history.push(`${match.url.replace(/\/$/, '')}/${event.id}`);
                 }
@@ -207,14 +249,14 @@ export default () => {
                         borderColor: theme('colors.red.400'),
                         backgroundColor: hexToRgba(theme('colors.red.700'), 0.35),
                         pointBackgroundColor: theme('colors.red.300'),
+                        pointRadius,
                         tension: 0.25,
                     },
                 ],
             },
             options,
-            count: ordered.length,
         };
-    }, [events, period, history, match.url]);
+    }, [events, period, now, history, match.url]);
 
     if ((!data && !error) || (error && isValidating && !data)) {
         return (
@@ -281,19 +323,11 @@ export default () => {
                 </TitledGreyBox>
             ) : (
                 <>
-                    {chart.count === 0 ? (
-                        <TitledGreyBox title={'Potência dos ataques'} icon={faShieldVirus} className={'mb-4'}>
-                            <p css={[emptyStateText, tw`py-2 m-0`]}>
-                                Sem eventos neste período para desenhar o gráfico.
-                            </p>
-                        </TitledGreyBox>
-                    ) : (
-                        <TitledGreyBox title={'Potência dos ataques'} icon={faShieldVirus} className={'mb-4'}>
-                            <div css={tw`h-64 cursor-pointer`}>
-                                <Line data={chart.data} options={chart.options} />
-                            </div>
-                        </TitledGreyBox>
-                    )}
+                    <TitledGreyBox title={'Potência dos ataques'} icon={faShieldVirus} className={'mb-4'}>
+                        <div css={tw`h-64 cursor-pointer`}>
+                            <Line data={chart.data} options={chart.options} />
+                        </div>
+                    </TitledGreyBox>
 
                     <TitledGreyBox title={'Eventos'} icon={faShieldVirus}>
                         {events.length === 0 ? (

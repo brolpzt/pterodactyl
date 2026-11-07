@@ -89,8 +89,10 @@ export default ({ children, ...props }: Props) => {
                         transition={{ type: 'spring', damping: 20, stiffness: 300, duration: 0.075 }}
                         {...getFloatingProps({
                             ref: floating,
-                            className:
-                                'bg-gray-900 text-sm text-gray-200 px-3 py-2 rounded pointer-events-none max-w-[24rem]',
+                            className: classNames(
+                                'bg-gray-900 text-sm text-gray-200 text-left px-3 py-2 rounded pointer-events-none max-w-[24rem]',
+                                props.className
+                            ),
                             style: {
                                 position: strategy,
                                 top: `${y || 0}px`,

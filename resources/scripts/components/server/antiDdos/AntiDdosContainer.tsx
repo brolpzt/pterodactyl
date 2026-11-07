@@ -312,7 +312,7 @@ export default () => {
                     <p className={'m-0 mt-1.5 text-neutral-200 leading-relaxed'}>
                         Ataques costumam atingir várias portas e IPs ao mesmo tempo; a coluna{' '}
                         <strong className={'font-semibold text-neutral-100'}>% neste servidor</strong> indica a parte
-                        que chegou aqui no seu servidor de jogo. Eventos em andamento ainda podem ser atualizados.
+                        que chegou no seu IP:PORTA. Eventos em andamento ainda podem ser atualizados.
                     </p>
                 </div>
             </Alert>
@@ -323,13 +323,13 @@ export default () => {
                 </TitledGreyBox>
             ) : (
                 <>
-                    <TitledGreyBox title={'Potência dos ataques'} icon={faShieldVirus} className={'mb-4'}>
+                    <TitledGreyBox title={'Histórico de eventos'} icon={faShieldVirus} className={'mb-4'}>
                         <div css={tw`h-64 cursor-pointer`}>
                             <Line data={chart.data} options={chart.options} />
                         </div>
                     </TitledGreyBox>
 
-                    <TitledGreyBox title={'Eventos'} icon={faShieldVirus}>
+                    <TitledGreyBox title={'Eventos'} icon={faShieldVirus} bodyClassName={'!pt-1.5'}>
                         {events.length === 0 ? (
                             <p css={[emptyStateText, tw`py-4 m-0`]}>
                                 Sem eventos neste período. Atualizado a cada 5 minutos.
@@ -340,7 +340,7 @@ export default () => {
                                     <table css={tw`w-full text-sm`}>
                                         <thead>
                                             <tr css={[tw`border-b`, cardRowBorder]}>
-                                                <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
+                                                <th css={[cardLabelText, tw`text-left py-1.5 font-medium`]}>
                                                     <ColumnLabel
                                                         label={'Início'}
                                                         tip={'Momento em que o ataque foi detectado pela Proteção DDoS'}
@@ -349,7 +349,7 @@ export default () => {
                                                 <th
                                                     css={[
                                                         cardLabelText,
-                                                        tw`text-left py-2 font-medium hidden md:table-cell`,
+                                                        tw`text-left py-1.5 font-medium hidden md:table-cell`,
                                                     ]}
                                                 >
                                                     <ColumnLabel
@@ -357,15 +357,15 @@ export default () => {
                                                         tip={'IP e portas deste servidor atingidas pelo ataque'}
                                                     />
                                                 </th>
-                                                <th css={[cardLabelText, tw`text-left py-2 font-medium`]}>
+                                                <th css={[cardLabelText, tw`text-left py-1.5 font-medium`]}>
                                                     <ColumnLabel
                                                         label={'Estado'}
                                                         tip={'Se o ataque ainda está em andamento ou já terminou'}
                                                     />
                                                 </th>
-                                                <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
+                                                <th css={[cardLabelText, tw`text-right py-1.5 font-medium`]}>
                                                     <ColumnLabel
-                                                        label={'Potência'}
+                                                        label={'BPS'}
                                                         tip={
                                                             'Volume máximo do ataque nas portas deste servidor (bits por segundo)'
                                                         }
@@ -374,7 +374,7 @@ export default () => {
                                                 <th
                                                     css={[
                                                         cardLabelText,
-                                                        tw`text-right py-2 font-medium hidden sm:table-cell`,
+                                                        tw`text-right py-1.5 font-medium hidden sm:table-cell`,
                                                     ]}
                                                 >
                                                     <ColumnLabel
@@ -387,7 +387,7 @@ export default () => {
                                                 <th
                                                     css={[
                                                         cardLabelText,
-                                                        tw`text-right py-2 font-medium hidden lg:table-cell`,
+                                                        tw`text-right py-1.5 font-medium hidden lg:table-cell`,
                                                     ]}
                                                 >
                                                     <ColumnLabel
@@ -397,7 +397,7 @@ export default () => {
                                                         }
                                                     />
                                                 </th>
-                                                <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
+                                                <th css={[cardLabelText, tw`text-right py-1.5 font-medium`]}>
                                                     <ColumnLabel label={'Ações'} tip={'Abrir o detalhe deste evento'} />
                                                 </th>
                                             </tr>

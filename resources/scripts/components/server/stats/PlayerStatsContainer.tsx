@@ -12,9 +12,10 @@ import {
 import { format, parseISO } from 'date-fns';
 import tw from 'twin.macro';
 import { theme } from 'twin.macro';
+import { faChartArea } from '@fortawesome/free-solid-svg-icons';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Spinner from '@/components/elements/Spinner';
-import ChartBlock from '@/components/server/console/ChartBlock';
+import TitledGreyBox from '@/components/elements/TitledGreyBox';
 import PeriodSelector, { PeriodOption, PeriodValue } from '@/components/elements/PeriodSelector';
 import usePlayerStats from '@/api/swr/getPlayerStats';
 import { ServerContext } from '@/state/server';
@@ -258,20 +259,18 @@ export default () => {
                     </div>
 
                     {!hasSamples ? (
-                        <StatCardShell>
-                            <StatCardInner>
-                                <p css={[cardValueText, tw`m-0`]}>
-                                    Ainda não há amostras neste período. A amostragem começa em breve e o gráfico
-                                    aparece depois da primeira coleta.
-                                </p>
-                            </StatCardInner>
-                        </StatCardShell>
+                        <TitledGreyBox title={'Jogadores conectados'} icon={faChartArea}>
+                            <p css={[cardValueText, tw`m-0`]}>
+                                Ainda não há amostras neste período. A amostragem começa em breve e o gráfico
+                                aparece depois da primeira coleta.
+                            </p>
+                        </TitledGreyBox>
                     ) : (
-                        <ChartBlock title={'Jogadores conectados'}>
+                        <TitledGreyBox title={'Jogadores conectados'} icon={faChartArea}>
                             <div css={tw`h-64`}>
                                 <Line data={chart.data} options={chart.options} />
                             </div>
-                        </ChartBlock>
+                        </TitledGreyBox>
                     )}
 
                     {error && (

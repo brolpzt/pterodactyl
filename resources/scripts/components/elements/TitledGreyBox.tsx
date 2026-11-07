@@ -12,6 +12,8 @@ interface Props {
     icon?: IconProp;
     title: string | React.ReactNode;
     className?: string;
+    /** Extra classes for the card body (e.g. tighter padding under the title). */
+    bodyClassName?: string;
     children: React.ReactNode;
 }
 
@@ -35,7 +37,7 @@ const CardBody = styled.div`
     ${tw`relative z-10 p-3`};
 `;
 
-const TitledGreyBox = ({ icon, title, children, className }: Props) => (
+const TitledGreyBox = ({ icon, title, children, className, bodyClassName }: Props) => (
     <CardShell className={className}>
         <CardInner>
             <CardHeader>
@@ -48,7 +50,7 @@ const TitledGreyBox = ({ icon, title, children, className }: Props) => (
                     <div css={[cardTitleText, tw`flex items-center`]}>{title}</div>
                 )}
             </CardHeader>
-            <CardBody>{children}</CardBody>
+            <CardBody className={bodyClassName}>{children}</CardBody>
         </CardInner>
     </CardShell>
 );

@@ -12,6 +12,7 @@ import routes from '@/routers/routes';
 import useScrollToTopOnRouteChange from '@/plugins/useScrollToTopOnRouteChange';
 
 import Sidebar from '@/components/Sidebar';
+import PanelAlerts from '@/components/PanelAlerts';
 import { MainContent } from '@/components/layout/MainContent';
 import PageFallbackBackground from '@/components/layout/PageFallbackBackground';
 import tw from 'twin.macro';
@@ -47,6 +48,7 @@ export default () => {
                             </div>
                         </SubNavigation>
                     )}
+                    <PanelAlerts />
                     <TransitionRouter>
                         <React.Suspense fallback={<Spinner centered />}>
                             <Switch location={location}>

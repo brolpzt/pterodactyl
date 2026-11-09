@@ -30,6 +30,7 @@ import { getServerBackgroundUrl } from '@/lib/serverBackgrounds';
 import ServerStatusBar from '@/components/server/ServerStatusBar';
 import SlotMismatchAlert from '@/components/server/SlotMismatchAlert';
 import HostnameBrandingAlert from '@/components/server/HostnameBrandingAlert';
+import PanelAlerts from '@/components/PanelAlerts';
 import useScrollToTopOnRouteChange from '@/plugins/useScrollToTopOnRouteChange';
 
 export default () => {
@@ -155,6 +156,7 @@ export default () => {
                                 onCopyText={onCopyText}
                                 formatIp={ip}
                             />
+                            <PanelAlerts serverUuid={uuid} />
                             <SlotMismatchAlert />
                             <HostnameBrandingAlert />
                             <div tw="mt-0">

@@ -22,6 +22,7 @@ use Pterodactyl\Http\Middleware\Api\Client\Server\AuthenticateServerAccess;
 */
 Route::get('/', [Client\ClientController::class, 'index'])->name('api:client.index');
 Route::get('/permissions', [Client\ClientController::class, 'permissions']);
+Route::get('/alerts', [Client\PanelAlertController::class, 'index'])->name('api:client.alerts');
 
 Route::prefix('/account')->middleware(AccountSubject::class)->group(function () {
     Route::prefix('/')->withoutMiddleware(RequireTwoFactorAuthentication::class)->group(function () {
@@ -67,6 +68,7 @@ Route::group([
     ],
 ], function () {
     Route::get('/', [Client\Servers\ServerController::class, 'index'])->name('api:client:server.view');
+    Route::get('/alerts', [Client\PanelAlertController::class, 'server'])->name('api:client:server.alerts');
     Route::middleware([ResourceLimit::Websocket->middleware()])
         ->get('/websocket', Client\Servers\WebsocketController::class)
         ->name('api:client:server.ws');

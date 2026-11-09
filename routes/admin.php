@@ -336,6 +336,25 @@ Route::group(['prefix' => 'addons'], function () {
 
 /*
 |--------------------------------------------------------------------------
+| Panel Alert Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/alerts
+|
+*/
+Route::group(['prefix' => 'alerts'], function () {
+    Route::get('/', [Admin\PanelAlertsController::class, 'index'])->name('admin.alerts');
+    Route::get('/new', [Admin\PanelAlertsController::class, 'create'])->name('admin.alerts.new');
+    Route::get('/servers.json', [Admin\PanelAlertsController::class, 'servers'])->name('admin.alerts.servers');
+    Route::get('/view/{panelAlert:id}', [Admin\PanelAlertsController::class, 'view'])->name('admin.alerts.view');
+
+    Route::post('/new', [Admin\PanelAlertsController::class, 'store']);
+    Route::patch('/view/{panelAlert:id}', [Admin\PanelAlertsController::class, 'update']);
+    Route::delete('/view/{panelAlert:id}', [Admin\PanelAlertsController::class, 'delete'])->name('admin.alerts.delete');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Addon Categories Controller Routes
 |--------------------------------------------------------------------------
 |

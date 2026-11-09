@@ -132,6 +132,11 @@
                             </a>
                         </li>
                         <li class="header">SERVICE MANAGEMENT</li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.alerts') ?: 'active' }}">
+                            <a href="{{ route('admin.alerts') }}">
+                                <i class="fa fa-bullhorn"></i> <span>Alertas</span>
+                            </a>
+                        </li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.mounts') ?: 'active' }}">
                             <a href="{{ route('admin.mounts') }}">
                                 <i class="fa fa-magic"></i> <span>Mounts</span>
@@ -179,6 +184,7 @@
                                     </div>
                                 @endforeach
                             @endforeach
+                            @include('partials.admin.panel-alerts')
                         </div>
                     </div>
                     @yield('content')

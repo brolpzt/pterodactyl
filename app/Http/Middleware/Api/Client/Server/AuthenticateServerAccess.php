@@ -49,8 +49,8 @@ class AuthenticateServerAccess
         try {
             $server->validateCurrentState();
         } catch (ServerStateConflictException $exception) {
-            if ($request->routeIs('api:client:server.view')) {
-                // Allow fetching server metadata during conflict states.
+            if ($request->routeIs('api:client:server.view', 'api:client:server.alerts')) {
+                // Allow fetching server metadata and alerts during conflict states.
             } elseif ($server->status === Server::STATUS_INSTALLING) {
                 // During installation only websocket is allowed besides server.view (install console output).
                 if (!$request->routeIs($this->except)) {

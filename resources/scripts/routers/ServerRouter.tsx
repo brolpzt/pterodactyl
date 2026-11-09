@@ -17,7 +17,7 @@ import ErrorBoundary from '@/components/elements/ErrorBoundary';
 import { useLocation } from 'react-router';
 import ConflictStateRenderer from '@/components/server/ConflictStateRenderer';
 import PermissionRoute from '@/components/elements/PermissionRoute';
-import routes from '@/routers/routes';
+import routes, { disabledServerRoutes } from '@/routers/routes';
 import { isCs16Server } from '@/lib/isCs16Server';
 import { supportsGameQuery } from '@/lib/supportsGameQuery';
 
@@ -171,7 +171,7 @@ export default () => {
                                             <Suspense fallback={routeContentFallback}>
                                                 <Switch location={location}>
                                                     {routes.server.map(({ path, permission, component: Component, adminOnly }) => (
-                                                        path === '/backups' ||
+                                                        disabledServerRoutes.includes(path) ||
                                                         (isTs3 && isBlockedRouteForTs3(path)) ||
                                                         (!isTs3 && isTs3OnlyRoute(path)) ||
                                                         (!hasStats && path === '/stats') ||

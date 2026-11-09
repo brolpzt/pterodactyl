@@ -58,6 +58,9 @@ interface Routes {
     server: ServerRouteDefinition[];
 }
 
+// Server tabs turned off for everyone: no menu link, and the URL redirects to the server home.
+export const disabledServerRoutes = ['/backups', '/network', '/users'];
+
 export default {
     account: [
         {
@@ -134,13 +137,6 @@ export default {
             component: AntiDdosEventContainer,
         },
         {
-            path: '/databases',
-            permission: 'database.*',
-            name: 'Databases',
-            nameKey: 'server.databases',
-            component: DatabasesContainer,
-        },
-        {
             path: '/schedules',
             permission: 'schedule.*',
             name: 'Schedules',
@@ -180,6 +176,13 @@ export default {
             name: 'Addons',
             nameKey: 'server.addons',
             component: lazy(() => import('@/components/server/addons/AddonsContainer')),
+        },
+        {
+            path: '/databases',
+            permission: 'database.*',
+            name: 'Databases',
+            nameKey: 'server.databases',
+            component: DatabasesContainer,
         },
         {
             path: '/workshop',

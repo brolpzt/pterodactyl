@@ -33,7 +33,7 @@ import { ServerContext } from '@/state/server';
 import tw from 'twin.macro';
 import styled, { css } from 'styled-components/macro';
 import Can from '@/components/elements/Can';
-import routes from '@/routers/routes';
+import routes, { disabledServerRoutes } from '@/routers/routes';
 import { useTranslation } from 'react-i18next';
 import { motionDurations } from '@/assets/css/motionTheme';
 import { glassContentLayer, glassSidebarShell } from '@/assets/css/glassPanel';
@@ -312,6 +312,7 @@ const ServerLinks = () => {
         '/files',
         '/anti-ddos',
         '/addons',
+        '/databases',
         '/firewall',
         '/dns',
         '/schedules',
@@ -380,7 +381,7 @@ const ServerLinks = () => {
             : isCs16
             ? !route.path.startsWith('/ts3')
             : !route.path.startsWith('/ts3') && !route.path.startsWith('/amxx')))
-        .filter((route) => route.path !== '/backups')
+        .filter((route) => !disabledServerRoutes.includes(route.path))
         .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
         .filter((route) => route.path !== '/ts3/query' || rootAdmin)
         .filter((route) => !(isCs16 && isAmxxRoute(route.path)))

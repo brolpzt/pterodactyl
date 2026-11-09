@@ -336,6 +336,19 @@ Route::group(['prefix' => 'addons'], function () {
 
 /*
 |--------------------------------------------------------------------------
+| hgHLDS Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/hghlds
+|
+*/
+Route::group(['prefix' => 'hghlds'], function () {
+    Route::get('/', [Admin\HgHldsController::class, 'index'])->name('admin.hghlds');
+    Route::post('/', [Admin\HgHldsController::class, 'update']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | Panel Alert Controller Routes
 |--------------------------------------------------------------------------
 |

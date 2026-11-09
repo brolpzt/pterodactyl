@@ -132,6 +132,11 @@
                             </a>
                         </li>
                         <li class="header">SERVICE MANAGEMENT</li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.hghlds') ?: 'active' }}">
+                            <a href="{{ route('admin.hghlds') }}">
+                                <i class="fa fa-key"></i> <span>hgHLDS</span>
+                            </a>
+                        </li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.alerts') ?: 'active' }}">
                             <a href="{{ route('admin.alerts') }}">
                                 <i class="fa fa-bullhorn"></i> <span>Alertas</span>

@@ -82,6 +82,9 @@ class RouteServiceProvider extends ServiceProvider
                 ->scopeBindings()
                 ->group(base_path('routes/api-remote.php'));
 
+            // License activation for the hgHLDS engine, guarded by the source address.
+            Route::prefix('/api/hghlds')->group(base_path('routes/api-hghlds.php'));
+
             // Internal redeem for phpMyAdmin SSO bridge (shared secret, no user session).
             Route::middleware(['throttle:60,1'])
                 ->prefix('/api/internal')

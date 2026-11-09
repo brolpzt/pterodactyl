@@ -71,7 +71,7 @@ export default ({ serverUuid }: { serverUuid?: string }) => {
             {visible.map((alert) => (
                 <Alert key={alert.id} type={alert.type} className={'text-sm'}>
                     <div className={'flex-1 min-w-0 break-words'}>
-                        {alert.title && <p className={'font-semibold'}>{alert.title}</p>}
+                        {alert.title && <p className={'font-bold text-white'}>{alert.title}</p>}
                         {/* Rendered by PanelAlert::renderedMessage(), which escapes HTML and drops unsafe links. */}
                         <p
                             className={'[&_a]:underline [&_a]:font-medium'}

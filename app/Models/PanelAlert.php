@@ -200,12 +200,30 @@ class PanelAlert extends Model
      */
     public function renderedMessage(): string
     {
-        return trim(Str::inlineMarkdown($this->message, [
+        $message = trim(str_replace(["\r\n", "\r"], "\n", $this->message));
+
+        // Markdown drops blank lines between paragraphs, so they are kept out of the
+        // conversion and printed as line breaks.
+        $parts = preg_split('/(\n(?:[ \t]*\n)+)/', $message, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+        $html = '';
+        foreach ($parts as $index => $part) {
+            $html .= $index % 2 === 0
+                ? trim($this->inlineMarkdown($part))
+                : str_repeat("<br>\n", substr_count($part, "\n"));
+        }
+
+        return $html;
+    }
+
+    private function inlineMarkdown(string $text): string
+    {
+        return Str::inlineMarkdown($text, [
             'html_input' => 'escape',
             'allow_unsafe_links' => false,
             'renderer' => ['soft_break' => "<br>\n"],
             'external_link' => ['open_in_new_window' => true],
-        ], [new ExternalLinkExtension()]));
+        ], [new ExternalLinkExtension()]);
     }
 
     /**

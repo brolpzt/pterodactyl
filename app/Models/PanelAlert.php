@@ -23,6 +23,7 @@ use League\CommonMark\Extension\ExternalLink\ExternalLinkExtension;
  * @property array|null $node_ids
  * @property array|null $location_ids
  * @property array|null $server_ids
+ * @property string|null $server_condition
  * @property \Illuminate\Support\Carbon|null $starts_at
  * @property \Illuminate\Support\Carbon|null $ends_at
  * @property \Illuminate\Support\Carbon $created_at
@@ -54,6 +55,13 @@ class PanelAlert extends Model
         self::PLACEMENT_ACCOUNT => 'Minha conta',
         self::PLACEMENT_SERVER => 'Páginas do servidor',
         self::PLACEMENT_ADMIN => 'Painel admin',
+    ];
+
+    public const CONDITION_HGHLDS_MISSING = 'hghlds_missing';
+
+    /** Extra checks against the state of the server, evaluated on the server's own pages. */
+    public const CONDITIONS = [
+        self::CONDITION_HGHLDS_MISSING => 'Servidor sem hgHLDS instalado',
     ];
 
     /** Client server routes an alert can be limited to; keys are matched against the URL. */
@@ -118,6 +126,7 @@ class PanelAlert extends Model
         'node_ids' => 'nullable|array',
         'location_ids' => 'nullable|array',
         'server_ids' => 'nullable|array',
+        'server_condition' => 'nullable|string|in:hghlds_missing',
         'starts_at' => 'nullable|date',
         'ends_at' => 'nullable|date',
     ];

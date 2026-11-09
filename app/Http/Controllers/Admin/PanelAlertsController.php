@@ -134,6 +134,7 @@ class PanelAlertsController extends Controller
             'enabled' => 'sometimes|boolean',
             'dismissible' => 'sometimes|boolean',
             'audience' => ['required', Rule::in(array_keys(PanelAlert::AUDIENCES))],
+            'server_condition' => ['nullable', Rule::in(array_keys(PanelAlert::CONDITIONS))],
             'placements' => 'required|array|min:1',
             'placements.*' => Rule::in(array_keys(PanelAlert::PLACEMENTS)),
             'server_pages' => 'nullable|array',
@@ -153,6 +154,7 @@ class PanelAlertsController extends Controller
             $data[$field] = array_values(array_unique(array_map('intval', $data[$field] ?? [])));
         }
 
+        $data['server_condition'] ??= null;
         $data['placements'] = array_values($data['placements']);
         $data['server_pages'] = in_array(PanelAlert::PLACEMENT_SERVER, $data['placements'], true)
             ? array_values($data['server_pages'] ?? [])

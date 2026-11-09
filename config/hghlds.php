@@ -12,6 +12,15 @@ return [
     'license_ttl' => 3 * 24 * 3600,
 
     /*
+    | Size in bytes of engine_i486.so on each released version, which is how a server
+    | running hgHLDS is recognized. Add the new size when releasing a version, or
+    | servers on it are reported as not using hgHLDS.
+    */
+    'engine_sizes' => [
+        1363824, // 1.0.0
+    ],
+
+    /*
     | Only connections from these ranges may state the client address through the
     | CF-Connecting-IP header. See https://www.cloudflare.com/ips/
     */

@@ -7,6 +7,8 @@ use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Subuser;
 use Pterodactyl\Models\PanelAlert;
 use Illuminate\Support\Facades\Notification;
+use Pterodactyl\Repositories\Wings\DaemonFileRepository;
+use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 
 class PanelAlertControllerTest extends ClientApiIntegrationTestCase
 {
@@ -31,6 +33,100 @@ class PanelAlertControllerTest extends ClientApiIntegrationTestCase
         $response->assertOk();
 
         return array_column(array_column($response->json('data'), 'attributes'), 'id');
+    }
+
+    private function engineOnDisk(array|\Throwable $result, ?int $times = 1): void
+    {
+        $this->mock(DaemonFileRepository::class, function ($mock) use ($result, $times) {
+            $mock->shouldReceive('setServer')->andReturnSelf();
+            $expectation = $mock->shouldReceive('getDirectory')->with('/');
+            $times === null ? $expectation->never() : $expectation->times($times);
+            $result instanceof \Throwable ? $expectation->andThrow($result) : $expectation->andReturn($result);
+        });
+    }
+
+    private function engineFile(int $size): array
+    {
+        return [['name' => 'engine_i486.so', 'size' => $size, 'file' => true, 'directory' => false]];
+    }
+
+    private function hgHldsAlert(array $attributes = []): PanelAlert
+    {
+        return $this->alert(array_merge(['server_condition' => PanelAlert::CONDITION_HGHLDS_MISSING], $attributes));
+    }
+
+    public function testConditionShowsTheAlertOnlyWithoutTheHgHldsEngine(): void
+    {
+        [$user, $server] = $this->generateTestAccount();
+        $alert = $this->hgHldsAlert();
+
+        $this->engineOnDisk($this->engineFile(1327992));
+
+        $url = "/api/client/servers/{$server->uuid}/alerts";
+        $this->assertSame([$alert->id], $this->ids($url, $user));
+        // The node is asked once: the expectation above fails on a second listing.
+        $this->assertSame([$alert->id], $this->ids($url, $user));
+    }
+
+    public function testConditionHidesTheAlertWhenTheEngineIsPresent(): void
+    {
+        [$user, $server] = $this->generateTestAccount();
+        $this->hgHldsAlert();
+
+        $this->engineOnDisk($this->engineFile(1363824));
+
+        $this->assertSame([], $this->ids("/api/client/servers/{$server->uuid}/alerts", $user));
+    }
+
+    /**
+     * @dataProvider undeterminedProvider
+     */
+    public function testConditionStaysHiddenWhenTheEngineCannotBeChecked(string $case): void
+    {
+        [$user, $server] = $this->generateTestAccount();
+        $this->hgHldsAlert();
+
+        $this->engineOnDisk($case === 'node offline'
+            ? new DaemonConnectionException(new \GuzzleHttp\Exception\TransferException('down'))
+            : [['name' => 'server.jar', 'size' => 10, 'file' => true, 'directory' => false]]);
+
+        $this->assertSame([], $this->ids("/api/client/servers/{$server->uuid}/alerts", $user));
+    }
+
+    public static function undeterminedProvider(): array
+    {
+        return [['node offline'], ['no engine file']];
+    }
+
+    public function testConditionNeverAsksTheNodeForUsersOutsideTheAudience(): void
+    {
+        [$user, $server] = $this->generateTestAccount();
+        $this->hgHldsAlert(['audience' => 'admins']);
+
+        $this->engineOnDisk([], null);
+
+        $this->assertSame([], $this->ids("/api/client/servers/{$server->uuid}/alerts", $user));
+    }
+
+    public function testConditionalAlertsReachAdminsOfTheServerPage(): void
+    {
+        [, $server] = $this->generateTestAccount();
+        $admin = User::factory()->create(['root_admin' => true]);
+        $alert = $this->hgHldsAlert(['audience' => 'admins']);
+
+        $this->engineOnDisk($this->engineFile(1327992));
+
+        $this->assertSame([$alert->id], $this->ids("/api/client/servers/{$server->uuid}/alerts", $admin));
+    }
+
+    public function testConditionalAlertsStayOffAccountPages(): void
+    {
+        [$user] = $this->generateTestAccount();
+        $this->hgHldsAlert();
+
+        $this->engineOnDisk([], null);
+
+        $this->assertSame([], $this->ids('/api/client/alerts', $user));
     }
 
     public function testUntargetedAlertReachesEveryUser(): void

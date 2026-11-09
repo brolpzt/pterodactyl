@@ -38,6 +38,21 @@ class PanelAlertsControllerTest extends IntegrationTestCase
         ], $overrides);
     }
 
+    public function testServerConditionIsSavedAndValidated(): void
+    {
+        $this->actingAs($this->admin)
+            ->post('/admin/alerts/new', $this->payload(['server_condition' => PanelAlert::CONDITION_HGHLDS_MISSING]))
+            ->assertRedirect();
+
+        $alert = PanelAlert::query()->latest('id')->firstOrFail();
+        $this->assertSame(PanelAlert::CONDITION_HGHLDS_MISSING, $alert->server_condition);
+
+        $this->actingAs($this->admin)->patch("/admin/alerts/view/{$alert->id}", $this->payload(['server_condition' => '']))->assertRedirect();
+        $this->assertNull($alert->refresh()->server_condition);
+
+        $this->actingAs($this->admin)->post('/admin/alerts/new', $this->payload(['server_condition' => 'other']))->assertUnprocessable();
+    }
+
     public function testAlertCanBeCreatedEditedAndShownInAdminArea(): void
     {
         $egg = Egg::query()->firstOrFail();

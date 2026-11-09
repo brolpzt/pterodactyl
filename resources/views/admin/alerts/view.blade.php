@@ -121,6 +121,16 @@
                     <div class="box-body">
                         <p class="text-muted small">Deixe vazio para valer em todos. Nests e eggs se somam; os demais filtros restringem o resultado. Na lista de servidores e em Minha conta, o alerta aparece para quem tem acesso a pelo menos um servidor compatível. No painel admin, estes filtros não se aplicam.</p>
                         <div class="form-group">
+                            <label class="control-label">Condição do servidor</label>
+                            <select name="server_condition" class="form-control">
+                                <option value="">Nenhuma</option>
+                                @foreach($model::CONDITIONS as $value => $label)
+                                    <option value="{{ $value }}" {{ old('server_condition', $alert->server_condition) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-muted small">Com uma condição, o alerta só aparece nas páginas do servidor.</p>
+                        </div>
+                        <div class="form-group">
                             <label class="control-label">Nests</label>
                             <select name="nest_ids[]" class="form-control alert-select" multiple data-placeholder="Todos os nests">
                                 @foreach($nests as $nest)

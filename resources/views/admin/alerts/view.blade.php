@@ -53,11 +53,15 @@
                             <textarea name="message" class="form-control" rows="4" maxlength="2000" required>{{ old('message', $alert->message) }}</textarea>
                             <p class="text-muted small">Aceita Markdown simples: <code>**negrito**</code>, <code>*itálico*</code> e <code>[texto](https://link)</code>. HTML não é interpretado.</p>
                         </div>
-                        <div class="checkbox">
-                            <label><input type="hidden" name="enabled" value="0"><input type="checkbox" name="enabled" value="1" {{ old('enabled', $alert->enabled) ? 'checked' : '' }}> Ativo</label>
+                        <div class="checkbox checkbox-primary">
+                            <input type="hidden" name="enabled" value="0">
+                            <input type="checkbox" id="alertEnabled" name="enabled" value="1" {{ old('enabled', $alert->enabled) ? 'checked' : '' }}>
+                            <label for="alertEnabled">Ativo</label>
                         </div>
-                        <div class="checkbox">
-                            <label><input type="hidden" name="dismissible" value="0"><input type="checkbox" name="dismissible" value="1" {{ old('dismissible', $alert->dismissible) ? 'checked' : '' }}> O usuário pode fechar este alerta</label>
+                        <div class="checkbox checkbox-primary">
+                            <input type="hidden" name="dismissible" value="0">
+                            <input type="checkbox" id="alertDismissible" name="dismissible" value="1" {{ old('dismissible', $alert->dismissible) ? 'checked' : '' }}>
+                            <label for="alertDismissible">O usuário pode fechar este alerta</label>
                             <p class="text-muted small">Fica fechado naquele navegador. Se você editar o alerta, ele aparece de novo.</p>
                         </div>
                         <div class="row">
@@ -87,8 +91,9 @@
                     <div class="box-body">
                         <div class="form-group">
                             @foreach($model::PLACEMENTS as $value => $label)
-                                <div class="checkbox" style="margin:2px 0">
-                                    <label><input type="checkbox" name="placements[]" value="{{ $value }}" {{ in_array($value, $selectedPlacements, true) ? 'checked' : '' }}> {{ $label }}</label>
+                                <div class="checkbox checkbox-primary" style="margin:6px 0">
+                                    <input type="checkbox" id="alertPlacement-{{ $value }}" name="placements[]" value="{{ $value }}" {{ in_array($value, $selectedPlacements, true) ? 'checked' : '' }}>
+                                    <label for="alertPlacement-{{ $value }}">{{ $label }}</label>
                                 </div>
                             @endforeach
                         </div>

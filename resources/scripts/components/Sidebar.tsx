@@ -39,6 +39,7 @@ import { motionDurations } from '@/assets/css/motionTheme';
 import { glassContentLayer, glassSidebarShell } from '@/assets/css/glassPanel';
 import ScrollArea from '@/components/elements/ScrollArea';
 import { isCs16Server } from '@/lib/isCs16Server';
+import { supportsGameQuery } from '@/lib/supportsGameQuery';
 import { HOSTGAMER_LOGO_SRC } from '@/lib/branding';
 import { HEADER_HEIGHT, sidebarWidthRule } from '@/lib/sidebarLayout';
 
@@ -386,7 +387,7 @@ const ServerLinks = () => {
         .filter((route) => !isWebRconRoute(route.path))
         .filter((route) => route.path !== '/dns' || dnsEnabled || eggFeatures.includes('dns'))
         .filter((route) => route.path !== '/workshop' || eggFeatures.includes('workshop'))
-        .filter((route) => !(isTs3 && route.path === '/stats'))
+        .filter((route) => route.path !== '/stats' || supportsGameQuery(gamedig, eggId))
         .filter((route) => !route.adminOnly || rootAdmin);
 
     const sortedRoutes = isTs3

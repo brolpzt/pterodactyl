@@ -19,6 +19,7 @@ import ConflictStateRenderer from '@/components/server/ConflictStateRenderer';
 import PermissionRoute from '@/components/elements/PermissionRoute';
 import routes from '@/routers/routes';
 import { isCs16Server } from '@/lib/isCs16Server';
+import { supportsGameQuery } from '@/lib/supportsGameQuery';
 
 import Sidebar from '@/components/Sidebar';
 import { MainContent } from '@/components/layout/MainContent';
@@ -118,8 +119,8 @@ export default () => {
     const hasWebRcon = eggFeatures.includes('webrcon');
     const isBlockedRouteForTs3 = (path: string) =>
         path === '/backups' ||
-        path === '/stats' ||
         ((!rootAdmin) && (path === '/console' || path === '/files' || path === '/files/:action(edit|new)'));
+    const hasStats = supportsGameQuery(gamedig, eggId);
     const isTs3OnlyRoute = (path: string) => path.startsWith('/ts3');
     const isAmxxOnlyRoute = (path: string) => path.startsWith('/amxx');
     const isWebRconOnlyRoute = (path: string) => path.startsWith('/webrcon');
@@ -173,6 +174,7 @@ export default () => {
                                                     {routes.server.map(({ path, permission, component: Component, adminOnly }) => (
                                                         (isTs3 && isBlockedRouteForTs3(path)) ||
                                                         (!isTs3 && isTs3OnlyRoute(path)) ||
+                                                        (!hasStats && path === '/stats') ||
                                                         (!isCs16 && isAmxxOnlyRoute(path)) ||
                                                         (!hasWebRcon && isWebRconOnlyRoute(path)) ||
                                                         (isTs3 && isRootAdminOnlyTs3Route(path) && !rootAdmin) ||

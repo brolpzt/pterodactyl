@@ -380,7 +380,7 @@ const ServerLinks = () => {
             : isCs16
             ? !route.path.startsWith('/ts3')
             : !route.path.startsWith('/ts3') && !route.path.startsWith('/amxx')))
-        .filter((route) => !(isTs3 && route.path === '/backups'))
+        .filter((route) => route.path !== '/backups')
         .filter((route) => !(isTs3 && (route.path === '/console' || route.path === '/files') && !rootAdmin))
         .filter((route) => route.path !== '/ts3/query' || rootAdmin)
         .filter((route) => !(isCs16 && isAmxxRoute(route.path)))

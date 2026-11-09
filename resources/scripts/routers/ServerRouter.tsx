@@ -118,8 +118,7 @@ export default () => {
     const isCs16 = isCs16Server(gamedig, eggName);
     const hasWebRcon = eggFeatures.includes('webrcon');
     const isBlockedRouteForTs3 = (path: string) =>
-        path === '/backups' ||
-        ((!rootAdmin) && (path === '/console' || path === '/files' || path === '/files/:action(edit|new)'));
+        (!rootAdmin) && (path === '/console' || path === '/files' || path === '/files/:action(edit|new)');
     const hasStats = supportsGameQuery(gamedig, eggId);
     const isTs3OnlyRoute = (path: string) => path.startsWith('/ts3');
     const isAmxxOnlyRoute = (path: string) => path.startsWith('/amxx');
@@ -172,6 +171,7 @@ export default () => {
                                             <Suspense fallback={routeContentFallback}>
                                                 <Switch location={location}>
                                                     {routes.server.map(({ path, permission, component: Component, adminOnly }) => (
+                                                        path === '/backups' ||
                                                         (isTs3 && isBlockedRouteForTs3(path)) ||
                                                         (!isTs3 && isTs3OnlyRoute(path)) ||
                                                         (!hasStats && path === '/stats') ||

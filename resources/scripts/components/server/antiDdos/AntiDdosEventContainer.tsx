@@ -139,13 +139,13 @@ export default () => {
                                                 <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
                                                     <ColumnLabel
                                                         label={'Potência'}
-                                                        tip={'Volume do ataque nesta porta (bits por segundo)'}
+                                                        tip={'Volume do evento nesta porta (bits por segundo)'}
                                                     />
                                                 </th>
                                                 <th css={[cardLabelText, tw`text-right py-2 font-medium`]}>
                                                     <ColumnLabel
-                                                        label={'% do ataque'}
-                                                        tip={'Porcentagem do tráfego do ataque que caiu nesta porta'}
+                                                        label={'% do evento'}
+                                                        tip={'Porcentagem do tráfego do evento que caiu nesta porta'}
                                                     />
                                                 </th>
                                             </tr>

@@ -162,10 +162,10 @@ export default () => {
                         },
                         label: (item) => {
                             const bucket = buckets[item.dataIndex];
-                            if (!bucket?.peak) return ' Sem ataques';
+                            if (!bucket?.peak) return ' Sem eventos';
                             const count = bucket.events.length;
                             return ` Potência: ${formatBps(bucket.peak.attack_power_bps)}${
-                                count > 1 ? ` (maior de ${count} ataques)` : ''
+                                count > 1 ? ` (maior de ${count} eventos)` : ''
                             }`;
                         },
                         afterLabel: (item) => {
@@ -308,9 +308,11 @@ export default () => {
                 className={'mb-4 text-sm items-start [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:w-5 [&>svg]:h-5'}
             >
                 <div>
-                    <p className={'m-0 font-medium text-neutral-100'}>Mostra apenas ataques às portas deste servidor</p>
+                    <p className={'m-0 font-medium text-neutral-100'}>
+                        Mostra apenas eventos nas portas deste servidor
+                    </p>
                     <p className={'m-0 mt-1.5 text-neutral-200 leading-relaxed'}>
-                        Ataques costumam atingir várias portas e IPs ao mesmo tempo; a coluna{' '}
+                        Eventos costumam atingir várias portas e IPs ao mesmo tempo; a coluna{' '}
                         <strong className={'font-semibold text-neutral-100'}>% neste servidor</strong> indica a parte
                         que chegou no seu IP:PORTA. Eventos em andamento ainda podem ser atualizados.
                     </p>
@@ -343,7 +345,7 @@ export default () => {
                                                 <th css={[cardLabelText, tw`text-left py-1.5 font-medium`]}>
                                                     <ColumnLabel
                                                         label={'Início'}
-                                                        tip={'Momento em que o ataque foi detectado pela Proteção DDoS'}
+                                                        tip={'Momento em que o evento foi detectado pela Proteção DDoS'}
                                                     />
                                                 </th>
                                                 <th
@@ -354,20 +356,20 @@ export default () => {
                                                 >
                                                     <ColumnLabel
                                                         label={'Alvo'}
-                                                        tip={'IP e portas deste servidor atingidas pelo ataque'}
+                                                        tip={'IP e portas deste servidor atingidas pelo evento'}
                                                     />
                                                 </th>
                                                 <th css={[cardLabelText, tw`text-left py-1.5 font-medium`]}>
                                                     <ColumnLabel
                                                         label={'Estado'}
-                                                        tip={'Se o ataque ainda está em andamento ou já terminou'}
+                                                        tip={'Se o evento ainda está em andamento ou já terminou'}
                                                     />
                                                 </th>
                                                 <th css={[cardLabelText, tw`text-right py-1.5 font-medium`]}>
                                                     <ColumnLabel
                                                         label={'BPS'}
                                                         tip={
-                                                            'Volume máximo do ataque nas portas deste servidor (bits por segundo)'
+                                                            'Volume máximo do evento nas portas deste servidor (bits por segundo)'
                                                         }
                                                     />
                                                 </th>
@@ -393,7 +395,7 @@ export default () => {
                                                     <ColumnLabel
                                                         label={'% neste servidor'}
                                                         tip={
-                                                            'Porcentagem do tráfego do ataque (no IP) que atingiu as portas deste servidor'
+                                                            'Porcentagem do tráfego do evento (no IP) que atingiu as portas deste servidor'
                                                         }
                                                     />
                                                 </th>

@@ -88,7 +88,8 @@ class GcoreIpListControllerTest extends IntegrationTestCase
                 ['policy' => 'allowlist', 'proto_list' => 'any', 'dport_list' => '', 'sport_list' => '', 'sip_list' => '187.94.104.229', 'ip_lists' => (string) $list->id, 'description' => '  Escritório +   Cloudflare '],
                 ['policy' => 'udp-general', 'proto_list' => 'udp', 'dport_list' => '27015', 'sport_list' => '', 'sip_list' => ''],
             ],
-        ])->assertRedirect();
+        ])->assertRedirect()
+            ->assertSessionHas('alert_messages', fn ($alerts) => str_contains(implode(' ', $alerts['success'] ?? []), 'conferido na Gcore: 2 faixa(s)'));
 
         $this->assertSame(['187.94.104.229', '103.21.244.0/22', '173.245.48.0/20'], $this->acl[0]['sip_list']);
         $this->assertArrayNotHasKey('ip_lists', $this->acl[0]);

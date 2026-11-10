@@ -29,6 +29,9 @@ class GcoreIpListRefreshServiceTest extends IntegrationTestCase
     private int $puts = 0;
     private bool $gcoreDown = false;
 
+    /** When set, Gcore "accepts" a PUT but stores only the first N sip entries of each rule. */
+    private ?int $gcoreKeepsSips = null;
+
     private GcoreIpListBindingService $bindings;
     private GcoreIpListRefreshService $refresh;
 
@@ -49,6 +52,12 @@ class GcoreIpListRefreshServiceTest extends IntegrationTestCase
                     foreach ($request->data()['fields'] as $field) {
                         if ($field['base_field'] === 3) {
                             $this->acl = $field['field_value'];
+                            if ($this->gcoreKeepsSips !== null) {
+                                foreach ($this->acl as &$rule) {
+                                    $rule['sip_list'] = array_slice($rule['sip_list'], 0, $this->gcoreKeepsSips);
+                                }
+                                unset($rule);
+                            }
                         }
                     }
 
@@ -207,6 +216,52 @@ class GcoreIpListRefreshServiceTest extends IntegrationTestCase
         $this->assertSame('updated', $results[0]['status']);
         $this->assertSame(['187.94.104.229', '45.121.184.0/22', '146.66.152.0/21'], $this->acl[0]['sip_list']);
         $this->assertSame([], $this->bindings->applyPending());
+    }
+
+    public function testPushIsReadBackAndConfirmed(): void
+    {
+        $list = $this->boundList("45.121.184.0/22\n");
+        $this->listBody = "45.121.184.0/22\n146.66.152.0/21\n";
+
+        $log = $this->refresh->refresh($list);
+
+        $this->assertSame('updated', $log->profiles[0]['status']);
+        $this->assertStringContainsString('conferido na Gcore: 2 faixa(s)', $log->profiles[0]['message']);
+        $this->assertSame('ok', GcoreIpListBinding::query()->firstOrFail()->status);
+    }
+
+    public function testMissingIpsAfterPushAreFlaggedAndRetried(): void
+    {
+        $list = $this->boundList("45.121.184.0/22\n");
+
+        // Gcore answers OK but only keeps the manual IP and the first list CIDR.
+        $this->gcoreKeepsSips = 2;
+        $this->listBody = "45.121.184.0/22\n146.66.152.0/21\n103.10.124.0/23\n";
+        $log = $this->refresh->refresh($list);
+
+        $this->assertSame('error', $log->profiles[0]['status']);
+        $this->assertStringContainsString('CONFERÊNCIA FALHOU: faltam 2 de 3', $log->profiles[0]['message']);
+        $binding = GcoreIpListBinding::query()->firstOrFail();
+        $this->assertSame('error', $binding->status);
+        $this->assertStringContainsString('146.66.152.0/21', $binding->last_error);
+
+        // Next run pushes again; this time Gcore stores everything.
+        $this->gcoreKeepsSips = null;
+        $results = $this->bindings->applyPending();
+        $this->assertSame('updated', $results[0]['status']);
+        $this->assertSame('ok', $binding->refresh()->status);
+        $this->assertSame([], $this->bindings->applyPending());
+    }
+
+    public function testReadBackAcceptsEquivalentNotation(): void
+    {
+        $this->boundList("1.1.1.1\n10.0.0.0/23\n");
+        // Gcore writes /32 suffixes and splits the /23 into two /24s: same addresses.
+        $this->acl[0]['sip_list'] = ['187.94.104.229/32', '1.1.1.1/32', '10.0.1.0/24', '10.0.0.0/24'];
+
+        $check = $this->bindings->verify(self::PROFILE);
+        $this->assertSame(0, $check['missing']);
+        $this->assertSame(2, $check['checked']);
     }
 
     public function testListWithoutEntriesCannotBeSelected(): void

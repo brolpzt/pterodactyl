@@ -273,7 +273,16 @@ class GcoreIpListBindingService
                     $message .= sprintf(' · %d regra(s) não encontrada(s)', count($orphans));
                 }
 
-                return ['profile_id' => $profileId, 'ip' => $ip, 'status' => $orphans !== [] && $changed === 0 ? 'orphan' : $status, 'rules' => $changed, 'message' => $message];
+                // Read the profile back (fresh GET after a PUT) and confirm every list CIDR is there.
+                $check = $this->verify($profileId, $changed > 0 ? null : $profile);
+                $message .= ' · ' . $check['message'];
+                if ($check['missing'] > 0) {
+                    $status = 'error';
+                } elseif ($orphans !== [] && $changed === 0) {
+                    $status = 'orphan';
+                }
+
+                return ['profile_id' => $profileId, 'ip' => $ip, 'status' => $status, 'rules' => $changed, 'message' => $message];
             });
         } catch (\Throwable $e) {
             foreach ($bindings as $binding) {
@@ -284,6 +293,68 @@ class GcoreIpListBindingService
 
             return ['profile_id' => $profileId, 'ip' => $ip, 'status' => 'error', 'rules' => 0, 'message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Read-back check: confirm that every list CIDR each binding last wrote is really in its rule
+     * on Gcore. Bindings whose rule lacks CIDRs (or can't be found) are marked 'error', so the next
+     * scheduled run pushes them again.
+     *
+     * @param array<string, mixed>|null $profile profile already fetched after the write; null = GET it now
+     * @return array{checked:int, missing:int, rules:list<array{policy:string, expected:int, missing:int, sample:list<string>}>, message:string}
+     */
+    public function verify(int $profileId, ?array $profile = null): array
+    {
+        $bindings = GcoreIpListBinding::query()->where('profile_id', $profileId)->where('status', '!=', 'orphan')->get();
+        if ($bindings->isEmpty()) {
+            return ['checked' => 0, 'missing' => 0, 'rules' => [], 'message' => 'nenhuma regra com lista para conferir'];
+        }
+
+        $profile ??= $this->client()->getProfile($profileId);
+        $acl = GcoreAclHelper::extractProfileFormData($profile)['acl'];
+        [$matches, $unmatched] = $this->match($acl, $bindings);
+
+        $checked = 0;
+        $missingTotal = 0;
+        $rules = [];
+        foreach ($matches as $idx => $binding) {
+            $expected = $binding->applied_sips ?? [];
+            $missing = IpListParser::uncovered($expected, (array) ($acl[$idx]['sip_list'] ?? []));
+            $checked += count($expected);
+            if ($missing === []) {
+                continue;
+            }
+            $missingTotal += count($missing);
+            $rules[] = ['policy' => (string) $binding->policy, 'expected' => count($expected), 'missing' => count($missing), 'sample' => array_slice($missing, 0, 5)];
+            $binding->forceFill([
+                'status' => 'error',
+                'last_error' => sprintf(
+                    'Conferência: a Gcore não tem %d de %d faixas das listas nesta regra (ex.: %s).',
+                    count($missing),
+                    count($expected),
+                    implode(', ', array_slice($missing, 0, 5)),
+                ),
+            ])->save();
+        }
+        foreach ($unmatched as $binding) {
+            $expected = $binding->applied_sips ?? [];
+            $checked += count($expected);
+            $missingTotal += count($expected);
+            $rules[] = ['policy' => (string) $binding->policy, 'expected' => count($expected), 'missing' => count($expected), 'sample' => []];
+            $binding->forceFill([
+                'status' => 'error',
+                'last_error' => 'Conferência: a regra não foi encontrada no perfil lido de volta da Gcore.',
+            ])->save();
+        }
+
+        $message = $missingTotal === 0
+            ? sprintf('conferido na Gcore: %d faixa(s) das listas presentes', $checked)
+            : sprintf('CONFERÊNCIA FALHOU: faltam %d de %d faixa(s) das listas na Gcore (%s)', $missingTotal, $checked, implode('; ', array_map(
+                fn (array $r) => sprintf('%s: %d/%d%s', $r['policy'], $r['missing'], $r['expected'], $r['sample'] ? ' ex. ' . implode(', ', $r['sample']) : ''),
+                $rules,
+            )));
+
+        return ['checked' => $checked, 'missing' => $missingTotal, 'rules' => $rules, 'message' => $message];
     }
 
     /**

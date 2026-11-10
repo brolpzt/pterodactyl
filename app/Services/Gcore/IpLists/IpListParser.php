@@ -85,6 +85,46 @@ class IpListParser
     }
 
     /**
+     * Entries of $want whose addresses are not fully covered by $have. Compares address ranges,
+     * so "1.2.3.4" vs "1.2.3.4/32" or one /23 vs two /24 count as the same thing.
+     *
+     * @param list<string> $want
+     * @param list<string> $have
+     * @return list<string>
+     */
+    public static function uncovered(array $want, array $have): array
+    {
+        $ranges = [];
+        foreach ($have as $entry) {
+            $range = self::parseIpv4((string) $entry);
+            if ($range !== null) {
+                $ranges[] = $range;
+            }
+        }
+        $merged = self::mergeRanges($ranges);
+
+        $missing = [];
+        foreach ($want as $entry) {
+            $range = self::parseIpv4((string) $entry);
+            if ($range === null) {
+                continue;
+            }
+            $covered = false;
+            foreach ($merged as [$start, $end]) {
+                if ($range[0] >= $start && $range[1] <= $end) {
+                    $covered = true;
+                    break;
+                }
+            }
+            if (!$covered) {
+                $missing[] = (string) $entry;
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
      * @param list<array{0:int,1:int}> $ranges
      * @param array{ipv6:int,invalid:int,too_broad:int} $stats
      */

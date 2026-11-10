@@ -109,9 +109,26 @@ class GcoreDdosController extends Controller
                     ? ''
                     : ' · ' . $this->applyOverrides((string) ($data['ip_address'] ?? ''), $overrides);
 
-                $this->alert->success(
-                    'Enviado à Gcore · ' . ($updated['status']['status'] ?? 'OK') . ' (propagação ~2–5 min)' . $listNote . $overrideNote
-                )->flash();
+                $text = 'Enviado à Gcore · ' . ($updated['status']['status'] ?? 'OK') . ' (propagação ~2–5 min)' . $listNote . $overrideNote;
+                if ($prepared['bindings'] === []) {
+                    $this->alert->success($text)->flash();
+
+                    return;
+                }
+
+                // Read the profile back and confirm every list CIDR made it into its rule.
+                try {
+                    $check = $bindings->verify($profile);
+                } catch (\Throwable $e) {
+                    $this->alert->warning($text . ' · não foi possível conferir na Gcore: ' . $e->getMessage())->flash();
+
+                    return;
+                }
+                if ($check['missing'] > 0) {
+                    $this->alert->danger($text . ' · ' . $check['message'] . '. O painel vai reenviar automaticamente a cada 15 min.')->flash();
+                } else {
+                    $this->alert->success($text . ' · ' . $check['message'])->flash();
+                }
             });
         } catch (\Throwable $e) {
             $this->alert->danger($e->getMessage())->flash();

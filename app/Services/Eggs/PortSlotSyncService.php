@@ -9,8 +9,8 @@ use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\EggVariable;
 use Pterodactyl\Models\ServerVariable;
 use Pterodactyl\Services\Gcore\GcoreClient;
-use Pterodactyl\Exceptions\DisplayException;
 use Illuminate\Database\ConnectionInterface;
+use Pterodactyl\Exceptions\DisplayException;
 
 class PortSlotSyncService
 {
@@ -25,7 +25,6 @@ class PortSlotSyncService
      *
      * SERVER_PORT is allowed as the special primary slot (ACL only; not an egg variable).
      *
-     * @param  mixed  $raw
      * @return list<array{env_variable: string, name: string, description: string, required: bool, gcore_policy: string|null, gcore_proto: string|null}>
      *
      * @throws DisplayException
@@ -68,6 +67,12 @@ class PortSlotSyncService
 
             $gcorePolicy = trim((string) Arr::get($row, 'gcore_policy', ''));
             $gcoreProto = strtolower(trim((string) Arr::get($row, 'gcore_proto', '')));
+            // Linked Gcore rules (admin → Gcore → Regras vinculadas) this slot's port also goes into.
+            $gcoreLinks = array_values(array_unique(array_filter(
+                array_map('intval', (array) Arr::get($row, 'gcore_links', [])),
+                fn (int $id) => $id > 0,
+            )));
+            sort($gcoreLinks);
 
             if ($env === '' && $name === '' && $gcorePolicy === '') {
                 continue;
@@ -111,6 +116,7 @@ class PortSlotSyncService
                 'required' => $required,
                 'gcore_policy' => $gcorePolicy === '' ? null : $gcorePolicy,
                 'gcore_proto' => $gcoreProto === '' || $gcoreProto === 'any' ? null : $gcoreProto,
+                'gcore_links' => $gcoreLinks,
             ];
         }
 
@@ -120,7 +126,8 @@ class PortSlotSyncService
     /**
      * Merge legacy egg.gcore_policy / gcore_proto into a SERVER_PORT slot when missing.
      *
-     * @param  list<array<string, mixed>>  $slots
+     * @param list<array<string, mixed>> $slots
+     *
      * @return list<array{env_variable: string, name: string, description: string, required: bool, gcore_policy: string|null, gcore_proto: string|null}>
      */
     public function withLegacyPrimarySlot(array $slots, ?Egg $egg): array
@@ -185,7 +192,8 @@ class PortSlotSyncService
     /**
      * Extra (non-primary) port slots.
      *
-     * @param  list<array<string, mixed>>|null  $slots
+     * @param list<array<string, mixed>>|null $slots
+     *
      * @return list<array{env_variable: string, name: string, description: string, required: bool, gcore_policy: string|null, gcore_proto: string|null}>
      */
     public function extraSlots(?array $slots): array
@@ -251,6 +259,27 @@ class PortSlotSyncService
         }
 
         return ['policy' => $policy, 'proto' => $proto];
+    }
+
+    /**
+     * Linked Gcore rule ids the allocation's port slot opts into (overrides do not change them).
+     *
+     * @return list<int>
+     */
+    public function resolveGcoreLinksForAllocation(Egg $egg, Allocation $allocation, int $primaryAllocationId): array
+    {
+        $slots = $this->withLegacyPrimarySlot(
+            is_array($egg->port_slots) ? $egg->port_slots : [],
+            $egg
+        );
+        $byEnv = [];
+        foreach ($slots as $slot) {
+            $byEnv[$slot['env_variable']] = $slot;
+        }
+
+        $env = $this->resolveSlotEnv($allocation, $primaryAllocationId, array_keys($byEnv));
+
+        return $env === '' ? [] : array_values((array) ($byEnv[$env]['gcore_links'] ?? []));
     }
 
     /**
@@ -509,7 +538,7 @@ class PortSlotSyncService
     /**
      * Clear port_env when allocations are released and refresh server variables.
      *
-     * @param  list<int>  $allocationIds
+     * @param list<int> $allocationIds
      */
     public function clearPortEnvForAllocations(array $allocationIds): void
     {
@@ -723,7 +752,8 @@ class PortSlotSyncService
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation>  $query
+     * @param \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation> $query
+     *
      * @return \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation>
      */
     public function constrainQueryToExtraSlot($query, ?Egg $egg, int $primaryPort)
@@ -747,7 +777,8 @@ class PortSlotSyncService
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation>  $query
+     * @param \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation> $query
+     *
      * @return \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation>
      */
     public function constrainQueryToPrimaryPool($query, ?Egg $egg)
@@ -814,9 +845,7 @@ class PortSlotSyncService
                 );
             }
 
-            throw new DisplayException(
-                "Sem allocation livre no IP {$ip} para o port slot obrigatório.{$hint}"
-            );
+            throw new DisplayException("Sem allocation livre no IP {$ip} para o port slot obrigatório.{$hint}");
         }
 
         return $allocation;

@@ -19,6 +19,9 @@ class GcoreDdosControllerTest extends IntegrationTestCase
 
     private array $acl = [];
 
+    /** PUT outcome: null = ok, 'applied' = 504 but saved, 'lost' = 504 and not saved. */
+    private ?string $putFails = null;
+
     /** @var array<string, int> "METHOD path" => calls */
     private array $calls = [];
 
@@ -48,7 +51,12 @@ class GcoreDdosControllerTest extends IntegrationTestCase
             }
             if ($path === '/security/iaas/v2/profiles/77') {
                 if ($request->method() === 'PUT') {
-                    $this->acl = $request->data()['fields'][1]['field_value'];
+                    if ($this->putFails !== 'lost') {
+                        $this->acl = $request->data()['fields'][1]['field_value'];
+                    }
+                    if ($this->putFails !== null) {
+                        return Http::response('<html><head><title>504 Gateway Time-out</title></head><body>nginx</body></html>', 504);
+                    }
                 }
 
                 return Http::response($this->profile());
@@ -145,6 +153,43 @@ class GcoreDdosControllerTest extends IntegrationTestCase
             ->assertSee('name="acl[1][dport_list]" value="27016,27018"', false)
             ->assertSee('value="' . GcoreProfileCache::formHash($this->profile()) . '"', false);
         $this->assertSame($gets, $this->gets());
+    }
+
+    public function testGatewayTimeoutIsResolvedByReadingTheProfileBack(): void
+    {
+        config()->set('gcore.recheck_wait_seconds', 0);
+        $hash = GcoreProfileCache::formHash($this->profile());
+
+        // Gcore answers 504 but applied the change: reported as sent, with a note.
+        $this->putFails = 'applied';
+        $this->actingAs($this->admin)->post('/admin/gcore/profiles/77', $this->form($hash, '27015,27019'))
+            ->assertRedirect()
+            ->assertSessionHas('alert_messages', fn ($a) => str_contains(implode(' ', $a['success'] ?? []), 'releitura confirmou que a mudança foi aplicada'));
+        $this->assertSame([27015, 27019], $this->acl[1]['dport_list']);
+
+        // Gcore answers 504 and did not apply it: clear "not applied" error, no HTML dump.
+        $this->putFails = 'lost';
+        $gets = $this->gets();
+        $this->actingAs($this->admin)->post('/admin/gcore/profiles/77', $this->form(GcoreProfileCache::formHash($this->profile()), '27015,27021'))
+            ->assertRedirect()
+            ->assertSessionHas('alert_messages', function ($a) {
+                $text = implode(' ', $a['danger'] ?? []);
+
+                return str_contains($text, 'HTTP 504') && str_contains($text, 'NÃO foi aplicada') && !str_contains($text, '<html');
+            });
+        $this->assertSame([27015, 27019], $this->acl[1]['dport_list']);
+        $this->assertSame($gets + 1 + 3, $this->gets(), 'one read before the PUT, three re-reads after');
+    }
+
+    public function testFormHashIgnoresNotationAndOrder(): void
+    {
+        $a = $this->profile();
+        $b = $this->profile();
+        $b['fields'][1]['field_value'][0]['sip_list'] = ['187.94.104.229/32'];
+        $b['fields'][1]['field_value'][1]['proto_list'] = ['UDP'];
+        $this->assertSame(GcoreProfileCache::formHash($a), GcoreProfileCache::formHash($b));
+        $b['fields'][1]['field_value'][1]['dport_list'] = [27016];
+        $this->assertNotSame(GcoreProfileCache::formHash($a), GcoreProfileCache::formHash($b));
     }
 
     public function testIpListEntriesAreServedSeparatelyWithEtag(): void

@@ -16,6 +16,7 @@ use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Services\Gcore\GcoreAclHelper;
 use Pterodactyl\Services\Gcore\GcoreProfileCache;
 use Pterodactyl\Services\Eggs\PortSlotSyncService;
+use Pterodactyl\Services\Gcore\GcoreLinkedRuleService;
 use Pterodactyl\Services\Gcore\GcoreAclRuleNoteService;
 use Pterodactyl\Services\Gcore\IpLists\GcoreIpListBindingService;
 
@@ -103,7 +104,7 @@ class GcoreDdosController extends Controller
      * Renders from the cached copy when there is one (the page revalidates via liveProfile());
      * only a first visit, or ?fresh=1, waits for the Gcore API.
      */
-    public function show(Request $request, int $profile, PortSlotSyncService $portSlots, GcoreIpListBindingService $bindings, GcoreAclRuleNoteService $notes, GcoreProfileCache $cache): View|RedirectResponse
+    public function show(Request $request, int $profile, PortSlotSyncService $portSlots, GcoreIpListBindingService $bindings, GcoreAclRuleNoteService $notes, GcoreProfileCache $cache, GcoreLinkedRuleService $linked): View|RedirectResponse
     {
         try {
             $cached = $request->boolean('fresh') ? null : $cache->get($profile);
@@ -115,6 +116,7 @@ class GcoreDdosController extends Controller
                 $fetchedAt = $cached['fetched_at'];
             }
             $form = GcoreAclHelper::extractProfileFormData($data);
+            $linkedNames = $linked->describe($form['acl']);
             $annotated = $bindings->annotate($profile, $form['acl']);
             $described = $notes->annotate($profile, $annotated['acl']);
             $form['acl'] = $described['acl'];
@@ -135,6 +137,7 @@ class GcoreDdosController extends Controller
                         'status' => $l->last_status,
                     ])->values(),
                 'formHash' => GcoreProfileCache::formHash($data),
+                'linkedNames' => $linkedNames,
                 'fetchedAt' => $fetchedAt,
                 'orphanBindings' => count($annotated['orphans']),
                 'listChecks' => GcoreIpListBinding::query()->where('profile_id', $profile)->where('status', '!=', 'orphan')->get(),
@@ -179,7 +182,8 @@ class GcoreDdosController extends Controller
                 $geoip = array_values(array_filter($geoip ?: []));
 
                 $payload = $client->buildUpdatePayload($data, $rate, $geoip, $prepared['acl']);
-                $updated = $client->updateProfile($profile, $payload);
+                $put = $client->updateProfileChecked($profile, $data, $payload);
+                $updated = $put['response'];
                 $bindings->storeBindings($profile, (string) ($data['ip_address'] ?? ''), $prepared['bindings']);
                 $notes->store($profile, $formAcl);
                 $listNote = $prepared['bindings'] === [] ? '' : ' · ' . count($prepared['bindings']) . ' regra(s) ligada(s) a listas de IP';
@@ -188,7 +192,9 @@ class GcoreDdosController extends Controller
                     ? ''
                     : ' · ' . $this->applyOverrides((string) ($data['ip_address'] ?? ''), $overrides);
 
-                $text = 'Enviado à Gcore · ' . ($updated['status']['status'] ?? 'OK') . ' (propagação ~2–5 min)' . $listNote . $overrideNote;
+                $text = 'Enviado à Gcore · ' . ($updated['status']['status'] ?? 'OK') . ' (propagação ~2–5 min)'
+                    . ($put['recovered'] === null ? '' : ' · ' . $put['recovered'])
+                    . $listNote . $overrideNote;
                 if ($prepared['bindings'] === []) {
                     $this->alert->success($text)->flash();
 

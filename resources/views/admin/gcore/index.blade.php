@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="/themes/pterodactyl/css/gcore-ddos.css">
 <div class="gcore-ddos-wrap">
     <h1 class="page-title">Perfis IaaS</h1>
-    <p class="meta-row">Anti-DDoS bare metal · edite ACL e rate limiters por IP · <a href="{{ route('admin.gcore.ip-lists') }}">Listas de IP →</a></p>
+    <p class="meta-row">Anti-DDoS bare metal · edite ACL e rate limiters por IP · <a href="{{ route('admin.gcore.ip-lists') }}">Listas de IP →</a> · <a href="{{ route('admin.gcore.linked-rules') }}">Regras vinculadas →</a></p>
 
     @if(!$configured)
         <div class="flash flash-err">

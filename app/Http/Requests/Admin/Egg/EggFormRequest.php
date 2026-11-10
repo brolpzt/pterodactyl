@@ -37,6 +37,8 @@ class EggFormRequest extends AdminFormRequest
             'port_slots.*.required' => 'sometimes|boolean',
             'port_slots.*.gcore_policy' => 'nullable|string|max:64',
             'port_slots.*.gcore_proto' => 'nullable|string|in:' . implode(',', GcoreClient::PROTOCOLS),
+            'port_slots.*.gcore_links' => 'nullable|array',
+            'port_slots.*.gcore_links.*' => 'integer|exists:gcore_linked_rules,id',
             'port_range_start' => 'nullable|integer|between:1,65535',
             'port_range_end' => 'nullable|integer|between:1,65535',
             'port_step' => 'nullable|integer|between:1,100',

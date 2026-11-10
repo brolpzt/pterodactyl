@@ -262,6 +262,11 @@ Route::group(['prefix' => 'gcore'], function () {
     Route::patch('/ip-lists/{list:id}', [Admin\GcoreIpListController::class, 'update']);
     Route::post('/ip-lists/{list:id}/refresh', [Admin\GcoreIpListController::class, 'refresh'])->name('admin.gcore.ip-lists.refresh');
     Route::delete('/ip-lists/{list:id}', [Admin\GcoreIpListController::class, 'delete'])->name('admin.gcore.ip-lists.delete');
+
+    Route::get('/linked-rules', [Admin\GcoreLinkedRuleController::class, 'index'])->name('admin.gcore.linked-rules');
+    Route::post('/linked-rules', [Admin\GcoreLinkedRuleController::class, 'store']);
+    Route::patch('/linked-rules/{rule:id}', [Admin\GcoreLinkedRuleController::class, 'update'])->name('admin.gcore.linked-rules.update');
+    Route::delete('/linked-rules/{rule:id}', [Admin\GcoreLinkedRuleController::class, 'delete'])->name('admin.gcore.linked-rules.delete');
 });
 
 /*

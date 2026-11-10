@@ -292,6 +292,7 @@
                         }
                         $gcorePolicies = \Pterodactyl\Services\Gcore\GcoreClient::POLICIES;
                         $gcoreProtos = \Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS;
+                        $gcoreLinked = \Pterodactyl\Models\GcoreLinkedRule::query()->orderBy('name')->get(['id', 'name', 'policy', 'proto', 'mode']);
                         $portStep = (int) old('port_step', $egg->port_step ?: 1);
                     @endphp
                     <div class="row" style="margin-bottom:15px">
@@ -329,6 +330,7 @@
                                 <th>Descrição</th>
                                 <th style="width:16%">Gcore policy</th>
                                 <th style="width:10%">Proto</th>
+                                <th style="width:16%">Também incluir em <a href="{{ route('admin.gcore.linked-rules') }}" target="_blank" title="Regras vinculadas: as portas deste slot entram também nestas regras Gcore">?</a></th>
                                 <th style="width:70px">Required</th>
                                 <th style="width:40px"></th>
                             </tr>
@@ -363,6 +365,16 @@
                                                 <option value="{{ $proto }}" {{ ($slot['gcore_proto'] ?? '') === $proto ? 'selected' : '' }}>{{ $proto }}</option>
                                             @endforeach
                                         </select>
+                                    </td>
+                                    <td class="gcore-links-cell">
+                                        @php $slotLinks = array_map('intval', (array) ($slot['gcore_links'] ?? [])); @endphp
+                                        @forelse($gcoreLinked as $link)
+                                            <label class="small" style="display:block;font-weight:normal;margin:0" title="{{ $link->policy }}/{{ $link->proto ?? 'any' }} · {{ $link->modeLabel() }}">
+                                                <input type="checkbox" name="port_slots[{{ $i }}][gcore_links][]" value="{{ $link->id }}" {{ in_array($link->id, $slotLinks, true) ? 'checked' : '' }}> {{ $link->name }}
+                                            </label>
+                                        @empty
+                                            <span class="text-muted small">nenhuma cadastrada</span>
+                                        @endforelse
                                     </td>
                                     <td class="text-center">
                                         @if($isPrimary)
@@ -581,6 +593,13 @@
         var idx = $('#portSlotsTable tbody tr').length;
         var policyOpts = @json($gcorePolicies ?? \Pterodactyl\Services\Gcore\GcoreClient::POLICIES);
         var protoOpts = @json(array_values(array_filter(\Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS, fn ($p) => $p !== 'any')));
+        var linkedOpts = @json(($gcoreLinked ?? collect())->map(fn ($l) => ['id' => $l->id, 'name' => $l->name])->values());
+        function linksCell(i) {
+            if (!linkedOpts.length) return '<span class="text-muted small">nenhuma cadastrada</span>';
+            return linkedOpts.map(function (l) {
+                return '<label class="small" style="display:block;font-weight:normal;margin:0"><input type="checkbox" name="port_slots[' + i + '][gcore_links][]" value="' + l.id + '"> ' + $('<span>').text(l.name).html() + '</label>';
+            }).join('');
+        }
         function policySelect(i) {
             var h = '<select name="port_slots[' + i + '][gcore_policy]" class="form-control input-sm"><option value="">— sem ACL —</option>';
             policyOpts.forEach(function (p) { h += '<option value="' + p + '">' + p + '</option>'; });
@@ -608,6 +627,7 @@
                 '<td><input type="text" name="port_slots[' + idx + '][description]" class="form-control input-sm" placeholder="Porta de query Steam"></td>' +
                 '<td>' + policySelect(idx) + '</td>' +
                 '<td>' + protoSelect(idx) + '</td>' +
+                '<td class="gcore-links-cell">' + linksCell(idx) + '</td>' +
                 '<td class="text-center"><input type="hidden" name="port_slots[' + idx + '][required]" value="0">' +
                 '<input type="checkbox" name="port_slots[' + idx + '][required]" value="1"></td>' +
                 '<td><button type="button" class="btn btn-xs btn-danger port-slot-remove">&times;</button></td>' +

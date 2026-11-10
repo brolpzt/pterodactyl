@@ -38,6 +38,8 @@
     .col-dports { width: 40%; }
     .col-sip { width: 18%; }
     .warn-total { color: #fcd34d; margin-left: 6px; }
+    .linked-badge { display: inline-block; margin-top: 2px; padding: 0 6px; border: 1px solid rgba(96,165,250,.6); border-radius: 9px; color: #93c5fd; font-size: 10px; white-space: nowrap; cursor: help; }
+    .shadow-warn { color: #fcd34d; cursor: help; }
     .pm-backdrop { position: fixed; inset: 0; z-index: 1050; background: rgba(0,0,0,.55); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px 16px; }
     .pm-backdrop[hidden] { display: none; }
     .pm-dialog { width: min(820px, 100%); max-height: 86vh; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
@@ -151,6 +153,7 @@
             <button type="button" class="btn btn-ghost" id="preset-theisle">Preset The Isle</button>
             <button type="button" class="btn btn-ghost" id="preset-geo">Preset GEO block</button>
             <a class="btn btn-ghost" href="{{ route('admin.gcore.ip-lists') }}">Listas de IP</a>
+            <a class="btn btn-ghost" href="{{ route('admin.gcore.linked-rules') }}">Regras vinculadas</a>
             <span class="toolbar-spacer"></span>
             <span class="toolbar-hint"><strong id="rule-count">{{ $ruleCount }}</strong> regras · ordem = prioridade · <code>dport</code> = porta no servidor · clique nas portas para editar<span class="warn-total" id="warn-total"></span></span>
         </div>
@@ -174,13 +177,13 @@
                     </thead>
                     <tbody id="acl-body">
                     @foreach($form['acl'] as $i => $rule)
-                        <tr class="acl-row">
+                        <tr class="acl-row" @isset($linkedNames[$i]) data-linked="{{ $linkedNames[$i] }}" @endisset>
                             <td class="col-idx row-idx">{{ $i + 1 }}</td>
                             <td class="col-ops">
                                 <button type="button" class="btn btn-icon btn-ghost move-up" title="Subir">↑</button>
                                 <button type="button" class="btn btn-icon btn-ghost move-down" title="Descer">↓</button>
                             </td>
-                            <td class="col-desc"><input class="desc" name="acl[{{ $i }}][description]" value="{{ $rule['description'] ?? '' }}" maxlength="160" placeholder="ex.: Liberar Cloudflare"></td>
+                            <td class="col-desc"><input class="desc" name="acl[{{ $i }}][description]" value="{{ $rule['description'] ?? '' }}" maxlength="160" placeholder="ex.: Liberar Cloudflare">@isset($linkedNames[$i])<span class="linked-badge" title="Regra vinculada: o sync de portas põe aqui as portas dos servidores cujos eggs marcam esta regra. Mudar política, proto ou sip desfaz o vínculo.">🔗 {{ $linkedNames[$i] }}</span>@endisset</td>
                             <td class="col-policy">
                                 <select name="acl[{{ $i }}][policy]" required>
                                     @foreach($policies as $p)
@@ -463,6 +466,8 @@
                 } else if (owners.length === 0) {
                     bump('err');
                     flags.push({ cls: 'f-err', text: 'Livre: allocation sem servidor, porta aberta à toa' });
+                } else if (rule.row.dataset.linked) {
+                    flags.push({ cls: 'f-ok', text: 'Regra vinculada "' + rule.row.dataset.linked + '": o sync põe aqui as portas dos eggs que a marcam' });
                 } else {
                     owners.forEach(e => {
                         const s = e.server;
@@ -552,17 +557,59 @@
         const { result, warnings } = analyze();
         result.forEach((ports, row) => { renderChips(row, ports); renderSipChips(row); });
         if (typeof sipRow !== 'undefined' && sipRow) renderSipModal();
-        const wt = document.getElementById('warn-total');
-        if (wt) wt.textContent = warnings ? '⚠ ' + warnings + ' porta(s) com aviso' : '';
         if (modalRow) renderModal(result.get(modalRow) || []);
 
         const rows = body.querySelectorAll('.acl-row');
+        const shadows = shadowWarnings([...rows].map(ruleInfo));
         rows.forEach((row, idx) => {
             const el = row.querySelector('.row-idx');
-            if (el) el.textContent = String(idx + 1);
+            const msg = shadows.get(idx);
+            if (el) el.innerHTML = String(idx + 1) + (msg ? ' <span class="shadow-warn" title="' + esc(msg) + '">⚠</span>' : '');
         });
+        const wt = document.getElementById('warn-total');
+        if (wt) {
+            const parts = [];
+            if (warnings) parts.push('⚠ ' + warnings + ' porta(s) com aviso');
+            if (shadows.size) parts.push('⚠ ' + shadows.size + ' regra(s) anulada(s) por regra acima (passe o mouse no ⚠ do #)');
+            wt.textContent = parts.join(' · ');
+        }
         if (countEl) countEl.textContent = String(rows.length);
         renderJson();
+    }
+
+    // Rules with sip/sport (exceptions: boost, DROP, outgoing replies) that an earlier rule
+    // already captures in part or whole: first match wins on Gcore, so that traffic never
+    // reaches them. Earlier rules with a sip are skipped (they only catch those sources).
+    function shadowWarnings(rules) {
+        const out = new Map();
+        const fmt = list => list.length > 8 ? list.slice(0, 8).join(',') + '… (' + list.length + ')' : list.join(',');
+        // Ports of `a` (empty = all) that `b` (empty = all) also matches: null = none, [] = all.
+        const overlap = (a, b) => {
+            if (b.length === 0) return a.length === 0 ? [] : a;
+            if (a.length === 0) return b;
+            const hit = a.filter(p => b.includes(p));
+            return hit.length ? hit : null;
+        };
+        const protoHit = (a, b) => a.includes('any') || b.includes('any') || a.some(p => b.includes(p));
+        rules.forEach((rule, idx) => {
+            if (rule.sip.length === 0 && rule.sport.length === 0) return;
+            const notes = [];
+            for (let j = 0; j < idx && notes.length < 3; j++) {
+                const prev = rules[j];
+                if (prev.sip.length || !protoHit(rule.protos, prev.protos)) continue;
+                const d = overlap(rule.dports, prev.dports);
+                const sp = overlap(rule.sport, prev.sport);
+                if (d === null || sp === null) continue;
+                const full = d.length === rule.dports.length && sp.length === rule.sport.length
+                    && (prev.protos.includes('any') || rule.protos.every(p => prev.protos.includes(p)));
+                notes.push((full ? 'Anulada' : 'Parcialmente anulada') + ' pela linha ' + (j + 1) + ' (' + prev.policy + '): tráfego'
+                    + (sp.length ? ' com sport ' + fmt(sp) : '') + (d.length ? ' para dport ' + fmt(d) : '')
+                    + ' cai nela antes.');
+                if (full) break;
+            }
+            if (notes.length) out.set(idx, notes.join('\n'));
+        });
+        return out;
     }
 
     const jsonPanel = document.getElementById('json-panel');

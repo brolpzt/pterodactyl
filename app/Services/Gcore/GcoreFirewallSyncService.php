@@ -5,16 +5,19 @@ namespace Pterodactyl\Services\Gcore;
 use Pterodactyl\Models\Node;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Allocation;
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\Models\NodeGcoreIp;
 use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Pterodactyl\Services\Gcore\IpLists\GcoreIpListBindingService;
-use Illuminate\Support\Facades\Log;
 
 class GcoreFirewallSyncService
 {
-    public function __construct(private PortSlotSyncService $portSlotSync)
+    private GcoreLinkedRuleService $linkedRules;
+
+    public function __construct(private PortSlotSyncService $portSlotSync, ?GcoreLinkedRuleService $linkedRules = null)
     {
+        $this->linkedRules = $linkedRules ?? new GcoreLinkedRuleService();
     }
 
     /**
@@ -111,7 +114,7 @@ class GcoreFirewallSyncService
      *
      * @throws DisplayException
      */
-    public function syncIp(Node $node, string $ip, bool $force = false): string
+    public function syncIp(Node $node, string $ip, bool $force = false, bool $dryRun = false): string
     {
         if (!$node->gcore_enabled) {
             throw new DisplayException('Este node não está marcado como Gcore.');
@@ -129,9 +132,11 @@ class GcoreFirewallSyncService
         // If the IP is no longer marked Gcore, clear panel-managed ports only.
         $desired = $ipIsGcore
             ? $this->collectDesiredByPolicy($node, $ip)
-            : ['ports' => [], 'by_proto' => []];
+            : ['ports' => [], 'by_proto' => [], 'links' => []];
         $portsByPolicy = $desired['ports'];
         $portsByPolicyProto = $desired['by_proto'];
+        $linkPorts = $desired['links'];
+        $linkedDefs = $this->linkedRules->inUse();
 
         try {
             $client = GcoreClient::fromConfig();
@@ -144,13 +149,13 @@ class GcoreFirewallSyncService
 
             // Same lock as the editor and the IP-list refresh: re-read inside it so a concurrent
             // write to this profile is not overwritten.
-            return GcoreIpListBindingService::withProfileLock((int) $profile['id'], function () use ($client, $profile, $ip, $ipIsGcore, $portsByPolicy, $portsByPolicyProto, $panelAllocationPorts) {
+            return GcoreIpListBindingService::withProfileLock((int) $profile['id'], function () use ($client, $profile, $ip, $ipIsGcore, $portsByPolicy, $portsByPolicyProto, $panelAllocationPorts, $linkPorts, $linkedDefs, $dryRun) {
                 $profile = $client->getProfile((int) $profile['id']);
                 $form = GcoreAclHelper::extractProfileFormData($profile);
-                $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicyProto, $panelAllocationPorts);
+                $merge = $this->planAcl($form['acl'], $portsByPolicyProto, $panelAllocationPorts, $linkedDefs, $linkPorts);
 
                 // No ACL delta — skip the PUT to avoid pointless Pending Update on Gcore.
-                if ($merge['added'] === [] && $merge['removed'] === []) {
+                if ($merge['added'] === [] && $merge['removed'] === [] && $merge['linked'] === []) {
                     return $this->formatSyncSummary(
                         $ip,
                         (int) $profile['id'],
@@ -161,9 +166,14 @@ class GcoreFirewallSyncService
                     );
                 }
 
+                if ($dryRun) {
+                    return $this->formatSyncSummary($ip, (int) $profile['id'], $portsByPolicy, $merge, 'PRÉVIA (nada enviado)', $ipIsGcore)
+                        . "\nACL resultante:\n" . $this->describeAcl($merge['acl']);
+                }
+
                 $payload = $client->buildUpdatePayload($profile, $form['rate'], $form['geoip'], $merge['acl']);
-                $updated = $client->updateProfile((int) $profile['id'], $payload);
-                $status = (string) ($updated['status']['status'] ?? 'OK');
+                $put = $client->updateProfileChecked((int) $profile['id'], $profile, $payload);
+                $status = (string) ($put['response']['status']['status'] ?? 'OK') . ($put['recovered'] === null ? '' : ' (' . $put['recovered'] . ')');
 
                 return $this->formatSyncSummary($ip, (int) $profile['id'], $portsByPolicy, $merge, $status, $ipIsGcore);
             });
@@ -193,6 +203,8 @@ class GcoreFirewallSyncService
 
         /** @var array<string, array<string, array<int, true>>> $byProto */
         $byProto = [];
+        /** @var array<int, array<int, true>> $links linked rule id => ports */
+        $links = [];
         foreach ($allocations as $allocation) {
             $port = (int) $allocation->port;
             if ($port < 1 || $port > 65535) {
@@ -202,6 +214,10 @@ class GcoreFirewallSyncService
             // Free allocations must never open ACL rules (would fall back to allowlist).
             if (!$allocation->server_id || !$allocation->server || !$allocation->server->egg) {
                 continue;
+            }
+
+            foreach ($this->portSlotSync->resolveGcoreLinksForAllocation($allocation->server->egg, $allocation, (int) $allocation->server->allocation_id) as $linkId) {
+                $links[(int) $linkId][$port] = true;
             }
 
             $resolved = $this->portSlotSync->resolveGcoreForAllocation(
@@ -245,7 +261,14 @@ class GcoreFirewallSyncService
         ksort($byProtoOut);
         ksort($flat);
 
-        return ['ports' => $flat, 'by_proto' => $byProtoOut];
+        $linksOut = [];
+        foreach ($links as $id => $ports) {
+            $list = array_map('intval', array_keys($ports));
+            sort($list);
+            $linksOut[$id] = $list;
+        }
+
+        return ['ports' => $flat, 'by_proto' => $byProtoOut, 'links' => $linksOut];
     }
 
     /**
@@ -286,6 +309,7 @@ class GcoreFirewallSyncService
      * @param list<array<string, mixed>> $acl
      * @param array<string, array<string, list<int>>> $desiredByPolicyProto policy => proto => ports
      * @param list<int> $panelAllocationPorts all allocation ports on this IP
+     *
      * @return array{
      *   acl: list<array<string, mixed>>,
      *   added: array<string, list<int>>,
@@ -293,6 +317,30 @@ class GcoreFirewallSyncService
      *   skipped_existing: array<string, list<int>>,
      * }
      */
+    /**
+     * Full sync plan: game rules (mergeGroupedAcl) then linked rules. Linked rules are marked
+     * first so the game merge leaves them alone (they carry sip/sport or DROP and would
+     * otherwise count as frozen rules covering those ports).
+     *
+     * @param list<array<string, mixed>> $acl
+     * @param array<string, array<string, list<int>>> $desiredByPolicyProto
+     * @param list<int> $panelAllocationPorts
+     * @param \Illuminate\Support\Collection<int, \Pterodactyl\Models\GcoreLinkedRule> $linkedDefs
+     * @param array<int, list<int>> $linkPorts
+     *
+     * @return array{acl: list<array<string, mixed>>, added: array, removed: array, skipped_existing: array, linked: list<string>}
+     */
+    public function planAcl(array $acl, array $desiredByPolicyProto, array $panelAllocationPorts, $linkedDefs, array $linkPorts): array
+    {
+        $marked = $this->linkedRules->mark($acl, $linkedDefs);
+        $merge = $this->mergeGroupedAcl($marked, $desiredByPolicyProto, $panelAllocationPorts);
+        $linked = $this->linkedRules->apply($merge['acl'], $linkedDefs, $linkPorts, $panelAllocationPorts);
+        $merge['acl'] = $linked['acl'];
+        $merge['linked'] = $linked['changes'];
+
+        return $merge;
+    }
+
     private function mergeGroupedAcl(
         array $acl,
         array $desiredByPolicyProto,
@@ -329,6 +377,12 @@ class GcoreFirewallSyncService
 
         foreach ($acl as $rule) {
             if (!is_array($rule)) {
+                continue;
+            }
+
+            if (isset($rule[GcoreLinkedRuleService::MARK])) {
+                // Linked rule: ports are set afterwards by GcoreLinkedRuleService::apply().
+                $out[] = $rule;
                 continue;
             }
 
@@ -494,7 +548,7 @@ class GcoreFirewallSyncService
             if (!str_starts_with($policy, 'default')) {
                 break;
             }
-            $i--;
+            --$i;
         }
 
         if ($i < 0) {
@@ -507,7 +561,7 @@ class GcoreFirewallSyncService
             while ($dropStart > 0
                 && strcasecmp(trim((string) ($acl[$dropStart - 1]['policy'] ?? '')), 'DROP') === 0
             ) {
-                $dropStart--;
+                --$dropStart;
             }
 
             return $dropStart;
@@ -602,7 +656,7 @@ class GcoreFirewallSyncService
         $removed = $merge['removed'];
         $skipped = $merge['skipped_existing'];
 
-        if ($portsByPolicy === [] && $added === [] && $removed === []) {
+        if ($portsByPolicy === [] && $added === [] && $removed === [] && ($merge['linked'] ?? []) === []) {
             $lines[] = 'Nenhuma porta com servidor + política ACL para sincronizar.';
 
             return implode("\n", $lines);
@@ -626,7 +680,8 @@ class GcoreFirewallSyncService
             }
         }
 
-        $hasDelta = $added !== [] || $removed !== [];
+        $linked = $merge['linked'] ?? [];
+        $hasDelta = $added !== [] || $removed !== [] || $linked !== [];
         if (!$hasDelta) {
             $lines[] = 'Resultado: sem alterações (tudo já estava na ACL).';
 
@@ -634,6 +689,9 @@ class GcoreFirewallSyncService
         }
 
         $lines[] = 'Alterações enviadas:';
+        foreach ($linked as $change) {
+            $lines[] = '  • ' . $change;
+        }
         foreach ($added as $policy => $ports) {
             $lines[] = sprintf('  • + %s: %s', $policy, implode(', ', $ports));
         }
@@ -648,6 +706,28 @@ class GcoreFirewallSyncService
                 $skipCount,
                 $skipCount === 1 ? '' : 's',
                 $skipCount === 1 ? '' : 's'
+            );
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /** @param list<array<string, mixed>> $acl */
+    private function describeAcl(array $acl): string
+    {
+        $fmt = function (array $values): string {
+            return count($values) > 15 ? count($values) . ' itens' : implode(',', $values);
+        };
+        $lines = [];
+        foreach ($acl as $i => $rule) {
+            $lines[] = sprintf(
+                '  %2d %s proto=%s dport=%s sport=%s sip=%s',
+                $i + 1,
+                $rule['policy'] ?? '?',
+                implode(',', (array) ($rule['proto_list'] ?? [])) ?: 'any',
+                $fmt((array) ($rule['dport_list'] ?? [])) ?: '(todas)',
+                $fmt((array) ($rule['sport_list'] ?? [])) ?: '-',
+                $fmt((array) ($rule['sip_list'] ?? [])) ?: '-',
             );
         }
 
@@ -711,7 +791,6 @@ class GcoreFirewallSyncService
     }
 
     /**
-     * @param mixed $value
      * @return list<string>
      */
     private function ruleStringList(mixed $value): array
@@ -733,6 +812,7 @@ class GcoreFirewallSyncService
 
     /**
      * @param array<string, mixed> $rule
+     *
      * @return list<string>
      */
     private function ruleProtoList(array $rule): array
@@ -755,6 +835,7 @@ class GcoreFirewallSyncService
 
     /**
      * @param array<string, mixed> $rule
+     *
      * @return list<int>
      */
     private function rulePorts(array $rule): array
@@ -782,6 +863,7 @@ class GcoreFirewallSyncService
 
     /**
      * @param array<string, mixed> $rule
+     *
      * @return array<string, mixed>
      */
     private function normalizeRuleShape(array $rule, ?string $policy = null): array

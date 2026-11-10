@@ -102,6 +102,57 @@ class GcoreClient
     }
 
     /**
+     * PUT that survives an unknown outcome: when Gcore answers 5xx or the request times out,
+     * the profile is re-read (a few times, the change may still be processing) and compared
+     * with what was sent. Returns normally only when the change is confirmed on Gcore.
+     *
+     * @param array<string, mixed> $current profile as read right before building $payload
+     * @param array<string, mixed> $payload
+     *
+     * @return array{response: array<string, mixed>, recovered: string|null} recovered = note when confirmed by re-read
+     */
+    public function updateProfileChecked(int $id, array $current, array $payload): array
+    {
+        try {
+            return ['response' => $this->updateProfile($id, $payload), 'recovered' => null];
+        } catch (\Throwable $e) {
+            $expected = GcoreProfileCache::withPayload($current, $payload);
+            if (!GcoreApiException::outcomeUnknown($e) || $expected === null) {
+                throw $e;
+            }
+            $error = $e instanceof GcoreApiException ? 'HTTP ' . $e->status : 'sem resposta (timeout)';
+        }
+
+        $want = GcoreProfileCache::formHash($expected);
+        $before = GcoreProfileCache::formHash($current);
+        $attempts = max(1, (int) config('gcore.recheck_attempts', 3));
+        $wait = max(0, (int) config('gcore.recheck_wait_seconds', 5));
+        $state = 'unread';
+        for ($i = 0; $i < $attempts; ++$i) {
+            if ($i > 0 && $wait > 0) {
+                sleep($wait);
+            }
+            try {
+                $fresh = $this->getProfile($id);
+            } catch (\Throwable) {
+                continue;
+            }
+            $hash = GcoreProfileCache::formHash($fresh);
+            if ($hash === $want) {
+                return ['response' => $fresh, 'recovered' => "a Gcore respondeu {$error}, mas a releitura confirmou que a mudança foi aplicada"];
+            }
+            $state = $hash === $before ? 'unchanged' : 'different';
+            if ($state === 'different') {
+                break;
+            }
+        }
+
+        throw new \RuntimeException(match ($state) {
+            'unchanged' => "A Gcore respondeu {$error} e o perfil relido {$attempts}x continua igual ao anterior: a mudança NÃO foi aplicada (ou ainda está processando). Confira o perfil em alguns minutos antes de salvar de novo.", 'different' => "A Gcore respondeu {$error} e o perfil relido não é nem o anterior nem o enviado (aplicado em parte ou alterado por outra fonte). Confira o perfil antes de salvar de novo.", default => "A Gcore respondeu {$error} e não foi possível reler o perfil para saber se a mudança foi aplicada. Confira o perfil em alguns minutos.",
+        });
+    }
+
+    /**
      * @param list<array<string, mixed>> $acl
      * @param array<string, mixed> $profile
      * @param array{low:int,medium:int,high:int,geo:int} $rateLimiters
@@ -203,9 +254,9 @@ class GcoreClient
         if ($response->failed()) {
             $msg = is_array($decoded)
                 ? ($decoded['message'] ?? $decoded['exception_class'] ?? $response->body())
-                : $response->body();
+                : trim(preg_replace('/\s+/', ' ', strip_tags($response->body())) ?? '');
 
-            throw new \RuntimeException('API HTTP ' . $response->status() . ': ' . $msg);
+            throw new GcoreApiException($response->status(), 'API HTTP ' . $response->status() . ': ' . $msg);
         }
 
         return is_array($decoded) ? $decoded : [];

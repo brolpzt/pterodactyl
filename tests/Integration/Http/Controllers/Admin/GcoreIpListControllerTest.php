@@ -85,20 +85,22 @@ class GcoreIpListControllerTest extends IntegrationTestCase
         $this->actingAs($this->admin)->post('/admin/gcore/profiles/77', [
             'rate_low' => 50, 'rate_medium' => 150, 'rate_high' => 300, 'rate_geo' => 300,
             'acl' => [
-                ['policy' => 'allowlist', 'proto_list' => 'any', 'dport_list' => '', 'sport_list' => '', 'sip_list' => '187.94.104.229', 'ip_lists' => (string) $list->id],
+                ['policy' => 'allowlist', 'proto_list' => 'any', 'dport_list' => '', 'sport_list' => '', 'sip_list' => '187.94.104.229', 'ip_lists' => (string) $list->id, 'description' => '  Escritório +   Cloudflare '],
                 ['policy' => 'udp-general', 'proto_list' => 'udp', 'dport_list' => '27015', 'sport_list' => '', 'sip_list' => ''],
             ],
         ])->assertRedirect();
 
         $this->assertSame(['187.94.104.229', '103.21.244.0/22', '173.245.48.0/20'], $this->acl[0]['sip_list']);
         $this->assertArrayNotHasKey('ip_lists', $this->acl[0]);
+        $this->assertArrayNotHasKey('description', $this->acl[0]);
         $this->assertSame(1, GcoreIpListBinding::query()->count());
 
         // Editor shows the binding (hidden input carries the list id, sip only the manual IP).
         $this->actingAs($this->admin)->get('/admin/gcore/profiles/77')
             ->assertOk()
             ->assertSee('name="acl[0][ip_lists]" value="' . $list->id . '"', false)
-            ->assertSee('name="acl[0][sip_list]" value="187.94.104.229"', false);
+            ->assertSee('name="acl[0][sip_list]" value="187.94.104.229"', false)
+            ->assertSee('name="acl[0][description]" value="Escritório + Cloudflare"', false);
 
         // A list in use cannot be deleted.
         $this->actingAs($this->admin)->delete("/admin/gcore/ip-lists/{$list->id}")->assertRedirect();

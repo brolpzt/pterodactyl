@@ -111,6 +111,11 @@ class GcoreAclHelper
             if ($lists !== []) {
                 $rule['ip_lists'] = $lists;
             }
+            // Panel-only description (GcoreAclRuleNote), stripped before sending.
+            $description = trim(preg_replace('/\s+/u', ' ', (string) ($row['description'] ?? '')) ?? '');
+            if ($description !== '') {
+                $rule['description'] = mb_substr($description, 0, 160);
+            }
             $out[] = $rule;
         }
 

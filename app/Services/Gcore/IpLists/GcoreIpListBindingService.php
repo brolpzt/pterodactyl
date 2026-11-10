@@ -122,7 +122,7 @@ class GcoreIpListBindingService
                 array_map('intval', (array) ($rule['ip_lists'] ?? [])),
                 fn (int $id) => $lists->has($id),
             )));
-            unset($rule['ip_lists']);
+            unset($rule['ip_lists'], $rule['description']);
 
             if ($listIds === []) {
                 $out[] = $rule;

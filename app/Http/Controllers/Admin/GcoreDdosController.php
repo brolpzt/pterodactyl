@@ -13,6 +13,7 @@ use Pterodactyl\Models\Allocation;
 use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Pterodactyl\Models\GcoreIpList;
 use Pterodactyl\Services\Gcore\IpLists\GcoreIpListBindingService;
+use Pterodactyl\Services\Gcore\GcoreAclRuleNoteService;
 
 class GcoreDdosController extends Controller
 {
@@ -41,14 +42,15 @@ class GcoreDdosController extends Controller
         ]);
     }
 
-    public function show(int $profile, PortSlotSyncService $portSlots, GcoreIpListBindingService $bindings): View|RedirectResponse
+    public function show(int $profile, PortSlotSyncService $portSlots, GcoreIpListBindingService $bindings, GcoreAclRuleNoteService $notes): View|RedirectResponse
     {
         try {
             $client = GcoreClient::fromConfig();
             $data = $client->getProfile($profile);
             $form = GcoreAclHelper::extractProfileFormData($data);
             $annotated = $bindings->annotate($profile, $form['acl']);
-            $form['acl'] = $annotated['acl'];
+            $described = $notes->annotate($profile, $annotated['acl']);
+            $form['acl'] = $described['acl'];
 
             return view('admin.gcore.profile', [
                 'profile' => $data,
@@ -64,6 +66,7 @@ class GcoreDdosController extends Controller
                     'entries' => $l->entryList(),
                 ])->values(),
                 'orphanBindings' => count($annotated['orphans']),
+                'lostNotes' => $described['lost'],
                 'error' => null,
             ]);
         } catch (\Throwable $e) {
@@ -73,15 +76,16 @@ class GcoreDdosController extends Controller
         }
     }
 
-    public function update(Request $request, int $profile, GcoreIpListBindingService $bindings): RedirectResponse
+    public function update(Request $request, int $profile, GcoreIpListBindingService $bindings, GcoreAclRuleNoteService $notes): RedirectResponse
     {
         $overrides = $this->parseOverrides((string) $request->input('port_overrides', ''));
 
         try {
-            $prepared = $bindings->prepareForSave(GcoreAclHelper::aclFromPost($request->all()));
+            $formAcl = GcoreAclHelper::aclFromPost($request->all());
+            $prepared = $bindings->prepareForSave($formAcl);
             $client = GcoreClient::fromConfig();
 
-            GcoreIpListBindingService::withProfileLock($profile, function () use ($request, $profile, $client, $prepared, $bindings, $overrides) {
+            GcoreIpListBindingService::withProfileLock($profile, function () use ($request, $profile, $client, $prepared, $bindings, $overrides, $notes, $formAcl) {
                 $data = $client->getProfile($profile);
 
                 $rate = [
@@ -98,6 +102,7 @@ class GcoreDdosController extends Controller
                 $payload = $client->buildUpdatePayload($data, $rate, $geoip, $prepared['acl']);
                 $updated = $client->updateProfile($profile, $payload);
                 $bindings->storeBindings($profile, (string) ($data['ip_address'] ?? ''), $prepared['bindings']);
+                $notes->store($profile, $formAcl);
                 $listNote = $prepared['bindings'] === [] ? '' : ' · ' . count($prepared['bindings']) . ' regra(s) ligada(s) a listas de IP';
 
                 $overrideNote = $overrides === []

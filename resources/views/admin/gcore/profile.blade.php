@@ -65,6 +65,12 @@
     .pm-list .flags .f-muted { color: var(--muted); }
     .pm-foot { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 12px; border-top: 1px solid var(--border); }
     .pm-foot .spacer { flex: 1; }
+    .layout-stack { display: flex; flex-direction: column; gap: 10px; }
+    .bottom-panels { display: grid; grid-template-columns: 220px 260px minmax(0, 1fr); gap: 10px; align-items: start; }
+    @media (max-width: 900px) { .bottom-panels { grid-template-columns: 1fr; } }
+    .bottom-panels .json-panel pre { max-height: 260px; }
+    .col-desc { width: 16%; min-width: 140px; }
+    table.data input.desc { font-family: var(--font); font-size: 11px; }
     .pchip.iplist { border-color: rgba(59,130,246,.6); color: #93c5fd; }
     .pchip.iplist.bad { border-color: rgba(239,68,68,.7); color: #fca5a5; }
     .sm-lists { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
@@ -95,6 +101,11 @@
     @if($error)
         <div class="flash flash-err" style="border-radius:6px;margin-bottom:8px">{{ $error }}</div>
     @endif
+    @if($lostNotes > 0)
+        <div class="flash flash-err" style="border-radius:6px;margin-bottom:8px">
+            {{ $lostNotes }} descrição(ões) não puderam ser associadas a nenhuma regra (política, proto, sport ou sip mudaram fora do painel) e serão descartadas ao salvar.
+        </div>
+    @endif
     @if($orphanBindings > 0)
         <div class="flash flash-err" style="border-radius:6px;margin-bottom:8px">
             {{ $orphanBindings }} regra(s) ligada(s) a listas de IP não foram encontradas neste perfil (alteradas fora do painel?).
@@ -115,9 +126,61 @@
             <span class="toolbar-hint"><strong id="rule-count">{{ $ruleCount }}</strong> regras · ordem = prioridade · <code>dport</code> = porta no servidor · clique nas portas para editar<span class="warn-total" id="warn-total"></span></span>
         </div>
 
-        <div class="layout-edit">
-            <aside>
-                <div class="panel" style="margin-bottom:10px">
+        <div class="layout-stack">
+
+            <div class="acl-wrap">
+                <table class="data" id="acl-table">
+                    <thead>
+                    <tr>
+                        <th class="col-idx">#</th>
+                        <th class="col-ops">Ordem</th>
+                        <th class="col-desc">Descrição</th>
+                        <th class="col-policy">Política</th>
+                        <th class="col-proto">Proto</th>
+                        <th class="col-dports">dport</th>
+                        <th class="col-ports">sport</th>
+                        <th class="col-sip">sip</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody id="acl-body">
+                    @foreach($form['acl'] as $i => $rule)
+                        <tr class="acl-row">
+                            <td class="col-idx row-idx">{{ $i + 1 }}</td>
+                            <td class="col-ops">
+                                <button type="button" class="btn btn-icon btn-ghost move-up" title="Subir">↑</button>
+                                <button type="button" class="btn btn-icon btn-ghost move-down" title="Descer">↓</button>
+                            </td>
+                            <td class="col-desc"><input class="desc" name="acl[{{ $i }}][description]" value="{{ $rule['description'] ?? '' }}" maxlength="160" placeholder="ex.: Liberar Cloudflare"></td>
+                            <td class="col-policy">
+                                <select name="acl[{{ $i }}][policy]" required>
+                                    @foreach($policies as $p)
+                                        <option value="{{ $p }}" @selected(($rule['policy'] ?? '') === $p)>{{ $p }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td><input name="acl[{{ $i }}][proto_list]" value="{{ implode(',', $rule['proto_list'] ?? []) }}" placeholder="tcp,udp"></td>
+                            <td class="col-dports">
+                                <input type="hidden" name="acl[{{ $i }}][dport_list]" value="{{ implode(',', $rule['dport_list'] ?? []) }}">
+                                <div class="port-chips" tabindex="0" title="Editar portas"></div>
+                            </td>
+                            <td class="col-ports">
+                                <input type="hidden" name="acl[{{ $i }}][sport_list]" value="{{ implode(',', $rule['sport_list'] ?? []) }}">
+                                <div class="sip-chips sport-chips" tabindex="0" title="Editar portas de origem"></div>
+                            </td>
+                            <td class="col-sip">
+                                <input type="hidden" name="acl[{{ $i }}][sip_list]" value="{{ implode(',', $rule['sip_list'] ?? []) }}">
+                                <input type="hidden" name="acl[{{ $i }}][ip_lists]" value="{{ implode(',', $rule['ip_lists'] ?? []) }}">
+                                <div class="sip-chips" tabindex="0" title="Editar IPs de origem"></div>
+                            </td>
+                            <td><button type="button" class="btn btn-icon del-rule" title="Remover">×</button></td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="bottom-panels">
+                <div class="panel">
                     <div class="panel-head">Rate limiters (kpps)</div>
                     <div class="panel-body field-grid">
                         <div class="field">
@@ -147,60 +210,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="panel json-panel" style="margin-top:10px">
+                <div class="panel json-panel">
                     <div class="panel-head">JSON ACL (preview)</div>
                     <pre><code id="json-preview">{{ $aclJson }}</code></pre>
                 </div>
-            </aside>
-
-            <div class="acl-wrap">
-                <table class="data" id="acl-table">
-                    <thead>
-                    <tr>
-                        <th class="col-idx">#</th>
-                        <th class="col-ops">Ordem</th>
-                        <th class="col-policy">Política</th>
-                        <th class="col-proto">Proto</th>
-                        <th class="col-dports">dport</th>
-                        <th class="col-ports">sport</th>
-                        <th class="col-sip">sip</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody id="acl-body">
-                    @foreach($form['acl'] as $i => $rule)
-                        <tr class="acl-row">
-                            <td class="col-idx row-idx">{{ $i + 1 }}</td>
-                            <td class="col-ops">
-                                <button type="button" class="btn btn-icon btn-ghost move-up" title="Subir">↑</button>
-                                <button type="button" class="btn btn-icon btn-ghost move-down" title="Descer">↓</button>
-                            </td>
-                            <td class="col-policy">
-                                <select name="acl[{{ $i }}][policy]" required>
-                                    @foreach($policies as $p)
-                                        <option value="{{ $p }}" @selected(($rule['policy'] ?? '') === $p)>{{ $p }}</option>
-                                    @endforeach
-                                </select>
-                            </td>
-                            <td><input name="acl[{{ $i }}][proto_list]" value="{{ implode(',', $rule['proto_list'] ?? []) }}" placeholder="tcp,udp"></td>
-                            <td class="col-dports">
-                                <input type="hidden" name="acl[{{ $i }}][dport_list]" value="{{ implode(',', $rule['dport_list'] ?? []) }}">
-                                <div class="port-chips" tabindex="0" title="Editar portas"></div>
-                            </td>
-                            <td class="col-ports">
-                                <input type="hidden" name="acl[{{ $i }}][sport_list]" value="{{ implode(',', $rule['sport_list'] ?? []) }}">
-                                <div class="sip-chips sport-chips" tabindex="0" title="Editar portas de origem"></div>
-                            </td>
-                            <td class="col-sip">
-                                <input type="hidden" name="acl[{{ $i }}][sip_list]" value="{{ implode(',', $rule['sip_list'] ?? []) }}">
-                                <input type="hidden" name="acl[{{ $i }}][ip_lists]" value="{{ implode(',', $rule['ip_lists'] ?? []) }}">
-                                <div class="sip-chips" tabindex="0" title="Editar IPs de origem"></div>
-                            </td>
-                            <td><button type="button" class="btn btn-icon del-rule" title="Remover">×</button></td>
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
             </div>
         </div>
     </form>
@@ -212,6 +225,7 @@
                 <button type="button" class="btn btn-icon btn-ghost move-up">↑</button>
                 <button type="button" class="btn btn-icon btn-ghost move-down">↓</button>
             </td>
+            <td class="col-desc"><input class="desc" name="acl[__IDX__][description]" value="" maxlength="160" placeholder="ex.: Liberar Cloudflare"></td>
             <td class="col-policy">
                 <select name="acl[__IDX__][policy]" required>
                     @foreach($policies as $p)

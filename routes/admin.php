@@ -251,6 +251,13 @@ Route::group(['prefix' => 'gcore'], function () {
     Route::get('/', [Admin\GcoreDdosController::class, 'index'])->name('admin.gcore');
     Route::get('/profiles/{profile}', [Admin\GcoreDdosController::class, 'show'])->name('admin.gcore.profile');
     Route::post('/profiles/{profile}', [Admin\GcoreDdosController::class, 'update'])->name('admin.gcore.profile.update');
+
+    Route::get('/ip-lists', [Admin\GcoreIpListController::class, 'index'])->name('admin.gcore.ip-lists');
+    Route::post('/ip-lists', [Admin\GcoreIpListController::class, 'store']);
+    Route::get('/ip-lists/{list:id}', [Admin\GcoreIpListController::class, 'view'])->name('admin.gcore.ip-lists.view');
+    Route::patch('/ip-lists/{list:id}', [Admin\GcoreIpListController::class, 'update']);
+    Route::post('/ip-lists/{list:id}/refresh', [Admin\GcoreIpListController::class, 'refresh'])->name('admin.gcore.ip-lists.refresh');
+    Route::delete('/ip-lists/{list:id}', [Admin\GcoreIpListController::class, 'delete'])->name('admin.gcore.ip-lists.delete');
 });
 
 /*

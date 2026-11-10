@@ -11,6 +11,8 @@ use Pterodactyl\Services\Gcore\GcoreClient;
 use Pterodactyl\Services\Gcore\GcoreAclHelper;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Services\Eggs\PortSlotSyncService;
+use Pterodactyl\Models\GcoreIpList;
+use Pterodactyl\Services\Gcore\IpLists\GcoreIpListBindingService;
 
 class GcoreDdosController extends Controller
 {
@@ -39,18 +41,29 @@ class GcoreDdosController extends Controller
         ]);
     }
 
-    public function show(int $profile, PortSlotSyncService $portSlots): View|RedirectResponse
+    public function show(int $profile, PortSlotSyncService $portSlots, GcoreIpListBindingService $bindings): View|RedirectResponse
     {
         try {
             $client = GcoreClient::fromConfig();
             $data = $client->getProfile($profile);
             $form = GcoreAclHelper::extractProfileFormData($data);
+            $annotated = $bindings->annotate($profile, $form['acl']);
+            $form['acl'] = $annotated['acl'];
 
             return view('admin.gcore.profile', [
                 'profile' => $data,
                 'form' => $form,
                 'policies' => GcoreClient::POLICIES,
                 'portMap' => $this->buildPortMap((string) ($data['ip_address'] ?? ''), $portSlots),
+                'ipLists' => GcoreIpList::query()->orderBy('name')->get()->map(fn (GcoreIpList $l) => [
+                    'id' => $l->id,
+                    'name' => $l->name,
+                    'count' => $l->entry_count,
+                    'enabled' => $l->enabled,
+                    'status' => $l->last_status,
+                    'entries' => $l->entryList(),
+                ])->values(),
+                'orphanBindings' => count($annotated['orphans']),
                 'error' => null,
             ]);
         } catch (\Throwable $e) {
@@ -60,36 +73,41 @@ class GcoreDdosController extends Controller
         }
     }
 
-    public function update(Request $request, int $profile): RedirectResponse
+    public function update(Request $request, int $profile, GcoreIpListBindingService $bindings): RedirectResponse
     {
         $overrides = $this->parseOverrides((string) $request->input('port_overrides', ''));
 
         try {
+            $prepared = $bindings->prepareForSave(GcoreAclHelper::aclFromPost($request->all()));
             $client = GcoreClient::fromConfig();
-            $data = $client->getProfile($profile);
 
-            $rate = [
-                'low' => max(1, min(50, (int) $request->input('rate_low', 50))),
-                'medium' => max(50, min(150, (int) $request->input('rate_medium', 150))),
-                'high' => max(150, min(300, (int) $request->input('rate_high', 300))),
-                'geo' => max(1, min(300, (int) $request->input('rate_geo', 300))),
-            ];
+            GcoreIpListBindingService::withProfileLock($profile, function () use ($request, $profile, $client, $prepared, $bindings, $overrides) {
+                $data = $client->getProfile($profile);
 
-            $geoRaw = trim((string) $request->input('geoip_list', ''));
-            $geoip = $geoRaw === '' ? [] : preg_split('/[\s,;]+/', strtoupper($geoRaw));
-            $geoip = array_values(array_filter($geoip ?: []));
+                $rate = [
+                    'low' => max(1, min(50, (int) $request->input('rate_low', 50))),
+                    'medium' => max(50, min(150, (int) $request->input('rate_medium', 150))),
+                    'high' => max(150, min(300, (int) $request->input('rate_high', 300))),
+                    'geo' => max(1, min(300, (int) $request->input('rate_geo', 300))),
+                ];
 
-            $acl = GcoreAclHelper::aclFromPost($request->all());
-            $payload = $client->buildUpdatePayload($data, $rate, $geoip, $acl);
-            $updated = $client->updateProfile($profile, $payload);
+                $geoRaw = trim((string) $request->input('geoip_list', ''));
+                $geoip = $geoRaw === '' ? [] : preg_split('/[\s,;]+/', strtoupper($geoRaw));
+                $geoip = array_values(array_filter($geoip ?: []));
 
-            $overrideNote = $overrides === []
-                ? ''
-                : ' · ' . $this->applyOverrides((string) ($data['ip_address'] ?? ''), $overrides);
+                $payload = $client->buildUpdatePayload($data, $rate, $geoip, $prepared['acl']);
+                $updated = $client->updateProfile($profile, $payload);
+                $bindings->storeBindings($profile, (string) ($data['ip_address'] ?? ''), $prepared['bindings']);
+                $listNote = $prepared['bindings'] === [] ? '' : ' · ' . count($prepared['bindings']) . ' regra(s) ligada(s) a listas de IP';
 
-            $this->alert->success(
-                'Enviado à Gcore · ' . ($updated['status']['status'] ?? 'OK') . ' (propagação ~2–5 min)' . $overrideNote
-            )->flash();
+                $overrideNote = $overrides === []
+                    ? ''
+                    : ' · ' . $this->applyOverrides((string) ($data['ip_address'] ?? ''), $overrides);
+
+                $this->alert->success(
+                    'Enviado à Gcore · ' . ($updated['status']['status'] ?? 'OK') . ' (propagação ~2–5 min)' . $listNote . $overrideNote
+                )->flash();
+            });
         } catch (\Throwable $e) {
             $this->alert->danger($e->getMessage())->flash();
         }

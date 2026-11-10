@@ -65,6 +65,14 @@
     .pm-list .flags .f-muted { color: var(--muted); }
     .pm-foot { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 12px; border-top: 1px solid var(--border); }
     .pm-foot .spacer { flex: 1; }
+    .pchip.iplist { border-color: rgba(59,130,246,.6); color: #93c5fd; }
+    .pchip.iplist.bad { border-color: rgba(239,68,68,.7); color: #fca5a5; }
+    .sm-lists { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+    .sm-lists[hidden] { display: none; }
+    .sm-lists .ttl { width: 100%; color: var(--muted); font-size: 11px; }
+    .sm-lists label { display: inline-flex; gap: 5px; align-items: center; font-weight: normal; margin: 0; cursor: pointer; }
+    .sm-lists label.off { opacity: .5; cursor: not-allowed; }
+    .sm-lists .cnt { color: var(--muted); font-family: var(--mono); font-size: 10px; }
 </style>
 @php
     $id = (int) $profile['id'];
@@ -87,6 +95,12 @@
     @if($error)
         <div class="flash flash-err" style="border-radius:6px;margin-bottom:8px">{{ $error }}</div>
     @endif
+    @if($orphanBindings > 0)
+        <div class="flash flash-err" style="border-radius:6px;margin-bottom:8px">
+            {{ $orphanBindings }} regra(s) ligada(s) a listas de IP não foram encontradas neste perfil (alteradas fora do painel?).
+            A ligação será descartada ao salvar; marque as listas de novo na regra certa.
+        </div>
+    @endif
 
     <form method="post" action="{{ route('admin.gcore.profile.update', $id) }}" id="profile-form">
         @csrf
@@ -96,6 +110,7 @@
             <button type="button" class="btn" id="add-rule">+ Regra</button>
             <button type="button" class="btn btn-ghost" id="preset-theisle">Preset The Isle</button>
             <button type="button" class="btn btn-ghost" id="preset-geo">Preset GEO block</button>
+            <a class="btn btn-ghost" href="{{ route('admin.gcore.ip-lists') }}">Listas de IP</a>
             <span class="toolbar-spacer"></span>
             <span class="toolbar-hint"><strong id="rule-count">{{ $ruleCount }}</strong> regras · ordem = prioridade · <code>dport</code> = porta no servidor · clique nas portas para editar<span class="warn-total" id="warn-total"></span></span>
         </div>
@@ -178,6 +193,7 @@
                             </td>
                             <td class="col-sip">
                                 <input type="hidden" name="acl[{{ $i }}][sip_list]" value="{{ implode(',', $rule['sip_list'] ?? []) }}">
+                                <input type="hidden" name="acl[{{ $i }}][ip_lists]" value="{{ implode(',', $rule['ip_lists'] ?? []) }}">
                                 <div class="sip-chips" tabindex="0" title="Editar IPs de origem"></div>
                             </td>
                             <td><button type="button" class="btn btn-icon del-rule" title="Remover">×</button></td>
@@ -214,6 +230,7 @@
             </td>
             <td class="col-sip">
                 <input type="hidden" name="acl[__IDX__][sip_list]" value="">
+                <input type="hidden" name="acl[__IDX__][ip_lists]" value="">
                 <div class="sip-chips" tabindex="0" title="Editar IPs de origem"></div>
             </td>
             <td><button type="button" class="btn btn-icon del-rule">×</button></td>
@@ -262,6 +279,7 @@
                 <button type="button" class="btn btn-primary" id="sm-add">Adicionar</button>
                 <span class="hint" id="sm-hint"></span>
             </div>
+            <div class="sm-lists" id="sm-lists" hidden></div>
             <div class="pm-msg" id="sm-msg"></div>
             <div class="pm-list">
                 <table>
@@ -283,6 +301,8 @@
 <script>
 (function () {
     const PORT_MAP = @json((object) $portMap);
+    // Remote IP lists (admin → Gcore → Listas de IP): id => {id, name, count, entries}.
+    const IP_LISTS = Object.fromEntries(@json($ipLists).map(l => [String(l.id), l]));
     const MAX_CHIPS = 60; // rendered per cell; fitChips() hides what does not fit the width
 
     // One line per cell: chips that do not fit are hidden and counted in "+N".
@@ -333,9 +353,19 @@
             policy: g('policy'),
             protos: protos.length === 0 || protos.includes('any') ? ['any'] : protos,
             dports: parsePorts(g('dport_list')),
-            sip: splitList(g('sip_list')),
+            sip: effectiveSips(row),
             sport: parsePorts(g('sport_list')),
         };
+    }
+
+    const ruleListIds = row => splitList(row.querySelector('[name$="[ip_lists]"]')?.value || '');
+
+    // What Gcore receives: manual IPs + CIDRs of every selected list.
+    function effectiveSips(row) {
+        const manual = splitList(row.querySelector('[name$="[sip_list]"]')?.value || '');
+        const out = new Set(manual);
+        ruleListIds(row).forEach(id => (IP_LISTS[id]?.entries || []).forEach(c => out.add(c)));
+        return [...out];
     }
 
     // Only tcp/udp carry ports; "any" = both. icmp/gre/esp rules never match a dport.
@@ -488,7 +518,7 @@
                 if (!policy) return;
                 rules.push({
                     policy,
-                    sip_list: split(g('sip_list')),
+                    sip_list: effectiveSips(row),
                     dport_list: split(g('dport_list')).map(Number).filter(n => n >= 1 && n <= 65535),
                     proto_list: split(g('proto_list')),
                     sport_list: split(g('sport_list')).map(Number).filter(n => n >= 1 && n <= 65535),
@@ -773,17 +803,27 @@
         });
     }
 
+    function listChips(row) {
+        return ruleListIds(row).map(id => {
+            const l = IP_LISTS[id];
+            if (!l) return '<span class="pchip iplist bad" title="Lista excluída">lista #' + esc(id) + '</span>';
+            return '<span class="pchip iplist' + (l.count ? '' : ' bad') + '" title="' + esc('Lista de IP: ' + l.name + ' (' + l.count + ' entradas, atualizada automaticamente)') + '">📋 ' + esc(l.name) + ' (' + l.count + ')</span>';
+        });
+    }
+
     function renderListChips(row, kind, box) {
         if (!box) return;
         const K = LIST_KINDS[kind];
         const items = analyzeList(row, kind);
-        if (items.length === 0) {
+        const lists = kind === 'sip' ? listChips(row) : [];
+        if (items.length === 0 && lists.length === 0) {
             box.innerHTML = '<span class="empty">' + K.chipEmpty + '</span><span></span><span class="pchip-edit">✎</span>';
             return;
         }
-        const shown = items.slice(0, MAX_CHIPS).map(i => '<span class="pchip st-' + i.level + '" title="' + esc(i.value + ' — ' + (i.parsed ? K.describe(i.parsed.info) : K.invalid)) + '">' + esc(i.value) + '</span>').join('');
+        const shown = lists.join('') + items.slice(0, MAX_CHIPS).map(i => '<span class="pchip st-' + i.level + '" title="' + esc(i.value + ' — ' + (i.parsed ? K.describe(i.parsed.info) : K.invalid)) + '">' + esc(i.value) + '</span>').join('');
         const bad = items.filter(i => i.level !== 'ok').length;
-        setChipCell(box, shown, Math.max(0, items.length - MAX_CHIPS), items.length + (bad ? ' · ⚠' + bad : '') + ' ✎');
+        const label = (lists.length ? lists.length + ' lista(s)' + (items.length ? ' + ' : '') : '') + (items.length || !lists.length ? items.length : '');
+        setChipCell(box, shown, Math.max(0, items.length - MAX_CHIPS), label + (bad ? ' · ⚠' + bad : '') + ' ✎');
     }
 
     function renderSipChips(row) {
@@ -800,13 +840,42 @@
         document.getElementById('sm-title').textContent = 'Linha ' + idx + ' · ' + (info.policy || '—') + ' · ' + K.title;
         document.getElementById('sm-sub').textContent = info.protos.join(',') + (info.dports.length ? ' · dport ' + info.dports.slice(0, 5).join(',') + (info.dports.length > 5 ? '…' : '') : ' · todas as portas') + ' · ' + items.length + ' item(s)';
         document.getElementById('sm-col').textContent = K.col;
+        renderListPicker();
+        const hasLists = listKind === 'sip' && ruleListIds(sipRow).length > 0;
         smBody.innerHTML = items.length === 0
-            ? '<tr><td colspan="4" style="color:var(--muted);padding:14px 8px">' + esc(K.empty) + '</td></tr>'
+            ? '<tr><td colspan="4" style="color:var(--muted);padding:14px 8px">' + esc(hasLists ? 'Sem IPs manuais: só as listas selecionadas acima.' : K.empty) + '</td></tr>'
             : items.map((i, n) => '<tr><td class="port"><span class="pchip st-' + i.level + '">' + esc(i.value) + '</span></td>'
                 + '<td class="owner"><span class="meta">' + esc(i.parsed ? K.describe(i.parsed.info) : '—') + '</span></td>'
                 + '<td class="flags">' + i.flags.map(f => '<span class="' + f.cls + '">' + esc(f.text) + '</span>').join('') + '</td>'
                 + '<td class="del"><button type="button" class="btn btn-icon sm-del" data-idx="' + n + '" title="Remover">×</button></td></tr>').join('');
     }
+
+    const smLists = document.getElementById('sm-lists');
+
+    function renderListPicker() {
+        const all = Object.values(IP_LISTS);
+        smLists.hidden = listKind !== 'sip';
+        if (smLists.hidden) return;
+        if (all.length === 0) {
+            smLists.innerHTML = '<span class="ttl">Nenhuma lista de IP cadastrada. <a href="{{ route('admin.gcore.ip-lists') }}" target="_blank">Cadastrar listas →</a></span>';
+            return;
+        }
+        const selected = new Set(ruleListIds(sipRow));
+        smLists.innerHTML = '<span class="ttl">Listas de IP (atualizadas automaticamente; somadas aos IPs manuais abaixo)</span>'
+            + all.map(l => {
+                const off = !l.count && !selected.has(String(l.id));
+                return '<label class="' + (off ? 'off' : '') + '" title="' + esc(off ? 'Lista ainda sem entradas' : (l.entries || []).slice(0, 20).join(', ') + ((l.entries || []).length > 20 ? '…' : '')) + '">'
+                    + '<input type="checkbox" class="sm-list" value="' + esc(l.id) + '"' + (selected.has(String(l.id)) ? ' checked' : '') + (off ? ' disabled' : '') + '> '
+                    + esc(l.name) + ' <span class="cnt">' + l.count + '</span></label>';
+            }).join('');
+    }
+
+    smLists.addEventListener('change', e => {
+        if (!e.target.classList.contains('sm-list') || !sipRow) return;
+        const ids = [...smLists.querySelectorAll('.sm-list:checked')].map(c => c.value);
+        sipRow.querySelector('[name$="[ip_lists]"]').value = ids.join(',');
+        refreshMeta();
+    });
 
     function setList(row, list) {
         listInput(row, listKind).value = list.join(',');

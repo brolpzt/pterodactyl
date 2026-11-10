@@ -8,6 +8,7 @@ use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\NodeGcoreIp;
 use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Services\Eggs\PortSlotSyncService;
+use Pterodactyl\Services\Gcore\IpLists\GcoreIpListBindingService;
 use Illuminate\Support\Facades\Log;
 
 class GcoreFirewallSyncService
@@ -139,27 +140,33 @@ class GcoreFirewallSyncService
                 throw new DisplayException("Nenhum perfil Gcore encontrado para o IP {$ip}.");
             }
 
-            $form = GcoreAclHelper::extractProfileFormData($profile);
             $panelAllocationPorts = $this->collectAllocationPortsOnIp($node, $ip);
-            $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicyProto, $panelAllocationPorts);
 
-            // No ACL delta — skip the PUT to avoid pointless Pending Update on Gcore.
-            if ($merge['added'] === [] && $merge['removed'] === []) {
-                return $this->formatSyncSummary(
-                    $ip,
-                    (int) $profile['id'],
-                    $portsByPolicy,
-                    $merge,
-                    'sem alterações (API não atualizada)',
-                    $ipIsGcore,
-                );
-            }
+            // Same lock as the editor and the IP-list refresh: re-read inside it so a concurrent
+            // write to this profile is not overwritten.
+            return GcoreIpListBindingService::withProfileLock((int) $profile['id'], function () use ($client, $profile, $ip, $ipIsGcore, $portsByPolicy, $portsByPolicyProto, $panelAllocationPorts) {
+                $profile = $client->getProfile((int) $profile['id']);
+                $form = GcoreAclHelper::extractProfileFormData($profile);
+                $merge = $this->mergeGroupedAcl($form['acl'], $portsByPolicyProto, $panelAllocationPorts);
 
-            $payload = $client->buildUpdatePayload($profile, $form['rate'], $form['geoip'], $merge['acl']);
-            $updated = $client->updateProfile((int) $profile['id'], $payload);
-            $status = (string) ($updated['status']['status'] ?? 'OK');
+                // No ACL delta — skip the PUT to avoid pointless Pending Update on Gcore.
+                if ($merge['added'] === [] && $merge['removed'] === []) {
+                    return $this->formatSyncSummary(
+                        $ip,
+                        (int) $profile['id'],
+                        $portsByPolicy,
+                        $merge,
+                        'sem alterações (API não atualizada)',
+                        $ipIsGcore,
+                    );
+                }
 
-            return $this->formatSyncSummary($ip, (int) $profile['id'], $portsByPolicy, $merge, $status, $ipIsGcore);
+                $payload = $client->buildUpdatePayload($profile, $form['rate'], $form['geoip'], $merge['acl']);
+                $updated = $client->updateProfile((int) $profile['id'], $payload);
+                $status = (string) ($updated['status']['status'] ?? 'OK');
+
+                return $this->formatSyncSummary($ip, (int) $profile['id'], $portsByPolicy, $merge, $status, $ipIsGcore);
+            });
         } catch (DisplayException $e) {
             throw $e;
         } catch (\Throwable $e) {

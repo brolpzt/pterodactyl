@@ -96,13 +96,22 @@ class GcoreAclHelper
             if ($policy === '') {
                 continue;
             }
-            $out[] = [
+            $rule = [
                 'policy' => $policy,
                 'sip_list' => self::parseIpList((string) ($row['sip_list'] ?? '')),
                 'dport_list' => self::parsePortList((string) ($row['dport_list'] ?? '')),
                 'proto_list' => self::parseProtoList((string) ($row['proto_list'] ?? '')),
                 'sport_list' => self::parsePortList((string) ($row['sport_list'] ?? '')),
             ];
+            // Panel-only: ids of GcoreIpList feeding this rule's sip_list (stripped before sending).
+            $lists = array_values(array_unique(array_map('intval', array_filter(
+                preg_split('/[\s,;]+/', (string) ($row['ip_lists'] ?? '')) ?: [],
+                fn ($id) => ctype_digit($id) && (int) $id > 0,
+            ))));
+            if ($lists !== []) {
+                $rule['ip_lists'] = $lists;
+            }
+            $out[] = $rule;
         }
 
         return $out;

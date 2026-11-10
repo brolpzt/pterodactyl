@@ -16,6 +16,7 @@ use Pterodactyl\Console\Commands\Server\ProcessForcedConsoleCommandsCommand;
 use Pterodactyl\Console\Commands\Maintenance\ExpireSftpFirewallGrantsCommand;
 use Pterodactyl\Console\Commands\Maintenance\SamplePlayerCountsCommand;
 use Pterodactyl\Console\Commands\Maintenance\SyncGcoreAttackEventsCommand;
+use Pterodactyl\Console\Commands\Maintenance\RefreshGcoreIpListsCommand;
 
 class Kernel extends ConsoleKernel
 {
@@ -51,6 +52,10 @@ class Kernel extends ConsoleKernel
         // Pull Gcore DDoS event logs into local DB for the Anti-DDoS client page.
         $schedule->command(SyncGcoreAttackEventsCommand::class)->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('p:maintenance:sync-gcore-attacks --purge-only')->daily();
+
+        // Download due Gcore IP lists (each has its own interval) and push changes to bound ACL rules.
+        $schedule->command(RefreshGcoreIpListsCommand::class)->everyFifteenMinutes()->withoutOverlapping();
+        $schedule->command('p:maintenance:refresh-gcore-ip-lists --purge-only')->daily();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

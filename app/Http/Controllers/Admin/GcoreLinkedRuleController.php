@@ -76,7 +76,6 @@ class GcoreLinkedRuleController extends Controller
                     }
                 }
             }],
-            'mode' => ['required', 'string', Rule::in(GcoreLinkedRule::MODES)],
         ]);
 
         $sips = self::splitSips((string) ($data['sip_list'] ?? ''));
@@ -86,7 +85,6 @@ class GcoreLinkedRuleController extends Controller
             'policy' => $data['policy'],
             'proto' => $data['proto'] ?: null,
             'sip_list' => $sips,
-            'mode' => $data['mode'],
         ];
     }
 

@@ -292,7 +292,7 @@
                         }
                         $gcorePolicies = \Pterodactyl\Services\Gcore\GcoreClient::POLICIES;
                         $gcoreProtos = \Pterodactyl\Services\Gcore\GcoreClient::PROTOCOLS;
-                        $gcoreLinked = \Pterodactyl\Models\GcoreLinkedRule::query()->orderBy('name')->get(['id', 'name', 'policy', 'proto', 'mode']);
+                        $gcoreLinked = \Pterodactyl\Models\GcoreLinkedRule::query()->orderBy('name')->get(['id', 'name', 'policy', 'proto']);
                         $portStep = (int) old('port_step', $egg->port_step ?: 1);
                     @endphp
                     <div class="row" style="margin-bottom:15px">
@@ -369,7 +369,7 @@
                                     <td class="gcore-links-cell">
                                         @php $slotLinks = array_map('intval', (array) ($slot['gcore_links'] ?? [])); @endphp
                                         @forelse($gcoreLinked as $link)
-                                            <label class="small" style="display:block;font-weight:normal;margin:0" title="{{ $link->policy }}/{{ $link->proto ?? 'any' }} · {{ $link->modeLabel() }}">
+                                            <label class="small" style="display:block;font-weight:normal;margin:0" title="{{ $link->policy }}/{{ $link->proto ?? 'any' }} · {{ implode(', ', $link->sipList()) ?: 'sem sip' }}">
                                                 <input type="checkbox" name="port_slots[{{ $i }}][gcore_links][]" value="{{ $link->id }}" {{ in_array($link->id, $slotLinks, true) ? 'checked' : '' }}> {{ $link->name }}
                                             </label>
                                         @empty

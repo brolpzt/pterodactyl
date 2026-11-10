@@ -23,7 +23,7 @@
     <div class="meta-row">
         <a href="{{ route('admin.gcore') }}">← Perfis</a>
         <span>
-            No egg, cada slot de porta tem "Também incluir em": as portas dos servidores daquele slot entram nestas regras em todo sync
+            No egg, cada slot de porta tem "Também incluir em": as portas dos servidores daquele slot entram no dport destas regras em todo sync
             (criar/excluir servidor ou "Sync Gcore" do node). Portas que não são de allocations do painel ficam como estão.
             Uma regra sem nenhuma porta é removida da Gcore (dport vazio valeria para todas as portas). Regras novas entram no topo da tabela;
             depois disso o sync mantém a posição em que você deixar.
@@ -43,7 +43,6 @@
                     <th>Política</th>
                     <th>Proto</th>
                     <th>sip fixo</th>
-                    <th>Portas</th>
                     <th>Usada em</th>
                     <th></th>
                 </tr>
@@ -56,7 +55,6 @@
                         <td class="ipl-mono">{{ $rule->policy }}</td>
                         <td class="ipl-mono">{{ $rule->proto ?? 'any' }}</td>
                         <td class="ipl-mono">{{ implode(', ', $rule->sipList()) ?: '—' }}</td>
-                        <td>{{ $rule->modeLabel() }}</td>
                         <td>
                             @if($used === [])
                                 <span class="ipl-st pending" title="O sync ignora regras que nenhum egg usa">nenhum egg</span>
@@ -74,7 +72,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="ipl-muted">Nenhuma regra vinculada.</td></tr>
+                    <tr><td colspan="6" class="ipl-muted">Nenhuma regra vinculada.</td></tr>
                 @endforelse
                 </tbody>
             </table>
@@ -111,17 +109,6 @@
                         <label>sip fixo (opcional; IPs/CIDRs separados por vírgula)</label>
                         <input type="text" name="sip_list" value="{{ $sipValue }}" placeholder="216.238.125.59">
                     </div>
-                    <div class="field field-full">
-                        <label>Portas do servidor entram em</label>
-                        <select name="mode" required>
-                            <option value="dport" @selected(old('mode', $form?->mode ?? 'dport') === 'dport')>dport (ex.: BOOST)</option>
-                            <option value="same_port" @selected(old('mode', $form?->mode) === 'same_port')>sport + dport: origem = destino (ex.: DROP)</option>
-                        </select>
-                    </div>
-                    <p class="ipl-muted" style="font-size:11px">
-                        "Origem = destino": a Gcore cruza as listas, então a regra também casa origem e destino diferentes entre essas portas
-                        (ex.: 27015→27017). Não marque em slots que usam portas de onde vêm respostas legítimas (ex.: 27010/27011 do master server).
-                    </p>
                     <div style="margin-top:10px">
                         <button type="submit" class="btn btn-primary">{{ $form ? 'Salvar' : 'Criar' }}</button>
                         @if($form)<a class="btn" href="{{ route('admin.gcore.linked-rules') }}">Cancelar</a>@endif

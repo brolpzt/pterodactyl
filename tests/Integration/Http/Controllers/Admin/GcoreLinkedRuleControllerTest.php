@@ -39,7 +39,7 @@ class GcoreLinkedRuleControllerTest extends IntegrationTestCase
                     ['name' => 'ACL list', 'base_field' => 3, 'field_value' => [
                         ['policy' => 'allowlist', 'sip_list' => ['216.238.125.59/32'], 'dport_list' => [27015], 'proto_list' => ['udp'], 'sport_list' => []],
                         ['policy' => 'ratelimiter-low', 'sip_list' => [], 'dport_list' => [], 'proto_list' => ['udp'], 'sport_list' => [27015, 27016]],
-                        ['policy' => 'DROP', 'sip_list' => [], 'dport_list' => [27015], 'proto_list' => ['udp'], 'sport_list' => [27015]],
+                        ['policy' => 'allowlist', 'sip_list' => ['198.51.100.0/24'], 'dport_list' => [27015], 'proto_list' => ['tcp'], 'sport_list' => []],
                         ['policy' => 'counter-strike-16-gold', 'sip_list' => [], 'dport_list' => [27015], 'proto_list' => ['udp'], 'sport_list' => []],
                     ]],
                 ],
@@ -50,14 +50,14 @@ class GcoreLinkedRuleControllerTest extends IntegrationTestCase
     public function testCreateLinkInEggAndSeeItInTheEditor(): void
     {
         $this->actingAs($this->admin)->post('/admin/gcore/linked-rules', [
-            'name' => 'CS 1.6 BOOST', 'policy' => 'allowlist', 'proto' => 'udp', 'sip_list' => '216.238.125.59', 'mode' => 'dport',
+            'name' => 'CS 1.6 BOOST', 'policy' => 'allowlist', 'proto' => 'udp', 'sip_list' => '216.238.125.59',
         ])->assertRedirect()->assertSessionHasNoErrors();
         $this->actingAs($this->admin)->post('/admin/gcore/linked-rules', [
-            'name' => 'Origem = destino', 'policy' => 'DROP', 'proto' => 'udp', 'sip_list' => '', 'mode' => 'same_port',
+            'name' => 'Parceiro TCP', 'policy' => 'allowlist', 'proto' => 'tcp', 'sip_list' => '198.51.100.0/24',
         ])->assertRedirect();
 
         $boost = GcoreLinkedRule::query()->where('name', 'CS 1.6 BOOST')->firstOrFail();
-        $same = GcoreLinkedRule::query()->where('name', 'Origem = destino')->firstOrFail();
+        $same = GcoreLinkedRule::query()->where('name', 'Parceiro TCP')->firstOrFail();
         $this->assertSame(['216.238.125.59'], $boost->sipList());
 
         // Not used by any egg yet: the editor shows no badge (the sync ignores it).
@@ -75,7 +75,7 @@ class GcoreLinkedRuleControllerTest extends IntegrationTestCase
             ->assertSee($egg->name . ' (SERVER_PORT)');
 
         $page = $this->actingAs($this->admin)->get('/admin/gcore/profiles/77')->assertOk();
-        $page->assertSee('🔗 CS 1.6 BOOST', false)->assertSee('🔗 Origem = destino', false);
+        $page->assertSee('🔗 CS 1.6 BOOST', false)->assertSee('🔗 Parceiro TCP', false);
         $page->assertSee('data-linked="CS 1.6 BOOST"', false);
 
         // In use: cannot be deleted.
@@ -84,7 +84,7 @@ class GcoreLinkedRuleControllerTest extends IntegrationTestCase
 
         // Last: the error handler rolls back the test transaction.
         $this->actingAs($this->admin)->post('/admin/gcore/linked-rules', [
-            'name' => 'Ruim', 'policy' => 'DROP', 'proto' => 'udp', 'sip_list' => '1.2.3', 'mode' => 'dport',
+            'name' => 'Ruim', 'policy' => 'DROP', 'proto' => 'udp', 'sip_list' => '1.2.3',
         ])->assertStatus(422)->assertJsonPath('errors.0.meta.source_field', 'sip_list');
         $this->assertNull(GcoreLinkedRule::query()->where('name', 'Ruim')->first());
     }

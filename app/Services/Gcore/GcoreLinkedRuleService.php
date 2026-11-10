@@ -13,7 +13,7 @@ use Pterodactyl\Services\Gcore\IpLists\IpListParser;
  * manual (non-panel) port already on the rule.
  *
  * Gcore rules have no id, so a linked rule is found in a profile by its shape: policy, proto,
- * source IPs and, for "same_port", sport_list equal to dport_list. A rule with an empty dport
+ * source IPs and an empty sport_list. A rule with an empty dport
  * never matches (empty = every port), and a linked rule that no egg uses is never touched.
  */
 class GcoreLinkedRuleService
@@ -75,7 +75,7 @@ class GcoreLinkedRuleService
             return false;
         }
         $sports = self::ports($rule['sport_list'] ?? []);
-        if ($def->mode === GcoreLinkedRule::MODE_SAME_PORT ? $sports !== $dports : $sports !== []) {
+        if ($sports !== []) {
             return false;
         }
 
@@ -145,9 +145,6 @@ class GcoreLinkedRuleService
                 $changes[] = $this->describeChange($def, $current, $final);
             }
             $rule['dport_list'] = $final;
-            if ($def->mode === GcoreLinkedRule::MODE_SAME_PORT) {
-                $rule['sport_list'] = $final;
-            }
             $out[] = $rule;
         }
 
@@ -163,7 +160,7 @@ class GcoreLinkedRuleService
                 'sip_list' => $def->sipList(),
                 'dport_list' => $ports,
                 'proto_list' => $def->protoList(),
-                'sport_list' => $def->mode === GcoreLinkedRule::MODE_SAME_PORT ? $ports : [],
+                'sport_list' => [],
             ];
             $changes[] = "regra vinculada \"{$def->name}\" criada no topo: " . implode(',', $ports);
         }

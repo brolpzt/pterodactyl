@@ -18,7 +18,7 @@ class GcoreAclRuleNoteService
     /**
      * @param array<string, mixed> $rule sip_list = manual IPs only, ip_lists = list ids
      */
-    public static function ruleKey(array $rule, bool $legacy = false): string
+    public static function ruleKey(array $rule): string
     {
         $norm = function ($values, bool $numeric = false): string {
             $values = array_map(fn ($v) => $numeric ? (int) $v : strtolower(trim((string) $v)), (array) $values);
@@ -28,17 +28,11 @@ class GcoreAclRuleNoteService
             return implode(',', $values);
         };
         $protos = $norm($rule['proto_list'] ?? []);
-        $sports = $norm($rule['sport_list'] ?? [], true);
-        // "Origem = destino" rules (sport = dport, kept in step by the linked-rule sync): the
-        // sport changes with every server, so key it by shape instead of by ports.
-        if (!$legacy && $sports !== '' && $sports === $norm($rule['dport_list'] ?? [], true)) {
-            $sports = '=dport';
-        }
 
         return mb_substr(implode('|', [
             trim((string) ($rule['policy'] ?? '')),
             $protos === '' ? 'any' : $protos,
-            $sports,
+            $norm($rule['sport_list'] ?? [], true),
             $norm($rule['sip_list'] ?? []),
             $norm($rule['ip_lists'] ?? [], true),
         ]), 0, 191);
@@ -48,7 +42,6 @@ class GcoreAclRuleNoteService
      * Add 'description' to each rule that has one stored.
      *
      * @param list<array<string, mixed>> $acl
-     *
      * @return array{acl: list<array<string, mixed>>, lost: int}
      */
     public function annotate(int $profileId, array $acl): array
@@ -60,11 +53,10 @@ class GcoreAclRuleNoteService
 
         $pairs = [];
         foreach ($acl as $idx => $rule) {
-            // Legacy key: notes stored before "=dport" keys existed.
-            $keys = [self::ruleKey($rule), self::ruleKey($rule, true)];
+            $key = self::ruleKey($rule);
             $dports = array_map('intval', (array) ($rule['dport_list'] ?? []));
             foreach ($notes as $n => $note) {
-                if (!in_array($note->rule_key, $keys, true)) {
+                if ($note->rule_key !== $key) {
                     continue;
                 }
                 $pairs[] = [$idx, $n, $this->overlap($dports, $note->dport_list ?? []), abs($note->position - $idx)];

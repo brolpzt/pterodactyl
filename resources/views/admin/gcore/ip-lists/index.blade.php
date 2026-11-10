@@ -120,6 +120,12 @@
         </div>
     </div>
 
+    @if($runs->isNotEmpty())
+        <h1 class="page-title" style="margin-top:18px">Atualizações na fila</h1>
+        <p class="meta-row">Download e envio à Gcore rodam na fila; a tabela se atualiza sozinha.</p>
+        @include('admin.gcore._runs_box', ['runs' => $runs, 'filter' => ['kind' => 'ip_list']])
+    @endif
+
     <h1 class="page-title" style="margin-top:18px">Log de atualizações</h1>
     <p class="meta-row">Últimos 50 registros de todas as listas</p>
     @include('admin.gcore.ip-lists._log', ['logs' => $logs, 'showList' => true])

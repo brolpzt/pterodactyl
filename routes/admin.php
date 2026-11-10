@@ -255,6 +255,7 @@ Route::group(['prefix' => 'gcore'], function () {
     Route::get('/live/profiles', [Admin\GcoreDdosController::class, 'liveProfiles'])->name('admin.gcore.live.profiles');
     Route::get('/live/profiles/{profile}', [Admin\GcoreDdosController::class, 'liveProfile'])->name('admin.gcore.live.profile');
     Route::get('/live/ip-list-entries', [Admin\GcoreDdosController::class, 'ipListEntries'])->name('admin.gcore.live.ip-list-entries');
+    Route::get('/live/runs', [Admin\GcoreDdosController::class, 'liveRuns'])->name('admin.gcore.live.runs');
 
     Route::get('/ip-lists', [Admin\GcoreIpListController::class, 'index'])->name('admin.gcore.ip-lists');
     Route::post('/ip-lists', [Admin\GcoreIpListController::class, 'store']);

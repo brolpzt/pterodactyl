@@ -7,28 +7,28 @@ use Illuminate\Http\Request;
 use Pterodactyl\Models\Node;
 use Illuminate\Http\Response;
 use Pterodactyl\Models\Allocation;
+use Pterodactyl\Models\NodeGcoreIp;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
 use Illuminate\View\Factory as ViewFactory;
+use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Services\Nodes\NodeUpdateService;
 use Illuminate\Cache\Repository as CacheRepository;
 use Pterodactyl\Services\Nodes\NodeCreationService;
 use Pterodactyl\Services\Nodes\NodeDeletionService;
 use Pterodactyl\Services\Allocations\AssignmentService;
+use Pterodactyl\Services\Gcore\GcoreFirewallSyncService;
 use Pterodactyl\Services\Helpers\SoftwareVersionService;
 use Pterodactyl\Http\Requests\Admin\Node\NodeFormRequest;
 use Pterodactyl\Contracts\Repository\NodeRepositoryInterface;
+use Pterodactyl\Services\Nftables\NftablesFirewallSyncService;
 use Pterodactyl\Contracts\Repository\ServerRepositoryInterface;
 use Pterodactyl\Http\Requests\Admin\Node\AllocationFormRequest;
 use Pterodactyl\Services\Allocations\AllocationDeletionService;
 use Pterodactyl\Contracts\Repository\LocationRepositoryInterface;
 use Pterodactyl\Contracts\Repository\AllocationRepositoryInterface;
 use Pterodactyl\Http\Requests\Admin\Node\AllocationAliasFormRequest;
-use Pterodactyl\Models\NodeGcoreIp;
-use Pterodactyl\Services\Gcore\GcoreFirewallSyncService;
-use Pterodactyl\Services\Nftables\NftablesFirewallSyncService;
-use Pterodactyl\Exceptions\DisplayException;
 
 class NodesController extends Controller
 {
@@ -85,7 +85,7 @@ class NodesController extends Controller
     /**
      * Updates settings for a node.
      *
-     * @throws \Pterodactyl\Exceptions\DisplayException
+     * @throws DisplayException
      * @throws \Pterodactyl\Exceptions\Model\DataValidationException
      * @throws \Pterodactyl\Exceptions\Repository\RecordNotFoundException
      */
@@ -361,11 +361,16 @@ class NodesController extends Controller
     public function syncGcoreFirewall(Node $node): RedirectResponse
     {
         try {
-            $lines = $this->gcoreFirewallSync->syncNode($node);
-            $body = $lines === []
-                ? 'Nada para sincronizar.'
-                : implode("\n\n", $lines);
-            $this->alert->success("Gcore sync\n" . $body)->flash();
+            $runs = $this->gcoreFirewallSync->queueNode($node, 'sync manual do node ' . $node->name . ' por ' . (request()->user()?->username ?? '?'));
+            if ($runs === []) {
+                $this->alert->warning('Nenhum IP marcado como Gcore neste node.')->flash();
+            } else {
+                $this->alert->success(sprintf(
+                    'Sincronização Gcore na fila para %d IP(s): %s. O resultado aparece em alguns segundos em Gcore DDoS → Sincronizações.',
+                    count($runs),
+                    implode(', ', array_map(fn ($r) => $r->ip, $runs)),
+                ))->flash();
+            }
         } catch (DisplayException $e) {
             $this->alert->danger($e->getMessage())->flash();
         }
@@ -376,7 +381,7 @@ class NodesController extends Controller
     /**
      * Deletes a node from the system.
      *
-     * @throws \Pterodactyl\Exceptions\DisplayException
+     * @throws DisplayException
      */
     public function delete(int|Node $node): RedirectResponse
     {

@@ -57,6 +57,10 @@
                 });
         })();
         </script>
+
+        <h1 class="page-title" style="margin-top:18px">Sincronizações</h1>
+        <p class="meta-row">Sync de portas (criar/excluir servidor, botão do node) e atualização de listas de IP rodam na fila, sem travar o painel. Últimas 20.</p>
+        @include('admin.gcore._runs_box', ['runs' => $runs])
     @endif
 </div>
 @endsection

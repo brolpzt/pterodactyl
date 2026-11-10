@@ -143,6 +143,15 @@
         </div>
     @endif
 
+    @if($runs->isNotEmpty())
+        <details class="meta-row" style="margin-bottom:8px" @if($runs->contains(fn ($r) => $r->isPending())) open @endif>
+            <summary style="cursor:pointer">Sincronizações de portas deste IP
+                @if($runs->contains(fn ($r) => $r->isPending()))<span style="color:#fcd34d">· uma está na fila/rodando; a página confere com a Gcore quando terminar</span>@endif
+            </summary>
+            @include('admin.gcore._runs_box', ['runs' => $runs, 'filter' => ['ip' => $profile['ip_address'] ?? '']])
+        </details>
+    @endif
+
     <form method="post" action="{{ route('admin.gcore.profile.update', $id) }}" id="profile-form">
         @csrf
         <input type="hidden" name="port_overrides" id="port-overrides" value="">
@@ -1161,7 +1170,8 @@
     const changedEl = document.getElementById('profile-changed');
     const loadedHash = form.querySelector('[name="form_hash"]').value;
     const syncState = t => { const el = syncEl.querySelector('.sync-state'); if (el) el.innerHTML = t; };
-    if (Number(syncEl.dataset.age) >= 20) {
+    function checkGcore() {
+        if (!syncEl.querySelector('.sync-state')) syncEl.insertAdjacentHTML('beforeend', ' · <span class="sync-state">conferindo com a Gcore…</span>');
         fetch(syncEl.dataset.url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
             .then(r => r.json().then(j => ({ ok: r.ok, j })))
             .then(({ ok, j }) => {
@@ -1185,6 +1195,9 @@
             })
             .catch(e => syncState('<span style="color:#fcd34d">não foi possível conferir: ' + esc(e.message) + '</span>'));
     }
+    if (Number(syncEl.dataset.age) >= 20) checkGcore();
+    // A queued port sync for this IP just finished: compare with Gcore again (reloads if untouched).
+    document.addEventListener('gcore-runs-done', () => checkGcore());
 })();
 </script>
 @endsection

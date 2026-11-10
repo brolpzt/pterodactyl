@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\GcoreIpList;
+use Pterodactyl\Models\GcoreSyncRun;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
 use Pterodactyl\Models\GcoreIpListBinding;
@@ -35,10 +36,50 @@ class GcoreDdosController extends Controller
         $cached = $configured ? $cache->list() : null;
 
         return view('admin.gcore.index', [
+            'runs' => self::recentRuns([], 20),
             'profiles' => $cached['data'] ?? null,
             'fetchedAt' => $cached['fetched_at'] ?? null,
             'configured' => $configured,
         ]);
+    }
+
+    /**
+     * Sync runs list for the pages' auto-refresh (filters: ip, ip_list_id).
+     */
+    public function liveRuns(Request $request): JsonResponse
+    {
+        $filter = array_filter([
+            'ip' => $request->query('ip'),
+            'ip_list_id' => $request->query('ip_list_id'),
+            'kind' => $request->query('kind'),
+        ], fn ($v) => $v !== null && $v !== '');
+        $runs = self::recentRuns($filter, $filter === [] ? 20 : 5);
+
+        return new JsonResponse([
+            'html' => view('admin.gcore._runs', ['runs' => $runs])->render(),
+            'pending' => $runs->contains(fn (GcoreSyncRun $r) => $r->isPending()),
+        ]);
+    }
+
+    /**
+     * @param array{ip?: string, ip_list_id?: int|string, kind?: string} $filter
+     *
+     * @return \Illuminate\Support\Collection<int, GcoreSyncRun>
+     */
+    public static function recentRuns(array $filter, int $limit): \Illuminate\Support\Collection
+    {
+        $query = GcoreSyncRun::query()->orderByDesc('id')->limit($limit);
+        if (isset($filter['ip'])) {
+            $query->where('kind', GcoreSyncRun::KIND_PORTS)->where('ip', (string) $filter['ip']);
+        }
+        if (isset($filter['kind'])) {
+            $query->where('kind', (string) $filter['kind']);
+        }
+        if (isset($filter['ip_list_id'])) {
+            $query->where('kind', GcoreSyncRun::KIND_IP_LIST)->where('ip_list_id', (int) $filter['ip_list_id']);
+        }
+
+        return $query->get();
     }
 
     public function liveProfiles(): JsonResponse
@@ -138,6 +179,7 @@ class GcoreDdosController extends Controller
                     ])->values(),
                 'formHash' => GcoreProfileCache::formHash($data),
                 'linkedNames' => $linkedNames,
+                'runs' => self::recentRuns(['ip' => (string) ($data['ip_address'] ?? '')], 3),
                 'fetchedAt' => $fetchedAt,
                 'orphanBindings' => count($annotated['orphans']),
                 'listChecks' => GcoreIpListBinding::query()->where('profile_id', $profile)->where('status', '!=', 'orphan')->get(),

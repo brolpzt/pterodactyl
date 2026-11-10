@@ -5,7 +5,6 @@ namespace Pterodactyl\Services\Gcore;
 use Pterodactyl\Models\Node;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Allocation;
-use Illuminate\Support\Facades\Log;
 use Pterodactyl\Models\NodeGcoreIp;
 use Pterodactyl\Exceptions\DisplayException;
 use Pterodactyl\Services\Eggs\PortSlotSyncService;
@@ -22,7 +21,7 @@ class GcoreFirewallSyncService
 
     /**
      * On server create: mark allocations on Gcore IPs as protected and sync immediately.
-     * On server delete: unmark those allocations and sync immediately.
+     * On server delete: unmark those allocations and sync. The sync itself is queued.
      *
      * @return list<string>
      */
@@ -60,22 +59,37 @@ class GcoreFirewallSyncService
             ->whereIn('id', $allocations->pluck('id')->all())
             ->update($payload);
 
+        // The Gcore call itself runs on the queue: creating/deleting a server never waits for it.
+        // The allocation flags above are already saved, so the job sees the new state.
+        $reason = ($opening ? 'servidor criado: ' : 'servidor excluído: ') . $server->name . ' (#' . $server->id . ')';
         $lines = [];
         foreach ($ips as $ip) {
-            try {
-                $lines[] = $this->syncIp($node->fresh(['gcoreIps']), (string) $ip, force: !$opening);
-            } catch (\Throwable $e) {
-                Log::warning('Gcore sync during server lifecycle failed.', [
-                    'server_id' => $server->id,
-                    'ip' => $ip,
-                    'opening' => $opening,
-                    'error' => $e->getMessage(),
-                ]);
-                $lines[] = "IP {$ip}: falha — {$e->getMessage()}";
-            }
+            $run = app(GcoreSyncQueue::class)->ports($node, (string) $ip, $reason, force: !$opening);
+            $lines[] = "IP {$ip}: sincronização Gcore na fila (#{$run->id})";
         }
 
         return $lines;
+    }
+
+    /**
+     * Queue a port sync for every IP marked as Gcore-protected on the node.
+     *
+     * @return list<\Pterodactyl\Models\GcoreSyncRun>
+     *
+     * @throws DisplayException
+     */
+    public function queueNode(Node $node, string $reason): array
+    {
+        if (!$node->gcore_enabled) {
+            throw new DisplayException('Este node não está marcado como Gcore.');
+        }
+
+        $runs = [];
+        foreach (NodeGcoreIp::query()->where('node_id', $node->id)->pluck('ip') as $ip) {
+            $runs[] = app(GcoreSyncQueue::class)->ports($node, (string) $ip, $reason);
+        }
+
+        return $runs;
     }
 
     /**

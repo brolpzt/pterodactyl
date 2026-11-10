@@ -5,19 +5,20 @@ namespace Pterodactyl\Http\Controllers\Admin;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Pterodactyl\Models\GcoreIpList;
+use Pterodactyl\Models\GcoreSyncRun;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
-use Pterodactyl\Models\GcoreIpList;
 use Pterodactyl\Models\GcoreIpListLog;
 use Pterodactyl\Models\GcoreIpListBinding;
 use Pterodactyl\Http\Controllers\Controller;
-use Pterodactyl\Services\Gcore\IpLists\GcoreIpListRefreshService;
+use Pterodactyl\Services\Gcore\GcoreSyncQueue;
 
 class GcoreIpListController extends Controller
 {
     public function __construct(
         private AlertsMessageBag $alert,
-        private GcoreIpListRefreshService $refresh,
+        private GcoreSyncQueue $queue,
     ) {
     }
 
@@ -29,6 +30,7 @@ class GcoreIpListController extends Controller
             'lists' => $lists,
             'usage' => $this->usageByList(),
             'logs' => GcoreIpListLog::query()->with('list:id,name')->orderByDesc('id')->limit(50)->get(),
+            'runs' => GcoreDdosController::recentRuns(['kind' => GcoreSyncRun::KIND_IP_LIST], 10),
         ]);
     }
 
@@ -36,9 +38,7 @@ class GcoreIpListController extends Controller
     {
         $data = $this->validated($request);
         $list = GcoreIpList::query()->create($data);
-
-        $log = $this->refresh->refresh($list, 'manual');
-        $this->flashLog($list, $log);
+        $this->queued($this->queue->ipList($list, 'manual', 'lista criada por ' . $this->who($request)));
 
         return redirect()->route('admin.gcore.ip-lists.view', $list->id);
     }
@@ -49,6 +49,7 @@ class GcoreIpListController extends Controller
             'list' => $list,
             'usage' => $this->usageByList()[$list->id] ?? [],
             'logs' => $list->logs()->limit(100)->get(),
+            'runs' => GcoreDdosController::recentRuns(['ip_list_id' => $list->id], 5),
         ]);
     }
 
@@ -60,7 +61,7 @@ class GcoreIpListController extends Controller
 
         if ($urlChanged) {
             // A new source is expected to differ: still refuse empty/broken lists, but not the shrink check.
-            $this->flashLog($list, $this->refresh->refresh($list, 'force'));
+            $this->queued($this->queue->ipList($list, 'force', 'URL alterada por ' . $this->who($request)));
         } else {
             $this->alert->success('Lista salva.')->flash();
         }
@@ -70,8 +71,7 @@ class GcoreIpListController extends Controller
 
     public function refresh(Request $request, GcoreIpList $list): RedirectResponse
     {
-        $log = $this->refresh->refresh($list, $request->boolean('force') ? 'force' : 'manual');
-        $this->flashLog($list, $log);
+        $this->queued($this->queue->ipList($list, $request->boolean('force') ? 'force' : 'manual', 'atualização manual por ' . $this->who($request)));
 
         return redirect()->route('admin.gcore.ip-lists.view', $list->id);
     }
@@ -135,13 +135,17 @@ class GcoreIpListController extends Controller
         return $out;
     }
 
-    private function flashLog(GcoreIpList $list, GcoreIpListLog $log): void
+    private function queued(GcoreSyncRun $run): void
     {
-        $text = $list->name . ': ' . $log->message;
-        match ($log->status) {
-            'changed', 'unchanged' => $this->alert->success($text)->flash(),
-            'rejected' => $this->alert->warning($text)->flash(),
-            default => $this->alert->danger($text)->flash(),
-        };
+        $run = $run->fresh() ?? $run; // with a sync queue the job already ran
+        $this->alert->info(match ($run->status) {
+            'ok', 'warning', 'error' => "{$run->label}: {$run->summary}",
+            default => "{$run->label}: download e envio à Gcore na fila (#{$run->id}). O resultado aparece no log abaixo em alguns segundos.",
+        })->flash();
+    }
+
+    private function who(Request $request): string
+    {
+        return (string) ($request->user()?->username ?? '?');
     }
 }

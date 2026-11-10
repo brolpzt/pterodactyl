@@ -106,6 +106,27 @@
             {{ $lostNotes }} descrição(ões) não puderam ser associadas a nenhuma regra (política, proto, sport ou sip mudaram fora do painel) e serão descartadas ao salvar.
         </div>
     @endif
+    @php
+        $listFailed = $listChecks->filter(fn ($b) => ($b->verify_missing ?? 0) > 0);
+        $listOldest = $listChecks->pluck('verified_at')->filter()->sort()->first();
+    @endphp
+    @foreach($listFailed as $b)
+        <div class="flash flash-err" style="border-radius:6px;margin-bottom:8px">
+            Regra {{ $b->policy }} ({{ implode(',', $b->proto_list ?? []) ?: 'any' }}): última conferência na Gcore, {{ $b->verified_at?->diffForHumans() }}, encontrou faixas faltando. {{ $b->verify_message }}
+            O painel reenvia automaticamente a cada 15 min.
+        </div>
+    @endforeach
+    @if($listChecks->isNotEmpty() && $listFailed->isEmpty())
+        <div class="meta-row" style="margin-bottom:8px">
+            Listas de IP: {{ $listChecks->count() }} regra(s), {{ $listChecks->sum('verify_checked') }} faixa(s)
+            @if($listChecks->contains(fn ($b) => $b->verified_at === null || $b->verify_missing === null))
+                <span style="color:#fcd34d">⚠ conferência pendente</span>
+            @else
+                <span style="color:#6ee7b7">✓ conferidas na Gcore</span>
+            @endif
+            @if($listOldest)<span title="{{ $listOldest }}">{{ $listOldest->diffForHumans() }}</span>@endif
+        </div>
+    @endif
     @if($orphanBindings > 0)
         <div class="flash flash-err" style="border-radius:6px;margin-bottom:8px">
             {{ $orphanBindings }} regra(s) ligada(s) a listas de IP não foram encontradas neste perfil (alteradas fora do painel?).

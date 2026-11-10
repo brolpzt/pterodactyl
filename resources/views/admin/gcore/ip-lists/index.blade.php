@@ -40,6 +40,7 @@
                     <th>Última verificação</th>
                     <th>Última mudança</th>
                     <th>Regras</th>
+                    <th>Conferido na Gcore</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -62,6 +63,24 @@
                         <td>{{ $list->last_changed_at?->diffForHumans() ?? '—' }}</td>
                         <td>{{ count($used) }}@if($bad) <span class="ipl-st error">{{ $bad }} com problema</span>@endif</td>
                         <td>
+                            @php
+                                $checked = collect($used)->reject(fn ($u) => $u['status'] === 'orphan');
+                                $failed = $checked->filter(fn ($u) => ($u['verify_missing'] ?? 0) > 0);
+                                $unknown = $checked->filter(fn ($u) => $u['verified_at'] === null || $u['verify_missing'] === null);
+                                $oldest = $checked->pluck('verified_at')->filter()->sort()->first();
+                            @endphp
+                            @if($checked->isEmpty())
+                                <span class="ipl-muted">—</span>
+                            @elseif($failed->isNotEmpty())
+                                <span class="ipl-st error" title="{{ $failed->pluck('verify_message')->implode(' | ') }}">✗ faltam {{ $failed->sum('verify_missing') }} em {{ $failed->count() }} regra(s)</span>
+                            @elseif($unknown->isNotEmpty())
+                                <span class="ipl-st pending" title="{{ $unknown->pluck('verify_message')->filter()->implode(' | ') }}">⚠ {{ $unknown->count() }} não conferida(s)</span>
+                            @else
+                                <span class="ipl-st ok">✓ ok</span>
+                            @endif
+                            @if($oldest)<span class="ipl-muted" title="{{ $oldest }}">{{ $oldest->diffForHumans() }}</span>@endif
+                        </td>
+                        <td>
                             <form method="post" action="{{ route('admin.gcore.ip-lists.refresh', $list->id) }}" style="display:inline">
                                 @csrf
                                 <button type="submit" class="btn">Atualizar agora</button>
@@ -69,7 +88,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="ipl-muted">Nenhuma lista cadastrada.</td></tr>
+                    <tr><td colspan="9" class="ipl-muted">Nenhuma lista cadastrada.</td></tr>
                 @endforelse
                 </tbody>
             </table>

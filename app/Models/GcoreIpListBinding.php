@@ -18,6 +18,10 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $status
  * @property string|null $last_error
  * @property \Illuminate\Support\Carbon|null $applied_at
+ * @property \Illuminate\Support\Carbon|null $verified_at
+ * @property int|null $verify_checked
+ * @property int|null $verify_missing
+ * @property string|null $verify_message
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  */
@@ -36,6 +40,9 @@ class GcoreIpListBinding extends Model
         'manual_sips' => 'array',
         'applied_sips' => 'array',
         'applied_at' => 'datetime',
+        'verified_at' => 'datetime',
+        'verify_checked' => 'integer',
+        'verify_missing' => 'integer',
     ];
 
     /** @return list<int> */

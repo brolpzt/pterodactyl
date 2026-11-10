@@ -298,7 +298,9 @@ class GcoreIpListBindingService
     /**
      * Read-back check: confirm that every list CIDR each binding last wrote is really in its rule
      * on Gcore. Bindings whose rule lacks CIDRs (or can't be found) are marked 'error', so the next
-     * scheduled run pushes them again.
+     * scheduled run pushes them again. The result is stored on each binding (verified_at, verify_*).
+     *
+     * Not locked by itself: callers that write (applyProfile, editor save) already hold the profile lock.
      *
      * @param array<string, mixed>|null $profile profile already fetched after the write; null = GET it now
      * @return array{checked:int, missing:int, rules:list<array{policy:string, expected:int, missing:int, sample:list<string>}>, message:string}
@@ -310,7 +312,21 @@ class GcoreIpListBindingService
             return ['checked' => 0, 'missing' => 0, 'rules' => [], 'message' => 'nenhuma regra com lista para conferir'];
         }
 
-        $profile ??= $this->client()->getProfile($profileId);
+        try {
+            $profile ??= $this->client()->getProfile($profileId);
+        } catch (\Throwable $e) {
+            foreach ($bindings as $binding) {
+                $binding->forceFill([
+                    'verified_at' => now(),
+                    'verify_checked' => null,
+                    'verify_missing' => null,
+                    'verify_message' => mb_substr('Não foi possível ler o perfil na Gcore: ' . $e->getMessage(), 0, 500),
+                ])->save();
+            }
+
+            throw $e;
+        }
+
         $acl = GcoreAclHelper::extractProfileFormData($profile)['acl'];
         [$matches, $unmatched] = $this->match($acl, $bindings);
 
@@ -321,29 +337,45 @@ class GcoreIpListBindingService
             $expected = $binding->applied_sips ?? [];
             $missing = IpListParser::uncovered($expected, (array) ($acl[$idx]['sip_list'] ?? []));
             $checked += count($expected);
+            $fill = [
+                'verified_at' => now(),
+                'verify_checked' => count($expected),
+                'verify_missing' => count($missing),
+            ];
+
             if ($missing === []) {
+                $fill['verify_message'] = sprintf('%d faixa(s) presentes', count($expected));
+                // A rule that only failed the read-back is healthy again once everything is there.
+                if ($binding->status === 'error' && str_starts_with((string) $binding->last_error, 'Conferência:')) {
+                    $fill += ['status' => 'ok', 'last_error' => null];
+                }
+                $binding->forceFill($fill)->save();
                 continue;
             }
+
             $missingTotal += count($missing);
             $rules[] = ['policy' => (string) $binding->policy, 'expected' => count($expected), 'missing' => count($missing), 'sample' => array_slice($missing, 0, 5)];
-            $binding->forceFill([
-                'status' => 'error',
-                'last_error' => sprintf(
-                    'Conferência: a Gcore não tem %d de %d faixas das listas nesta regra (ex.: %s).',
-                    count($missing),
-                    count($expected),
-                    implode(', ', array_slice($missing, 0, 5)),
-                ),
-            ])->save();
+            $text = sprintf(
+                'Conferência: a Gcore não tem %d de %d faixas das listas nesta regra (ex.: %s).',
+                count($missing),
+                count($expected),
+                implode(', ', array_slice($missing, 0, 5)),
+            );
+            $binding->forceFill($fill + ['status' => 'error', 'last_error' => $text, 'verify_message' => mb_substr($text, 0, 500)])->save();
         }
         foreach ($unmatched as $binding) {
             $expected = $binding->applied_sips ?? [];
             $checked += count($expected);
             $missingTotal += count($expected);
             $rules[] = ['policy' => (string) $binding->policy, 'expected' => count($expected), 'missing' => count($expected), 'sample' => []];
+            $text = 'Conferência: a regra não foi encontrada no perfil lido de volta da Gcore.';
             $binding->forceFill([
                 'status' => 'error',
-                'last_error' => 'Conferência: a regra não foi encontrada no perfil lido de volta da Gcore.',
+                'last_error' => $text,
+                'verified_at' => now(),
+                'verify_checked' => count($expected),
+                'verify_missing' => count($expected),
+                'verify_message' => $text,
             ])->save();
         }
 
@@ -355,6 +387,35 @@ class GcoreIpListBindingService
             )));
 
         return ['checked' => $checked, 'missing' => $missingTotal, 'rules' => $rules, 'message' => $message];
+    }
+
+    /**
+     * Scheduled read-back of every profile with list bindings (read-only on Gcore), so a rule
+     * changed directly on Gcore is noticed even when no list changed.
+     *
+     * @param list<int> $skipProfileIds profiles already written and checked in this run
+     * @return list<array{profile_id:int, ip:string|null, status:string, message:string}>
+     */
+    public function verifyAll(array $skipProfileIds = []): array
+    {
+        $profiles = GcoreIpListBinding::query()
+            ->where('status', '!=', 'orphan')
+            ->get(['profile_id', 'profile_ip'])
+            ->unique('profile_id')
+            ->reject(fn (GcoreIpListBinding $b) => in_array((int) $b->profile_id, $skipProfileIds, true));
+
+        $results = [];
+        foreach ($profiles as $row) {
+            $profileId = (int) $row->profile_id;
+            try {
+                $check = self::withProfileLock($profileId, fn () => $this->verify($profileId));
+                $results[] = ['profile_id' => $profileId, 'ip' => $row->profile_ip, 'status' => $check['missing'] > 0 ? 'error' : 'ok', 'message' => $check['message']];
+            } catch (\Throwable $e) {
+                $results[] = ['profile_id' => $profileId, 'ip' => $row->profile_ip, 'status' => 'error', 'message' => 'não foi possível conferir: ' . $e->getMessage()];
+            }
+        }
+
+        return $results;
     }
 
     /**

@@ -125,6 +125,9 @@ class GcoreIpListController extends Controller
                     'status' => $binding->status,
                     'error' => $binding->last_error,
                     'applied_at' => $binding->applied_at,
+                    'verified_at' => $binding->verified_at,
+                    'verify_missing' => $binding->verify_missing,
+                    'verify_message' => $binding->verify_message,
                 ];
             }
         }

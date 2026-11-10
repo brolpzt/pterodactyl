@@ -48,7 +48,7 @@
             <button type="submit" class="btn">Forçar atualização</button>
         </form>
         <span class="toolbar-spacer"></span>
-        <span class="toolbar-hint">“Forçar” ignora só o limite de encolhimento. Mudanças são enviadas na hora para as regras que usam a lista.</span>
+        <span class="toolbar-hint">“Forçar” ignora só o limite de encolhimento. Mudanças são enviadas na hora para as regras que usam a lista. A cada 15 min o painel lê as regras na Gcore e confere se todas as faixas estão lá.</span>
     </div>
 
     <div class="ipl-grid">
@@ -59,7 +59,7 @@
                     <div class="panel-body ipl-muted">Nenhuma. Selecione a lista no campo <code>sip</code> de uma regra no editor do perfil.</div>
                 @else
                     <table class="data list">
-                        <thead><tr><th>Perfil</th><th>Regra</th><th>Estado</th><th>Aplicada</th></tr></thead>
+                        <thead><tr><th>Perfil</th><th>Regra</th><th>Estado</th><th>Aplicada</th><th>Conferido na Gcore</th></tr></thead>
                         <tbody>
                         @foreach($usage as $u)
                             <tr>
@@ -67,6 +67,10 @@
                                 <td class="ipl-mono">{{ $u['policy'] }} · {{ $u['proto'] }} · dport {{ $u['dports'] ? implode(',', array_slice($u['dports'], 0, 6)) . (count($u['dports']) > 6 ? '…' : '') : 'todas' }}</td>
                                 <td><span class="ipl-st {{ $u['status'] }}">{{ $u['status'] }}</span>@if($u['error'])<div class="ipl-muted" style="font-size:11px">{{ $u['error'] }}</div>@endif</td>
                                 <td>{{ $u['applied_at']?->diffForHumans() ?? '—' }}</td>
+                                <td>
+                                    @include('admin.gcore.ip-lists._verified', ['at' => $u['verified_at'], 'missing' => $u['verify_missing'], 'message' => $u['verify_message']])
+                                    @if($u['verify_message'])<div class="ipl-muted" style="font-size:11px">{{ $u['verify_message'] }}</div>@endif
+                                </td>
                             </tr>
                         @endforeach
                         </tbody>

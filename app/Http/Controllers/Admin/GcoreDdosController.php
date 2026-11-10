@@ -12,6 +12,7 @@ use Pterodactyl\Services\Gcore\GcoreAclHelper;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Pterodactyl\Models\GcoreIpList;
+use Pterodactyl\Models\GcoreIpListBinding;
 use Pterodactyl\Services\Gcore\IpLists\GcoreIpListBindingService;
 use Pterodactyl\Services\Gcore\GcoreAclRuleNoteService;
 
@@ -66,6 +67,7 @@ class GcoreDdosController extends Controller
                     'entries' => $l->entryList(),
                 ])->values(),
                 'orphanBindings' => count($annotated['orphans']),
+                'listChecks' => GcoreIpListBinding::query()->where('profile_id', $profile)->where('status', '!=', 'orphan')->get(),
                 'lostNotes' => $described['lost'],
                 'error' => null,
             ]);

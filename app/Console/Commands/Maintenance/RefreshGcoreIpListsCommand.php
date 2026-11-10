@@ -35,8 +35,20 @@ class RefreshGcoreIpListsCommand extends Command
             $this->line(sprintf('[%s] list #%d: %s', $log->status, $log->gcore_ip_list_id, $log->message));
         }
 
-        // Retry profiles that failed earlier (Gcore down, lock timeout, …).
         if (trim((string) config('gcore.api_key')) !== '') {
+            // Read back every other profile with list rules (read-only), so rules changed on Gcore
+            // are flagged as error and fixed by applyPending right below.
+            $touched = [];
+            foreach ($logs as $log) {
+                foreach ($log->profiles ?? [] as $p) {
+                    $touched[] = (int) $p['profile_id'];
+                }
+            }
+            foreach ($bindings->verifyAll(array_values(array_unique($touched))) as $result) {
+                $this->line(sprintf('[verify:%s] profile #%d %s: %s', $result['status'], $result['profile_id'], $result['ip'] ?? '', $result['message']));
+            }
+
+            // Retry profiles that failed earlier (Gcore down, lock timeout, missing CIDRs, …).
             foreach ($bindings->applyPending() as $result) {
                 $this->line(sprintf('[%s] profile #%d %s: %s', $result['status'], $result['profile_id'], $result['ip'] ?? '', $result['message']));
             }

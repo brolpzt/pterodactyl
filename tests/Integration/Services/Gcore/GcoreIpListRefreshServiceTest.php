@@ -264,6 +264,53 @@ class GcoreIpListRefreshServiceTest extends IntegrationTestCase
         $this->assertSame(2, $check['checked']);
     }
 
+    public function testScheduledReadBackFlagsRuleChangedOnGcoreAndRestoresIt(): void
+    {
+        $this->boundList("45.121.184.0/22\n103.10.124.0/23\n");
+        $binding = GcoreIpListBinding::query()->firstOrFail();
+
+        // All good: read-only check, no PUT.
+        $results = $this->bindings->verifyAll();
+        $this->assertSame('ok', $results[0]['status']);
+        $this->assertSame(0, $this->puts);
+        $binding->refresh();
+        $this->assertNotNull($binding->verified_at);
+        $this->assertSame(2, $binding->verify_checked);
+        $this->assertSame(0, $binding->verify_missing);
+
+        // Someone removes a list CIDR directly on Gcore.
+        $this->acl[0]['sip_list'] = ['187.94.104.229', '45.121.184.0/22'];
+        $results = $this->bindings->verifyAll();
+        $this->assertSame('error', $results[0]['status']);
+        $this->assertSame(0, $this->puts);
+        $binding->refresh();
+        $this->assertSame('error', $binding->status);
+        $this->assertSame(1, $binding->verify_missing);
+
+        // Profiles written in this run are skipped.
+        $this->assertSame([], $this->bindings->verifyAll([self::PROFILE]));
+
+        // Retry puts the CIDR back and the read-back clears the error.
+        $this->assertSame('updated', $this->bindings->applyPending()[0]['status']);
+        $this->assertSame(['187.94.104.229', '45.121.184.0/22', '103.10.124.0/23'], $this->acl[0]['sip_list']);
+        $binding->refresh();
+        $this->assertSame('ok', $binding->status);
+        $this->assertSame(0, $binding->verify_missing);
+    }
+
+    public function testReadBackFailureIsRecordedWithoutChangingTheRule(): void
+    {
+        $this->boundList("45.121.184.0/22\n");
+        $this->gcoreDown = true;
+
+        $results = $this->bindings->verifyAll();
+        $this->assertSame('error', $results[0]['status']);
+        $binding = GcoreIpListBinding::query()->firstOrFail();
+        $this->assertSame('ok', $binding->status);
+        $this->assertNull($binding->verify_missing);
+        $this->assertStringContainsString('Não foi possível ler', $binding->verify_message);
+    }
+
     public function testListWithoutEntriesCannotBeSelected(): void
     {
         $list = GcoreIpList::query()->create(['name' => 'Empty', 'url' => self::LIST_URL, 'refresh_hours' => 24, 'enabled' => true]);

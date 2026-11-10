@@ -101,7 +101,11 @@ class GcoreIpListControllerTest extends IntegrationTestCase
             ->assertOk()
             ->assertSee('name="acl[0][ip_lists]" value="' . $list->id . '"', false)
             ->assertSee('name="acl[0][sip_list]" value="187.94.104.229"', false)
-            ->assertSee('name="acl[0][description]" value="Escritório + Cloudflare"', false);
+            ->assertSee('name="acl[0][description]" value="Escritório + Cloudflare"', false)
+            ->assertSee('✓ conferidas na Gcore', false);
+
+        $this->actingAs($this->admin)->get('/admin/gcore/ip-lists')->assertOk()->assertSee('✓ ok', false);
+        $this->actingAs($this->admin)->get("/admin/gcore/ip-lists/{$list->id}")->assertOk()->assertSee('2 faixa(s) presentes', false);
 
         // A list in use cannot be deleted.
         $this->actingAs($this->admin)->delete("/admin/gcore/ip-lists/{$list->id}")->assertRedirect();

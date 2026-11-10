@@ -23,50 +23,40 @@
             Configure <code>GCORE_API_KEY</code> no <code>.env</code> do painel e limpe o cache de config
             (<code>php artisan config:clear</code>).
         </div>
-    @elseif($error)
-        <div class="flash flash-err">{{ $error }}</div>
-    @elseif($profiles === [])
-        <p style="color:var(--muted)">Nenhum perfil nesta conta.</p>
     @else
-        <div class="acl-wrap" style="max-height:none">
-            <table class="data list">
-                <thead>
-                <tr>
-                    <th class="col-idx">#</th>
-                    <th>ID</th>
-                    <th>IP protegido</th>
-                    <th>POP</th>
-                    <th>Template</th>
-                    <th>Plano</th>
-                    <th>BGP</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach($profiles as $n => $p)
-                    @php
-                        $st = (string) ($p['status']['status'] ?? '-');
-                        $chip = str_contains(strtolower($st), 'pending') ? 'status-pending' : 'status-updated';
-                        $opt = $p['options'] ?? [];
-                    @endphp
-                    <tr>
-                        <td class="col-idx">{{ $n + 1 }}</td>
-                        <td>{{ (int) $p['id'] }}</td>
-                        <td><code>{{ $p['ip_address'] ?? '' }}</code></td>
-                        <td>{{ $p['site'] ?? '' }}</td>
-                        <td>{{ $p['profile_template']['name'] ?? '' }}</td>
-                        <td>{{ $p['plan'] ?? '' }}</td>
-                        <td>{{ !empty($opt['bgp']) ? 'on' : 'off' }}</td>
-                        <td><span class="chip {{ $chip }}">{{ $st }}</span></td>
-                        <td>
-                            <a class="btn btn-primary" href="{{ route('admin.gcore.profile', (int) $p['id']) }}">Editar ACL</a>
-                        </td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
+        <p class="meta-row" id="profiles-sync" data-url="{{ route('admin.gcore.live.profiles') }}">
+            @if($fetchedAt)
+                <span>Cópia de {{ $fetchedAt->diffForHumans() }}</span> · <span class="sync-state">atualizando com a Gcore…</span>
+            @else
+                <span class="sync-state">Carregando perfis da Gcore…</span>
+            @endif
+        </p>
+        <div class="flash flash-err" id="profiles-error" hidden></div>
+        <div id="profiles-box">
+            @if($profiles !== null)
+                @include('admin.gcore._profiles', ['profiles' => $profiles])
+            @endif
         </div>
+        <script>
+        (function () {
+            const sync = document.getElementById('profiles-sync');
+            const box = document.getElementById('profiles-box');
+            const err = document.getElementById('profiles-error');
+            const state = () => sync.querySelector('.sync-state');
+            fetch(sync.dataset.url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+                .then(r => r.json().then(j => ({ ok: r.ok, j })))
+                .then(({ ok, j }) => {
+                    if (!ok || j.error) throw new Error(j.error || 'erro ao consultar a Gcore');
+                    box.innerHTML = j.html;
+                    sync.innerHTML = '<span class="sync-state" style="color:#6ee7b7">✓ atualizado com a Gcore agora</span>';
+                })
+                .catch(e => {
+                    err.textContent = 'Não foi possível atualizar com a Gcore: ' + e.message + (box.children.length ? ' (mostrando a última cópia)' : '');
+                    err.hidden = false;
+                    if (state()) state().textContent = 'falhou';
+                });
+        })();
+        </script>
     @endif
 </div>
 @endsection

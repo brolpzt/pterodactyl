@@ -4,17 +4,20 @@ namespace Pterodactyl\Http\Controllers\Admin;
 
 use Illuminate\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Pterodactyl\Models\Allocation;
+use Pterodactyl\Models\GcoreIpList;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
-use Pterodactyl\Http\Controllers\Controller;
-use Pterodactyl\Services\Gcore\GcoreClient;
-use Pterodactyl\Services\Gcore\GcoreAclHelper;
-use Pterodactyl\Models\Allocation;
-use Pterodactyl\Services\Eggs\PortSlotSyncService;
-use Pterodactyl\Models\GcoreIpList;
 use Pterodactyl\Models\GcoreIpListBinding;
-use Pterodactyl\Services\Gcore\IpLists\GcoreIpListBindingService;
+use Pterodactyl\Services\Gcore\GcoreClient;
+use Pterodactyl\Exceptions\DisplayException;
+use Pterodactyl\Http\Controllers\Controller;
+use Pterodactyl\Services\Gcore\GcoreAclHelper;
+use Pterodactyl\Services\Gcore\GcoreProfileCache;
+use Pterodactyl\Services\Eggs\PortSlotSyncService;
 use Pterodactyl\Services\Gcore\GcoreAclRuleNoteService;
+use Pterodactyl\Services\Gcore\IpLists\GcoreIpListBindingService;
 
 class GcoreDdosController extends Controller
 {
@@ -22,32 +25,95 @@ class GcoreDdosController extends Controller
     {
     }
 
-    public function index(): View
+    /**
+     * Renders the last known profile list at once; the page then calls liveProfiles() to refresh it.
+     */
+    public function index(GcoreProfileCache $cache): View
     {
-        $error = null;
-        $profiles = [];
         $configured = (string) config('gcore.api_key', '') !== '';
-
-        if ($configured) {
-            try {
-                $profiles = GcoreClient::fromConfig()->listProfiles();
-            } catch (\Throwable $e) {
-                $error = $e->getMessage();
-            }
-        }
+        $cached = $configured ? $cache->list() : null;
 
         return view('admin.gcore.index', [
-            'profiles' => $profiles,
-            'error' => $error,
+            'profiles' => $cached['data'] ?? null,
+            'fetchedAt' => $cached['fetched_at'] ?? null,
             'configured' => $configured,
         ]);
     }
 
-    public function show(int $profile, PortSlotSyncService $portSlots, GcoreIpListBindingService $bindings, GcoreAclRuleNoteService $notes): View|RedirectResponse
+    public function liveProfiles(): JsonResponse
     {
         try {
-            $client = GcoreClient::fromConfig();
-            $data = $client->getProfile($profile);
+            $profiles = GcoreClient::fromConfig()->listProfiles();
+        } catch (\Throwable $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 502);
+        }
+
+        return new JsonResponse([
+            'html' => view('admin.gcore._profiles', ['profiles' => $profiles])->render(),
+            'fetched_at' => now()->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * Fresh read of one profile for the editor's background check: the page compares the hash
+     * with the one it was rendered from and reloads (or warns) when Gcore has something else.
+     */
+    public function liveProfile(int $profile): JsonResponse
+    {
+        try {
+            $data = GcoreClient::fromConfig()->getProfile($profile);
+        } catch (\Throwable $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 502);
+        }
+        $status = (string) ($data['status']['status'] ?? '-');
+
+        return new JsonResponse([
+            'hash' => GcoreProfileCache::formHash($data),
+            'status' => $status,
+            'pending' => str_contains(strtolower($status), 'pending'),
+            'fetched_at' => now()->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * CIDRs of every IP list, loaded by the editor after the page (they can be thousands).
+     * ETag on ids/updated_at so an unchanged set costs a 304.
+     */
+    public function ipListEntries(Request $request): JsonResponse
+    {
+        $meta = GcoreIpList::query()->orderBy('id')->get(['id', 'entry_count', 'updated_at']);
+        $etag = sha1($meta->map(fn (GcoreIpList $l) => $l->id . ':' . $l->entry_count . ':' . $l->updated_at?->getTimestamp())->join('|'));
+
+        $response = new JsonResponse();
+        $response->setEtag($etag);
+        $response->headers->set('Cache-Control', 'private, no-cache');
+        if ($response->isNotModified($request)) {
+            return $response;
+        }
+
+        $lists = [];
+        foreach (GcoreIpList::query()->get(['id', 'entries']) as $list) {
+            $lists[(string) $list->id] = $list->entryList();
+        }
+
+        return $response->setData(['lists' => (object) $lists]);
+    }
+
+    /**
+     * Renders from the cached copy when there is one (the page revalidates via liveProfile());
+     * only a first visit, or ?fresh=1, waits for the Gcore API.
+     */
+    public function show(Request $request, int $profile, PortSlotSyncService $portSlots, GcoreIpListBindingService $bindings, GcoreAclRuleNoteService $notes, GcoreProfileCache $cache): View|RedirectResponse
+    {
+        try {
+            $cached = $request->boolean('fresh') ? null : $cache->get($profile);
+            if ($cached === null) {
+                $data = GcoreClient::fromConfig()->getProfile($profile);
+                $fetchedAt = now();
+            } else {
+                $data = $cached['data'];
+                $fetchedAt = $cached['fetched_at'];
+            }
             $form = GcoreAclHelper::extractProfileFormData($data);
             $annotated = $bindings->annotate($profile, $form['acl']);
             $described = $notes->annotate($profile, $annotated['acl']);
@@ -58,14 +124,18 @@ class GcoreDdosController extends Controller
                 'form' => $form,
                 'policies' => GcoreClient::POLICIES,
                 'portMap' => $this->buildPortMap((string) ($data['ip_address'] ?? ''), $portSlots),
-                'ipLists' => GcoreIpList::query()->orderBy('name')->get()->map(fn (GcoreIpList $l) => [
-                    'id' => $l->id,
-                    'name' => $l->name,
-                    'count' => $l->entry_count,
-                    'enabled' => $l->enabled,
-                    'status' => $l->last_status,
-                    'entries' => $l->entryList(),
-                ])->values(),
+                // Entries come later from ipListEntries(): they are the bulk of the page otherwise.
+                'ipLists' => GcoreIpList::query()->orderBy('name')
+                    ->get(['id', 'name', 'entry_count', 'enabled', 'last_status'])
+                    ->map(fn (GcoreIpList $l) => [
+                        'id' => $l->id,
+                        'name' => $l->name,
+                        'count' => $l->entry_count,
+                        'enabled' => $l->enabled,
+                        'status' => $l->last_status,
+                    ])->values(),
+                'formHash' => GcoreProfileCache::formHash($data),
+                'fetchedAt' => $fetchedAt,
                 'orphanBindings' => count($annotated['orphans']),
                 'listChecks' => GcoreIpListBinding::query()->where('profile_id', $profile)->where('status', '!=', 'orphan')->get(),
                 'lostNotes' => $described['lost'],
@@ -89,6 +159,13 @@ class GcoreDdosController extends Controller
 
             GcoreIpListBindingService::withProfileLock($profile, function () use ($request, $profile, $client, $prepared, $bindings, $overrides, $notes, $formAcl) {
                 $data = $client->getProfile($profile);
+
+                // The page may have been rendered from the cache or left open: never overwrite
+                // a profile that changed on Gcore since then.
+                $loaded = (string) $request->input('form_hash', '');
+                if ($loaded !== '' && !hash_equals(GcoreProfileCache::formHash($data), $loaded)) {
+                    throw new DisplayException('Nada foi enviado: este perfil mudou na Gcore depois que a página foi aberta (sync de portas, listas de IP, outra aba ou o painel da Gcore). A página abaixo já mostra a versão atual; refaça a alteração.');
+                }
 
                 $rate = [
                     'low' => max(1, min(50, (int) $request->input('rate_low', 50))),

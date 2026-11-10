@@ -2,7 +2,6 @@
 
 namespace Pterodactyl\Services\Gcore;
 
-use RuntimeException;
 use Illuminate\Support\Facades\Http;
 
 class GcoreClient
@@ -42,7 +41,7 @@ class GcoreClient
     public function __construct(private readonly string $apiKey)
     {
         if ($this->apiKey === '') {
-            throw new RuntimeException('Configure GCORE_API_KEY no arquivo .env');
+            throw new \RuntimeException('Configure GCORE_API_KEY no arquivo .env');
         }
     }
 
@@ -59,7 +58,10 @@ class GcoreClient
             return [];
         }
 
-        return array_is_list($data) ? $data : [$data];
+        $profiles = array_is_list($data) ? $data : [$data];
+        $this->cache()->putList($profiles);
+
+        return $profiles;
     }
 
     /** @return array<string, mixed> */
@@ -67,22 +69,34 @@ class GcoreClient
     {
         $data = $this->request('GET', "/security/iaas/v2/profiles/$id");
         if (!is_array($data)) {
-            throw new RuntimeException('Resposta inválida da API.');
+            throw new \RuntimeException('Resposta inválida da API.');
         }
+        $this->cache()->put($data);
 
         return $data;
     }
 
     /**
      * @param array<string, mixed> $payload
+     *
      * @return array<string, mixed>
      */
     public function updateProfile(int $id, array $payload): array
     {
-        $data = $this->request('PUT', "/security/iaas/v2/profiles/$id", $payload);
-        if (!is_array($data)) {
-            throw new RuntimeException('Resposta inválida ao salvar.');
+        try {
+            $data = $this->request('PUT', "/security/iaas/v2/profiles/$id", $payload);
+        } catch (\Throwable $e) {
+            // The PUT may or may not have landed: the cached copy can no longer be trusted.
+            $this->cache()->forget($id);
+
+            throw $e;
         }
+        if (!is_array($data)) {
+            $this->cache()->forget($id);
+
+            throw new \RuntimeException('Resposta inválida ao salvar.');
+        }
+        $this->cache()->applyUpdate($id, $payload, $data);
 
         return $data;
     }
@@ -92,6 +106,7 @@ class GcoreClient
      * @param array<string, mixed> $profile
      * @param array{low:int,medium:int,high:int,geo:int} $rateLimiters
      * @param list<string> $geoip
+     *
      * @return array<string, mixed>
      */
     public function buildUpdatePayload(array $profile, array $rateLimiters, array $geoip, array $acl): array
@@ -130,6 +145,7 @@ class GcoreClient
      * List DDoS / RTBH event logs.
      *
      * @param array<string, scalar|null> $query
+     *
      * @return array{results?: list<array<string, mixed>>, count?: int, limit?: int, offset?: int}
      */
     public function listEventLogs(array $query = []): array
@@ -146,15 +162,21 @@ class GcoreClient
     {
         $data = $this->request('GET', '/security/notifier/v1/event_logs/' . rawurlencode($eventId));
         if (!is_array($data) || !isset($data['id'])) {
-            throw new RuntimeException('Resposta inválida do event log Gcore.');
+            throw new \RuntimeException('Resposta inválida do event log Gcore.');
         }
 
         return $data;
     }
 
+    private function cache(): GcoreProfileCache
+    {
+        return app(GcoreProfileCache::class);
+    }
+
     /**
      * @param array<string, mixed>|null $body
      * @param array<string, scalar|null> $query
+     *
      * @return array<string, mixed>|list<mixed>
      */
     private function request(string $method, string $path, ?array $body = null, array $query = []): array
@@ -183,7 +205,7 @@ class GcoreClient
                 ? ($decoded['message'] ?? $decoded['exception_class'] ?? $response->body())
                 : $response->body();
 
-            throw new RuntimeException('API HTTP ' . $response->status() . ': ' . $msg);
+            throw new \RuntimeException('API HTTP ' . $response->status() . ': ' . $msg);
         }
 
         return is_array($decoded) ? $decoded : [];

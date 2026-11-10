@@ -82,7 +82,6 @@
 </style>
 @php
     $id = (int) $profile['id'];
-    $aclJson = json_encode($form['acl'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     $ruleCount = count($form['acl']);
     $st = (string) ($profile['status']['status'] ?? '-');
     $stClass = str_contains(strtolower($st), 'pending') ? 'status-pending' : 'status-updated';
@@ -95,8 +94,16 @@
         <span class="chip"><strong>POP</strong> {{ $profile['site'] ?? '' }}</span>
         <span class="chip"><strong>Tmpl</strong> {{ $profile['profile_template']['name'] ?? '' }}</span>
         <span class="chip"><strong>Plano</strong> {{ $profile['plan'] ?? '' }}</span>
-        <span class="chip {{ $stClass }}">{{ $st }}</span>
+        <span class="chip {{ $stClass }}" id="profile-status">{{ $st }}</span>
+        <span id="profile-sync" data-url="{{ route('admin.gcore.live.profile', $id) }}" data-age="{{ (int) max(0, $fetchedAt->diffInSeconds(now())) }}">
+            @if($fetchedAt->diffInSeconds(now()) < 20)
+                atualizado agora
+            @else
+                cópia de {{ $fetchedAt->diffForHumans() }} · <span class="sync-state">conferindo com a Gcore…</span>
+            @endif
+        </span>
     </div>
+    <div class="flash flash-err" id="profile-changed" style="border-radius:6px;margin-bottom:8px" hidden></div>
 
     @if($error)
         <div class="flash flash-err" style="border-radius:6px;margin-bottom:8px">{{ $error }}</div>
@@ -137,6 +144,7 @@
     <form method="post" action="{{ route('admin.gcore.profile.update', $id) }}" id="profile-form">
         @csrf
         <input type="hidden" name="port_overrides" id="port-overrides" value="">
+        <input type="hidden" name="form_hash" value="{{ $formHash }}">
         <div class="toolbar">
             <button type="submit" class="btn btn-primary">Salvar na Gcore</button>
             <button type="button" class="btn" id="add-rule">+ Regra</button>
@@ -231,10 +239,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="panel json-panel">
-                    <div class="panel-head">JSON ACL (preview)</div>
-                    <pre><code id="json-preview">{{ $aclJson }}</code></pre>
-                </div>
+                <details class="panel json-panel" id="json-panel">
+                    <summary class="panel-head" style="cursor:pointer">JSON ACL (preview: clique para gerar)</summary>
+                    <pre><code id="json-preview"></code></pre>
+                </details>
             </div>
         </div>
     </form>
@@ -337,7 +345,16 @@
 (function () {
     const PORT_MAP = @json((object) $portMap);
     // Remote IP lists (admin → Gcore → Listas de IP): id => {id, name, count, entries}.
+    // entries arrive later (loadListEntries): they can be thousands of CIDRs.
     const IP_LISTS = Object.fromEntries(@json($ipLists).map(l => [String(l.id), l]));
+    let listEntriesLoaded = null;
+    function loadListEntries() {
+        listEntriesLoaded ??= fetch(@json(route('admin.gcore.live.ip-list-entries')), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+            .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+            .then(j => { Object.entries(j.lists || {}).forEach(([id, entries]) => { if (IP_LISTS[id]) IP_LISTS[id].entries = entries; }); })
+            .catch(e => { listEntriesLoaded = null; throw e; });
+        return listEntriesLoaded;
+    }
     const MAX_CHIPS = 60; // rendered per cell; fitChips() hides what does not fit the width
 
     // One line per cell: chips that do not fit are hidden and counted in "+N".
@@ -388,7 +405,8 @@
             policy: g('policy'),
             protos: protos.length === 0 || protos.includes('any') ? ['any'] : protos,
             dports: parsePorts(g('dport_list')),
-            sip: effectiveSips(row),
+            // Only "has any source IP" matters here; avoid expanding the lists on every keystroke.
+            sip: splitList(row.querySelector('[name$="[sip_list]"]')?.value || '').concat(ruleListIds(row)),
             sport: parsePorts(g('sport_list')),
         };
     }
@@ -544,7 +562,20 @@
             if (el) el.textContent = String(idx + 1);
         });
         if (countEl) countEl.textContent = String(rows.length);
-        if (jsonEl) {
+        renderJson();
+    }
+
+    const jsonPanel = document.getElementById('json-panel');
+    function renderJson() {
+        if (!jsonEl || !jsonPanel?.open) return;
+        const rows = body.querySelectorAll('.acl-row');
+        const usesLists = [...rows].some(row => ruleListIds(row).some(id => IP_LISTS[id] && !IP_LISTS[id].entries));
+        if (usesLists) {
+            jsonEl.textContent = 'Carregando as entradas das listas de IP…';
+            loadListEntries().then(renderJson, e => { jsonEl.textContent = 'Erro ao carregar as listas de IP: ' + e.message; });
+            return;
+        }
+        {
             const rules = [];
             rows.forEach(row => {
                 const g = n => row.querySelector('[name$="[' + n + ']"]')?.value?.trim() || '';
@@ -561,6 +592,14 @@
             });
             jsonEl.textContent = JSON.stringify(rules, null, 2);
         }
+    }
+    jsonPanel?.addEventListener('toggle', renderJson);
+
+    // Typing (descriptions, proto) re-analyses every row: coalesce bursts of input events.
+    let metaTimer = null;
+    function refreshMetaSoon() {
+        clearTimeout(metaTimer);
+        metaTimer = setTimeout(refreshMeta, 150);
     }
 
     function reindex() {
@@ -582,7 +621,7 @@
             const next = row.nextElementSibling;
             if (next) { body.insertBefore(next, row); reindex(); }
         });
-        row.querySelectorAll('input,select').forEach(el => el.addEventListener('input', refreshMeta));
+        row.querySelectorAll('input,select').forEach(el => el.addEventListener('input', refreshMetaSoon));
         const chips = row.querySelector('.port-chips');
         chips?.addEventListener('click', () => openModal(row));
         chips?.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(row); } });
@@ -899,7 +938,8 @@
         smLists.innerHTML = '<span class="ttl">Listas de IP (atualizadas automaticamente; somadas aos IPs manuais abaixo)</span>'
             + all.map(l => {
                 const off = !l.count && !selected.has(String(l.id));
-                return '<label class="' + (off ? 'off' : '') + '" title="' + esc(off ? 'Lista ainda sem entradas' : (l.entries || []).slice(0, 20).join(', ') + ((l.entries || []).length > 20 ? '…' : '')) + '">'
+                const sample = l.entries ? l.entries.slice(0, 20).join(', ') + (l.entries.length > 20 ? '…' : '') : l.count + ' entradas';
+                return '<label class="' + (off ? 'off' : '') + '" title="' + esc(off ? 'Lista ainda sem entradas' : sample) + '">'
                     + '<input type="checkbox" class="sm-list" value="' + esc(l.id) + '"' + (selected.has(String(l.id)) ? ' checked' : '') + (off ? ' disabled' : '') + '> '
                     + esc(l.name) + ' <span class="cnt">' + l.count + '</span></label>';
             }).join('');
@@ -927,6 +967,7 @@
         document.getElementById('sm-hint').textContent = K.hint;
         sm.hidden = false;
         renderSipModal();
+        if (listKind === 'sip') loadListEntries().then(() => { if (sipRow === row) renderListPicker(); }, () => {});
         smInput.focus();
     }
 
@@ -1064,6 +1105,39 @@
         });
         reindex();
     });
+
+    // ---- Background check against Gcore (the page may come from the cached copy) ----
+    const form = document.getElementById('profile-form');
+    const formSnapshot = () => new URLSearchParams(new FormData(form)).toString();
+    const initialForm = formSnapshot();
+    const syncEl = document.getElementById('profile-sync');
+    const changedEl = document.getElementById('profile-changed');
+    const loadedHash = form.querySelector('[name="form_hash"]').value;
+    const syncState = t => { const el = syncEl.querySelector('.sync-state'); if (el) el.innerHTML = t; };
+    if (Number(syncEl.dataset.age) >= 20) {
+        fetch(syncEl.dataset.url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+            .then(r => r.json().then(j => ({ ok: r.ok, j })))
+            .then(({ ok, j }) => {
+                if (!ok || j.error) throw new Error(j.error || 'erro ao consultar a Gcore');
+                const status = document.getElementById('profile-status');
+                status.textContent = j.status;
+                status.className = 'chip ' + (j.pending ? 'status-pending' : 'status-updated');
+                if (j.hash === loadedHash) {
+                    syncState('<span style="color:#6ee7b7">✓ igual à Gcore</span>');
+                    return;
+                }
+                if (formSnapshot() === initialForm) {
+                    syncState('mudou na Gcore, recarregando…');
+                    location.reload();
+                    return;
+                }
+                syncState('<span style="color:#fca5a5">desatualizada</span>');
+                changedEl.innerHTML = 'Este perfil mudou na Gcore depois que esta cópia foi lida. Salvar agora será recusado para não sobrescrever a mudança. '
+                    + '<a href="' + location.pathname + '">Recarregar</a> (as alterações desta página serão perdidas).';
+                changedEl.hidden = false;
+            })
+            .catch(e => syncState('<span style="color:#fcd34d">não foi possível conferir: ' + esc(e.message) + '</span>'));
+    }
 })();
 </script>
 @endsection

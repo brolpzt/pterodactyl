@@ -16,3 +16,4 @@ use Pterodactyl\Http\Controllers\Api\Boost\BoostController;
 */
 Route::get('/{token}/servers', [BoostController::class, 'servers'])->name('api:boost.servers');
 Route::match(['get', 'post'], '/{token}/connect', [BoostController::class, 'connect'])->name('api:boost.connect');
+Route::get('/{token}/blacklist', [BoostController::class, 'blacklist'])->name('api:boost.blacklist');

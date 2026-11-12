@@ -52,14 +52,22 @@
 <div class="acl-wrap" style="max-height:520px;min-height:0">
     <table class="data">
         <thead>
-        <tr><th>Quando</th><th>Jogador</th><th>SteamID</th><th>IP do jogador</th><th>Servidor</th></tr>
+        <tr><th>Quando</th><th>Jogador</th><th>SteamID</th><th>IP do jogador</th><th>Servidor</th><th></th></tr>
         </thead>
         <tbody>
         @forelse($connections as $c)
-            @php $at = $c->created_at->copy()->setTimezone($tz)->locale('pt_BR'); @endphp
-            <tr>
+            @php
+                $at = $c->created_at->copy()->setTimezone($tz)->locale('pt_BR');
+                $blocked = \Pterodactyl\Services\Boost\BoostBlacklistService::matchConnection($blacklist, $c);
+                $marks = array_filter([
+                    'steam_id' => $c->steam_id ? ['SteamID', $c->steam_id] : null,
+                    'ip' => $c->player_ip ? ['IP', $c->player_ip] : null,
+                    'name' => $c->player_name ? ['Nome', $c->player_name] : null,
+                ]);
+            @endphp
+            <tr class="{{ $blocked ? 'bst-blocked' : '' }}">
                 <td class="ipl-mono" title="{{ $at->format('d/m/Y H:i:s') }}">{{ $at->format('d/m H:i:s') }} <span class="ipl-muted">· {{ $at->diffForHumans(null, true) }}</span></td>
-                <td>{{ $c->player_name ?? '—' }}</td>
+                <td>{{ $c->player_name ?? '—' }}@if($blocked) <span class="ipl-st error" title="{{ \Pterodactyl\Models\BoostBlacklistEntry::TYPES[$blocked->type] }} {{ $blocked->value }}{{ $blocked->reason ? ' · ' . $blocked->reason : '' }}">blacklist</span>@endif</td>
                 <td class="ipl-mono">{{ $c->steam_id ?? '—' }}</td>
                 <td class="ipl-mono">{{ $c->player_ip ?? '—' }}</td>
                 <td>
@@ -70,9 +78,25 @@
                     @endif
                     <span class="ipl-mono ipl-muted">{{ $c->address }}</span>
                 </td>
+                <td style="text-align:right;white-space:nowrap">
+                    @if($marks !== [])
+                        <span class="bst-bl" title="Colocar na blacklist">
+                            <i class="fa fa-ban"></i>
+                            @foreach($marks as $type => [$label, $value])
+                                <form method="post" action="{{ route('admin.boost.blacklist.store') }}" onsubmit="return confirm('Blacklist por {{ $label }}: ' + {{ json_encode($value) }} + '?')">
+                                    @csrf
+                                    <input type="hidden" name="type" value="{{ $type }}">
+                                    <input type="hidden" name="value" value="{{ $value }}">
+                                    <input type="hidden" name="back" value="{{ $backUrl }}">
+                                    <button type="submit" class="btn" title="Blacklist por {{ $label }}: {{ $value }}">{{ $label }}</button>
+                                </form>
+                            @endforeach
+                        </span>
+                    @endif
+                </td>
             </tr>
         @empty
-            <tr><td colspan="5" class="ipl-muted">Nenhum jogador conectado via boost{{ $serverId || $search ? ' com este filtro' : ' ainda' }}.</td></tr>
+            <tr><td colspan="6" class="ipl-muted">Nenhum jogador conectado via boost{{ $serverId || $search ? ' com este filtro' : ' ainda' }}.</td></tr>
         @endforelse
         </tbody>
     </table>

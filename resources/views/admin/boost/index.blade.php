@@ -46,11 +46,16 @@
     .bst-url input { flex: 1; min-width: 0; font-family: var(--mono); font-size: 11px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 4px; height: 26px; padding: 0 6px; }
     .bst-doc { font-family: var(--mono); font-size: 10.5px; line-height: 1.5; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; white-space: pre-wrap; word-break: break-all; margin: 6px 0; }
     .bst-eggs { max-height: 220px; overflow: auto; }
+    .bst-bl { display: inline-flex; gap: 3px; align-items: center; color: var(--muted); }
+    .bst-bl form { display: inline; margin: 0; }
+    .bst-bl .btn { height: 20px; padding: 0 6px; font-size: 10px; }
+    .bst-bl .btn:hover { border-color: rgba(239,68,68,.7); color: #fca5a5; }
+    tr.bst-blocked td { background: rgba(239,68,68,.06); }
     .bst-eggs label { display: flex; gap: 6px; align-items: center; font-weight: normal; margin: 2px 0; }
 </style>
 <div class="gcore-ddos-wrap">
     <h1 class="page-title">Server Boost</h1>
-    <p class="meta-row">Cada linha é um jogador que o sistema de boost mandou para um servidor (informado pelo endpoint <code>connect</code>). Guardamos {{ \Pterodactyl\Services\Boost\ServerBoostService::RETENTION_DAYS }} dias.</p>
+    <p class="meta-row">Cada linha é um jogador que o sistema de boost mandou para um servidor (informado pelo endpoint <code>connect</code>). Guardamos {{ \Pterodactyl\Services\Boost\ServerBoostService::RETENTION_DAYS }} dias. · <a href="{{ route('admin.boost.blacklist') }}">Blacklist →</a></p>
 
     <form method="get" action="{{ route('admin.boost') }}" class="bst-toolbar" id="boost-filter">
         @foreach(['24h' => '24 horas', '7d' => '7 dias', '30d' => '30 dias'] as $key => $label)
@@ -98,8 +103,9 @@ POST …/connect   (form ou JSON)
   player=Nome do jogador   (opcional)
   player_ip=200.1.2.3      (opcional)
   steam_id=STEAM_0:1:123   (opcional)
-→ 201 {"ok": true, "id": 1, "server_id": 325, "address": "…"}
+→ 201 {"ok": true, "id": 1, "server_id": 325, "address": "…", "blacklisted": false}
 → 404 servidor fora da lista dos eggs do boost · 422 parâmetro inválido
+GET …/blacklist   lista de bloqueio (veja a página Blacklist)
 Token errado → 404. Limite: 600 chamadas por minuto por IP.</div>
                     </details>
                     <p class="ipl-muted" style="margin:6px 0 0">Fora da lista: servidores ocultos (abaixo ou em Manage do servidor), suspensos ou instalando.</p>

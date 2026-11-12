@@ -96,6 +96,8 @@ class ServerBoostController extends Controller
             'search' => $search,
             'stats' => $this->service->stats($range, $serverId),
             'connections' => $this->service->recent($serverId, $search),
+            'blacklist' => app(\Pterodactyl\Services\Boost\BoostBlacklistService::class)->active(),
+            'backUrl' => route('admin.boost', array_filter(['range' => $range, 'server' => $serverId, 'q' => $search])),
             'tz' => (string) config('app.stats_timezone', config('app.timezone', 'UTC')),
         ];
     }

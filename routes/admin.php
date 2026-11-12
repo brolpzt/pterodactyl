@@ -415,5 +415,8 @@ Route::group(['prefix' => 'boost'], function () {
     Route::post('/eggs', [Admin\ServerBoostController::class, 'updateEggs'])->name('admin.boost.eggs');
     Route::post('/token', [Admin\ServerBoostController::class, 'regenerateToken'])->name('admin.boost.token');
     Route::post('/client-tab', [Admin\ServerBoostController::class, 'clientTab'])->name('admin.boost.client-tab');
+    Route::get('/blacklist', [Admin\BoostBlacklistController::class, 'index'])->name('admin.boost.blacklist');
+    Route::post('/blacklist', [Admin\BoostBlacklistController::class, 'store'])->name('admin.boost.blacklist.store');
+    Route::delete('/blacklist/{entry:id}', [Admin\BoostBlacklistController::class, 'delete'])->name('admin.boost.blacklist.delete');
     Route::post('/servers/{server:id}', [Admin\ServerBoostController::class, 'toggleServer'])->name('admin.boost.server');
 });

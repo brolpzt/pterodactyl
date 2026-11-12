@@ -71,6 +71,7 @@ class PanelAlert extends Model
         '/stats' => 'Stats',
         '/files' => 'Arquivos',
         '/anti-ddos' => 'Anti-DDoS',
+        '/boost' => 'Server Boost',
         '/databases' => 'Databases',
         '/schedules' => 'Schedules',
         '/users' => 'Usuários',

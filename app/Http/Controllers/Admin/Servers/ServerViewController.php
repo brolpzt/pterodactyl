@@ -149,6 +149,7 @@ class ServerViewController extends Controller
             'locations' => $this->locationRepository->all(),
             'canTransfer' => $canTransfer,
             'fastDlManifest' => $fastDlManifest,
+            'boostEligible' => app(\Pterodactyl\Services\Boost\ServerBoostService::class)->isEligible($server),
         ]);
     }
 

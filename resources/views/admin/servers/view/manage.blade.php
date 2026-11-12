@@ -138,6 +138,31 @@
             </div>
         @endif
 
+        @if($boostEligible)
+            <div class="col-sm-4">
+                <div class="box {{ $server->boost_hidden ? 'box-warning' : 'box-success' }}">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Server Boost</h3>
+                    </div>
+                    <div class="box-body">
+                        @if($server->boost_hidden)
+                            <p>This server is <strong>hidden</strong> from the boost system's server list: it receives no boost players.</p>
+                        @else
+                            <p>This server is <strong>listed</strong> for the boost system (while it is not suspended or installing).</p>
+                        @endif
+                        <p class="small text-muted no-margin"><a href="{{ route('admin.boost', ['server' => $server->id]) }}">Boost connections for this server →</a></p>
+                    </div>
+                    <div class="box-footer">
+                        <form action="{{ route('admin.boost.server', $server->id) }}" method="POST">
+                            {!! csrf_field() !!}
+                            <input type="hidden" name="back" value="manage">
+                            <input type="hidden" name="hidden" value="{{ $server->boost_hidden ? 0 : 1 }}">
+                            <button type="submit" class="btn {{ $server->boost_hidden ? 'btn-success' : 'btn-warning' }}">{{ $server->boost_hidden ? 'Show in boost list' : 'Hide from boost list' }}</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
         @if($server->fastdl_enabled && in_array('fastdl', $server->egg->features ?? []))
             <div class="col-sm-4">
                 <div class="box box-info">

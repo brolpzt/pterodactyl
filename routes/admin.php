@@ -400,3 +400,19 @@ Route::group(['prefix' => 'addon-categories'], function () {
     Route::patch('/view/{category:id}', [Admin\AddonCategoriesController::class, 'update']);
     Route::delete('/view/{category:id}/delete', [Admin\AddonCategoriesController::class, 'delete'])->name('admin.addon-categories.delete');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Server Boost Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/boost
+|
+*/
+Route::group(['prefix' => 'boost'], function () {
+    Route::get('/', [Admin\ServerBoostController::class, 'index'])->name('admin.boost');
+    Route::get('/live', [Admin\ServerBoostController::class, 'live'])->name('admin.boost.live');
+    Route::post('/eggs', [Admin\ServerBoostController::class, 'updateEggs'])->name('admin.boost.eggs');
+    Route::post('/token', [Admin\ServerBoostController::class, 'regenerateToken'])->name('admin.boost.token');
+    Route::post('/servers/{server:id}', [Admin\ServerBoostController::class, 'toggleServer'])->name('admin.boost.server');
+});

@@ -17,6 +17,7 @@ use Pterodactyl\Console\Commands\Maintenance\ExpireSftpFirewallGrantsCommand;
 use Pterodactyl\Console\Commands\Maintenance\SamplePlayerCountsCommand;
 use Pterodactyl\Console\Commands\Maintenance\SyncGcoreAttackEventsCommand;
 use Pterodactyl\Console\Commands\Maintenance\RefreshGcoreIpListsCommand;
+use Pterodactyl\Console\Commands\Maintenance\PruneBoostConnectionsCommand;
 
 class Kernel extends ConsoleKernel
 {
@@ -56,6 +57,9 @@ class Kernel extends ConsoleKernel
         // Download due Gcore IP lists (each has its own interval) and push changes to bound ACL rules.
         $schedule->command(RefreshGcoreIpListsCommand::class)->everyFifteenMinutes()->withoutOverlapping();
         $schedule->command('p:maintenance:refresh-gcore-ip-lists --purge-only')->daily();
+
+        // Drop Server Boost connection reports past the retention window.
+        $schedule->command(PruneBoostConnectionsCommand::class)->daily();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

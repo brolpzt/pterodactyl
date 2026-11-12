@@ -85,6 +85,11 @@ class RouteServiceProvider extends ServiceProvider
             // License activation for the hgHLDS engine, guarded by the source address.
             Route::prefix('/api/hghlds')->group(base_path('routes/api-hghlds.php'));
 
+            // Server Boost: the external boost system authenticates with the token in the URL.
+            Route::middleware(['throttle:600,1'])
+                ->prefix('/api/boost')
+                ->group(base_path('routes/api-boost.php'));
+
             // Internal redeem for phpMyAdmin SSO bridge (shared secret, no user session).
             Route::middleware(['throttle:60,1'])
                 ->prefix('/api/internal')

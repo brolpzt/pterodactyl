@@ -121,6 +121,11 @@
                                 <i class="fa fa-shield"></i> <span>Gcore DDoS</span>
                             </a>
                         </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.boost') ?: 'active' }}">
+                            <a href="{{ route('admin.boost') }}">
+                                <i class="fa fa-rocket"></i> <span>Server Boost</span>
+                            </a>
+                        </li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.servers') ?: 'active' }}">
                             <a href="{{ route('admin.servers') }}">
                                 <i class="fa fa-server"></i> <span>Servers</span>

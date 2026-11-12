@@ -35,6 +35,7 @@ const WebRconContainer = lazy(() => import('@/components/server/webrcon/WebRconC
 const PlayerStatsContainer = lazy(() => import('@/components/server/stats/PlayerStatsContainer'));
 const AntiDdosContainer = lazy(() => import('@/components/server/antiDdos/AntiDdosContainer'));
 const AntiDdosEventContainer = lazy(() => import('@/components/server/antiDdos/AntiDdosEventContainer'));
+const ServerBoostContainer = lazy(() => import('@/components/server/boost/ServerBoostContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -135,6 +136,13 @@ export default {
             permission: null,
             name: undefined,
             component: AntiDdosEventContainer,
+        },
+        {
+            path: '/boost',
+            permission: null,
+            name: 'Server Boost',
+            nameKey: 'server.boost',
+            component: ServerBoostContainer,
         },
         {
             path: '/schedules',

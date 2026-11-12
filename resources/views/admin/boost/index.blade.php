@@ -110,6 +110,28 @@ Token errado → 404. Limite: 600 chamadas por minuto por IP.</div>
                 </form>
             </div>
         </div>
+        <div>
+        <div class="panel" style="margin-bottom:12px">
+            <div class="panel-head">Painel do cliente</div>
+            <div class="panel-body">
+                <p style="margin:0 0 8px">
+                    Aba <strong>Server Boost</strong> nos servidores dos eggs abaixo, com os jogadores que o boost mandou
+                    para aquele servidor (nome, SteamID e horário; sem o IP do jogador).
+                </p>
+                <p style="margin:0 0 8px">
+                    @if($clientTab)
+                        <span class="ipl-st ok">donos e admins veem</span>
+                    @else
+                        <span class="ipl-st pending">só admins veem</span>
+                    @endif
+                </p>
+                <form method="post" action="{{ route('admin.boost.client-tab') }}">
+                    @csrf
+                    <input type="hidden" name="enabled" value="{{ $clientTab ? 0 : 1 }}">
+                    <button type="submit" class="btn">{{ $clientTab ? 'Mostrar só para admins' : 'Mostrar para os donos' }}</button>
+                </form>
+            </div>
+        </div>
         <div class="panel">
             <div class="panel-head">Eggs do boost</div>
             <div class="panel-body">
@@ -123,6 +145,7 @@ Token errado → 404. Limite: 600 chamadas por minuto por IP.</div>
                     <button type="submit" class="btn btn-primary" style="margin-top:8px">Salvar</button>
                 </form>
             </div>
+        </div>
         </div>
     </div>
 

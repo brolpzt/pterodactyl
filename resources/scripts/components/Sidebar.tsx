@@ -26,6 +26,7 @@ import {
     faStore,
     faChartArea,
     faShieldVirus,
+    faRocket,
 } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState, useStoreActions } from '@/state/hooks';
 import { ApplicationStore } from '@/state';
@@ -214,6 +215,7 @@ const ServerLinks = () => {
     const eggId = ServerContext.useStoreState((state) => state.server.data?.eggId);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data?.eggFeatures ?? []);
     const dnsEnabled = ServerContext.useStoreState((state) => state.server.data?.dnsEnabled ?? false);
+    const boostEnabled = ServerContext.useStoreState((state) => state.server.data?.boostEnabled ?? false);
     const gamedig = ServerContext.useStoreState((state) => state.server.data?.gamedig);
     const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
     const rootAdmin = useStoreState((state: any) => state.user.data!.rootAdmin);
@@ -244,6 +246,8 @@ const ServerLinks = () => {
             case 'Files': return faFolderOpen;
             case 'server.anti_ddos':
             case 'Anti-DDoS (beta)': return faShieldVirus;
+            case 'server.boost':
+            case 'Server Boost': return faRocket;
             case 'server.databases':
             case 'Databases': return faDatabase;
             case 'server.schedules':
@@ -311,6 +315,7 @@ const ServerLinks = () => {
         '/stats',
         '/files',
         '/anti-ddos',
+        '/boost',
         '/addons',
         '/databases',
         '/firewall',
@@ -389,6 +394,7 @@ const ServerLinks = () => {
         .filter((route) => route.path !== '/dns' || dnsEnabled || eggFeatures.includes('dns'))
         .filter((route) => route.path !== '/workshop' || eggFeatures.includes('workshop'))
         .filter((route) => route.path !== '/stats' || supportsGameQuery(gamedig, eggId))
+        .filter((route) => route.path !== '/boost' || boostEnabled)
         .filter((route) => !route.adminOnly || rootAdmin);
 
     const sortedRoutes = isTs3

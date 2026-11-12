@@ -70,6 +70,7 @@ export interface Server {
         threads: string;
     };
     eggFeatures: string[];
+    boostEnabled: boolean;
     portSlots: PortSlot[];
     dnsEnabled: boolean;
     featureLimits: {
@@ -111,6 +112,7 @@ export const rawDataToServerObject = ({ attributes: data }: FractalResponseData)
     description: data.description ? (data.description.length > 0 ? data.description : null) : null,
     limits: { ...data.limits },
     eggFeatures: data.egg_features || [],
+    boostEnabled: !!data.boost_enabled,
     portSlots: (data.port_slots || []).map((slot: any) => ({
         envVariable: slot.env_variable,
         name: slot.name,

@@ -54,6 +54,7 @@ export default () => {
     const gamedig = ServerContext.useStoreState((state) => state.server.data?.gamedig);
     const eggName = ServerContext.useStoreState((state) => state.server.data?.egg);
     const eggFeatures = ServerContext.useStoreState((state) => state.server.data?.eggFeatures ?? []);
+    const boostEnabled = ServerContext.useStoreState((state) => state.server.data?.boostEnabled ?? false);
     const allocation = ServerContext.useStoreState((state) => state.server.data?.allocations.find((a) => a.isDefault));
     const locationName = ServerContext.useStoreState((state) => state.server.data?.location);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
@@ -175,6 +176,7 @@ export default () => {
                                                         (isTs3 && isBlockedRouteForTs3(path)) ||
                                                         (!isTs3 && isTs3OnlyRoute(path)) ||
                                                         (!hasStats && path === '/stats') ||
+                                                        (!boostEnabled && path === '/boost') ||
                                                         (!isCs16 && isAmxxOnlyRoute(path)) ||
                                                         (!hasWebRcon && isWebRconOnlyRoute(path)) ||
                                                         (isTs3 && isRootAdminOnlyTs3Route(path) && !rootAdmin) ||

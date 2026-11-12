@@ -4,6 +4,7 @@ namespace Pterodactyl\Transformers\Api\Client;
 
 use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Services\Boost\ServerBoostService;
 use Pterodactyl\Models\Subuser;
 use League\Fractal\Resource\Item;
 use Pterodactyl\Models\Allocation;
@@ -77,6 +78,7 @@ class ServerTransformer extends BaseClientTransformer
             'invocation' => $service->handle($server, !$user->can(Permission::ACTION_STARTUP_READ, $server)),
             'docker_image' => $server->image,
             'egg_features' => $server->egg->inherit_features,
+            'boost_enabled' => Container::getInstance()->make(ServerBoostService::class)->visibleTo($server, $user),
             'port_slots' => array_values(array_map(static function (array $slot): array {
                 return [
                     'env_variable' => $slot['env_variable'],

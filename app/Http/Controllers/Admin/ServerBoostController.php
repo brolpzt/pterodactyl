@@ -29,6 +29,7 @@ class ServerBoostController extends Controller
             'connectUrl' => $token ? route('api:boost.connect', $token) : null,
             'eggs' => Egg::query()->orderBy('name')->get(['id', 'name']),
             'eggIds' => $eggIds,
+            'clientTab' => $this->service->clientTabEnabled(),
             'servers' => $this->service->eligibleQuery()->get(),
         ]));
     }
@@ -44,6 +45,17 @@ class ServerBoostController extends Controller
         $data = $request->validate(['eggs' => 'array', 'eggs.*' => 'integer|exists:eggs,id']);
         $this->service->setEggIds($data['eggs'] ?? []);
         $this->alert->success('Eggs do Server Boost salvos.')->flash();
+
+        return redirect()->route('admin.boost');
+    }
+
+    public function clientTab(Request $request): RedirectResponse
+    {
+        $enabled = $request->boolean('enabled');
+        $this->service->setClientTabEnabled($enabled);
+        $this->alert->success($enabled
+            ? 'Os donos dos servidores agora veem a aba Server Boost no painel.'
+            : 'A aba Server Boost do painel do cliente agora aparece só para admins.')->flash();
 
         return redirect()->route('admin.boost');
     }

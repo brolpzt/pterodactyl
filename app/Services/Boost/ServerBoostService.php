@@ -21,6 +21,7 @@ class ServerBoostService
 {
     public const SETTING_TOKEN = 'boost:token';
     public const SETTING_EGGS = 'boost:eggs';
+    public const SETTING_CLIENT_TAB = 'boost:client_tab';
 
     public const RETENTION_DAYS = 90;
 
@@ -28,6 +29,9 @@ class ServerBoostService
     public const RANGES = ['24h' => [24, 1], '7d' => [168, 24], '30d' => [720, 24]];
 
     /** Statuses that keep a server out of the list: no game is running there. */
+    /** @var list<int>|null */
+    private static ?array $detectedEggs = null;
+
     private const UNAVAILABLE = [Server::STATUS_SUSPENDED, Server::STATUS_INSTALLING, Server::STATUS_INSTALL_FAILED];
 
     public function __construct(private SettingsRepositoryInterface $settings, private Encrypter $encrypter)
@@ -76,7 +80,8 @@ class ServerBoostService
             return array_values(array_filter(array_map('intval', explode(',', $value))));
         }
 
-        return Egg::query()
+        // Asked once per server in client listings: remember the name lookup for this request.
+        return self::$detectedEggs ??= Egg::query()
             ->where(fn ($q) => $q->where('name', 'like', '%Counter-Strike 1.6%')->orWhere('name', 'like', '%CS 1.6%'))
             ->orderBy('id')
             ->pluck('id')
@@ -90,6 +95,73 @@ class ServerBoostService
         $ids = array_values(array_unique(array_map('intval', $ids)));
         sort($ids);
         $this->settings->set(self::SETTING_EGGS, implode(',', $ids));
+        self::$detectedEggs = null;
+    }
+
+    /** Whether server owners see the Server Boost tab in the client panel (admins always do). */
+    public function clientTabEnabled(): bool
+    {
+        return $this->settings->get(self::SETTING_CLIENT_TAB, '1') === '1';
+    }
+
+    public function setClientTabEnabled(bool $enabled): void
+    {
+        $this->settings->set(self::SETTING_CLIENT_TAB, $enabled ? '1' : '0');
+    }
+
+    /** Client panel tab: servers of the boost eggs, for admins always, for owners when switched on. */
+    public function visibleTo(Server $server, ?\Pterodactyl\Models\User $user): bool
+    {
+        return $this->isEligible($server) && ($this->clientTabEnabled() || (bool) $user?->root_admin);
+    }
+
+    /**
+     * Boost data for one server in the client panel: totals, connections per UTC hour (the
+     * browser re-buckets them in its own time zone) and the latest connections. No player IPs.
+     *
+     * @return array<string, mixed>
+     */
+    public function forServer(Server $server, string $range): array
+    {
+        [$hours] = self::RANGES[$range] ?? self::RANGES['7d'];
+        $since = CarbonImmutable::now('UTC')->startOfHour()->subHours($hours - 1);
+        $base = BoostConnection::query()->where('server_id', $server->id)->where('created_at', '>=', $since);
+
+        $hourly = (clone $base)
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00') AS h, COUNT(*) AS c")
+            ->groupBy('h')
+            ->orderBy('h')
+            ->get()
+            ->map(fn ($r) => ['hour' => CarbonImmutable::parse($r->h, 'UTC')->toIso8601String(), 'count' => (int) $r->c])
+            ->all();
+
+        $connections = (clone $base)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get(['id', 'player_name', 'steam_id', 'created_at'])
+            ->map(fn (BoostConnection $c) => [
+                'id' => $c->id,
+                'player' => $c->player_name,
+                'steam_id' => $c->steam_id,
+                'connected_at' => $c->created_at->toIso8601String(),
+            ])
+            ->all();
+
+        return [
+            'period' => array_key_exists($range, self::RANGES) ? $range : '7d',
+            'since' => $since->toIso8601String(),
+            'listed' => !$server->boost_hidden && self::isAvailable($server),
+            'total' => (clone $base)->count(),
+            'players' => (int) (clone $base)
+                ->selectRaw("COUNT(DISTINCT COALESCE(steam_id, player_ip, player_name, CONCAT('#', id))) AS c")
+                ->value('c'),
+            'last_connected_at' => ($last = BoostConnection::query()->where('server_id', $server->id)->max('created_at'))
+                ? CarbonImmutable::parse($last, 'UTC')->toIso8601String()
+                : null,
+            'hourly' => $hourly,
+            'connections' => $connections,
+        ];
     }
 
     public function isEligible(Server $server): bool

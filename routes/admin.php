@@ -414,5 +414,6 @@ Route::group(['prefix' => 'boost'], function () {
     Route::get('/live', [Admin\ServerBoostController::class, 'live'])->name('admin.boost.live');
     Route::post('/eggs', [Admin\ServerBoostController::class, 'updateEggs'])->name('admin.boost.eggs');
     Route::post('/token', [Admin\ServerBoostController::class, 'regenerateToken'])->name('admin.boost.token');
+    Route::post('/client-tab', [Admin\ServerBoostController::class, 'clientTab'])->name('admin.boost.client-tab');
     Route::post('/servers/{server:id}', [Admin\ServerBoostController::class, 'toggleServer'])->name('admin.boost.server');
 });

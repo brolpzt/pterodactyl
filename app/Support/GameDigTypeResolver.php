@@ -58,6 +58,11 @@ class GameDigTypeResolver
         'bo2' => self::PLUTONIUM,
         'blackops2' => self::PLUTONIUM,
         'iw5mp' => self::PLUTONIUM,
+        // Truck simulators: Steam A2S on QUERY_PORT (Wings maps them to the "source" protocol).
+        'eurotrucksimulator2' => 'ets2',
+        'eurotrucksimulator2dedicatedserver' => 'ets2',
+        'americantrucksimulator' => 'ats',
+        'americantrucksimulatordedicatedserver' => 'ats',
         't5mp' => self::PLUTONIUM,
         't4mp' => self::PLUTONIUM,
     ];
@@ -78,6 +83,8 @@ class GameDigTypeResolver
         ['/(gta\s*san\s*andreas|\bsa-?mp\b|\bgtasa\b)/i', 'samp'],
         ['/(medal\s*of\s*honor|\bmohaa\b)/i', 'mohaa'],
         ['/(the\s*isle\s*evrima|\bevrima\b|\btie\b)/i', 'tie'],
+        ['/(euro\s*truck\s*simulator|\bets\s*2\b)/i', 'ets2'],
+        ['/(american\s*truck\s*simulator|\bats\b)/i', 'ats'],
         ['/(dragonwilds|rune\s*scape\s*:?\s*dragonwilds|\brsdw\b)/i', 'dragonwilds'],
     ];
 
@@ -95,7 +102,7 @@ class GameDigTypeResolver
         'counter-strike-go', 'counter-strike-source', 'counterstrike16', 'cs', 'cs16', 'cs2', 'cscz',
         'csgo', 'css', 'cstrike', 'cz', 'dark-and-light', 'day-of-defeat', 'day-of-defeat-source',
         'day-of-infamy', 'dayz', 'deathmatch-classic', 'dmc', 'dnl', 'dod', 'dods', 'doi', 'dragonwilds', 'egs',
-        'empyrion', 'enshrouded', 'et', 'evrima', 'fistful-of-frags', 'fivem', 'fof', 'forest',
+        'empyrion', 'enshrouded', 'et', 'ets2', 'ats', 'evrima', 'fistful-of-frags', 'fivem', 'fof', 'forest',
         'garrys-mod', 'gmod', 'goldsource', 'gta5', 'gtasa', 'half-life', 'half-life-2-deathmatch',
         'half-life-deathmatch-source', 'half-life-opposing-force', 'hell-let-loose', 'hl', 'hl1',
         'hl2dm', 'hldms', 'hll', 'hlof', 'holdfast', 'holdfast-naw', 'hurtworld', 'ins', 'inss',

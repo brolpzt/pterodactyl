@@ -114,7 +114,7 @@
 
     var SERVERS = @json($servers);
     var CONCURRENCY = 6;
-    var TYPE_LABEL = { cs16: 'CS 1.6', cscz: 'CS:CZ', cod: 'CoD', coduo: 'CoD UO', cod2: 'CoD2', cod4: 'CoD4', codmw3: 'MW3', plutonium: 'Plutonium', samp: 'SA-MP', tie: 'The Isle', mohaa: 'MoHAA', ts3: 'TeamSpeak 3' };
+    var TYPE_LABEL = { cs16: 'CS 1.6', cscz: 'CS:CZ', cod: 'CoD', coduo: 'CoD UO', cod2: 'CoD2', cod4: 'CoD4', codmw3: 'MW3', plutonium: 'Plutonium', samp: 'SA-MP', tie: 'The Isle', mohaa: 'MoHAA', ts3: 'TeamSpeak 3', ets2: 'ETS2', ats: 'ATS' };
     var STEAM_CONNECT = { cs16: 1, cscz: 1 };
     var Q3_COLORS = { 0: '#7c8796', 1: '#f87171', 2: '#4ade80', 3: '#facc15', 4: '#60a5fa', 5: '#22d3ee', 6: '#e879f9', 7: '#e7edf4', 8: '#fb923c', 9: '#9ca3af' };
 

@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Pterodactyl\Support\ServerType;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Support\GameDigTypeResolver;
+use Pterodactyl\Services\Ts3\Ts3QueryService;
 use Pterodactyl\Services\Boost\ServerBoostService;
 use Pterodactyl\Services\GameQuery\GameQueryService;
 
@@ -21,8 +22,11 @@ class GameMonitorController extends Controller
 {
     private const CACHE_SECONDS = 8;
 
-    public function __construct(private Repository $cache, private GameQueryService $gameQuery)
-    {
+    public function __construct(
+        private Repository $cache,
+        private GameQueryService $gameQuery,
+        private Ts3QueryService $ts3Query,
+    ) {
     }
 
     public function index(): View
@@ -64,7 +68,7 @@ class GameMonitorController extends Controller
         if (!is_array($result)) {
             $started = microtime(true);
             try {
-                $result = $this->gameQuery->query($server);
+                $result = self::gameType($server) === 'ts3' ? $this->ts3Query->monitor($server) : $this->gameQuery->query($server);
             } catch (\Throwable $e) {
                 $result = ['online' => false, 'error' => $e->getMessage() ?: 'Falha ao consultar o servidor.'];
             }
@@ -75,15 +79,11 @@ class GameMonitorController extends Controller
         return new JsonResponse($result);
     }
 
-    /** Query type for the server's egg; TeamSpeak has its own credentials-based query and stays out. */
+    /** Query type for the server's egg; TeamSpeak goes through the panel's own TS3 query (TCP). */
     private static function gameType(Server $server): ?string
     {
-        if (ServerType::isTs3($server)) {
-            return null;
-        }
+        $type = ServerType::isTs3($server) ? 'ts3' : GameDigTypeResolver::resolve($server->egg?->gamedig, $server->egg?->name);
 
-        $type = GameDigTypeResolver::resolve($server->egg?->gamedig, $server->egg?->name);
-
-        return $type === 'teamspeak3' ? null : $type;
+        return $type === 'teamspeak3' ? 'ts3' : $type;
     }
 }

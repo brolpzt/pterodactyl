@@ -89,6 +89,99 @@ class Ts3QueryService
         });
     }
 
+    /**
+     * Live status for the admin Game Monitor. Logs in when query credentials are configured,
+     * otherwise reads what the TS3 guest query group is allowed to see.
+     *
+     * @return array<string, mixed>
+     */
+    public function monitor(Server $server): array
+    {
+        $config = $this->resolveConfiguration($server, false);
+        $socket = @fsockopen($config['host'], $config['query_port'], $errno, $errstr, 4);
+        if (!$socket) {
+            throw new Ts3QueryException("Sem resposta da query TS3 em {$config['host']}:{$config['query_port']}.", Response::HTTP_BAD_GATEWAY);
+        }
+        stream_set_timeout($socket, 4);
+
+        try {
+            @fwrite($socket, "\n");
+            $this->readWelcomeBanner($socket);
+
+            $authenticated = $config['password'] !== '';
+            if ($authenticated) {
+                $this->sendCommand($socket, 'login client_login_name=' . $this->escape($config['user']) . ' client_login_password=' . $this->escape($config['password']));
+            }
+            $this->sendCommand($socket, is_null($config['server_id']) ? 'use port=' . $config['virtual_server_port'] : 'use sid=' . $config['server_id']);
+
+            $result = [
+                'online' => true,
+                'type' => 'ts3',
+                'authenticated' => $authenticated,
+                'port' => $config['virtual_server_port'],
+                'query_port' => $config['query_port'],
+                'player_list' => [],
+                'queried_at' => now()->toAtomString(),
+            ];
+
+            try {
+                $info = $this->sendCommand($socket, 'serverinfo')[0] ?? [];
+            } catch (Ts3QueryException) {
+                return $result + [
+                    'limited' => true,
+                    'notice' => 'O TeamSpeak respondeu, mas não deixa a query de convidado ler os dados. Configure TS3_QUERY_USER e TS3_QUERY_PASS no servidor.',
+                ];
+            }
+
+            $channels = [];
+            try {
+                foreach ($this->sendCommand($socket, 'channellist') as $channel) {
+                    $channels[$channel['cid'] ?? ''] = $channel['channel_name'] ?? null;
+                }
+            } catch (Ts3QueryException) {
+            }
+
+            try {
+                $clients = $this->sendCommand($socket, 'clientlist -times -away');
+            } catch (Ts3QueryException) {
+                try {
+                    $clients = $this->sendCommand($socket, 'clientlist');
+                } catch (Ts3QueryException) {
+                    $clients = [];
+                }
+            }
+
+            foreach ($clients as $client) {
+                if (($client['client_type'] ?? '0') !== '0') {
+                    continue; // ServerQuery connections, not people
+                }
+                $result['player_list'][] = array_filter([
+                    'name' => $client['client_nickname'] ?? null,
+                    'channel' => $channels[$client['cid'] ?? ''] ?? null,
+                    'time' => isset($client['client_lastconnected']) ? max(0, time() - (int) $client['client_lastconnected']) : null,
+                    'idle' => isset($client['client_idle_time']) ? intdiv((int) $client['client_idle_time'], 1000) : null,
+                    'away' => ($client['client_away'] ?? '0') === '1' ? true : null,
+                ], static fn ($v) => $v !== null);
+            }
+
+            $online = (int) ($info['virtualserver_clientsonline'] ?? 0) - (int) ($info['virtualserver_queryclientsonline'] ?? 0);
+
+            return array_merge($result, [
+                'hostname' => $info['virtualserver_name'] ?? null,
+                'players' => max(0, $online, count($result['player_list'])),
+                'max_players' => (int) ($info['virtualserver_maxclients'] ?? 0),
+                'password_protected' => ($info['virtualserver_flag_password'] ?? '0') === '1',
+                'version' => $info['virtualserver_version'] ?? null,
+                'platform' => $info['virtualserver_platform'] ?? null,
+                'uptime' => isset($info['virtualserver_uptime']) ? (int) $info['virtualserver_uptime'] : null,
+                'channels' => isset($info['virtualserver_channelsonline']) ? (int) $info['virtualserver_channelsonline'] : null,
+            ]);
+        } finally {
+            @fwrite($socket, "quit\n");
+            @fclose($socket);
+        }
+    }
+
     public function listBans(Server $server): array
     {
         return $this->withQuery($server, fn ($socket) => $this->sendCommand($socket, 'banlist'));
@@ -401,7 +494,7 @@ class Ts3QueryService
         );
     }
 
-    private function resolveConfiguration(Server $server): array
+    private function resolveConfiguration(Server $server, bool $requireCredentials = true): array
     {
         $server->loadMissing(['allocation', 'node']);
 
@@ -439,7 +532,7 @@ class Ts3QueryService
             $variables['TSSERVER_QUERY_ADMIN_PASSWORD'] ?? null,
         );
 
-        if ($user === '' || $password === '') {
+        if ($requireCredentials && ($user === '' || $password === '')) {
             throw new Ts3QueryException(
                 'TS3 Query credentials are not configured for this server. Configure QUERY_USER/QUERY_PASS or SERVERADMIN_PASSWORD.',
                 Response::HTTP_BAD_REQUEST

@@ -105,7 +105,7 @@
             <tbody id="rows"></tbody>
         </table>
     </div>
-    <p class="meta-row" style="margin-top:8px">A query sai do node de cada servidor (via Wings), então funciona mesmo com o Anti-DDoS filtrando o IP do painel. Clique numa linha para ver a lista de jogadores. Plutonium vem da lista pública do plutonium.pw.</p>
+    <p class="meta-row" style="margin-top:8px">A query sai do node de cada servidor (via Wings), então funciona mesmo com o Anti-DDoS filtrando o IP do painel. Clique numa linha para ver a lista de jogadores. Plutonium vem da lista pública do plutonium.pw. TeamSpeak é consultado pelo painel (ServerQuery TCP), com o login TS3_QUERY_USER/PASS do servidor ou, sem ele, como convidado.</p>
 </div>
 
 <script>
@@ -114,7 +114,7 @@
 
     var SERVERS = @json($servers);
     var CONCURRENCY = 6;
-    var TYPE_LABEL = { cs16: 'CS 1.6', cscz: 'CS:CZ', cod: 'CoD', coduo: 'CoD UO', cod2: 'CoD2', cod4: 'CoD4', codmw3: 'MW3', plutonium: 'Plutonium', samp: 'SA-MP', tie: 'The Isle', mohaa: 'MoHAA' };
+    var TYPE_LABEL = { cs16: 'CS 1.6', cscz: 'CS:CZ', cod: 'CoD', coduo: 'CoD UO', cod2: 'CoD2', cod4: 'CoD4', codmw3: 'MW3', plutonium: 'Plutonium', samp: 'SA-MP', tie: 'The Isle', mohaa: 'MoHAA', ts3: 'TeamSpeak 3' };
     var STEAM_CONNECT = { cs16: 1, cscz: 1 };
     var Q3_COLORS = { 0: '#7c8796', 1: '#f87171', 2: '#4ade80', 3: '#facc15', 4: '#60a5fa', 5: '#22d3ee', 6: '#e879f9', 7: '#e7edf4', 8: '#fb923c', 9: '#9ca3af' };
 
@@ -146,6 +146,10 @@
         sec = Math.max(0, Math.floor(sec));
         var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
         return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+    }
+    function fmtUptime(sec) {
+        var d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60);
+        return (d ? d + 'd ' : '') + (d || h ? h + 'h ' : '') + m + 'min';
     }
     function typeLabel(t) { return TYPE_LABEL[t] || t; }
 
@@ -221,9 +225,10 @@
         if (st.loading && d) dot += ' wait';
         var title = d ? (d.online ? 'Online' : (d.error || 'Offline')) : 'Consultando…';
         var host = d && d.online && d.hostname ? colorize(d.hostname) : esc(s.name);
-        var sub = d && d.online && d.hostname ? esc(s.name) : (d && d.error ? '<span class="gm-err">' + esc(d.error) + '</span>' : (d && !d.online ? 'sem resposta' : ''));
+        var sub = d && d.error ? '<span class="gm-err">' + esc(d.error) + '</span>'
+            : (d && d.limited ? '<span class="gm-warn">sem permissão para ler os dados</span>' : (d && !d.online ? 'sem resposta' : ''));
         var players = '';
-        if (d && d.online) {
+        if (d && d.online && !d.limited) {
             var max = d.max_players || 0, n = d.players || 0, pct = max ? Math.min(100, n / max * 100) : 0;
             players = '<div class="gm-players"><span><strong>' + n + '</strong>/' + max + '</span>'
                 + (d.bots ? '<span class="ipl-muted">+' + d.bots + ' bots</span>' : '')
@@ -234,10 +239,10 @@
         }
         return '<tr class="gm-row' + (open[s.id] ? ' open' : '') + '" data-id="' + s.id + '" tabindex="0" aria-expanded="' + (open[s.id] ? 'true' : 'false') + '">'
             + '<td><span class="gm-dot ' + dot + '" title="' + esc(title) + '"></span></td>'
-            + '<td><div class="gm-host">' + host + '</div><span class="gm-sub">' + sub + '</span></td>'
+            + '<td><div class="gm-host" title="' + esc('Painel: ' + s.name) + '">' + host + '</div>' + (sub ? '<span class="gm-sub">' + sub + '</span>' : '') + '</td>'
             + '<td class="ipl-mono">' + esc(s.address || '—') + '</td>'
             + '<td>' + esc(typeLabel(s.type)) + (d && d.gametype ? ' <span class="ipl-muted">· ' + esc(d.gametype) + '</span>' : '') + '</td>'
-            + '<td class="ipl-mono">' + esc(d && d.online ? (d.map || '—') : '') + '</td>'
+            + '<td class="ipl-mono">' + esc(d && d.online ? (d.map || (d.channels != null ? d.channels + ' canais' : '—')) : '') + '</td>'
             + '<td>' + players + '</td>'
             + '<td class="gm-num ipl-mono ipl-muted">' + (d && d.took_ms != null ? d.took_ms + ' ms' : '') + '</td>'
             + '<td class="ipl-muted">' + esc(s.node || '') + '</td>'
@@ -248,20 +253,24 @@
     function detailHtml(s) {
         var st = state[s.id] || {}, d = st.data || {};
         var list = (d.player_list || []).slice();
-        var has = { score: false, time: false, ping: false };
-        list.forEach(function (p) { ['score', 'time', 'ping'].forEach(function (k) { if (p[k] != null) has[k] = true; }); });
+        var has = { channel: false, score: false, time: false, idle: false, ping: false };
+        list.forEach(function (p) { ['channel', 'score', 'time', 'idle', 'ping'].forEach(function (k) { if (p[k] != null) has[k] = true; }); });
         list.sort(function (a, b) { return (b.score || 0) - (a.score || 0) || (b.time || 0) - (a.time || 0); });
 
         var players;
-        if (!d.online) players = '<p class="ipl-muted" style="margin:0">' + esc(d.error || (st.data ? 'Servidor não respondeu à query.' : 'Consultando…')) + '</p>';
+        if (d.limited) players = '<p class="gm-warn" style="margin:0">' + esc(d.notice) + '</p>';
+        else if (!d.online) players = '<p class="ipl-muted" style="margin:0">' + esc(d.error || (st.data ? 'Servidor não respondeu à query.' : 'Consultando…')) + '</p>';
         else if (!list.length) players = '<p class="ipl-muted" style="margin:0">' + (d.players ? d.players + ' jogadores, mas o servidor não enviou a lista.' : 'Nenhum jogador conectado.') + '</p>';
         else players = '<table class="gm-plist"><thead><tr><th>#</th><th>Jogador</th>'
-            + (has.score ? '<th class="gm-num">Score</th>' : '') + (has.time ? '<th class="gm-num">Tempo</th>' : '') + (has.ping ? '<th class="gm-num">Ping</th>' : '')
+            + (has.channel ? '<th>Canal</th>' : '') + (has.score ? '<th class="gm-num">Score</th>' : '') + (has.time ? '<th class="gm-num">Tempo</th>' : '')
+            + (has.idle ? '<th class="gm-num">Inativo</th>' : '') + (has.ping ? '<th class="gm-num">Ping</th>' : '')
             + '</tr></thead><tbody>'
             + list.map(function (p, i) {
-                return '<tr><td class="ipl-muted">' + (i + 1) + '</td><td>' + (p.name ? colorize(p.name) : '<span class="ipl-muted">(conectando)</span>') + '</td>'
+                return '<tr><td class="ipl-muted">' + (i + 1) + '</td><td>' + (p.name ? colorize(p.name) : '<span class="ipl-muted">(conectando)</span>') + (p.away ? ' <span class="ipl-muted">(ausente)</span>' : '') + '</td>'
+                    + (has.channel ? '<td class="ipl-muted">' + esc(p.channel || '') + '</td>' : '')
                     + (has.score ? '<td class="gm-num">' + (p.score != null ? p.score : '') + '</td>' : '')
                     + (has.time ? '<td class="gm-num ipl-mono">' + fmtTime(p.time) + '</td>' : '')
+                    + (has.idle ? '<td class="gm-num ipl-mono">' + fmtTime(p.idle) + '</td>' : '')
                     + (has.ping ? '<td class="gm-num ipl-mono">' + (p.ping != null ? p.ping + ' ms' : '') + '</td>' : '')
                     + '</tr>';
             }).join('') + '</tbody></table>';
@@ -278,7 +287,10 @@
             + row('Jogadores', d.online ? (d.players || 0) + ' / ' + (d.max_players || 0) + (d.bots ? ' (+' + d.bots + ' bots)' : '') : null)
             + row('Slots no painel', slots)
             + row('Senha', d.online ? (d.password_protected ? 'sim' : 'não') : null)
-            + row('Versão', d.version ? esc(d.version) : null)
+            + row('Versão', d.version ? esc(d.version) + (d.platform ? ' · ' + esc(d.platform) : '') : null)
+            + row('Canais', d.channels != null ? d.channels : null)
+            + row('Uptime', d.uptime != null ? fmtUptime(d.uptime) : null)
+            + row('Query', s.type === 'ts3' && d.online ? (d.authenticated ? 'com login' : 'convidado (sem login)') : null)
             + row('Endereço', '<span class="ipl-mono">' + esc(s.address || '—') + '</span>' + (d.query_port && d.query_port !== d.port ? ' <span class="ipl-muted">(query ' + d.query_port + ')</span>' : ''))
             + row('Egg', esc(s.egg))
             + row('Node', esc(s.node))
@@ -291,6 +303,7 @@
             + '<a class="btn" href="' + esc(s.client_url) + '" target="_blank" rel="noopener">Painel do cliente</a>'
             + (s.address ? '<button type="button" class="btn gm-copy" data-copy="' + esc(s.address) + '">Copiar IP</button>' : '')
             + (s.address && STEAM_CONNECT[s.type] ? '<a class="btn" href="steam://connect/' + esc(s.address) + '">Conectar (Steam)</a>' : '')
+            + (s.address && s.type === 'ts3' ? '<a class="btn" href="ts3server://' + esc(s.address.replace(/:(\d+)$/, '?port=$1')) + '">Conectar (TS3)</a>' : '')
             + '<button type="button" class="btn gm-requery" data-id="' + s.id + '">Consultar de novo</button>'
             + '</div>';
 

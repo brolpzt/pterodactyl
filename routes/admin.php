@@ -420,3 +420,16 @@ Route::group(['prefix' => 'boost'], function () {
     Route::delete('/blacklist/{entry:id}', [Admin\BoostBlacklistController::class, 'delete'])->name('admin.boost.blacklist.delete');
     Route::post('/servers/{server:id}', [Admin\ServerBoostController::class, 'toggleServer'])->name('admin.boost.server');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Game Monitor Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/monitor
+|
+*/
+Route::group(['prefix' => 'monitor'], function () {
+    Route::get('/', [Admin\GameMonitorController::class, 'index'])->name('admin.monitor');
+    Route::get('/servers/{server:id}', [Admin\GameMonitorController::class, 'query'])->name('admin.monitor.query');
+});

@@ -126,6 +126,11 @@
                                 <i class="fa fa-rocket"></i> <span>Server Boost</span>
                             </a>
                         </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.monitor') ?: 'active' }}">
+                            <a href="{{ route('admin.monitor') }}">
+                                <i class="fa fa-desktop"></i> <span>Game Monitor</span>
+                            </a>
+                        </li>
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.servers') ?: 'active' }}">
                             <a href="{{ route('admin.servers') }}">
                                 <i class="fa fa-server"></i> <span>Servers</span>

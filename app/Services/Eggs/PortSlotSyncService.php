@@ -770,7 +770,7 @@ class PortSlotSyncService
 
         $step = $this->portStep($egg);
         if ($step > 1) {
-            $query->whereRaw('MOD(port - ?, ?) = 0', [$primaryPort, $step]);
+            $this->whereSameStep($query, $primaryPort, $step);
         }
 
         return $query;
@@ -797,10 +797,21 @@ class PortSlotSyncService
 
         $step = $this->portStep($egg);
         if ($step > 1) {
-            $query->whereRaw('MOD(port - ?, ?) = 0', [$start, $step]);
+            $this->whereSameStep($query, $start, $step);
         }
 
         return $query;
+    }
+
+    /**
+     * Ports congruent to $base modulo $step. `port` is unsigned, so `port - base` overflows
+     * in MySQL for ports below the base; adding the complement keeps the math non-negative.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<\Pterodactyl\Models\Allocation> $query
+     */
+    private function whereSameStep($query, int $base, int $step): void
+    {
+        $query->whereRaw('MOD(port + ?, ?) = 0', [($step - $base % $step) % $step, $step]);
     }
 
     /**

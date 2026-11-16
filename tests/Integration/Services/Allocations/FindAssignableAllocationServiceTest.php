@@ -45,6 +45,33 @@ class FindAssignableAllocationServiceTest extends IntegrationTestCase
     }
 
     /**
+     * With an egg port step, free ports below the primary port must not overflow the
+     * unsigned `port` column (MOD(port - primary) raised SQLSTATE 22003 in MySQL).
+     */
+    public function testStepFilterHandlesPortsBelowThePrimary()
+    {
+        $server = $this->createServerModel();
+        $server->allocation->forceFill(['port' => 27019])->save();
+        $egg = $server->egg;
+        $previous = $egg->only(['port_range_start', 'port_range_end', 'port_step']);
+        $egg->forceFill(['port_range_start' => 27015, 'port_range_end' => null, 'port_step' => 2])->save();
+
+        try {
+            foreach ([27016, 27017, 27018, 27021] as $port) {
+                Allocation::factory()->create(['node_id' => $server->node_id, 'ip' => $server->allocation->ip, 'port' => $port]);
+            }
+
+            $response = $this->getService()->handle($server->fresh());
+
+            $this->assertSame(27017, $response->port);
+            $this->assertSame($server->id, $response->server_id);
+        } finally {
+            // This test case has no transaction; other tests share the egg.
+            $egg->forceFill($previous)->save();
+        }
+    }
+
+    /**
      * Test that a new allocation is created if there is not a free one available.
      */
     public function testNewAllocationIsCreatedIfOneIsNotFound()

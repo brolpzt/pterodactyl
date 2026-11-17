@@ -5,6 +5,7 @@ namespace Pterodactyl\Http\Controllers\Admin\Nodes;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Pterodactyl\Models\Node;
+use Pterodactyl\Models\XdpSyncLog;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
 use Pterodactyl\Services\Xdp\XdpProfile;
@@ -22,7 +23,7 @@ class NodeXdpController extends Controller
     ) {
     }
 
-    public function index(Node $node): View
+    public function index(Request $request, Node $node): View
     {
         $desired = $this->xdp->desiredPortsDetailed($node);
 
@@ -42,6 +43,9 @@ class NodeXdpController extends Controller
             'preview' => $preview,
             'previewError' => $previewError,
             'lastSync' => $this->xdp->lastSyncStatus($node),
+            'showAll' => $request->boolean('all'),
+            'history' => $this->xdp->history($node, !$request->boolean('all'))->withQueryString(),
+            'lastReconcile' => $this->xdp->lastReconcile($node),
             'labels' => XdpProfile::LABELS,
         ]);
     }
@@ -60,10 +64,10 @@ class NodeXdpController extends Controller
         return redirect()->route('admin.nodes.view.xdp', $node->id);
     }
 
-    public function sync(Node $node): RedirectResponse
+    public function sync(Request $request, Node $node): RedirectResponse
     {
         try {
-            $result = $this->xdp->syncNode($node);
+            $result = $this->xdp->syncNode($node, false, XdpSyncLog::TRIGGER_MANUAL, 'por ' . ($request->user()?->username ?? '?'));
             $this->alert->success(sprintf(
                 'Firewall XDP sincronizado: entraram %d, mudaram %d, saíram %d porta(s); %d sem alteração.',
                 count($result['added']),

@@ -4,6 +4,7 @@ namespace Pterodactyl\Console\Commands\Node;
 
 use Pterodactyl\Models\Node;
 use Illuminate\Console\Command;
+use Pterodactyl\Models\XdpSyncLog;
 use Pterodactyl\Services\Xdp\XdpFirewallSyncService;
 
 class SyncXdpFirewallCommand extends Command
@@ -32,7 +33,7 @@ class SyncXdpFirewallCommand extends Command
             }
 
             try {
-                $result = $service->syncNode($node, $dryRun);
+                $result = $service->syncNode($node, $dryRun, XdpSyncLog::TRIGGER_RECONCILE, 'reconciliação periódica');
             } catch (\Throwable $e) {
                 $failed = true;
                 $this->error("Node {$node->name}: {$e->getMessage()}");

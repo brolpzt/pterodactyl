@@ -56,7 +56,7 @@ class DaemonServerRepository extends DaemonRepository
         }
 
         // The server's ports may have changed: refresh the node's XDP port map.
-        SyncNodeXdpJob::dispatchForNode($this->server->node_id);
+        SyncNodeXdpJob::dispatchForNode($this->server->node_id, "servidor #{$this->server->id} criado no Wings");
     }
 
     /**
@@ -75,7 +75,7 @@ class DaemonServerRepository extends DaemonRepository
         }
 
         // The server's ports may have changed: refresh the node's XDP port map.
-        SyncNodeXdpJob::dispatchForNode($this->server->node_id);
+        SyncNodeXdpJob::dispatchForNode($this->server->node_id, "servidor #{$this->server->id} sincronizado no Wings");
     }
 
     /**
@@ -188,7 +188,7 @@ class DaemonServerRepository extends DaemonRepository
         }
 
         // The server's ports may have changed: refresh the node's XDP port map.
-        SyncNodeXdpJob::dispatchForNode($this->server->node_id);
+        SyncNodeXdpJob::dispatchForNode($this->server->node_id, "servidor #{$this->server->id} excluído no Wings");
     }
 
     /**

@@ -4,6 +4,8 @@ namespace Pterodactyl\Services\Xdp;
 
 use Pterodactyl\Models\Node;
 use Pterodactyl\Models\Allocation;
+use Pterodactyl\Models\XdpSyncLog;
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\Support\ServerType;
 use Illuminate\Support\Facades\Cache;
 use Pterodactyl\Exceptions\DisplayException;
@@ -99,13 +101,14 @@ class XdpFirewallSyncService
     }
 
     /**
-     * Sends the desired map to Wings. On a dry run Wings only reports the difference.
+     * Sends the desired map to Wings. On a dry run Wings only reports the difference;
+     * real syncs are recorded in xdp_sync_logs with what triggered them.
      *
      * @return array{dry_run: bool, added: list<array>, updated: list<array>, removed: list<array>, unchanged: int}
      *
      * @throws DisplayException
      */
-    public function syncNode(Node $node, bool $dryRun = false): array
+    public function syncNode(Node $node, bool $dryRun = false, string $trigger = XdpSyncLog::TRIGGER_MANUAL, ?string $reason = null): array
     {
         if (!$dryRun && !$node->xdp_enabled) {
             throw new DisplayException('Este node não tem o firewall XDP habilitado.');
@@ -118,6 +121,7 @@ class XdpFirewallSyncService
         } catch (DaemonConnectionException $e) {
             if (!$dryRun) {
                 $this->rememberLastSync($node, false, $e->getMessage(), count($ports));
+                $this->record($node, $trigger, $reason, false, count($ports), null, $e->getMessage());
             }
             throw new DisplayException('Falha ao falar com o Wings sobre o firewall XDP: ' . $e->getMessage(), $e);
         }
@@ -136,9 +140,68 @@ class XdpFirewallSyncService
                 count($result['updated']),
                 count($result['removed']),
             ), count($ports));
+            $this->record($node, $trigger, $reason, true, count($ports), $result);
         }
 
         return $result;
+    }
+
+    /**
+     * History of real syncs for the admin page, newest first.
+     *
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator<XdpSyncLog>
+     */
+    public function history(Node $node, bool $onlyRelevant, int $perPage = 25)
+    {
+        return XdpSyncLog::query()
+            ->where('node_id', $node->id)
+            ->when($onlyRelevant, fn ($q) => $q->where(fn ($q) => $q->where('ok', false)
+                ->orWhere('added', '>', 0)->orWhere('updated', '>', 0)->orWhere('removed', '>', 0)))
+            ->orderByDesc('id')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Most recent successful scheduled reconciliation, to spot a stopped scheduler.
+     */
+    public function lastReconcile(Node $node): ?XdpSyncLog
+    {
+        return XdpSyncLog::query()
+            ->where('node_id', $node->id)
+            ->where('trigger', XdpSyncLog::TRIGGER_RECONCILE)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    private function record(Node $node, string $trigger, ?string $reason, bool $ok, int $ports, ?array $result, ?string $error = null): void
+    {
+        try {
+            $changes = null;
+            if ($result !== null && ($result['added'] || $result['updated'] || $result['removed'])) {
+                $changes = [
+                    'added' => array_values($result['added']),
+                    'updated' => array_values($result['updated']),
+                    'removed' => array_values($result['removed']),
+                ];
+            }
+
+            XdpSyncLog::query()->create([
+                'node_id' => $node->id,
+                'trigger' => array_key_exists($trigger, XdpSyncLog::TRIGGER_LABELS) ? $trigger : XdpSyncLog::TRIGGER_MANUAL,
+                'reason' => $reason !== null ? mb_substr($reason, 0, 191) : null,
+                'ok' => $ok,
+                'ports' => $ports,
+                'added' => $result ? count($result['added']) : 0,
+                'updated' => $result ? count($result['updated']) : 0,
+                'removed' => $result ? count($result['removed']) : 0,
+                'unchanged' => $result ? (int) $result['unchanged'] : 0,
+                'changes' => $changes,
+                'error' => $error,
+            ]);
+        } catch (\Throwable $e) {
+            // The history is for monitoring only: never fail a sync because of it.
+            Log::warning('XDP: could not record sync log.', ['node_id' => $node->id, 'error' => $e->getMessage()]);
+        }
     }
 
     /**

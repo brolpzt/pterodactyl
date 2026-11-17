@@ -20,7 +20,7 @@ class EggXdpObserver
 
         $nodeIds = Server::query()->where('egg_id', $egg->id)->distinct()->pluck('node_id');
         foreach ($nodeIds as $nodeId) {
-            SyncNodeXdpJob::dispatchForNode((int) $nodeId);
+            SyncNodeXdpJob::dispatchForNode((int) $nodeId, "egg #{$egg->id} ({$egg->name}) alterado");
         }
     }
 }

@@ -3,6 +3,7 @@
 namespace Pterodactyl\Console;
 
 use Ramsey\Uuid\Uuid;
+use Pterodactyl\Models\XdpSyncLog;
 use Pterodactyl\Models\ActivityLog;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Console\PruneCommand;
@@ -64,6 +65,8 @@ class Kernel extends ConsoleKernel
 
         // Reconcile the XDP game firewall of nodes with XDP enabled (fixes drift and missed changes).
         $schedule->command(SyncXdpFirewallCommand::class)->everyTenMinutes()->withoutOverlapping();
+        // Keep XDP sync history for XdpSyncLog::RETENTION_DAYS days.
+        $schedule->command(PruneCommand::class, ['--model' => [XdpSyncLog::class]])->daily();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

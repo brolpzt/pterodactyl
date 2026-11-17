@@ -7,6 +7,7 @@ use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\Node;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Allocation;
+use Pterodactyl\Models\XdpSyncLog;
 use Pterodactyl\Jobs\SyncNodeXdpJob;
 use Illuminate\Support\Facades\Queue;
 use Pterodactyl\Exceptions\DisplayException;
@@ -101,8 +102,56 @@ class XdpFirewallSyncServiceTest extends IntegrationTestCase
         }
 
         $node->update(['xdp_enabled' => true]);
+        $this->assertSame(0, XdpSyncLog::query()->where('node_id', $node->id)->count(), 'Dry runs are not recorded.');
         $this->assertSame(4, $service->syncNode($node)['unchanged']);
         $this->assertTrue($service->lastSyncStatus($node)['ok']);
+
+        $log = XdpSyncLog::query()->where('node_id', $node->id)->sole();
+        $this->assertSame(XdpSyncLog::TRIGGER_MANUAL, $log->trigger);
+        $this->assertTrue($log->ok);
+        $this->assertSame(4, $log->ports);
+        $this->assertFalse($log->changedPorts());
+        $this->assertNull($log->changes);
+    }
+
+    public function testSyncHistoryRecordsChangesFailuresAndTheTrigger(): void
+    {
+        $node = Node::factory()->create(['location_id' => $this->createServerModel()->location->id, 'xdp_enabled' => true]);
+        $this->server($node, 30000);
+
+        $repository = m::mock(DaemonXdpRepository::class);
+        $repository->allows('setNode')->andReturnSelf();
+        $repository->expects('sync')->andReturn(['dry_run' => false, 'added' => [['port' => 30000, 'to' => 'source']], 'updated' => [], 'removed' => [['port' => 9999, 'from' => 'cs16']], 'unchanged' => 3]);
+        $repository->expects('sync')->andThrow(new \Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException(new \GuzzleHttp\Exception\TransferException('wings offline')));
+        $this->app->instance(DaemonXdpRepository::class, $repository);
+        $service = app(XdpFirewallSyncService::class);
+
+        $service->syncNode($node, false, XdpSyncLog::TRIGGER_RECONCILE, 'reconciliação periódica');
+        try {
+            $service->syncNode($node, false, XdpSyncLog::TRIGGER_AUTOMATIC, 'servidor #1 sincronizado no Wings');
+            $this->fail('Expected the Wings failure to surface.');
+        } catch (DisplayException) {
+        }
+
+        [$failed, $changed] = XdpSyncLog::query()->where('node_id', $node->id)->orderByDesc('id')->get()->all();
+        $this->assertTrue($changed->ok);
+        $this->assertSame(XdpSyncLog::TRIGGER_RECONCILE, $changed->trigger);
+        $this->assertSame([1, 0, 1], [$changed->added, $changed->updated, $changed->removed]);
+        $this->assertSame(9999, $changed->changes['removed'][0]['port']);
+        $this->assertFalse($failed->ok);
+        $this->assertSame(XdpSyncLog::TRIGGER_AUTOMATIC, $failed->trigger);
+        $this->assertSame('servidor #1 sincronizado no Wings', $failed->reason);
+        $this->assertNotEmpty($failed->error);
+        $this->assertSame($changed->id, $service->lastReconcile($node)->id);
+
+        // A no-change reconciliation is hidden by default and shown with "all".
+        XdpSyncLog::query()->create(['node_id' => $node->id, 'trigger' => XdpSyncLog::TRIGGER_RECONCILE, 'ok' => true, 'ports' => 4, 'unchanged' => 4]);
+        $this->assertSame(2, $service->history($node, onlyRelevant: true)->total());
+        $this->assertSame(3, $service->history($node, onlyRelevant: false)->total());
+
+        // Logs past the retention window are pruned.
+        XdpSyncLog::query()->whereKey($changed->id)->update(['created_at' => now()->subDays(XdpSyncLog::RETENTION_DAYS + 1)]);
+        $this->assertSame(1, (new XdpSyncLog())->prunable()->count());
     }
 
     public function testWingsServerSyncQueuesTheNodeOnlyWhenXdpIsEnabled(): void
@@ -133,10 +182,20 @@ class XdpFirewallSyncServiceTest extends IntegrationTestCase
         $repository->allows('sync')->andReturn(['dry_run' => true, 'added' => [], 'updated' => [], 'removed' => [['port' => 9999, 'from' => 'cs16']], 'unchanged' => 4]);
         $this->app->instance(DaemonXdpRepository::class, $repository);
 
+        XdpSyncLog::query()->create(['node_id' => $node->id, 'trigger' => XdpSyncLog::TRIGGER_AUTOMATIC, 'reason' => 'servidor #77 criado no Wings', 'ok' => true, 'ports' => 5, 'added' => 1, 'unchanged' => 4, 'changes' => ['added' => [['port' => 30004, 'to' => 'generic']], 'updated' => [], 'removed' => []]]);
+        XdpSyncLog::query()->create(['node_id' => $node->id, 'trigger' => XdpSyncLog::TRIGGER_RECONCILE, 'reason' => 'reconciliação periódica', 'ok' => true, 'ports' => 5, 'unchanged' => 5]);
+
         $this->actingAs($admin)->get("/admin/nodes/view/{$node->id}/xdp")->assertOk()
             ->assertSee('Firewall XDP')
             ->assertSee('9999')
-            ->assertSee('Query Port');
+            ->assertSee('Query Port')
+            ->assertSee('Histórico de sincronizações')
+            ->assertSee('servidor #77 criado no Wings')
+            ->assertSee('30004 generic')
+            ->assertDontSee('reconciliação periódica');
+
+        $this->actingAs($admin)->get("/admin/nodes/view/{$node->id}/xdp?all=1")->assertOk()
+            ->assertSee('reconciliação periódica');
 
         $this->actingAs($admin)->post("/admin/nodes/view/{$node->id}/xdp", ['xdp_enabled' => 1])
             ->assertRedirect("/admin/nodes/view/{$node->id}/xdp");

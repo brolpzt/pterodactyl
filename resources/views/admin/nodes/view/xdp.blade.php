@@ -21,6 +21,8 @@
         'updated' => ['Muda', 'warning', '~'],
         'removed' => ['Sai', 'danger', '−'],
     ];
+    $tz = config('app.stats_timezone', 'America/Sao_Paulo');
+    $triggerColors = ['manual' => 'primary', 'automatic' => 'info', 'reconcile' => 'default'];
     $pending = $preview ? count($preview['added']) + count($preview['updated']) + count($preview['removed']) : 0;
 @endphp
 <div class="row">
@@ -83,6 +85,25 @@
                 @else
                     <p class="text-muted" style="margin-bottom:0">Nenhuma sync registrada ainda.</p>
                 @endif
+                @if($node->xdp_enabled)
+                    @php($reconcileAge = $lastReconcile ? $lastReconcile->created_at->diffInMinutes(now()) : null)
+                    <p style="margin:6px 0 0">
+                        <strong>Reconciliação automática:</strong>
+                        @if(!$lastReconcile)
+                            <span class="label label-default">ainda não rodou</span>
+                            <span class="text-muted small">roda a cada 10 min pelo agendador do painel</span>
+                        @elseif(!$lastReconcile->ok)
+                            <span class="label label-danger">falhou</span>
+                            <span class="text-muted">{{ $lastReconcile->created_at->timezone($tz)->format('d/m H:i') }} - {{ $lastReconcile->error }}</span>
+                        @elseif($reconcileAge > 25)
+                            <span class="label label-warning">atrasada</span>
+                            <span class="text-muted">última há {{ $reconcileAge }} min; confira o cron/agendador do painel</span>
+                        @else
+                            <span class="label label-success">em dia</span>
+                            <span class="text-muted">última {{ $lastReconcile->created_at->timezone($tz)->format('d/m H:i') }} (há {{ $reconcileAge }} min)</span>
+                        @endif
+                    </p>
+                @endif
             </div>
         </div>
 
@@ -114,6 +135,64 @@
                     <div class="box-footer text-muted small">{{ $preview['unchanged'] }} porta(s) já estão iguais. Nada é aplicado até clicar em "Sincronizar agora".</div>
                 @endif
             </div>
+        </div>
+
+        <div class="box box-default" id="history">
+            <div class="box-header with-border">
+                <h3 class="box-title"><i class="fa fa-history"></i> Histórico de sincronizações</h3>
+                <div class="box-tools" style="margin-top:4px">
+                    @if($showAll)
+                        <a href="{{ route('admin.nodes.view.xdp', $node->id) }}#history" class="btn btn-xs btn-default">Só mudanças e falhas</a>
+                    @else
+                        <a href="{{ route('admin.nodes.view.xdp', ['node' => $node->id, 'all' => 1]) }}#history" class="btn btn-xs btn-default">Mostrar todas</a>
+                    @endif
+                </div>
+            </div>
+            <div class="box-body table-responsive no-padding">
+                @if($history->isEmpty())
+                    <div style="padding:15px"><p class="text-muted" style="margin:0">
+                        {{ $showAll ? 'Nenhuma sincronização registrada ainda.' : 'Nenhuma sincronização com mudança ou falha. Use "Mostrar todas" para ver as reconciliações sem alteração.' }}
+                    </p></div>
+                @else
+                    <table class="table table-hover" style="margin-bottom:0">
+                        <thead><tr><th>Quando</th><th>Origem</th><th>Resultado</th><th>Portas</th><th>Mudanças</th></tr></thead>
+                        <tbody>
+                        @foreach($history as $log)
+                            <tr>
+                                <td style="white-space:nowrap" title="{{ $log->created_at->toIso8601String() }}">{{ $log->created_at->timezone($tz)->format('d/m H:i:s') }}</td>
+                                <td>
+                                    <span class="label label-{{ $triggerColors[$log->trigger] ?? 'default' }}">{{ \Pterodactyl\Models\XdpSyncLog::TRIGGER_LABELS[$log->trigger] ?? $log->trigger }}</span>
+                                    @if($log->reason)<div class="small text-muted">{{ $log->reason }}</div>@endif
+                                </td>
+                                <td>
+                                    @if($log->ok)
+                                        <span class="label label-success">OK</span>
+                                    @else
+                                        <span class="label label-danger">Falha</span>
+                                        <div class="small text-danger">{{ \Illuminate\Support\Str::limit($log->error, 160) }}</div>
+                                    @endif
+                                </td>
+                                <td>{{ $log->ports }}</td>
+                                <td class="small">
+                                    @if(!$log->changedPorts())
+                                        <span class="text-muted">sem alteração</span>
+                                    @else
+                                        @foreach($changes as $key => [$label, $color, $sign])
+                                            @foreach($log->changes[$key] ?? [] as $change)
+                                                <span class="label label-{{ $color }}" style="display:inline-block;margin:1px 0" title="{{ $label }}">{{ $sign }} {{ $change['port'] ?? '' }} {{ trim(($change['from'] ?? '') . ' → ' . ($change['to'] ?? ''), ' →') }}</span>
+                                            @endforeach
+                                        @endforeach
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+            @if($history->hasPages())
+                <div class="box-footer">{{ $history->fragment('history')->links() }}</div>
+            @endif
         </div>
 
         @if(!empty($conflicts))
@@ -162,7 +241,7 @@
                 <ol style="padding-left:18px;margin:0">
                     <li>Confira a prévia: portas colocadas à mão que não pertencem a servidores aparecem como <strong>Sai</strong>.</li>
                     <li>Habilite e clique em <strong>Sincronizar agora</strong>.</li>
-                    <li>Depois disso o painel sincroniza sozinho ao criar, alterar ou apagar servidores, e a cada 10 minutos.</li>
+                    <li>Depois disso o painel sincroniza sozinho ao criar, alterar ou apagar servidores, e a cada 10 minutos. Tudo fica no <a href="#history">histórico</a> por {{ \Pterodactyl\Models\XdpSyncLog::RETENTION_DAYS }} dias.</li>
                     <li>O perfil de cada porta é ajustável no egg (port slots → XDP).</li>
                 </ol>
                 <p class="small" style="margin-top:12px;margin-bottom:4px"><strong>Perfis</strong></p>

@@ -3,6 +3,7 @@
 namespace Pterodactyl\Jobs;
 
 use Pterodactyl\Models\Node;
+use Pterodactyl\Models\XdpSyncLog;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,7 +25,7 @@ class SyncNodeXdpJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
     public int $uniqueFor = 300;
 
-    public function __construct(public int $nodeId)
+    public function __construct(public int $nodeId, public ?string $reason = null)
     {
     }
 
@@ -36,7 +37,7 @@ class SyncNodeXdpJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
     /**
      * Queues a sync for the node when it has XDP enabled.
      */
-    public static function dispatchForNode(?int $nodeId): void
+    public static function dispatchForNode(?int $nodeId, ?string $reason = null): void
     {
         if (!$nodeId) {
             return;
@@ -46,7 +47,7 @@ class SyncNodeXdpJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
             if (!Node::query()->whereKey($nodeId)->where('xdp_enabled', true)->exists()) {
                 return;
             }
-            self::dispatch($nodeId)->delay(now()->addSeconds(self::DELAY_SECONDS));
+            self::dispatch($nodeId, $reason)->delay(now()->addSeconds(self::DELAY_SECONDS));
         } catch (\Throwable $e) {
             Log::warning('XDP: could not queue node sync.', ['node_id' => $nodeId, 'error' => $e->getMessage()]);
         }
@@ -60,7 +61,7 @@ class SyncNodeXdpJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
         }
 
         try {
-            $service->syncNode($node);
+            $service->syncNode($node, false, XdpSyncLog::TRIGGER_AUTOMATIC, $this->reason);
         } catch (\Throwable $e) {
             Log::warning('XDP: node sync failed.', ['node_id' => $this->nodeId, 'error' => $e->getMessage()]);
         }

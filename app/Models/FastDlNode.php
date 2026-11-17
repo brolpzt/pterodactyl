@@ -26,9 +26,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string|null $password
  * @property string|null $private_key
  * @property bool $is_active
+ * @property int|null $cloudflare_zone_id zone whose cache is purged after a sync
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
- * @property \Pterodactyl\Models\Location $location
+ * @property Location $location
+ * @property CloudflareZone|null $cloudflareZone
  */
 class FastDlNode extends Model
 {
@@ -62,6 +64,7 @@ class FastDlNode extends Model
         'port' => 'integer',
         'is_active' => 'boolean',
         'use_path_style_endpoint' => 'boolean',
+        'cloudflare_zone_id' => 'integer',
     ];
 
     /**
@@ -86,6 +89,7 @@ class FastDlNode extends Model
         'password' => 'nullable|string',
         'private_key' => 'nullable|string',
         'is_active' => 'boolean',
+        'cloudflare_zone_id' => 'nullable|integer|exists:cloudflare_zones,id',
     ];
 
     public function isS3(): bool
@@ -104,5 +108,13 @@ class FastDlNode extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * Cloudflare zone whose cache is purged for files a sync overwrites or deletes.
+     */
+    public function cloudflareZone(): BelongsTo
+    {
+        return $this->belongsTo(CloudflareZone::class);
     }
 }

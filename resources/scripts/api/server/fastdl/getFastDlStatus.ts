@@ -2,7 +2,7 @@ import http from '@/api/http';
 
 export interface FastDlSyncStatus {
     state: 'never' | 'running' | 'completed' | 'failed';
-    phase?: 'scanning' | 'comparing' | 'uploading' | 'cleaning';
+    phase?: 'scanning' | 'comparing' | 'uploading' | 'cleaning' | 'purging';
     storage_type?: string;
     started_at?: string;
     finished_at?: string;
@@ -14,6 +14,9 @@ export interface FastDlSyncStatus {
     bytes_total: number;
     bytes_done: number;
     deleted_files: number;
+    /** CDN URLs purged (http + https per overwritten or deleted file). */
+    purged_urls?: number;
+    purge_error?: string;
     error?: string;
 }
 

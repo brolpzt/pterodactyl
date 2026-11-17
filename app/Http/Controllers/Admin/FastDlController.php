@@ -4,17 +4,18 @@ namespace Pterodactyl\Http\Controllers\Admin;
 
 use Illuminate\View\View;
 use Illuminate\Http\Request;
-use Pterodactyl\Services\FastDl\FastDlBucketAuditService;
 use Pterodactyl\Models\FastDlNode;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
+use Pterodactyl\Models\CloudflareZone;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Services\FastDl\FastDlNodeUpdateService;
+use Pterodactyl\Services\FastDl\FastDlBucketAuditService;
 use Pterodactyl\Services\FastDl\FastDlNodeCreationService;
 use Pterodactyl\Services\FastDl\FastDlNodeDeletionService;
 use Pterodactyl\Contracts\Repository\LocationRepositoryInterface;
-use Pterodactyl\Contracts\Repository\FastDlNodeRepositoryInterface;
 use Pterodactyl\Http\Requests\Admin\FastDl\FastDlNodeFormRequest;
+use Pterodactyl\Contracts\Repository\FastDlNodeRepositoryInterface;
 
 class FastDlController extends Controller
 {
@@ -27,7 +28,7 @@ class FastDlController extends Controller
         protected FastDlNodeDeletionService $deletionService,
         protected FastDlNodeRepositoryInterface $repository,
         protected FastDlNodeUpdateService $updateService,
-        protected LocationRepositoryInterface $locationRepository
+        protected LocationRepositoryInterface $locationRepository,
     ) {
     }
 
@@ -81,6 +82,7 @@ class FastDlController extends Controller
     {
         return view('admin.fastdl.new', [
             'locations' => $this->locationRepository->all(),
+            'cloudflareZones' => $this->cloudflareZones(),
         ]);
     }
 
@@ -105,7 +107,16 @@ class FastDlController extends Controller
         return view('admin.fastdl.view', [
             'node' => $node,
             'locations' => $this->locationRepository->all(),
+            'cloudflareZones' => $this->cloudflareZones(),
         ]);
+    }
+
+    /**
+     * Zones that can be picked for the FastDL cache purge (one per Cloudflare zone).
+     */
+    private function cloudflareZones()
+    {
+        return CloudflareZone::query()->with('account:id,name')->orderBy('domain')->orderBy('id')->get()->unique('zone_id')->values();
     }
 
     /**

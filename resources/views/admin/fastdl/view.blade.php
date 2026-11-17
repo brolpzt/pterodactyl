@@ -59,6 +59,16 @@
                             <input type="text" name="public_url" id="pPublicUrl" class="form-control" value="{{ old('public_url', $node->public_url) }}" placeholder="https://fastdl.example.com" />
                             <p class="text-muted small">Full base URL if different from <code>http://{host}</code>. Include scheme (<code>https://</code>).</p>
                         </div>
+                        <div class="form-group">
+                            <label for="pCloudflareZone" class="control-label">Purge de cache (Cloudflare)</label>
+                            <select name="cloudflare_zone_id" id="pCloudflareZone" class="form-control">
+                                <option value="">Nenhum</option>
+                                @foreach($cloudflareZones as $zone)
+                                    <option value="{{ $zone->id }}" {{ (string) old('cloudflare_zone_id', $node->cloudflare_zone_id) === (string) $zone->id ? 'selected' : '' }}>{{ $zone->domain }} ({{ $zone->account?->name ?? 'sem conta' }})</option>
+                                @endforeach
+                            </select>
+                            <p class="text-muted small">Zona da Cloudflare que serve a URL pública. Depois de cada sincronização, o Wings limpa o cache dos arquivos sobrescritos ou apagados, para os jogadores não baixarem a versão antiga. O token da conta precisa da permissão <code>Zone → Cache Purge → Purge</code>.</p>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="pRemotePath" class="control-label"><span id="remote-path-label">Remote Path</span></label>

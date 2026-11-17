@@ -4,8 +4,9 @@ namespace Pterodactyl\Services\Servers;
 
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\FastDlNode;
-use Illuminate\Contracts\Encryption\Encrypter;
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\Exceptions\DisplayException;
+use Illuminate\Contracts\Encryption\Encrypter;
 use Pterodactyl\Repositories\Wings\DaemonServerRepository;
 
 class FastDlSyncService
@@ -15,14 +16,14 @@ class FastDlSyncService
      */
     public function __construct(
         protected DaemonServerRepository $daemonServerRepository,
-        protected Encrypter $encrypter
+        protected Encrypter $encrypter,
     ) {
     }
 
     /**
      * Trigger a FastDL synchronization for a server.
      *
-     * @throws \Pterodactyl\Exceptions\DisplayException
+     * @throws DisplayException
      * @throws \Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException
      */
     public function handle(Server $server): void
@@ -70,6 +71,7 @@ class FastDlSyncService
                 'access_key' => $this->encrypter->decrypt($node->access_key),
                 'secret_key' => $this->encrypter->decrypt($node->secret_key),
                 'use_path_style_endpoint' => $node->use_path_style_endpoint,
+                'purge' => $this->purgeConfigFor($node),
             ]);
         } else {
             $password = $node->password ? $this->encrypter->decrypt($node->password) : null;
@@ -89,6 +91,35 @@ class FastDlSyncService
         }
 
         $this->daemonServerRepository->setServer($server)->syncFastDl($payload);
+    }
+
+    /**
+     * Cloudflare credentials so Wings clears the cached copy of the files the sync
+     * overwrites or deletes; null when the node has no zone for purging.
+     */
+    public function purgeConfigFor(FastDlNode $node): ?array
+    {
+        $zone = $node->cloudflareZone()->with('account')->first();
+        $account = $zone?->account;
+        if (!$zone || !$account || empty($account->api_token)) {
+            return null;
+        }
+
+        try {
+            $token = $this->encrypter->decrypt($account->api_token);
+        } catch (\Throwable $exception) {
+            Log::warning('FastDL: could not decrypt the Cloudflare token for cache purge.', ['fastdl_node' => $node->id]);
+
+            return null;
+        }
+
+        return [
+            'provider' => 'cloudflare',
+            'zone_id' => $zone->zone_id,
+            'api_token' => $token,
+            // Same base the servers' download URL uses (sv_downloadurl).
+            'base_url' => rtrim($node->public_url ?: ('http://' . $node->fqdn), '/'),
+        ];
     }
 
     /**

@@ -53,7 +53,13 @@ export default () => {
                 percent: Math.floor(progress),
             });
         } else {
-            message = t(sync.phase === 'cleaning' ? 'fastdl.cleaning' : 'fastdl.running');
+            message = t(
+                sync.phase === 'cleaning'
+                    ? 'fastdl.cleaning'
+                    : sync.phase === 'purging'
+                    ? 'fastdl.purging'
+                    : 'fastdl.running'
+            );
         }
     } else if (sync.state === 'completed') {
         message = t(auto ? 'fastdl.completed_auto' : 'fastdl.completed', { date: formatDate(sync.finished_at) });

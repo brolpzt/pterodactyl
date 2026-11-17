@@ -4,8 +4,8 @@ namespace Pterodactyl\Services\GameQuery;
 
 use Illuminate\Http\Response;
 use Pterodactyl\Models\Server;
-use Pterodactyl\Support\GameDigTypeResolver;
 use Pterodactyl\Support\ServerType;
+use Pterodactyl\Support\GameDigTypeResolver;
 use Pterodactyl\Support\SlotMismatchResolver;
 use Pterodactyl\Repositories\Wings\DaemonGameQueryRepository;
 use Pterodactyl\Exceptions\Service\GameQuery\GameQueryException;
@@ -13,6 +13,8 @@ use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 
 class GameQueryService
 {
+    private const QUERY_PORT_VARIABLES = ['QUERY_PORT', 'SERVER_QUERY_PORT', 'VR_QUERY_PORT'];
+
     public function __construct(
         private DaemonGameQueryRepository $daemonGameQueryRepository,
         private PlutoniumMasterList $plutoniumMasterList,
@@ -22,13 +24,12 @@ class GameQueryService
     public function query(Server $server): array
     {
         if (ServerType::isTs3($server)) {
-            throw new GameQueryException(
-                'Este servidor TeamSpeak 3 utiliza a API dedicada de query TS3.',
-                Response::HTTP_UNPROCESSABLE_ENTITY
-            );
+            throw new GameQueryException('Este servidor TeamSpeak 3 utiliza a API dedicada de query TS3.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $server->loadMissing(['egg', 'allocation', 'variables']);
+        // Not 'variables': eager loading that relation loses the server_id in its join and
+        // returns every server_value as null (see Server::variables()).
+        $server->loadMissing(['egg', 'allocation']);
 
         $gameType = GameDigTypeResolver::resolve(
             $server->egg->gamedig ?? null,
@@ -36,18 +37,12 @@ class GameQueryService
         );
 
         if ($gameType === null) {
-            throw new GameQueryException(
-                'Configure o campo GameDig do egg com um tipo suportado (ex.: cs16, cod4, samp).',
-                Response::HTTP_UNPROCESSABLE_ENTITY
-            );
+            throw new GameQueryException('Configure o campo GameDig do egg com um tipo suportado (ex.: cs16, cod4, samp).', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $allocation = $server->allocation;
         if ($allocation === null) {
-            throw new GameQueryException(
-                'Este servidor não possui alocação primária configurada.',
-                Response::HTTP_UNPROCESSABLE_ENTITY
-            );
+            throw new GameQueryException('Este servidor não possui alocação primária configurada.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $port = (int) $allocation->port;
@@ -61,11 +56,7 @@ class GameQueryService
         try {
             $result = $this->daemonGameQueryRepository->setServer($server)->query($gameType, $queryPort);
         } catch (DaemonConnectionException $exception) {
-            throw new GameQueryException(
-                $exception->getMessage(),
-                $exception->getStatusCode(),
-                $exception
-            );
+            throw new GameQueryException($exception->getMessage(), $exception->getStatusCode(), $exception);
         }
 
         // Prefer alias (public/GCore IP) over the private bind address.
@@ -126,29 +117,25 @@ class GameQueryService
             return $defaultPort;
         }
 
-        $server->loadMissing(['variables', 'allocations']);
-
-        foreach ($server->variables as $variable) {
-            if (!in_array($variable->env_variable, ['QUERY_PORT', 'SERVER_QUERY_PORT', 'VR_QUERY_PORT'], true)) {
-                continue;
-            }
-
-            $value = trim((string) ($variable->server_value ?? ''));
-            if ($value !== '' && ctype_digit($value)) {
-                return (int) $value;
+        // Same precedence as EnvironmentService, so we query the port the container receives:
+        // a non-primary allocation bound to the query slot wins over the variable value.
+        $server->loadMissing('allocations');
+        foreach ($server->allocations as $allocation) {
+            $env = strtoupper(trim((string) ($allocation->port_env ?? '')));
+            $port = (int) $allocation->port;
+            if (in_array($env, self::QUERY_PORT_VARIABLES, true)
+                && (int) $allocation->id !== (int) $server->allocation_id
+                && $port >= 1 && $port <= 65535) {
+                return $port;
             }
         }
 
-        // Fall back to the allocation bound to the query port slot.
-        foreach ($server->allocations as $allocation) {
-            $env = strtoupper(trim((string) ($allocation->port_env ?? '')));
-            if (!in_array($env, ['QUERY_PORT', 'SERVER_QUERY_PORT', 'VR_QUERY_PORT'], true)) {
-                continue;
-            }
-
-            $port = (int) $allocation->port;
-            if ($port >= 1 && $port <= 65535) {
-                return $port;
+        // Query the relation directly: an eager-loaded "variables" relation has no server_value.
+        $variables = $server->variables()->whereIn('egg_variables.env_variable', self::QUERY_PORT_VARIABLES)->get();
+        foreach ($variables as $variable) {
+            $value = trim((string) ($variable->server_value ?? $variable->default_value ?? ''));
+            if ($value !== '' && ctype_digit($value) && (int) $value >= 1 && (int) $value <= 65535) {
+                return (int) $value;
             }
         }
 

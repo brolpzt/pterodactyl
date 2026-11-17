@@ -95,18 +95,19 @@ class FastDlSyncService
 
     /**
      * Cloudflare credentials so Wings clears the cached copy of the files the sync
-     * overwrites or deletes; null when the node has no zone for purging.
+     * overwrites or deletes; null when the node has no zone for purging. The node's
+     * own purge-only token wins over the zone account's (DNS) token.
      */
     public function purgeConfigFor(FastDlNode $node): ?array
     {
         $zone = $node->cloudflareZone()->with('account')->first();
-        $account = $zone?->account;
-        if (!$zone || !$account || empty($account->api_token)) {
+        $encrypted = $node->cloudflare_purge_token ?: $zone?->account?->api_token;
+        if (!$zone || empty($encrypted)) {
             return null;
         }
 
         try {
-            $token = $this->encrypter->decrypt($account->api_token);
+            $token = $this->encrypter->decrypt($encrypted);
         } catch (\Throwable $exception) {
             Log::warning('FastDL: could not decrypt the Cloudflare token for cache purge.', ['fastdl_node' => $node->id]);
 

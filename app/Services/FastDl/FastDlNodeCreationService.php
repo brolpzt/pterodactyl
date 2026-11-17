@@ -54,7 +54,7 @@ class FastDlNodeCreationService
 
     private function encryptSecrets(array $data): array
     {
-        foreach (['password', 'private_key', 'access_key', 'secret_key'] as $field) {
+        foreach (['password', 'private_key', 'access_key', 'secret_key', 'cloudflare_purge_token'] as $field) {
             if (!empty($data[$field])) {
                 $data[$field] = $this->encrypter->encrypt($data[$field]);
             }

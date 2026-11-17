@@ -66,7 +66,12 @@
                                     <option value="{{ $zone->id }}" {{ (string) old('cloudflare_zone_id') === (string) $zone->id ? 'selected' : '' }}>{{ $zone->domain }} ({{ $zone->account?->name ?? 'sem conta' }})</option>
                                 @endforeach
                             </select>
-                            <p class="text-muted small">Zona da Cloudflare que serve a URL pública. Depois de cada sincronização, o Wings limpa o cache dos arquivos sobrescritos ou apagados, para os jogadores não baixarem a versão antiga. O token da conta precisa da permissão <code>Zone → Cache Purge → Purge</code>.</p>
+                            <p class="text-muted small">Zona da Cloudflare que serve a URL pública. Depois de cada sincronização, o Wings limpa o cache dos arquivos sobrescritos ou apagados, para os jogadores não baixarem a versão antiga. Sem token próprio abaixo, usa o token da conta, que precisa da permissão <code>Zone → Cache Purge → Purge</code>.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="pCloudflarePurgeToken" class="control-label">Token de purge da Cloudflare (opcional)</label>
+                            <input type="password" name="cloudflare_purge_token" id="pCloudflarePurgeToken" class="form-control" autocomplete="new-password" />
+                            <p class="text-muted small">Token só com a permissão <code>Zone → Cache Purge → Purge</code>. </p>
                         </div>
                     </div>
                     <div class="form-group">

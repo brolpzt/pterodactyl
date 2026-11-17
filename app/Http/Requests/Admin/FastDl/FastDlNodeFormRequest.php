@@ -35,6 +35,7 @@ class FastDlNodeFormRequest extends AdminFormRequest
                 'use_path_style_endpoint' => 'sometimes|boolean',
                 'public_url' => 'nullable|string|max:512',
                 'cloudflare_zone_id' => 'nullable|integer|exists:cloudflare_zones,id',
+                'cloudflare_purge_token' => 'nullable|string|max:512',
                 'port' => 'nullable|numeric|between:1,65535',
                 'username' => 'nullable|string|max:191',
                 'password' => 'nullable|string',

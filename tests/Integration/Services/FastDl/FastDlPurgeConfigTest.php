@@ -60,6 +60,12 @@ class FastDlPurgeConfigTest extends IntegrationTestCase
         // Without a public URL the base falls back to http://<fqdn>, like the download URL.
         $this->assertSame('http://fastdl.example.com', $service->purgeConfigFor($this->node(['cloudflare_zone_id' => $zone->id]))['base_url']);
 
+        // The node's own purge-only token wins over the account token.
+        $this->assertSame('purge-token', $service->purgeConfigFor($this->node([
+            'cloudflare_zone_id' => $zone->id,
+            'cloudflare_purge_token' => $encrypter->encrypt('purge-token'),
+        ]))['api_token']);
+
         // An account without a token cannot purge.
         $account->forceFill(['api_token' => null])->save();
         $this->assertNull($service->purgeConfigFor($this->node(['cloudflare_zone_id' => $zone->id])));

@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string|null $private_key
  * @property bool $is_active
  * @property int|null $cloudflare_zone_id zone whose cache is purged after a sync
+ * @property string|null $cloudflare_purge_token encrypted; falls back to the zone account's token
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property Location $location
@@ -90,6 +91,7 @@ class FastDlNode extends Model
         'private_key' => 'nullable|string',
         'is_active' => 'boolean',
         'cloudflare_zone_id' => 'nullable|integer|exists:cloudflare_zones,id',
+        'cloudflare_purge_token' => 'nullable|string',
     ];
 
     public function isS3(): bool

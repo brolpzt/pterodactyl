@@ -164,6 +164,7 @@ Route::group(['prefix' => 'nodes'], function () {
     Route::get('/view/{node:id}/configuration', [Admin\Nodes\NodeViewController::class, 'configuration'])->name('admin.nodes.view.configuration');
     Route::get('/view/{node:id}/allocation', [Admin\Nodes\NodeViewController::class, 'allocations'])->name('admin.nodes.view.allocation');
     Route::get('/view/{node:id}/nftables', [Admin\Nodes\NodeViewController::class, 'nftables'])->name('admin.nodes.view.nftables');
+    Route::get('/view/{node:id}/xdp', [Admin\Nodes\NodeXdpController::class, 'index'])->name('admin.nodes.view.xdp');
     Route::get('/view/{node:id}/servers', [Admin\Nodes\NodeViewController::class, 'servers'])->name('admin.nodes.view.servers');
     Route::get('/view/{node:id}/system-information', Admin\Nodes\SystemInformationController::class);
 
@@ -177,6 +178,8 @@ Route::group(['prefix' => 'nodes'], function () {
     Route::post('/view/{node:id}/allocation/nftables', [Admin\NodesController::class, 'allocationSetNftablesManaged'])->name('admin.nodes.view.allocation.setNftables');
     Route::post('/view/{node:id}/nftables', [Admin\NodesController::class, 'setNftablesEnabled'])->name('admin.nodes.view.nftables.setEnabled');
     Route::post('/view/{node:id}/nftables/sync', [Admin\NodesController::class, 'syncNftablesFirewall'])->name('admin.nodes.view.nftables.sync');
+    Route::post('/view/{node:id}/xdp', [Admin\Nodes\NodeXdpController::class, 'setEnabled'])->name('admin.nodes.view.xdp.setEnabled');
+    Route::post('/view/{node:id}/xdp/sync', [Admin\Nodes\NodeXdpController::class, 'sync'])->name('admin.nodes.view.xdp.sync');
     Route::post('/view/{node:id}/settings/token', Admin\NodeAutoDeployController::class)->name('admin.nodes.view.configuration.token');
 
     Route::patch('/view/{node:id}/settings', [Admin\NodesController::class, 'updateSettings']);

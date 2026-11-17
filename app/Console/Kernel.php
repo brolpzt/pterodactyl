@@ -8,16 +8,17 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Console\PruneCommand;
 use Pterodactyl\Repositories\Eloquent\SettingsRepository;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Pterodactyl\Console\Commands\Node\SyncXdpFirewallCommand;
 use Pterodactyl\Services\Telemetry\TelemetryCollectionService;
 use Pterodactyl\Console\Commands\Schedule\ProcessRunnableCommand;
+use Pterodactyl\Console\Commands\Maintenance\SamplePlayerCountsCommand;
+use Pterodactyl\Console\Commands\Maintenance\RefreshGcoreIpListsCommand;
 use Pterodactyl\Console\Commands\Maintenance\PruneOrphanedBackupsCommand;
+use Pterodactyl\Console\Commands\Maintenance\PruneBoostConnectionsCommand;
+use Pterodactyl\Console\Commands\Maintenance\SyncGcoreAttackEventsCommand;
 use Pterodactyl\Console\Commands\Maintenance\CleanServiceBackupFilesCommand;
 use Pterodactyl\Console\Commands\Server\ProcessForcedConsoleCommandsCommand;
 use Pterodactyl\Console\Commands\Maintenance\ExpireSftpFirewallGrantsCommand;
-use Pterodactyl\Console\Commands\Maintenance\SamplePlayerCountsCommand;
-use Pterodactyl\Console\Commands\Maintenance\SyncGcoreAttackEventsCommand;
-use Pterodactyl\Console\Commands\Maintenance\RefreshGcoreIpListsCommand;
-use Pterodactyl\Console\Commands\Maintenance\PruneBoostConnectionsCommand;
 
 class Kernel extends ConsoleKernel
 {
@@ -60,6 +61,9 @@ class Kernel extends ConsoleKernel
 
         // Drop Server Boost connection reports past the retention window.
         $schedule->command(PruneBoostConnectionsCommand::class)->daily();
+
+        // Reconcile the XDP game firewall of nodes with XDP enabled (fixes drift and missed changes).
+        $schedule->command(SyncXdpFirewallCommand::class)->everyTenMinutes()->withoutOverlapping();
 
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 

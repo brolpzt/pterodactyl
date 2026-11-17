@@ -322,6 +322,9 @@
                         </div>
                     </div>
                     <div class="table-responsive">
+                        @php
+                            $xdpAuto = \Pterodactyl\Services\Xdp\XdpProfile::auto($egg, (int) $egg->id === \Pterodactyl\Support\ServerType::TS3_EGG_ID);
+                        @endphp
                         <table class="table table-condensed" id="portSlotsTable">
                             <thead>
                             <tr>
@@ -330,6 +333,7 @@
                                 <th>Descrição</th>
                                 <th style="width:16%">Gcore policy</th>
                                 <th style="width:10%">Proto</th>
+                                <th style="width:11%">XDP <span class="text-muted" title="Perfil do firewall XDP do node para a porta deste slot. Automático usa o jogo do egg; slots só TCP ficam de fora.">?</span></th>
                                 <th style="width:16%">Também incluir em <a href="{{ route('admin.gcore.linked-rules') }}" target="_blank" title="Regras vinculadas: as portas deste slot entram também nestas regras Gcore">?</a></th>
                                 <th style="width:70px">Required</th>
                                 <th style="width:40px"></th>
@@ -363,6 +367,15 @@
                                             @foreach($gcoreProtos as $proto)
                                                 @continue($proto === 'any')
                                                 <option value="{{ $proto }}" {{ ($slot['gcore_proto'] ?? '') === $proto ? 'selected' : '' }}>{{ $proto }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="port_slots[{{ $i }}][xdp_profile]" class="form-control input-sm">
+                                            <option value="">Automático ({{ $xdpAuto }})</option>
+                                            <option value="none" {{ ($slot['xdp_profile'] ?? '') === 'none' ? 'selected' : '' }}>Nenhum</option>
+                                            @foreach(\Pterodactyl\Services\Xdp\XdpProfile::PROFILES as $xdpProfile)
+                                                <option value="{{ $xdpProfile }}" {{ ($slot['xdp_profile'] ?? '') === $xdpProfile ? 'selected' : '' }}>{{ $xdpProfile }}</option>
                                             @endforeach
                                         </select>
                                     </td>
@@ -610,6 +623,13 @@
             protoOpts.forEach(function (p) { h += '<option value="' + p + '">' + p + '</option>'; });
             return h + '</select>';
         }
+        var xdpAuto = @json($xdpAuto ?? 'generic');
+        var xdpOpts = @json(\Pterodactyl\Services\Xdp\XdpProfile::PROFILES);
+        function xdpSelect(i) {
+            var h = '<select name="port_slots[' + i + '][xdp_profile]" class="form-control input-sm"><option value="">Automático (' + xdpAuto + ')</option><option value="none">Nenhum</option>';
+            xdpOpts.forEach(function (p) { h += '<option value="' + p + '">' + p + '</option>'; });
+            return h + '</select>';
+        }
         function reindex() {
             $('#portSlotsTable tbody tr').each(function (i) {
                 $(this).find('input, select').each(function () {
@@ -627,6 +647,7 @@
                 '<td><input type="text" name="port_slots[' + idx + '][description]" class="form-control input-sm" placeholder="Porta de query Steam"></td>' +
                 '<td>' + policySelect(idx) + '</td>' +
                 '<td>' + protoSelect(idx) + '</td>' +
+                '<td>' + xdpSelect(idx) + '</td>' +
                 '<td class="gcore-links-cell">' + linksCell(idx) + '</td>' +
                 '<td class="text-center"><input type="hidden" name="port_slots[' + idx + '][required]" value="0">' +
                 '<input type="checkbox" name="port_slots[' + idx + '][required]" value="1"></td>' +

@@ -8,6 +8,7 @@ use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\EggVariable;
 use Pterodactyl\Models\ServerVariable;
+use Pterodactyl\Services\Xdp\XdpProfile;
 use Pterodactyl\Services\Gcore\GcoreClient;
 use Illuminate\Database\ConnectionInterface;
 use Pterodactyl\Exceptions\DisplayException;
@@ -73,6 +74,7 @@ class PortSlotSyncService
                 fn (int $id) => $id > 0,
             )));
             sort($gcoreLinks);
+            $xdpProfile = XdpProfile::normalizeSlotValue(Arr::get($row, 'xdp_profile', ''));
 
             if ($env === '' && $name === '' && $gcorePolicy === '') {
                 continue;
@@ -100,6 +102,10 @@ class PortSlotSyncService
                 throw new DisplayException("port_slots[{$index}]: gcore_proto inválido ({$gcoreProto}).");
             }
 
+            if ($xdpProfile === false) {
+                throw new DisplayException("port_slots[{$index}]: perfil XDP inválido.");
+            }
+
             if ($name === '') {
                 $name = $isPrimary ? 'Game Port' : $env;
             }
@@ -117,6 +123,7 @@ class PortSlotSyncService
                 'gcore_policy' => $gcorePolicy === '' ? null : $gcorePolicy,
                 'gcore_proto' => $gcoreProto === '' || $gcoreProto === 'any' ? null : $gcoreProto,
                 'gcore_links' => $gcoreLinks,
+                'xdp_profile' => $xdpProfile,
             ];
         }
 
@@ -158,6 +165,7 @@ class PortSlotSyncService
             'required' => true,
             'gcore_policy' => $policy !== '' && in_array($policy, GcoreClient::POLICIES, true) ? $policy : null,
             'gcore_proto' => $proto !== '' && $proto !== 'any' && in_array($proto, GcoreClient::PROTOCOLS, true) ? $proto : null,
+            'xdp_profile' => null,
         ]);
 
         return $slots;
@@ -183,6 +191,7 @@ class PortSlotSyncService
                 'required' => true,
                 'gcore_policy' => null,
                 'gcore_proto' => null,
+                'xdp_profile' => null,
             ]];
         }
 
@@ -356,6 +365,43 @@ class PortSlotSyncService
 
         // icmp/gre/esp are not useful as dport ACCEPTs for game servers.
         return null;
+    }
+
+    /**
+     * XDP game firewall profile for an allocation, or null when the port is not protected.
+     *
+     * The slot's xdp_profile wins ('none' disables it); without one the profile comes from
+     * the egg's game (XdpProfile::auto). TCP-only slots are skipped: XDP only filters UDP.
+     * Allocations not bound to any slot follow the SERVER_PORT slot.
+     */
+    public function resolveXdpProfileForAllocation(Egg $egg, Allocation $allocation, int $primaryAllocationId, bool $isTs3 = false): ?string
+    {
+        $slots = $this->withLegacyPrimarySlot(
+            is_array($egg->port_slots) ? $egg->port_slots : [],
+            $egg
+        );
+        $byEnv = [];
+        foreach ($slots as $slot) {
+            $byEnv[$slot['env_variable']] = $slot;
+        }
+
+        $env = $this->resolveSlotEnv($allocation, $primaryAllocationId, array_keys($byEnv));
+        $slot = $byEnv[$env] ?? $byEnv[self::PRIMARY_ENV] ?? null;
+
+        $profile = $slot['xdp_profile'] ?? null;
+        if ($profile === XdpProfile::NONE) {
+            return null;
+        }
+        if (is_string($profile) && in_array($profile, XdpProfile::PROFILES, true)) {
+            return $profile;
+        }
+
+        $proto = strtolower(trim((string) ($slot['gcore_proto'] ?? '')));
+        if ($proto !== '' && $proto !== 'any' && $proto !== 'udp') {
+            return null;
+        }
+
+        return XdpProfile::auto($egg, $isTs3);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace Pterodactyl\Repositories\Wings;
 
 use Webmozart\Assert\Assert;
 use Pterodactyl\Models\Server;
+use Pterodactyl\Jobs\SyncNodeXdpJob;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\TransferException;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
@@ -53,6 +54,9 @@ class DaemonServerRepository extends DaemonRepository
         } catch (GuzzleException $exception) {
             throw new DaemonConnectionException($exception);
         }
+
+        // The server's ports may have changed: refresh the node's XDP port map.
+        SyncNodeXdpJob::dispatchForNode($this->server->node_id);
     }
 
     /**
@@ -69,6 +73,9 @@ class DaemonServerRepository extends DaemonRepository
         } catch (GuzzleException $exception) {
             throw new DaemonConnectionException($exception);
         }
+
+        // The server's ports may have changed: refresh the node's XDP port map.
+        SyncNodeXdpJob::dispatchForNode($this->server->node_id);
     }
 
     /**
@@ -179,6 +186,9 @@ class DaemonServerRepository extends DaemonRepository
         } catch (TransferException $exception) {
             throw new DaemonConnectionException($exception);
         }
+
+        // The server's ports may have changed: refresh the node's XDP port map.
+        SyncNodeXdpJob::dispatchForNode($this->server->node_id);
     }
 
     /**

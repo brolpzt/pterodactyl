@@ -24,6 +24,7 @@
                 <li class="active"><a href="{{ route('admin.nodes.view.configuration', $node->id) }}">Configuration</a></li>
                 <li><a href="{{ route('admin.nodes.view.allocation', $node->id) }}">Allocation</a></li>
                 <li><a href="{{ route('admin.nodes.view.nftables', $node->id) }}">Firewall Nftables</a></li>
+                <li><a href="{{ route('admin.nodes.view.xdp', $node->id) }}">Firewall XDP</a></li>
                 <li><a href="{{ route('admin.nodes.view.servers', $node->id) }}">Servers</a></li>
             </ul>
         </div>

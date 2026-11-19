@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import useSWR from 'swr';
+import { format, parseISO } from 'date-fns';
 import tw from 'twin.macro';
 import { faSlidersH } from '@fortawesome/free-solid-svg-icons';
 import TitledGreyBox from '@/components/elements/TitledGreyBox';
@@ -38,6 +39,33 @@ const ProfileAlert = ({ alert, className }: { alert: DdosProfileAlert; className
     </Alert>
 );
 
+const SyncStatus = ({ sync }: { sync: NonNullable<DdosProfileState['sync']> }) => {
+    if (sync.status === 'pending') {
+        return (
+            <p css={tw`flex items-center gap-2 text-sm text-yellow-300 m-0 mt-2`}>
+                <span css={tw`inline-block h-2 w-2 rounded-full bg-yellow-400 animate-pulse`} />
+                Aplicando na proteção… isso costuma levar alguns instantes.
+            </p>
+        );
+    }
+    if (sync.status === 'applied') {
+        return (
+            <p css={tw`flex items-center gap-2 text-sm text-green-400 m-0 mt-2`}>
+                <span css={tw`inline-block h-2 w-2 rounded-full bg-green-400`} />
+                Aplicado na proteção
+                {sync.finished_at ? ` em ${format(parseISO(sync.finished_at), 'dd/MM HH:mm')}` : ''}.
+            </p>
+        );
+    }
+
+    return (
+        <Alert type={'danger'} className={'mt-3 text-sm'}>
+            Não foi possível aplicar a última troca na proteção agora. Ela será aplicada na próxima sincronização; você
+            já pode tentar trocar novamente ou abrir um ticket.
+        </Alert>
+    );
+};
+
 const minutesUntil = (iso: string | null, now: number): number => {
     if (!iso) return 0;
     const diff = new Date(iso).getTime() - now;
@@ -47,15 +75,18 @@ const minutesUntil = (iso: string | null, now: number): number => {
 
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
-    const { data, mutate } = useSWR<DdosProfileState>(['server:anti-ddos:profile', uuid], () => getDdosProfile(uuid), {
-        revalidateOnFocus: false,
-        errorRetryCount: 1,
-    });
+    const { data, mutate, revalidate } = useSWR<DdosProfileState>(
+        ['server:anti-ddos:profile', uuid],
+        () => getDdosProfile(uuid),
+        {
+            revalidateOnFocus: false,
+            errorRetryCount: 1,
+        }
+    );
     const [selected, setSelected] = useState<number | null>(null);
     const [confirming, setConfirming] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [now, setNow] = useState(() => Date.now());
 
     useEffect(() => {
@@ -67,6 +98,15 @@ export default () => {
     useEffect(() => {
         setSelected(data?.current?.id ?? null);
     }, [data?.current?.id]);
+
+    // While Gcore applies the change, check every few seconds.
+    const pending = data?.sync?.status === 'pending';
+    useEffect(() => {
+        if (!pending) return;
+        const timer = setInterval(() => revalidate(), 5_000);
+
+        return () => clearInterval(timer);
+    }, [pending]);
 
     if (!data || !data.enabled || !data.current) {
         return null;
@@ -81,11 +121,9 @@ export default () => {
         if (!chosen) return;
         setSaving(true);
         setError(null);
-        setSuccess(null);
         updateDdosProfile(uuid, chosen.id)
             .then((state) => {
                 mutate(state, false);
-                setSuccess('Perfil alterado. A nova proteção é aplicada em alguns instantes.');
             })
             .catch((e) => setError(httpErrorToHuman(e)))
             .then(() => {
@@ -98,6 +136,7 @@ export default () => {
         <TitledGreyBox title={'Perfil de proteção'} icon={faSlidersH} className={'mb-4'}>
             <p css={[cardLabelText, tw`text-xs uppercase tracking-wide m-0`]}>Perfil ativo</p>
             <p css={[cardValueText, tw`text-lg font-medium m-0 mt-1`]}>{data.current.label}</p>
+            {data.sync && <SyncStatus sync={data.sync} />}
             {data.current.alert && <ProfileAlert alert={data.current.alert} className={'mt-3'} />}
 
             {blocked
@@ -119,7 +158,6 @@ export default () => {
                                       onChange={(e) => {
                                           setSelected(Number(e.currentTarget.value));
                                           setError(null);
-                                          setSuccess(null);
                                       }}
                                       disabled={saving}
                                   >
@@ -149,11 +187,6 @@ export default () => {
                               {error && (
                                   <Alert type={'danger'} className={'mt-3 text-sm'}>
                                       {error}
-                                  </Alert>
-                              )}
-                              {success && (
-                                  <Alert type={'success'} className={'mt-3 text-sm'}>
-                                      {success}
                                   </Alert>
                               )}
                           </div>

@@ -19,6 +19,8 @@ export interface DdosProfileState {
     custom: boolean;
     cooldown_minutes: number;
     next_change_at: string | null;
+    /** Gcore sync of the last change: pending while queued or running. */
+    sync: { status: 'pending' | 'applied' | 'failed'; finished_at: string | null } | null;
     current: { id: number | null; label: string; alert: DdosProfileAlert | null } | null;
     options: DdosProfileOption[];
 }

@@ -3,7 +3,6 @@
 namespace Pterodactyl\Services\Gcore\IpLists;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Pterodactyl\Models\GcoreIpList;
 use Pterodactyl\Services\Gcore\GcoreClient;
 use Pterodactyl\Models\GcoreIpListBinding;
@@ -28,7 +27,8 @@ class GcoreIpListBindingService
     }
 
     /**
-     * Serialises every read-modify-write of one Gcore profile (editor save, port sync, list refresh).
+     * Serialises every read-modify-write of a Gcore profile (editor save, port sync, list refresh);
+     * the lock is global, so no two Gcore writes run at the same time.
      *
      * @template T
      * @param callable(): T $callback
@@ -36,7 +36,8 @@ class GcoreIpListBindingService
      */
     public static function withProfileLock(int $profileId, callable $callback): mixed
     {
-        return Cache::lock('gcore:profile-acl:' . $profileId, 120)->block(60, $callback);
+        // Global, not per profile: Gcore writes never run in parallel.
+        return \Pterodactyl\Services\Gcore\GcoreWriteLock::run($callback, 60);
     }
 
     /** @param array<string, mixed> $rule */

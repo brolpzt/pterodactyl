@@ -30,6 +30,7 @@ class ServerDdosProfileController extends Controller
             'server' => $server,
             'context' => $context,
             'nextClientChange' => $this->service->nextClientChangeAt($context),
+            'sync' => $this->service->syncStatus($context['state']),
             'policies' => GcoreClient::POLICIES,
         ]);
     }

@@ -79,9 +79,9 @@ class GcoreSyncQueueTest extends IntegrationTestCase
         $failing = app(GcoreSyncQueue::class)->ports($this->node, '203.0.113.11', 'teste');
         $sync = \Mockery::mock(GcoreFirewallSyncService::class);
         $sync->expects('syncIp')->andThrow(new \RuntimeException('API HTTP 502'));
-        $job = new SyncGcorePortsJob($failing->id);
-        $job->tries = 1;
-        $job->handle($sync);
+        // Last real attempt (waits for the write lock do not count).
+        $failing->forceFill(['attempts' => SyncGcorePortsJob::MAX_ATTEMPTS - 1])->save();
+        (new SyncGcorePortsJob($failing->id))->handle($sync);
         $failing->refresh();
         $this->assertSame('error', $failing->status);
         $this->assertSame('API HTTP 502', $failing->summary);
@@ -113,5 +113,31 @@ class GcoreSyncQueueTest extends IntegrationTestCase
             ->assertSessionHas('alert_messages', fn ($a) => str_contains(implode(' ', $a['info'] ?? []), 'na fila'));
         Queue::assertPushed(RefreshGcoreIpListJob::class, 1);
         $this->actingAs($admin)->get("/admin/gcore/ip-lists/{$list->id}")->assertOk()->assertSee('na fila');
+    }
+
+    public function testPortsJobWaitsOnTheQueueWhileAnotherGcoreWriteRuns(): void
+    {
+        Queue::fake();
+        $run = app(GcoreSyncQueue::class)->ports($this->node, '203.0.113.10', 'teste');
+
+        $lock = \Illuminate\Support\Facades\Cache::lock(\Pterodactyl\Services\Gcore\GcoreWriteLock::KEY, 60);
+        $this->assertTrue($lock->get());
+        try {
+            $sync = \Mockery::mock(GcoreFirewallSyncService::class);
+            $sync->shouldNotReceive('syncIp');
+            (new SyncGcorePortsJob($run->id))->handle($sync);
+        } finally {
+            $lock->release();
+        }
+
+        $run->refresh();
+        $this->assertSame('queued', $run->status);
+        $this->assertSame(0, $run->attempts);
+
+        // Free again: it runs.
+        $sync = \Mockery::mock(GcoreFirewallSyncService::class);
+        $sync->shouldReceive('syncIp')->once()->andReturn('ok');
+        (new SyncGcorePortsJob($run->id))->handle($sync);
+        $this->assertSame('ok', $run->refresh()->status);
     }
 }

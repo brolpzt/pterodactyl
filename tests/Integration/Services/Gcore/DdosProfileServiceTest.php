@@ -172,4 +172,29 @@ class DdosProfileServiceTest extends IntegrationTestCase
         $this->expectException(DisplayException::class);
         $this->service()->changeByClient($this->server->fresh(), $this->general->id);
     }
+
+    public function testClientSeesTheSyncStatusAndAFailedSyncWaivesTheCooldown(): void
+    {
+        $this->service()->changeByClient($this->server, $this->general->id);
+        $run = GcoreSyncRun::query()->where('ip', $this->allocation->ip)->sole();
+
+        $payload = $this->service()->clientPayload($this->server);
+        $this->assertSame('pending', $payload['sync']['status']);
+        $this->assertArrayNotHasKey('summary', $payload['sync']);
+
+        $run->forceFill(['status' => 'ok', 'finished_at' => now(), 'summary' => 'udp-general aplicado'])->save();
+        $payload = $this->service()->clientPayload($this->server);
+        $this->assertSame('applied', $payload['sync']['status']);
+        $this->assertNotNull($payload['next_change_at']);
+        $this->assertStringNotContainsString('udp-general', json_encode($payload));
+
+        $run->forceFill(['status' => 'error', 'summary' => 'Gcore 500'])->save();
+        $payload = $this->service()->clientPayload($this->server);
+        $this->assertSame('failed', $payload['sync']['status']);
+        $this->assertNull($payload['next_change_at']);
+
+        // A later successful sync of the same IP applied it anyway.
+        GcoreSyncRun::query()->create(['kind' => GcoreSyncRun::KIND_PORTS, 'node_id' => $this->server->node_id, 'ip' => $this->allocation->ip, 'label' => 'x', 'reasons' => ['x'], 'status' => 'ok', 'finished_at' => now()]);
+        $this->assertSame('applied', $this->service()->clientPayload($this->server)['sync']['status']);
+    }
 }

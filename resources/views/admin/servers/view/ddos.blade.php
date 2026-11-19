@@ -57,6 +57,22 @@
                     </dd>
                     <dt>Padrão do egg</dt>
                     <dd><code>{{ $context['default']['policy'] }}</code></dd>
+                    @if($sync)
+                        <dt>Última troca na Gcore</dt>
+                        <dd>
+                            @if($sync['status'] === 'pending')
+                                <span class="label label-warning">na fila / aplicando</span>
+                            @elseif($sync['status'] === 'applied')
+                                <span class="label label-success">aplicada</span>
+                            @else
+                                <span class="label label-danger">falhou</span>
+                            @endif
+                            <span class="text-muted small">sincronização #{{ $sync['run_id'] }}</span>
+                            @if($sync['status'] === 'failed' && $sync['summary'])
+                                <br><span class="text-danger small">{{ \Illuminate\Support\Str::limit($sync['summary'], 300) }}</span>
+                            @endif
+                        </dd>
+                    @endif
                 </dl>
             </div>
         </div>

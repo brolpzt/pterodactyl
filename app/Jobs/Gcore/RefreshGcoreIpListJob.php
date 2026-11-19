@@ -6,6 +6,7 @@ use Pterodactyl\Models\GcoreIpList;
 use Pterodactyl\Models\GcoreSyncRun;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Pterodactyl\Services\Gcore\GcoreWriteLock;
 use Pterodactyl\Services\Gcore\IpLists\GcoreIpListRefreshService;
 
 /**
@@ -16,12 +17,17 @@ class RefreshGcoreIpListJob implements ShouldQueue
 {
     use Queueable;
 
-    public int $tries = 1;
 
     public int $timeout = 85;
 
     public function __construct(public readonly int $runId)
     {
+    }
+
+    /** It runs once, but may wait on the queue for the Gcore write lock. */
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHour();
     }
 
     public function handle(GcoreIpListRefreshService $refresh): void
@@ -30,6 +36,15 @@ class RefreshGcoreIpListJob implements ShouldQueue
         if ($run === null || !$run->isPending()) {
             return;
         }
+        [$ran] = GcoreWriteLock::attempt(fn () => $this->refresh($run, $refresh));
+        if (!$ran) {
+            // Another Gcore write is running: stay queued and come back shortly.
+            $this->release(SyncGcorePortsJob::BUSY_DELAY);
+        }
+    }
+
+    private function refresh(GcoreSyncRun $run, GcoreIpListRefreshService $refresh): void
+    {
         $run->forceFill(['status' => 'running', 'started_at' => now(), 'attempts' => $run->attempts + 1])->save();
 
         $list = GcoreIpList::query()->find($run->ip_list_id);

@@ -10,6 +10,7 @@ use Pterodactyl\Facades\Activity;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Pterodactyl\Models\Allocation;
+use Pterodactyl\Models\GcoreSyncRun;
 use Pterodactyl\Models\EggDdosProfile;
 use Pterodactyl\Models\EggDdosSetting;
 use Pterodactyl\Exceptions\DisplayException;
@@ -120,6 +121,11 @@ class DdosProfileService
      */
     public function nextClientChangeAt(array $context): ?CarbonImmutable
     {
+        // A change that Gcore could not apply does not cost the client a cooldown.
+        if (($this->syncStatus($context['state'])['status'] ?? null) === 'failed') {
+            return null;
+        }
+
         $changedAt = $context['state']->client_changed_at;
         $minutes = (int) $context['settings']->cooldown_minutes;
         if (!$changedAt || $minutes <= 0) {
@@ -149,6 +155,7 @@ class DdosProfileService
             'custom' => $context['custom'],
             'cooldown_minutes' => (int) $settings->cooldown_minutes,
             'next_change_at' => $next?->toIso8601String(),
+            'sync' => !$enabled ? null : $this->syncStatus($context['state'], forClient: true),
             'current' => !$enabled ? null : [
                 'id' => $current?->id,
                 'label' => $current?->label ?? ($context['custom'] ? 'Configuração personalizada pelo suporte' : 'Proteção padrão'),
@@ -270,7 +277,7 @@ class DdosProfileService
             $override = $allocation?->activeGcoreOverride();
             if ($allocation && $override !== null && $state->profile && $override['policy'] === $state->profile->policy) {
                 $this->writeOverride($allocation, null);
-                $this->queueSync($server, $allocation, $reason);
+                $state->gcore_sync_run_id = $this->queueSync($server, $allocation, $reason)?->id;
                 ++$count;
             }
             $state->forceFill(['egg_ddos_profile_id' => null])->save();
@@ -323,7 +330,7 @@ class DdosProfileService
                 continue;
             }
             $this->writeOverride($allocation, $profile->policy === $context['default']['policy'] ? null : ['policy' => $profile->policy, 'proto' => $context['default']['proto']]);
-            $this->queueSync($server, $allocation, $reason);
+            $state->forceFill(['gcore_sync_run_id' => $this->queueSync($server, $allocation, $reason)?->id])->save();
             ++$count;
         }
 
@@ -341,16 +348,18 @@ class DdosProfileService
         // The egg default needs no override, so later egg changes still reach the server.
         $this->writeOverride($allocation, $policy === $default['policy'] ? null : ['policy' => $policy, 'proto' => $default['proto']]);
 
+        $who = $actor === self::ACTOR_CLIENT ? 'cliente' : 'admin';
+        $run = $this->queueSync($server, $allocation, "perfil anti-DDoS trocado pelo {$who}: {$server->name} (#{$server->id}) → {$policy}");
+
         $state = ServerDdosProfileState::query()->firstOrNew(['server_id' => $server->id]);
         $state->egg_ddos_profile_id = $profile?->id;
+        $state->gcore_sync_run_id = $run?->id;
         if ($actor === self::ACTOR_CLIENT) {
             $state->client_changed_at = now();
         }
         $state->save();
 
         $label = $profile?->label ?? ($policy === $default['policy'] ? 'Proteção padrão' : 'Configuração personalizada');
-        $who = $actor === self::ACTOR_CLIENT ? 'cliente' : 'admin';
-        $this->queueSync($server, $allocation, "perfil anti-DDoS trocado pelo {$who}: {$server->name} (#{$server->id}) → {$policy}");
 
         $event = Activity::event('server:antiddos.profile')
             ->subject($server)
@@ -373,11 +382,51 @@ class DdosProfileService
         ])->save();
     }
 
-    private function queueSync(Server $server, Allocation $allocation, string $reason): void
+    private function queueSync(Server $server, Allocation $allocation, string $reason): ?GcoreSyncRun
     {
         $server->loadMissing('node');
-        if ($server->node) {
-            app(GcoreSyncQueue::class)->ports($server->node, (string) $allocation->ip, $reason);
+
+        return $server->node ? app(GcoreSyncQueue::class)->ports($server->node, (string) $allocation->ip, $reason) : null;
+    }
+
+    /**
+     * Where the Gcore sync of the last change stands: pending (queued or running), applied or failed.
+     * A failed run counts as applied once a later sync of the same IP succeeded.
+     *
+     * @return array{status: string, finished_at: string|null, run_id?: int, summary?: string|null}|null
+     */
+    public function syncStatus(ServerDdosProfileState $state, bool $forClient = false): ?array
+    {
+        $run = $state->gcore_sync_run_id ? GcoreSyncRun::query()->find($state->gcore_sync_run_id) : null;
+        if ($run === null) {
+            return null;
         }
+
+        $status = match (true) {
+            $run->isPending() => 'pending',
+            $run->status === 'ok' => 'applied',
+            default => 'failed',
+        };
+        $finishedAt = $run->finished_at;
+        if ($status === 'failed') {
+            $later = GcoreSyncRun::query()
+                ->where('kind', GcoreSyncRun::KIND_PORTS)
+                ->where('ip', $run->ip)
+                ->where('id', '>', $run->id)
+                ->where('status', 'ok')
+                ->orderBy('id')
+                ->first();
+            if ($later !== null) {
+                [$status, $finishedAt] = ['applied', $later->finished_at];
+            }
+        }
+
+        $payload = ['status' => $status, 'finished_at' => $finishedAt?->toIso8601String()];
+        if (!$forClient) {
+            // Admin only: the run's summary names Gcore policies.
+            $payload += ['run_id' => $run->id, 'summary' => $run->summary];
+        }
+
+        return $payload;
     }
 }

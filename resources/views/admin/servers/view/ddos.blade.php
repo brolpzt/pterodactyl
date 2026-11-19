@@ -99,6 +99,7 @@
                         </optgroup>
                     </select>
                     <p class="text-muted small" style="margin-top: 8px;">
+                        A troca pode deixar o servidor indisponível por alguns segundos enquanto o filtro é aplicado na Gcore.
                         Sem cooldown para o admin. Um perfil fora das opções do egg trava a troca pelo cliente até voltar a uma opção ou ao padrão.
                     </p>
                 </div>

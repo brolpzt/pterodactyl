@@ -44,7 +44,7 @@ const SyncStatus = ({ sync }: { sync: NonNullable<DdosProfileState['sync']> }) =
         return (
             <p css={tw`flex items-center gap-2 text-sm text-yellow-300 m-0 mt-2`}>
                 <span css={tw`inline-block h-2 w-2 rounded-full bg-yellow-400 animate-pulse`} />
-                Aplicando na proteção… isso costuma levar alguns instantes.
+                Aplicando na proteção… o servidor pode ficar indisponível por alguns segundos durante a troca.
             </p>
         );
     }
@@ -178,6 +178,7 @@ export default () => {
                               </div>
                               {changed && chosen?.alert && <ProfileAlert alert={chosen.alert} className={'mt-3'} />}
                               <p css={[cardLabelText, tw`text-xs mt-3 mb-0`]}>
+                                  A troca pode deixar o servidor indisponível por alguns segundos.{' '}
                                   {wait > 0
                                       ? `Você poderá trocar novamente em ${wait} min.`
                                       : data.cooldown_minutes > 0
@@ -203,6 +204,10 @@ export default () => {
                     {data.cooldown_minutes > 0 &&
                         ` Depois disso, você só poderá trocar de novo em ${data.cooldown_minutes} minutos.`}
                 </p>
+                <Alert type={'warning'} className={'mt-3 text-sm'}>
+                    Enquanto o novo filtro é aplicado, o servidor pode ficar indisponível por alguns segundos e
+                    jogadores conectados podem cair.
+                </Alert>
                 {chosen?.alert && <ProfileAlert alert={chosen.alert} className={'mt-3'} />}
                 <Dialog.Footer>
                     <Button.Text onClick={() => setConfirming(false)} disabled={saving}>

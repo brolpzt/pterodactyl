@@ -122,6 +122,9 @@ return [
             'rename' => 'Renamed the server from :old to :new',
             'description' => 'Changed the server description from :old to :new',
         ],
+        'antiddos' => [
+            'profile' => 'Anti-DDoS profile changed from ":old" to ":new"',
+        ],
         'startup' => [
             'edit' => 'Changed the :variable variable from ":old" to ":new"',
             'image' => 'Updated the Docker Image for the server from :old to :new',

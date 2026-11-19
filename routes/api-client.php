@@ -77,6 +77,8 @@ Route::group([
     Route::get('/player-stats', Client\Servers\PlayerStatsController::class)->name('api:client:server.player-stats');
     Route::get('/anti-ddos/events', [Client\Servers\AntiDdosController::class, 'index'])->name('api:client:server.anti-ddos');
     Route::get('/anti-ddos/events/{event}', [Client\Servers\AntiDdosController::class, 'view'])->name('api:client:server.anti-ddos.view');
+    Route::get('/anti-ddos/profile', [Client\Servers\AntiDdosProfileController::class, 'index'])->name('api:client:server.anti-ddos.profile');
+    Route::post('/anti-ddos/profile', [Client\Servers\AntiDdosProfileController::class, 'update']);
     Route::get('/boost', Client\Servers\ServerBoostController::class)->name('api:client:server.boost');
     Route::get('/activity', Client\Servers\ActivityLogController::class)->name('api:client:server.activity');
 

@@ -81,6 +81,8 @@ class Permission extends Model
     public const ACTION_AMXX_CHAT = 'amxx.chat';
     public const ACTION_AMXX_CVAR = 'amxx.cvar';
 
+    public const ACTION_ANTIDDOS_PROFILE = 'antiddos.profile';
+
     public const ACTION_WEBRCON_READ = 'webrcon.read';
     public const ACTION_WEBRCON_KICK = 'webrcon.kick';
     public const ACTION_WEBRCON_BAN = 'webrcon.ban';
@@ -244,6 +246,13 @@ class Permission extends Model
                 'read'   => 'Allows a user to view DNS records for this server.',
                 'create' => 'Allows a user to create DNS records for this server.',
                 'delete' => 'Allows a user to remove DNS records from this server.',
+            ],
+        ],
+
+        'antiddos' => [
+            'description' => 'Permissions for the server\'s Anti-DDoS protection.',
+            'keys' => [
+                'profile' => 'Allows a user to change the Anti-DDoS protection profile of the server.',
             ],
         ],
 

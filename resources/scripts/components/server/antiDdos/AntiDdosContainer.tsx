@@ -25,6 +25,7 @@ import Tooltip from '@/components/elements/tooltip/Tooltip';
 import { Alert } from '@/components/elements/alert';
 import { ServerContext } from '@/state/server';
 import { AntiDdosEventSummary, getAntiDdosEvents } from '@/api/server/antiDdos/getAntiDdosEvents';
+import DdosProfileCard from '@/components/server/antiDdos/DdosProfileCard';
 import { bpsToMbps, formatBps, formatPps, formatWhen } from '@/components/server/antiDdos/format';
 import { cardLabelText, cardRowBorder, cardValueText, emptyStateText } from '@/assets/css/cardTheme';
 import type { PaginationDataSet } from '@/api/http';
@@ -318,6 +319,8 @@ export default () => {
                     </p>
                 </div>
             </Alert>
+
+            <DdosProfileCard />
 
             {!data?.supported ? (
                 <TitledGreyBox title={'Proteção DDoS'} icon={faShieldVirus}>

@@ -30,6 +30,9 @@
                     <li class="{{ $router->currentRouteNamed('admin.servers.view.firewall') ? 'active' : '' }}">
                         <a href="{{ route('admin.servers.view.firewall', $server->id) }}">Firewall</a>
                     </li>
+                    <li class="{{ $router->currentRouteNamed('admin.servers.view.ddos') ? 'active' : '' }}">
+                        <a href="{{ route('admin.servers.view.ddos', $server->id) }}">Anti-DDoS</a>
+                    </li>
                 @endif
                 <li class="{{ $router->currentRouteNamed('admin.servers.view.manage') ? 'active' : '' }}">
                     <a href="{{ route('admin.servers.view.manage', $server->id) }}">Manage</a>

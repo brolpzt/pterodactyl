@@ -113,6 +113,9 @@ return [
             'rename' => 'Servidor renombrado de :old a :new',
             'description' => 'Descripción del servidor cambiada de :old a :new',
         ],
+        'antiddos' => [
+            'profile' => 'Perfil anti-DDoS cambiado de ":old" a ":new"',
+        ],
         'startup' => [
             'edit' => 'Variable :variable cambiada de ":old" a ":new"',
             'image' => 'Imagen Docker del servidor actualizada de :old a :new',

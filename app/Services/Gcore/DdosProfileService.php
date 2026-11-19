@@ -183,10 +183,10 @@ class DdosProfileService
 
             $context = $this->context($server);
             if (!$context['available'] || !$context['settings']->enabled || $context['profiles']->isEmpty()) {
-                throw new DisplayException('A troca do perfil de proteção não está disponível para este servidor.');
+                throw new DisplayException('A mudança do perfil de proteção não está disponível para este servidor.');
             }
             if ($context['state']->client_locked) {
-                throw new DisplayException('A troca do perfil de proteção foi bloqueada pelo suporte para este servidor.');
+                throw new DisplayException('A mudança do perfil de proteção foi bloqueada pelo suporte para este servidor.');
             }
             if ($context['custom']) {
                 throw new DisplayException('Este servidor usa uma configuração personalizada pelo suporte. Abra um ticket para alterá-la.');
@@ -204,7 +204,7 @@ class DdosProfileService
             $next = $this->nextClientChangeAt($context);
             if ($next !== null) {
                 $minutes = max(1, (int) ceil(now()->diffInSeconds($next, true) / 60));
-                throw new DisplayException("Você poderá trocar o perfil de proteção novamente em {$minutes} min.");
+                throw new DisplayException("Você poderá mudar o perfil de proteção novamente em {$minutes} min.");
             }
 
             $this->apply($server, $context, $profile->policy, $profile, self::ACTOR_CLIENT, $user);
@@ -349,7 +349,7 @@ class DdosProfileService
         $this->writeOverride($allocation, $policy === $default['policy'] ? null : ['policy' => $policy, 'proto' => $default['proto']]);
 
         $who = $actor === self::ACTOR_CLIENT ? 'cliente' : 'admin';
-        $run = $this->queueSync($server, $allocation, "perfil anti-DDoS trocado pelo {$who}: {$server->name} (#{$server->id}) → {$policy}");
+        $run = $this->queueSync($server, $allocation, "perfil anti-DDoS alterado pelo {$who}: {$server->name} (#{$server->id}) → {$policy}");
 
         $state = ServerDdosProfileState::query()->firstOrNew(['server_id' => $server->id]);
         $state->egg_ddos_profile_id = $profile?->id;

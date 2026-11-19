@@ -103,7 +103,7 @@ class EggDdosProfileController extends Controller
 
         $enabled = $request->boolean('enabled');
         if ($enabled && $rows === []) {
-            return $this->fail($egg, 'Cadastre pelo menos uma opção antes de habilitar a troca pelo cliente.');
+            return $this->fail($egg, 'Cadastre pelo menos uma opção antes de habilitar a mudança pelo cliente.');
         }
 
         $settings = $this->service->settingsFor($egg);

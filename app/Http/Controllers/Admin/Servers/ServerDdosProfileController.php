@@ -70,7 +70,7 @@ class ServerDdosProfileController extends Controller
             $this->service->resetCooldown($server);
         }
 
-        $this->alert->success('Configurações de troca do cliente salvas.')->flash();
+        $this->alert->success('Configurações de mudança do cliente salvas.')->flash();
 
         return redirect()->route('admin.servers.view.ddos', $server->id);
     }

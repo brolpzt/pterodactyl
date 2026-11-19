@@ -46,7 +46,7 @@
         <div class="col-xs-12">
             <div class="box box-primary">
                 <div class="box-header with-border">
-                    <h3 class="box-title">Troca pelo cliente</h3>
+                    <h3 class="box-title">Mudança pelo cliente</h3>
                 </div>
                 <div class="box-body">
                     <p>
@@ -63,12 +63,12 @@
                         @if($defaultPolicy)
                             <code>{{ $defaultPolicy }}</code>
                         @else
-                            <span class="text-danger">nenhum (defina o perfil da Gcore no slot <code>SERVER_PORT</code> do egg; sem ele a troca não aparece).</span>
+                            <span class="text-danger">nenhum (defina o perfil da Gcore no slot <code>SERVER_PORT</code> do egg; sem ele a mudança não aparece).</span>
                         @endif
                     </p>
                     @if($defaultPolicy && !$defaultCovered && count($optionRows) > 0)
                         <div class="alert alert-warning" style="margin-bottom: 10px;">
-                            Nenhuma opção usa o perfil padrão (<code>{{ $defaultPolicy }}</code>). Quem trocar não conseguirá voltar para ele sozinho.
+                            Nenhuma opção usa o perfil padrão (<code>{{ $defaultPolicy }}</code>). Quem mudar não conseguirá voltar para ele sozinho.
                         </div>
                     @endif
                     <div class="row">
@@ -76,14 +76,14 @@
                             <label class="control-label">Habilitado</label>
                             <div class="checkbox checkbox-primary no-margin-bottom">
                                 <input type="checkbox" id="pEnabled" name="enabled" value="1" {{ old('enabled', $settings->enabled) ? 'checked' : '' }}>
-                                <label for="pEnabled">Cliente pode trocar o perfil de proteção</label>
+                                <label for="pEnabled">Cliente pode mudar o perfil de proteção</label>
                             </div>
-                            <p class="text-muted small">Ao desabilitar, os servidores que trocaram voltam ao perfil padrão do egg.</p>
+                            <p class="text-muted small">Ao desabilitar, os servidores que mudaram voltam ao perfil padrão do egg.</p>
                         </div>
                         <div class="form-group col-sm-4">
                             <label for="pCooldown" class="control-label">Cooldown (minutos)</label>
                             <input type="number" min="0" max="1440" id="pCooldown" name="cooldown_minutes" class="form-control" value="{{ old('cooldown_minutes', $settings->cooldown_minutes) }}">
-                            <p class="text-muted small">Tempo mínimo entre duas trocas do cliente. O admin não tem cooldown.</p>
+                            <p class="text-muted small">Tempo mínimo entre duas mudanças do cliente. O admin não tem cooldown.</p>
                         </div>
                     </div>
                 </div>

@@ -44,7 +44,7 @@ const SyncStatus = ({ sync }: { sync: NonNullable<DdosProfileState['sync']> }) =
         return (
             <p css={tw`flex items-center gap-2 text-sm text-yellow-300 m-0 mt-2`}>
                 <span css={tw`inline-block h-2 w-2 rounded-full bg-yellow-400 animate-pulse`} />
-                Aplicando na proteção… o servidor pode ficar indisponível por alguns segundos durante a troca.
+                Aplicando na proteção… o servidor pode ficar indisponível por alguns segundos durante a mudança.
             </p>
         );
     }
@@ -60,8 +60,8 @@ const SyncStatus = ({ sync }: { sync: NonNullable<DdosProfileState['sync']> }) =
 
     return (
         <Alert type={'danger'} className={'mt-3 text-sm'}>
-            Não foi possível aplicar a última troca na proteção agora. Ela será aplicada na próxima sincronização; você
-            já pode tentar trocar novamente ou abrir um ticket.
+            Não foi possível aplicar a última mudança na proteção agora. Ela será aplicada na próxima sincronização;
+            você já pode tentar mudar novamente ou abrir um ticket.
         </Alert>
     );
 };
@@ -150,7 +150,7 @@ export default () => {
                       <Can action={'antiddos.profile'}>
                           <div css={tw`mt-4 border-t border-neutral-700 pt-4`}>
                               <label css={[cardLabelText, tw`block text-xs uppercase tracking-wide mb-2`]}>
-                                  Trocar perfil
+                                  Mudar perfil
                               </label>
                               <div css={tw`flex flex-col sm:flex-row gap-2`}>
                                   <Select
@@ -178,11 +178,11 @@ export default () => {
                               </div>
                               {changed && chosen?.alert && <ProfileAlert alert={chosen.alert} className={'mt-3'} />}
                               <p css={[cardLabelText, tw`text-xs mt-3 mb-0`]}>
-                                  A troca pode deixar o servidor indisponível por alguns segundos.{' '}
+                                  A mudança pode deixar o servidor indisponível por alguns segundos.{' '}
                                   {wait > 0
-                                      ? `Você poderá trocar novamente em ${wait} min.`
+                                      ? `Você poderá mudar novamente em ${wait} min.`
                                       : data.cooldown_minutes > 0
-                                      ? `Depois de trocar, uma nova troca só é liberada após ${data.cooldown_minutes} min.`
+                                      ? `Depois de mudar, uma nova mudança só é liberada após ${data.cooldown_minutes} min.`
                                       : null}
                               </p>
                               {error && (
@@ -197,12 +197,12 @@ export default () => {
             <Dialog
                 open={confirming}
                 onClose={() => !saving && setConfirming(false)}
-                title={'Trocar perfil de proteção?'}
+                title={'Mudar perfil de proteção?'}
             >
                 <p css={tw`text-sm text-neutral-300 m-0`}>
                     O perfil passará de <strong>{data.current.label}</strong> para <strong>{chosen?.label}</strong>.
                     {data.cooldown_minutes > 0 &&
-                        ` Depois disso, você só poderá trocar de novo em ${data.cooldown_minutes} minutos.`}
+                        ` Depois disso, você só poderá mudar de novo em ${data.cooldown_minutes} minutos.`}
                 </p>
                 <Alert type={'warning'} className={'mt-3 text-sm'}>
                     Enquanto o novo filtro é aplicado, o servidor pode ficar indisponível por alguns segundos e
@@ -214,7 +214,7 @@ export default () => {
                         Cancelar
                     </Button.Text>
                     <Button onClick={submit} disabled={saving}>
-                        Confirmar troca
+                        Confirmar mudança
                     </Button>
                 </Dialog.Footer>
             </Dialog>

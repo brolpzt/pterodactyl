@@ -50,7 +50,7 @@
                         @if($current)
                             {{ $current->label }}
                         @elseif($context['custom'])
-                            Configuração personalizada pelo suporte <span class="text-muted">(troca bloqueada para o cliente)</span>
+                            Configuração personalizada pelo suporte <span class="text-muted">(mudança bloqueada para o cliente)</span>
                         @else
                             Proteção padrão
                         @endif
@@ -58,7 +58,7 @@
                     <dt>Padrão do egg</dt>
                     <dd><code>{{ $context['default']['policy'] }}</code></dd>
                     @if($sync)
-                        <dt>Última troca na Gcore</dt>
+                        <dt>Última mudança na Gcore</dt>
                         <dd>
                             @if($sync['status'] === 'pending')
                                 <span class="label label-warning">na fila / aplicando</span>
@@ -78,7 +78,7 @@
         </div>
         <div class="box box-primary">
             <div class="box-header with-border">
-                <h3 class="box-title">Trocar perfil</h3>
+                <h3 class="box-title">Mudar perfil</h3>
             </div>
             <form action="{{ route('admin.servers.view.ddos', $server->id) }}" method="POST">
                 {!! csrf_field() !!}
@@ -99,8 +99,8 @@
                         </optgroup>
                     </select>
                     <p class="text-muted small" style="margin-top: 8px;">
-                        A troca pode deixar o servidor indisponível por alguns segundos enquanto o filtro é aplicado na Gcore.
-                        Sem cooldown para o admin. Um perfil fora das opções do egg trava a troca pelo cliente até voltar a uma opção ou ao padrão.
+                        A mudança pode deixar o servidor indisponível por alguns segundos enquanto o filtro é aplicado na Gcore.
+                        Sem cooldown para o admin. Um perfil fora das opções do egg trava a mudança pelo cliente até voltar a uma opção ou ao padrão.
                     </p>
                 </div>
                 <div class="box-footer">
@@ -112,7 +112,7 @@
     <div class="col-md-6">
         <div class="box">
             <div class="box-header with-border">
-                <h3 class="box-title">Troca pelo cliente</h3>
+                <h3 class="box-title">Mudança pelo cliente</h3>
             </div>
             <form action="{{ route('admin.servers.view.ddos.settings', $server->id) }}" method="POST">
                 {!! csrf_field() !!}
@@ -126,10 +126,10 @@
                         @endif
                     </p>
                     <p>
-                        Última troca do cliente:
+                        Última mudança do cliente:
                         {{ $state->client_changed_at ? $state->client_changed_at->timezone(config('app.stats_timezone', config('app.timezone')))->format('d/m/Y H:i') : 'nunca' }}
                         @if($nextClientChange)
-                            <br><span class="text-muted">Pode trocar de novo às {{ $nextClientChange->timezone(config('app.stats_timezone', config('app.timezone')))->format('H:i') }}.</span>
+                            <br><span class="text-muted">Pode mudar de novo às {{ $nextClientChange->timezone(config('app.stats_timezone', config('app.timezone')))->format('H:i') }}.</span>
                         @endif
                     </p>
                     <div class="checkbox checkbox-primary">
@@ -140,7 +140,7 @@
                     @if($nextClientChange)
                         <div class="checkbox checkbox-primary">
                             <input type="checkbox" id="pResetCooldown" name="reset_cooldown" value="1">
-                            <label for="pResetCooldown">Zerar o cooldown (cliente pode trocar agora)</label>
+                            <label for="pResetCooldown">Zerar o cooldown (cliente pode mudar agora)</label>
                         </div>
                     @endif
                 </div>
